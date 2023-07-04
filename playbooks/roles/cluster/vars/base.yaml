@@ -1,0 +1,174 @@
+---
+# vim: set ft=yaml:
+
+- name: Setup Helm plugins on host
+  delegate_to: localhost
+  block:
+    - name: Install Helm git plugin
+      kubernetes.core.helm_plugin:
+        plugin_path: https://github.com/aslafy-z/helm-git
+        state: present
+    - name: Install Helm diff plugin
+      kubernetes.core.helm_plugin:
+        plugin_path: https://github.com/databus23/helm-diff
+        state: present
+    - name: Set fact for helm plugins setup
+      set_fact:
+        helm_plugins_setup: true
+        cacheable: true
+  when: "'helm_plugins_setup' not in ansible_facts"
+
+- name: Deploy NFS Storage provisioner
+  delegate_to: localhost
+  kubernetes.core.helm:
+    name: csi-driver-nfs
+    chart_ref: "{{ q('pipe', 'git rev-parse --show-toplevel')[0] }}/charts/csi-driver-nfs/charts/v4.1.0/csi-driver-nfs"
+    chart_version: 4.1.0
+    # chart_repo_url: https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
+    release_namespace: csi-driver-nfs
+    create_namespace: true
+#    values:
+#      controller:
+#        # runOnControlPlane: true
+#        nodeSelector:
+#          node-role.kubernetes.io/control-plane: "true"
+#      node:
+#        nodeSelector:
+#          node-role.kubernetes.io/control-plane: "true"
+  when: mock is not defined
+  register: csi_driver
+
+- name: Deploy NFS Storage Class Manifest
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('ansible.builtin.template', 'nfs-sc.yaml.j2') | from_yaml }}"
+  when: mock is not defined
+
+- name: Create the monitoring k8s namespace
+  delegate_to: localhost
+  kubernetes.core.k8s:
+   name: monitoring
+   api_version: v1
+   kind: Namespace
+   state: present
+
+- name: Deploy secret gitlab access for private registry
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('ansible.builtin.template', 'gitlab-arkcr.yaml') | from_yaml }}"
+
+- name: Deploy PVC for Grafana
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('ansible.builtin.template', 'grafana-pvc.yaml.j2') | from_yaml }}"
+
+- name: Deploy PVC for VictoriaMetrics
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('ansible.builtin.template', 'vm-pvc.yaml.j2') | from_yaml }}"
+
+
+#- name: Deploy PVC for Kafka brokers
+#  kubernetes.core.k8s:
+#    state: present
+#    definition: "{{ lookup('ansible.builtin.template', 'kafka-pvc.yaml.j2') | from_yaml }}"
+
+- name: Deploy PVC for Flink checkpoints
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('ansible.builtin.template', 'checkpoint-pvc.yaml.j2') | from_yaml }}"
+
+- name: Deploy PVC for .jar artifacts
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('ansible.builtin.template', 'artifacts-pvc.yaml.j2') | from_yaml }}"
+
+#
+#- name: Add prometheus chart
+#  vars:
+#     helm_chart_url: "https://prometheus-community.github.io/helm-charts"
+#  kubernetes.core.helm_repository:
+#    name: prometheus-community
+#    repo_url: "{{ helm_chart_url }}"
+#
+#- name: Install prometheus chart
+#  kubernetes.core.helm:
+#    name: prometheus-community
+#    namespace: monitoring
+#    chart_ref: prometheus-community/kube-prometheus-stack
+- name: Deploy latest version of VictoriaMetrics chart for long term storage of experiment results
+  delegate_to: localhost
+  kubernetes.core.helm:
+    name: victoria-metrics-single
+    chart_ref: "{{ q('pipe', 'git rev-parse --show-toplevel')[0] }}/charts/victoriametrics/charts/victoria-metrics-single"
+    # chart_version: 0.8.41
+    # chart_repo_url: https://victoriametrics.github.io/helm-charts/
+    release_namespace: default
+    create_namespace: true
+    values:
+      server:
+        retentionPeriod: 100y
+        persistentVolume:
+          existingClaim: vm-pvc
+        nodeSelector:
+          node-role.kubernetes.io/control-plane: "true"
+        image:
+          repository: registry.gitlab.inria.fr/karsalan/arkcr/victoria-metrics
+          tag: v1.86.1
+#        spec:
+#          imagePullSecrets:
+#            - name: gitlab-arkcr
+  when: mock is not defined
+
+- name: Add Secret access to private repository for victoriametrics
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    api_version: apps/v1
+    kind: StatefulSet
+    name: victoria-metrics-single-server
+    namespace: default
+    state: present
+    definition: |
+      spec:
+        template:
+          spec:
+            imagePullSecrets:
+              - name: gitlab-arkcr
+
+
+#TODO should do rollout restart instead
+- name: Delete and recreate pod
+  kubernetes.core.k8s:
+    api_version: v1
+    kind: Pod
+    name: victoria-metrics-single-server-0
+    namespace: default
+    state: absent
+
+- name: Deploy latest version of Prometheus Stack in monitoring namespace
+  delegate_to: localhost
+  kubernetes.core.helm:
+    chart_ref: "{{ q('pipe', 'git rev-parse --show-toplevel')[0] }}/charts/prometheus-community/charts/kube-prometheus-stack"
+    # chart_version: 39.9.0
+    # chart_repo_url: https://prometheus-community.github.io/helm-charts
+    release_namespace: monitoring
+    create_namespace: true
+    release_name: prometheus
+    # force: true
+    values: "{{ lookup('ansible.builtin.template', 'kube-prometheus-stack-values.yaml.j2') | from_yaml }}"
+#
+##- name: Add kafka/strimzi chart
+##  vars:
+##     helm_chart_url: "https://strimzi.io/charts/"
+##  kubernetes.core.helm_repository:
+##    name: strimzi-operator
+##    repo_url: "{{ helm_chart_url }}"
+#
+#- name: Install kafka/strimzi chart
+#  kubernetes.core.helm:
+#    name: strimzi-operator
+#    namespace: default
+#    chart_ref: strimzi/strimzi-kafka-operator
+
+

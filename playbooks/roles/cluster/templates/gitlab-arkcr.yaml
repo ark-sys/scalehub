@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gitlab-arkcr
+  namespace: default
+data:
+  .dockerconfigjson: ewoJImF1dGhzIjogewoJCSJyZWdpc3RyeS5naXRsYWIuaW5yaWEuZnIiOiB7CgkJCSJhdXRoIjogImFXMWhaMlZmY0hWc2JHVnlPbWRzY0dGMExYUlllbkZ6VTFKV1RtaHlPWGxvVTJSRFJWY3giCgkJfQoJfQp9
+type: kubernetes.io/dockerconfigjson

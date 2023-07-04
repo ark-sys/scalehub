@@ -1,0 +1,115 @@
+#!/usr/bin/env python3
+import argparse
+import json
+
+from src.utils.Logger import Logger
+from src.utils.Config import Config
+from src.utils.Defaults import ConfigKeys as Key,DefaultValues as Value
+from src.utils.Misc import Misc
+from src.G5k import G5k
+from src.Platform import Platform
+from src.Playbooks import Playbooks
+
+def provision(config: Config):
+    platform_type = config.get_str(Key.TYPE)
+    match platform_type:
+        case "Grid5000":
+            # Create .python-grid5000.yaml required by enoslib
+            Misc.create_credentials_file()
+
+            # Initiate oarsub request
+            log.info("Reserving...")
+            p: Platform = G5k(config)
+            inventory = p.setup()
+
+            # Dump list of requested nodes to file
+            with open(Value.System.INVENTORY_PATH, "w") as f:
+                log.info("Dumping list of hosts")
+                json.dump(inventory, f, ensure_ascii=False, indent=4)
+            log.info("Done.")
+
+def destroy(config: Config):
+    platform_type = config.get_str(Key.TYPE)
+    match platform_type:
+        case "Grid5000":
+            # Initiate oardel request
+            p: Platform = G5k(config)
+            p.teardown()
+
+
+def deploy(playbook):
+    log.info(f"Executing deployment tasks in playbook : {playbook} ...")
+    p: Playbooks = Playbooks()
+    p.run(playbook)
+
+def delete(playbook):
+    log.info(f"Executing deletion tasks in playbook : {playbook} ...")
+
+def run():
+    log.info("Running...")
+
+def export():
+    log.info("Exporting...")
+
+def plot():
+    log.info("Plotting...")
+
+def main():
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(dest="command")
+
+    parser.add_argument('-c', '--conf', dest='conf_file', action='store',
+                        default=Value.System.CONF_PATH,
+                        help="Specify a custom path for the configuration file of scalehub.")
+    # Provision command
+    provision_parser = subparsers.add_parser("provision", help="Provision platform specified in conf/scalehub.conf")
+
+    # Destroy command
+    destroy_parser = subparsers.add_parser("destroy", help="Destroy platform specified in conf/scalehub.conf")
+
+    # Deploy command
+    deploy_parser = subparsers.add_parser("deploy", help="Executes deploy tasks of provided playbook.")
+    deploy_parser.add_argument("playbook",help="Name of the playbook.")
+
+    # Delete command
+    delete_parser = subparsers.add_parser("delete", help="Executes delete tasks of provided playbook.")
+    delete_parser.add_argument("playbook",help="Name of the playbook .")
+
+    # Run command
+    subparsers.add_parser("run", help="Run the program")
+
+    # Export command
+    subparsers.add_parser("export", help="Export data")
+
+    # Plot command
+    subparsers.add_parser("plot", help="Plot data")
+
+    # Parse command line arguments
+    args = parser.parse_args()
+
+    # Parse configuration file values
+    configuration_file= args.conf_file
+
+    # Store configuration file values in Config struct
+    config=Config(log,configuration_file)
+
+    if args.command == "provision":
+        provision(config)
+    elif args.command == "deploy":
+        deploy(args.playbook)
+    elif args.command == "delete":
+        delete(args.playbook)
+    elif args.command == "destroy":
+        destroy(config)
+    elif args.command == "run":
+        run()
+    elif args.command == "export":
+        export()
+    elif args.command == "plot":
+        plot()
+    else:
+        parser.print_help()
+
+if __name__ == "__main__":
+    log = Logger()
+    main()
