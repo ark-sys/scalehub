@@ -1,0 +1,14 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  namespace: default
+  labels:
+    app: kafka
+  name: kafka
+spec:
+  selector:
+    matchLabels:
+        app: kafka
+  endpoints:
+    - port: metrics
+      interval: 5s

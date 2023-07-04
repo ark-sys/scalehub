@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zookeeper
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zookeeper
+  template:
+    metadata:
+      labels:
+        app: zookeeper
+    spec:
+      hostname: zookeeper
+      imagePullSecrets:
+        - name: gitlab-arkcr
+      containers:
+      - env:
+        - name: ZOOKEEPER_CLIENT_PORT
+          value: "2181"
+        image: registry.gitlab.inria.fr/karsalan/arkcr/cp-zookeeper:latest
+        name: zookeeper
+        ports:
+        - containerPort: 2081
+        resources:
+          limits:
+            memory: 2Gi
+            cpu: 200m
+      restartPolicy: Always

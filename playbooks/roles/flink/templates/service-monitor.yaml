@@ -1,0 +1,14 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  namespace: default
+  labels:
+    app: flink
+  name: flink
+spec:
+  selector:
+    matchLabels:
+        app: flink
+  endpoints:
+    - port: metrics
+      interval: 1s

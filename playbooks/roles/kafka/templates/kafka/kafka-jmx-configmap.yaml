@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jmx-configmap
+  namespace: default
+data:
+  jmx-kafka-prometheus.yml: |+
+    jmxUrl: service:jmx:rmi:///jndi/rmi://localhost:5555/jmxrmi
+    lowercaseOutputName: true
+    lowercaseOutputLabelNames: true
+    ssl: false
+    whitelistObjectNames: [ "kafka.server:*","kafka.controller:*","java.lang:*" ]
+    rules:
+      - pattern: kafka.server<type=ReplicaFetcherManager, name=MaxLag, clientId=(.+)><>Value
+      - pattern: kafka.server<type=BrokerTopicMetrics, name=(BytesInPerSec|BytesOutPerSec|MessagesInPerSec|TotalProduceRequestsPerSec), topic=(.+)><>(.*)
+      - pattern: kafka.server<type=KafkaRequestHandlerPool, name=RequestHandlerAvgIdlePercent><>OneMinuteRate
+      - pattern: kafka.server<type=Produce><>queue-size
+      - pattern: kafka.server<type=ReplicaManager, name=(PartitionCount|UnderReplicatedPartitions)><>(Value|OneMinuteRate)
+      - pattern: kafka.server<type=controller-channel-metrics, broker-id=(.+)><>(.*)
+      - pattern: kafka.server<type=socket-server-metrics, networkProcessor=(.+)><>(.*)
+      - pattern: kafka.server<type=Fetch><>queue-size
+      - pattern: kafka.server<type=SessionExpireListener, name=(.+)><>OneMinuteRate
+      - pattern: kafka.controller<type=KafkaController, name=(.+)><>Value
+      - pattern: kafka.consumer<type=consumer-fetch-manager-metrics><>(.*)
+      - pattern: kafka.producer<type=producer-metrics, name=(.+)><>(.*)
+      - pattern: java.lang<type=OperatingSystem><>SystemCpuLoad
+      - pattern: java.lang<type=Memory><HeapMemoryUsage>used
+      - pattern: java.lang<type=OperatingSystem><>FreePhysicalMemorySize

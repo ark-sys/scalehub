@@ -1,0 +1,23 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: flink-taskmanager
+  namespace: default
+  labels:
+    app: flink
+spec:
+  selector:
+    matchLabels:
+      app: flink
+      component: taskmanager
+  endpoints:
+  - port: metrics
+#    targetPort: 9249
+    interval: 1s
+#    honorLabels: true
+#    metricRelabelings:
+#    - sourceLabels: [__name__]
+#      targetLabel: job
+#      replacement: flink-taskmanager
+#    - sourceLabels: [instance]
+#      targetLabel: instance

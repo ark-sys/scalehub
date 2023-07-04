@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gitlab-registry-s
+  namespace: default
+data:
+  .dockerconfigjson: ***REMOVED***
+
+type: kubernetes.io/dockerconfigjson
+
