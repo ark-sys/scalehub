@@ -21,7 +21,7 @@ function display_help() {
     echo "  generate          Generate Docker secret with credentials"
     echo "  create            Create the Docker container"
     echo "  restart           Restart the Docker container"
-    echo "  shell             Spawn an interactive shell in thw container"
+    echo "  shell             Spawn an interactive shell in the container"
     echo "  push <registry>   Push the Docker image to a private registry"
     echo "  help              Display this help message"
 }
