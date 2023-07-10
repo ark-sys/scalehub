@@ -1,8 +1,0 @@
----
-# vim: set ft=yaml:
-- name: Deploy Helm Charts
-  hosts: localhost
-  strategy: mitogen_free
-  gather_facts: false
-  roles:
-    - monitoring

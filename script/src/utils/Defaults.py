@@ -12,9 +12,9 @@ class ConfigKeys:
     WALLTIME = "platform.walltime"
 
     NAME = "experiment.name"
-    TOPIC_SOURCES = "experiment.sources"
-    NUM_SENSORS = "experiment.sensors"
-    INTERVAL_MS = "experiment.interval"
+    TOPIC_SOURCES = "experiment.topic_sources"
+    NUM_SENSORS = "experiment.num_sensors"
+    INTERVAL_MS = "experiment.interval_ms"
 
     DEBUG_LEVEL = "debug.level"
 
@@ -22,7 +22,7 @@ class ConfigKeys:
 class DefaultValues:
     class System:
         CONF_PATH = "/app/conf/scalehub.conf"
-        PLAYBOOKS_PATH = "/app/playbooks"
+        PLAYBOOKS_PATH = "/app/playbooks/project"
         INVENTORY_PATH = "/tmp/hosts.json"
         class Debug:
             DISABLED = 0
@@ -41,6 +41,6 @@ class DefaultValues:
 
     class Experiment:
         name = "scalehub1"
-        sources = ["input-topic1"]
-        sensors = 100000
-        interval = 3000
+        topic_sources = ["input-topic1"]
+        num_sensors = 100000
+        interval_ms = 3000

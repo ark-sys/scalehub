@@ -1,0 +1,23 @@
+---
+# Setup task for PVC deployment
+- name: Setup Service Monitors - Creation block
+  delegate_to: localhost
+  tags: [ create ]
+  block:
+    - name: Deploying Service Monitors
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('ansible.builtin.template', item) | from_yaml }}"
+      with_fileglob:
+        - "../templates/servicemonitors/*.yaml"
+
+- name: Setup Service Monitors - Deletion block
+  delegate_to: localhost
+  tags: [ delete ]
+  block:
+    - name: Deploying Service Monitors
+      kubernetes.core.k8s:
+        state: absent
+        definition: "{{ lookup('ansible.builtin.template', item) | from_yaml }}"
+      with_fileglob:
+        - "../templates/servicemonitors/*.yaml"

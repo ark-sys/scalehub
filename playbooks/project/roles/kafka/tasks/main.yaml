@@ -1,0 +1,51 @@
+---
+- name: Deploy Kafka stack
+  tags:
+    - create
+  block:
+    - name: Deploy Schema-registry
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('ansible.builtin.template', item) | from_yaml }}"
+      with_fileglob:
+        - "../templates/schema-registry/*.yaml"
+
+    - name: Deploy Zookeeper
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('ansible.builtin.template', item) | from_yaml }}"
+      with_fileglob:
+        - "../templates/zookeeper/*.yaml"
+
+    - name: Deploy Kafka
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('ansible.builtin.template', item) | from_yaml }}"
+      with_fileglob:
+        - "../templates/kafka/*.yaml"
+
+
+- name: Remove Kafka stack
+  tags:
+    - delete
+  block:
+    - name: Remove Schema-registry
+      kubernetes.core.k8s:
+        state: absent
+        definition: "{{ lookup('ansible.builtin.template', item) | from_yaml }}"
+      with_fileglob:
+        - "../templates/schema-registry/*.yaml"
+
+    - name: Remove Zookeeper
+      kubernetes.core.k8s:
+        state: absent
+        definition: "{{ lookup('ansible.builtin.template', item) | from_yaml }}"
+      with_fileglob:
+        - "../templates/zookeeper/*.yaml"
+
+    - name: Remove Kafka
+      kubernetes.core.k8s:
+        state: absent
+        definition: "{{ lookup('ansible.builtin.template', item) | from_yaml }}"
+      with_fileglob:
+        - "../templates/kafka/*.yaml"

@@ -1,0 +1,39 @@
+---
+# Main base
+
+- name: Setup Helm plugins on host
+  delegate_to: localhost
+  tags: [ always ]
+  block:
+    - name: Install Helm git plugin
+      kubernetes.core.helm_plugin:
+        plugin_path: https://github.com/aslafy-z/helm-git
+        state: present
+    - name: Install Helm diff plugin
+      kubernetes.core.helm_plugin:
+        plugin_path: https://github.com/databus23/helm-diff
+        state: present
+    - name: Set fact for helm plugins setup
+      set_fact:
+        helm_plugins_setup: true
+        cacheable: true
+  when: "'helm_plugins_setup' not in ansible_facts"
+
+- name: Deploy secret gitlab access for private registry
+  tags: [ always ]
+  kubernetes.core.k8s:
+    state: present
+    definition: "{{ lookup('ansible.builtin.template', 'gitlab-arkcr.yaml') | from_yaml }}"
+
+- name: Create the monitoring k8s namespace
+  tags: [ always ]
+  delegate_to: localhost
+  kubernetes.core.k8s:
+    name: monitoring
+    api_version: v1
+    kind: Namespace
+    state: present
+
+- import_tasks: nfs.yaml
+
+- import_tasks: pvc.yaml
