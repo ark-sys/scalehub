@@ -117,6 +117,7 @@ function create_container() {
         --mount type=bind,source=$BASEDIR/script,target=/app/script \
         --mount type=bind,source=$BASEDIR/playbooks,target=/app/playbooks \
         --mount type=bind,source=$BASEDIR/conf,target=/app/conf \
+        --mount type=bind,source=$BASEDIR/experiments-data,target=/app/experiments-data \
         --mount type=bind,source=$HOME/.ssh,target=/root/.ssh \
         --mount type=bind,source=/tmp/scalehub-tmp/,target=/tmp/ \
         $IMAGE_NAME

@@ -14,6 +14,10 @@ class Config:
             conf_path = join(getcwd(), Value.System.CONF_PATH)
         self.__read_config_file(conf_path)
     def __init_defaults(self):
+        self.__config[Key.PLAYBOOKS_PATH] = Value.System.PLAYBOOKS_PATH
+        self.__config[Key.INVENTORY_PATH] = Value.System.INVENTORY_PATH
+        self.__config[Key.EXPERIMENTS_DATA_PATH] = Value.System.EXPERIMENTS_DATA_PATH
+
         self.__config[Key.TYPE] = Value.Platform.type
         self.__config[Key.SITE] = Value.Platform.site
         self.__config[Key.CLUSTER] = Value.Platform.cluster

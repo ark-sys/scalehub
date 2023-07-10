@@ -1,6 +1,3 @@
-from os.path import join
-
-
 class ConfigKeys:
 
     TYPE = "platform.type"
@@ -18,12 +15,17 @@ class ConfigKeys:
 
     DEBUG_LEVEL = "debug.level"
 
+    PLAYBOOKS_PATH = "scalehub.playbook"
+    INVENTORY_PATH = "scalehub.inventory"
+    EXPERIMENTS_DATA_PATH = "scalehub.experiments"
 
 class DefaultValues:
     class System:
         CONF_PATH = "/app/conf/scalehub.conf"
         PLAYBOOKS_PATH = "/app/playbooks/project"
+        EXPERIMENTS_DATA_PATH = "/app/experiments-data"
         INVENTORY_PATH = "/tmp/hosts.json"
+
         class Debug:
             DISABLED = 0
             LEVEL_1 = 1

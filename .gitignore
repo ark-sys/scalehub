@@ -1,4 +1,6 @@
-__pycache__/
+__pycache__/      imagePullSecrets:
+
 *.py[cod]
 *$py.class
 .idea/
+experiments-data
