@@ -1,11 +1,16 @@
 import enoslib as en
 from .Platform import Platform
 from .utils.Config import Config, Key
+from .utils.Misc import Misc
 
 class G5k(Platform):
     def __init__(self,config: Config):
         super().__init__()
         _ = en.init_logging()
+
+        # Create .python-grid5000.yaml required by enoslib
+        Misc.create_credentials_file()
+
         en.check()
 
         self.name = config.get_str(Key.NAME)

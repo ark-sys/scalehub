@@ -1,6 +1,6 @@
 ![Logo](ScaleHub.png)
 
-Scalehub is a tool that allows you to provision a cluster and deploy K3S and Flink on top of it
+Scalehub is a tool that allows you to provision a cluster and deploy K3S and Flink on top of it.
 ## Table of Contents
 
 - [Introduction](#introduction)
@@ -33,7 +33,8 @@ To get started with the project, follow the steps below.
 
 The project requires **Docker** to build and run the development environment.
 
-An active VPN connection to the Grid5000 network is required.
+An active VPN connection to the Grid5000 network is required. 
+   [Grid5000 VPN setup guide](https://www.grid5000.fr/w/VPN)
 
 ### Installation
 
@@ -108,6 +109,19 @@ options:
 ```
 
 Refer to the script's help section for detailed information on each action.
+
+### Nomimal execution order for playbooks
+
+After provisioning the cluster with K3S, the first playbook that should be deployed is **base**.
+
+This playbook deploys the NFS plugin for storage access and various PVCs required by the data stream application.
+
+The other playbooks will perform the following actions:
+
+- **monitoring** : Deploy the monitoring stack composed by Prometheus with NodeExporter-VictoriaMetrics-Grafana
+- **datastreamapps** : Deploys Flink and Kafka brokers with JMX-exporter for metrics
+- **transscale** : Deploys Transscale autoscaler
+- **load_generators** : Deploys a set of load generators that test Flink
 
 ## Configuration
 The conf folder contains the configuration files for the project, specifically the configuration file for Scalehub. You can specify a custom path for the configuration file using the `-c` or `--conf` option when running the shub script.

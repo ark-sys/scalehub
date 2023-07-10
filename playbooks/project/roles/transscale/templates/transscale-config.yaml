@@ -9,7 +9,7 @@ data:
   transscale.conf: |+
     sys.max.par = 8
     sys.max.transp = 3
-    sys.monitoring.warmup = 0
+    sys.monitoring.warmup = 900
     scaling.strategy.module = transscale.strategies.ParallelismOnly
     scaling.combined.threshold = 30
     
