@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 import argparse
+import argcomplete
 import json
 
 from src.utils.Logger import Logger
 from src.utils.Config import Config
 from src.utils.Defaults import ConfigKeys as Key,DefaultValues as Value
-from src.utils.Misc import Misc
 from src.G5k import G5k
 from src.Platform import Platform
 from src.Playbooks import Playbooks
@@ -15,8 +15,6 @@ def provision(config: Config):
     platform_type = config.get_str(Key.TYPE)
     match platform_type:
         case "Grid5000":
-
-
             # Initiate oarsub request
             log.info("Reserving...")
             p: Platform = G5k(config)
@@ -107,6 +105,9 @@ def main():
     # Plot command
     subparsers.add_parser("plot", help="Plot data")
 
+    # Setup autocomplete for the script
+    argcomplete.autocomplete(parser)
+
     # Parse command line arguments
     args = parser.parse_args()
 
@@ -115,9 +116,6 @@ def main():
 
     # Store configuration file values in Config struct
     config = Config(log, configuration_file)
-
-    # Create .python-grid5000.yaml required by enoslib
-    Misc.create_credentials_file()
 
     if args.command == "provision":
         provision(config)
