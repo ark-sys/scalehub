@@ -1,41 +1,34 @@
 # Base image
 FROM python:3.12-rc-slim
-ARG USER_ID
+
+# Set the working directory
+WORKDIR /app
+RUN mkdir /app/script
+ENV PATH="$PATH:/app/script"
+ENV KUBECONFIG="/tmp/kubeconfig"
+ENV TZ="Europe/Paris"
+
 # Install necessary dependencies
 RUN apt-get update && apt-get install -y \
     openssh-client \
     python3-pip \
     gcc \
     libffi-dev \
-    fish
-
-# Install Ansible module for Python
-RUN pip3 install wheel ansible enoslib
+    fish \
+    curl \
+    git \
+    rustc
 
 # Install kubectl
-RUN apt-get update && apt-get install -y curl && \
-    curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl" && \
+RUN curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl" && \
     chmod +x kubectl && \
     mv kubectl /usr/local/bin
 
-# Set the working directory
-WORKDIR /app
-RUN mkdir /app/script
+# Install Helm
+RUN cd /tmp && curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 && chmod 700 get_helm.sh && ./get_helm.sh && rm ./get_helm.sh
 
-#################################################
-#TODO temporary
-# use ARG CACHEBUST=1 for custom cache invalidation
-RUN apt install iputils-ping iproute2 -y
-## Adding support to ssh server for pycharm
-#RUN mkdir /var/run/sshd && \
-#    echo 'root:password' | chpasswd && \
-#    sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
-#RUN service ssh start
-#EXPOSE 22
-#RUN /usr/sbin/sshd
-#################################################
-ARG CACHEBUST=1
-# Add script path to PATH
-#USER $USER_ID
-ENV PATH="$PATH:/app/script"
+# Install python requirements
+COPY requirements.txt requirements.txt
+RUN pip install -r requirements.txt
+
 ENTRYPOINT ["sleep", "infinity"]

@@ -1,0 +1,200 @@
+---
+# vim: set ft=yaml:
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    remoteWrite:
+      - url: http://victoria-metrics-single-server.default.svc.cluster.local:8428/api/v1/write
+#    additionalScrapeConfigs:
+
+#      - job_name: 'kubernetes-nodes'
+#        kubernetes_sd_configs:
+#          - role: node
+#        relabel_configs:
+#          - action: labelmap
+#            regex: __meta_kubernetes_node_label_(.+)
+#          - target_label: __address__
+#            replacement: kubernetes.default.svc:443
+#          - source_labels: [ __meta_kubernetes_node_name ]
+#            target_label: instance
+
+
+#      - job_name: 'kafka-exporter-job'
+#        kubernetes_sd_configs:
+#          - role: service
+#        relabel_configs:
+#          - source_labels: [ __meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_service_port_name ]
+#            target_label: __metrics_path__
+#            replacement: /metrics
+    nodeSelector:
+      node-role.kubernetes.io/control-plane: "true"
+  serviceMonitor:
+    relabelings:
+      - action: replace
+        sourceLabels:
+          - __meta_kubernetes_pod_node_name
+        targetLabel: instance
+#  additionalServiceMonitors:
+#    - name: flink
+#      selector:
+#        matchLabels:
+#          app: flink
+#      endpoints:
+#        - port: metrics
+#          path: /metrics
+grafana:
+  fullnameOverride: "grafana"
+  nodeSelector:
+    node-role.kubernetes.io/control-plane: "true"
+  enabled: true
+  grafana.ini:
+    dashboards:
+      min_refresh_rate: 1s
+    auth.anonymous:
+      enabled: true
+      org_role: Admin
+  sidecar:
+    datasources:
+      enabled: false
+      defaultDatasourceEnabled: false
+  datasources:
+    datsources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: VictoriaMetrics
+          type: prometheus
+          url: http://victoria-metrics-single-server.default.svc.cluster.local:8428/
+          access: proxy
+          isDefault: true
+  persistence:
+    type: pvc
+    enabled: true
+    existingClaim: grafana-pvc
+  initChownData:
+    ## If false, data ownership will not be reset at startup
+    ## This allows the prometheus-server to be run with an arbitrary user
+    ##
+    enabled: false
+
+prometheusOperator:
+  serviceMonitor:
+    relabelings:
+      - action: replace
+        sourceLabels:
+          - __meta_kubernetes_pod_node_name
+        targetLabel: instance
+  nodeSelector:
+    node-role.kubernetes.io/control-plane: "true"
+kubeApiServer:
+  serviceMonitor:
+    relabelings:
+      - action: replace
+        sourceLabels:
+          - __meta_kubernetes_pod_node_name
+        targetLabel: instance
+kubelet:
+  serviceMonitor:
+    relabelings:
+      - sourceLabels: [__metrics_path__]
+        targetLabel: metrics_path
+      - action: replace
+        sourceLabels:
+          - __meta_kubernetes_pod_node_name
+        targetLabel: instance
+kubeControllerManager:
+  serviceMonitor:
+    relabelings:
+      - action: replace
+        sourceLabels:
+          - __meta_kubernetes_pod_node_name
+        targetLabel: instance
+coreDns:
+  serviceMonitor:
+    relabelings:
+      - action: replace
+        sourceLabels:
+          - __meta_kubernetes_pod_node_name
+        targetLabel: instance
+kubeDns:
+  serviceMonitor:
+    relabelings:
+      - action: replace
+        sourceLabels:
+          - __meta_kubernetes_pod_node_name
+        targetLabel: instance
+kubeEtcd:
+  serviceMonitor:
+    relabelings:
+      - action: replace
+        sourceLabels:
+          - __meta_kubernetes_pod_node_name
+        targetLabel: instance
+kubeScheduler:
+  serviceMonitor:
+    relabelings:
+      - action: replace
+        sourceLabels:
+          - __meta_kubernetes_pod_node_name
+        targetLabel: instance
+kubeProxy:
+  serviceMonitor:
+    relabelings:
+      - action: replace
+        sourceLabels:
+          - __meta_kubernetes_pod_node_name
+        targetLabel: instance
+kube-state-metrics:
+  nodeSelector:
+    node-role.kubernetes.io/control-plane: "true"
+  prometheus:
+    monitor:
+      relabelings:
+        - action: replace
+          sourceLabels:
+            - __meta_kubernetes_pod_node_name
+          targetLabel: instance
+#prometheus-node-exporter:
+#  prometheus:
+#    monitor:
+#      relabelings:
+#        - action: replace
+#          sourceLabels:
+#            - __meta_kubernetes_pod_node_name
+#          targetLabel: instance
+#        - action: labelmap
+#          regex: __meta_kubernetes_node_label_(.+)
+#        - action: replace
+#          sourceLabels:
+#            - __address__
+#            - __meta_kubernetes_node_label_role
+#          targetLabel: __address__
+#          regex: (.+)(?::\d+)?;(.+)
+#          replacement: $1:9100
+#          # Add the following rule to include the `node_network_latency_seconds` metric
+#        - action: replace
+#          sourceLabels:
+#            - __address__
+#          targetLabel: __param_target
+#        - action: replace
+#          sourceLabels:
+#            - __param_target
+#          targetLabel: instance
+#        - action: labelmap
+#          regex: __meta_kubernetes_node_label_(.+)
+#        - target_label: __address__
+#          replacement:
+#        - source_labels: [ __address__ ]
+#          regex: '(.+):9100'
+#          target_label: instance
+#          replacement: '${1}'
+alertmanager:
+  alertmanagerSpec:
+    nodeSelector:
+      node-role.kubernetes.io/control-plane: "true"
+  serviceMonitor:
+    relabelings:
+      - action: replace
+        sourceLabels:
+          - __meta_kubernetes_pod_node_name
+        targetLabel: instance

@@ -43,7 +43,10 @@ class G5k(Platform):
         self.provider = en.G5k(self.conf)
 
     def setup(self):
+        # Request resources from Grid5000
         roles, networks = self.provider.init()
+
+        # Initialize dictionary store for inventory
         Inventory = {
             "all": {
                 "children": {}}}
@@ -52,15 +55,18 @@ class G5k(Platform):
             Inventory["all"]["children"][grp]["hosts"] = {}
             for host in hostset:
                 Inventory["all"]["children"][grp]["hosts"][host.alias] = None
-
         self.post_setup()
+
+        # Return inventory dictionary
         return Inventory
 
     def post_setup(self):
+        # Retrieve running job info
         jobs = self.provider.driver.get_jobs()
         self.job_id = jobs[0].uid
         self.job_site = jobs[0].site
 
+        # Setup NFS access
         self.enable_g5k_nfs_access()
 
     def enable_g5k_nfs_access(self):
@@ -85,4 +91,5 @@ class G5k(Platform):
         return dict(job_id=self.job_id)
 
     def teardown(self):
+        # Destroy all resources from Grid5000
         self.provider.destroy()

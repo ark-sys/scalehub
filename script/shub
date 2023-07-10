@@ -9,6 +9,7 @@ from src.utils.Misc import Misc
 from src.G5k import G5k
 from src.Platform import Platform
 from src.Playbooks import Playbooks
+from src.Experiment import Experiment
 
 def provision(config: Config):
     platform_type = config.get_str(Key.TYPE)
@@ -24,9 +25,14 @@ def provision(config: Config):
 
             # Dump list of requested nodes to file
             with open(Value.System.INVENTORY_PATH, "w") as f:
-                log.info("Dumping list of hosts")
                 json.dump(inventory, f, ensure_ascii=False, indent=4)
-            log.info("Done.")
+
+            # Setup cluster with docker, k3s and appropriate labels
+            play: Playbooks = Playbooks()
+            play.deploy("cluster-setup")
+        case _:
+            log.error(f"Provision is not implemented for platform {platform_type}")
+
 
 def destroy(config: Config):
     platform_type = config.get_str(Key.TYPE)
@@ -35,24 +41,39 @@ def destroy(config: Config):
             # Initiate oardel request
             p: Platform = G5k(config)
             p.teardown()
-
+        case _ :
+            log.error(f"Destroy is not implemented for platform {platform_type}")
 
 def deploy(playbook):
     log.info(f"Executing deployment tasks in playbook : {playbook} ...")
     p: Playbooks = Playbooks()
-    p.run(playbook)
+    p.deploy(playbook)
 
 def delete(playbook):
     log.info(f"Executing deletion tasks in playbook : {playbook} ...")
+    p: Playbooks = Playbooks()
+    p.delete(playbook)
 
-def run():
-    log.info("Running...")
+def run(action):
+    log.info(f"Running action {action} ...")
+    e: Experiment = Experiment()
+    match action:
+        case "job":
+            e.run_command("flink-jobmanager","flink run -j /tmp/jobs/myjoin-all.jar")
+        case "transscale":
+            e.run_command("transscale","python run_transscale.py")
+        case _ :
+            log.error(f"Action {action} is not implemented.")
+
 
 def export():
     log.info("Exporting...")
 
 def plot():
     log.info("Plotting...")
+
+def add_time():
+    pass
 
 def main():
     parser = argparse.ArgumentParser()
@@ -62,10 +83,10 @@ def main():
                         default=Value.System.CONF_PATH,
                         help="Specify a custom path for the configuration file of scalehub.")
     # Provision command
-    provision_parser = subparsers.add_parser("provision", help="Provision platform specified in conf/scalehub.conf")
+    subparsers.add_parser("provision", help="Provision platform specified in conf/scalehub.conf")
 
     # Destroy command
-    destroy_parser = subparsers.add_parser("destroy", help="Destroy platform specified in conf/scalehub.conf")
+    subparsers.add_parser("destroy", help="Destroy platform specified in conf/scalehub.conf")
 
     # Deploy command
     deploy_parser = subparsers.add_parser("deploy", help="Executes deploy tasks of provided playbook.")
@@ -73,10 +94,11 @@ def main():
 
     # Delete command
     delete_parser = subparsers.add_parser("delete", help="Executes delete tasks of provided playbook.")
-    delete_parser.add_argument("playbook",help="Name of the playbook .")
+    delete_parser.add_argument("playbook", help="Name of the playbook.")
 
     # Run command
-    subparsers.add_parser("run", help="Run the program")
+    run_parser = subparsers.add_parser("run", help="Run action.")
+    run_parser.add_argument("action", help="Specify the action to be run. {job | transscale}")
 
     # Export command
     subparsers.add_parser("export", help="Export data")
@@ -88,10 +110,10 @@ def main():
     args = parser.parse_args()
 
     # Parse configuration file values
-    configuration_file= args.conf_file
+    configuration_file = args.conf_file
 
     # Store configuration file values in Config struct
-    config=Config(log,configuration_file)
+    config = Config(log, configuration_file)
 
     if args.command == "provision":
         provision(config)
@@ -102,7 +124,7 @@ def main():
     elif args.command == "destroy":
         destroy(config)
     elif args.command == "run":
-        run()
+        run(args.action)
     elif args.command == "export":
         export()
     elif args.command == "plot":

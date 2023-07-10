@@ -1,0 +1,50 @@
+---
+# Setup task for VictoriaMetrics database
+- name: Setup VM - Creation block
+  delegate_to: localhost
+  tags: [ create ]
+  block:
+    - name: Deploy latest version of VictoriaMetrics chart for long term storage of experiment results
+      kubernetes.core.helm:
+        name: victoria-metrics-single
+        chart_ref: "victoria-metrics-single"
+        chart_version: 0.8.41
+        chart_repo_url: https://victoriametrics.github.io/helm-charts/
+        release_namespace: default
+        create_namespace: true
+        values:
+          server:
+            retentionPeriod: 100y
+            persistentVolume:
+              existingClaim: vm-pvc
+            nodeSelector:
+              node-role.kubernetes.io/control-plane: "true"
+            image:
+              repository: registry.gitlab.inria.fr/karsalan/arkcr/victoria-metrics
+              tag: v1.86.1
+    #        spec:
+    #          imagePullSecrets:
+    #            - name: gitlab-arkcr
+
+    - name: Add Secret access to private repository for victoriametrics
+      kubernetes.core.k8s:
+        api_version: apps/v1
+        kind: StatefulSet
+        name: victoria-metrics-single-server
+        namespace: default
+        state: present
+        definition: |
+          spec:
+            template:
+              spec:
+                imagePullSecrets:
+                  - name: gitlab-arkcr
+
+    #TODO should do rollout restart instead
+    - name: Delete and recreate pod
+      kubernetes.core.k8s:
+        api_version: v1
+        kind: Pod
+        name: victoria-metrics-single-server-0
+        namespace: default
+        state: absent

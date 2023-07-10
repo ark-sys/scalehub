@@ -1,8 +1,0 @@
----
-# vim: set ft=yaml:
-- name: Deploy flink
-  kubernetes.core.k8s:
-    state: present
-    definition: "{{ lookup('ansible.builtin.template', item) | from_yaml }}"
-  with_fileglob:
-    - "../templates/*.yaml"

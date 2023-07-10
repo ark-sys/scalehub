@@ -1,0 +1,6 @@
+- name: Deploy Helm Charts
+  hosts: localhost
+  gather_facts: false
+  roles:
+    - kafka
+    - flink

@@ -28,7 +28,7 @@ function display_help() {
 
 # Function to build the Docker image
 function build_image() {
-  docker build --build-arg USER_ID=$userid -t $IMAGE_NAME .
+  docker build -t $IMAGE_NAME .
   # Check the exit code
   if [ $? -eq 0 ]; then
       echo "Docker build completed successfully."
@@ -118,7 +118,7 @@ function create_container() {
         --mount type=bind,source=$BASEDIR/playbooks,target=/app/playbooks \
         --mount type=bind,source=$BASEDIR/conf,target=/app/conf \
         --mount type=bind,source=$HOME/.ssh,target=/root/.ssh \
-        --publish published=3022,target=22,mode=host \
+        --mount type=bind,source=/tmp/scalehub-tmp/,target=/tmp/ \
         $IMAGE_NAME
 }
 
