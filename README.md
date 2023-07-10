@@ -1,8 +1,6 @@
-# SCALEHUB
+![Logo](ScaleHub.png)
 
-#TODO to be completed.
-A brief description of the project. 
-
+Scalehub is a tool that allows you to provision a cluster and deploy K3S and Flink on top of it
 ## Table of Contents
 
 - [Introduction](#introduction)

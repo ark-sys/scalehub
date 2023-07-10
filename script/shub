@@ -15,8 +15,7 @@ def provision(config: Config):
     platform_type = config.get_str(Key.TYPE)
     match platform_type:
         case "Grid5000":
-            # Create .python-grid5000.yaml required by enoslib
-            Misc.create_credentials_file()
+
 
             # Initiate oarsub request
             log.info("Reserving...")
@@ -24,7 +23,7 @@ def provision(config: Config):
             inventory = p.setup()
 
             # Dump list of requested nodes to file
-            with open(Value.System.INVENTORY_PATH, "w") as f:
+            with open(config.get_str(Key.INVENTORY_PATH), "w") as f:
                 json.dump(inventory, f, ensure_ascii=False, indent=4)
 
             # Setup cluster with docker, k3s and appropriate labels
@@ -66,8 +65,10 @@ def run(action):
             log.error(f"Action {action} is not implemented.")
 
 
-def export():
+def export(config: Config):
     log.info("Exporting...")
+    e: Experiment = Experiment()
+    e.create_exp_folder(config)
 
 def plot():
     log.info("Plotting...")
@@ -115,6 +116,9 @@ def main():
     # Store configuration file values in Config struct
     config = Config(log, configuration_file)
 
+    # Create .python-grid5000.yaml required by enoslib
+    Misc.create_credentials_file()
+
     if args.command == "provision":
         provision(config)
     elif args.command == "deploy":
@@ -126,7 +130,7 @@ def main():
     elif args.command == "run":
         run(args.action)
     elif args.command == "export":
-        export()
+        export(config)
     elif args.command == "plot":
         plot()
     else:
