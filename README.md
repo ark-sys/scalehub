@@ -40,10 +40,18 @@ An active VPN connection to the Grid5000 network is required.
 ### Installation
 
 1. Clone the repository.
+    ```shell 
+    git clone git@gitlab.inria.fr:karsalan/scalehub.git
 2. If you intend to connect to Grid5000, generate Docker secrets with the deployment script.
+    ```shell
+    ./deploy.sh generate
 3. Build the image of the development environment with the deployment script.
+    ```shell
+   ./deploy.sh build
 4. Run the container and start an interactive shell with the deployment script
-
+    ```shell
+   ./deploy.sh shell
+  
 At this point you shuld be able to run the **shub** command from within the container.
 
 ## Usage
@@ -73,7 +81,9 @@ Options:
 
 To start working with the container, use the shell option:
 
-`./deploy.sh shell`
+```shell
+  ./deploy.sh shell
+```
 
 ### Scalehub Script
 The shub script, located in the script folder, is loaded into the Docker container and provides various actions and options for the deployment and execution of experiments. Here is the usage section of the script:
@@ -108,3 +118,4 @@ The conf folder contains the configuration files for the project, specifically t
 Contributions are welcome! If you have any ideas, suggestions, or bug reports, please create an issue or submit a pull request.
 
 Please follow the contribution guidelines when making contributions.
+
