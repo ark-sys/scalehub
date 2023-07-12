@@ -1,6 +1,7 @@
 ![Logo](ScaleHub.png)
 
 Scalehub is a tool that allows you to provision a cluster and deploy K3S and Flink on top of it.
+
 ## Table of Contents
 
 - [Introduction](#introduction)
@@ -12,9 +13,8 @@ Scalehub is a tool that allows you to provision a cluster and deploy K3S and Fli
 - [License](#license)
 
 ## Introduction
-#TODO to be completed.
 
-Provide an overview of the project, its purpose, and its key features.
+The purpose of the script is to ease the execution of repetitive tasks when running flink experiments on Kurbenetes.
 
 ## Folder Structure
 The project has the following folder structure:
@@ -51,7 +51,7 @@ An active VPN connection to the Grid5000 network is required.
     ```shell
    ./deploy.sh shell
   
-At this point you shuld be able to run the **shub** command from within the container.
+At this point you shuld be able to run the *shub* command from within the container.
 
 ## Usage
 
@@ -119,9 +119,12 @@ This playbook deploys the NFS plugin for storage access and various PVCs require
 The other playbooks will perform the following actions:
 
 - **monitoring** : Deploy the monitoring stack composed by Prometheus with NodeExporter-VictoriaMetrics-Grafana
-- **datastreamapps** : Deploys Flink and Kafka brokers with JMX-exporter for metrics
+- **flink** : Deploys Flink
+- **kafka** : Deploys Kafka brokers with JMX-exporter for metrics
 - **transscale** : Deploys Transscale autoscaler
 - **load_generators** : Deploys a set of load generators that test Flink
+
+- **datastreamapps** : Deploys both flink and kafka in one command
 
 ## Configuration
 The conf folder contains the configuration files for the project, specifically the configuration file for Scalehub. You can specify a custom path for the configuration file using the `-c` or `--conf` option when running the shub script.

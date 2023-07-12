@@ -95,6 +95,7 @@ class G5k(Platform):
     def get_platform_metadata(self) -> dict[str, str]:
         return dict(job_id=self.job_id)
 
-    def teardown(self):
+    def destroy(self):
         # Destroy all resources from Grid5000
         self.provider.destroy()
+

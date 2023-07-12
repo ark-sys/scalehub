@@ -1,18 +1,40 @@
 ---
 - name: Deploy Flink
-  tags:
-    - create
-  kubernetes.core.k8s:
-    state: present
-    definition: "{{ lookup('ansible.builtin.template', item) | from_yaml }}"
-  with_fileglob:
-    - "../templates/*.yaml"
+  tags : [ create ]
+  block :
+    - name : Deploy services
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('ansible.builtin.file', item) | from_yaml }}"
+      with_fileglob:
+        - "../files/*.yaml"
+
+    - name: Deploy jobmanager
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('ansible.builtin.template', 'jobmanager-deployment.yaml.j2') | from_yaml }}"
+
+    - name: Deploy taskmanager
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('ansible.builtin.template', 'taskmanager-deployment.yaml.j2') | from_yaml }}"
 
 - name: Delete Flink
-  tags:
-    - delete
-  kubernetes.core.k8s:
-    state: absent
-    definition: "{{ lookup('ansible.builtin.template', item) | from_yaml }}"
-  with_fileglob:
-    - "../templates/*.yaml"
+  tags : [ delete ]
+  block :
+    - name : Delete services
+      kubernetes.core.k8s:
+        state: absent
+        definition: "{{ lookup('ansible.builtin.file', item) | from_yaml }}"
+      with_fileglob:
+        - "../files/*.yaml"
+
+    - name: Delete jobmanager
+      kubernetes.core.k8s:
+        state: absent
+        definition: "{{ lookup('ansible.builtin.template', 'jobmanager-deployment.yaml.j2') | from_yaml }}"
+
+    - name: Delete taskmanager
+      kubernetes.core.k8s:
+        state: absent
+        definition: "{{ lookup('ansible.builtin.template', 'taskmanager-deployment.yaml.j2') | from_yaml }}"

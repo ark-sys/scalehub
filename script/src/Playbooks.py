@@ -1,4 +1,4 @@
-import os.path
+import os
 import enoslib as en
 from .utils.Defaults import DefaultValues as Value
 
@@ -12,7 +12,7 @@ class Playbooks:
 
         en.run_ansible(playbooks=[playbook_filename], inventory_path=Value.System.INVENTORY_PATH,tags=["create"],
                        extra_vars={
-                           "kubeconfig_path": "/tmp/kubeconfig"})
+                           "kubeconfig_path": os.environ["KUBECONFIG"]})
 
 
     def delete(self, playbook):
@@ -22,4 +22,4 @@ class Playbooks:
             raise FileNotFoundError(f"The file doesn't exist: {playbook_filename}")
         en.run_ansible(playbooks=[playbook_filename], inventory_path=Value.System.INVENTORY_PATH, tags=["delete"],
                        extra_vars={
-                           "kubeconfig_path": "/tmp/kubeconfig"})
+                           "kubeconfig_path":os.environ["KUBECONFIG"]})

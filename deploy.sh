@@ -37,6 +37,8 @@ function build_image() {
       if docker service ls -q --filter "name=$SERVICE_NAME" | grep -q .; then
           # If the service exists, update it to use the latest image
           docker service update --image $IMAGE_NAME $SERVICE_NAME
+      else
+        create_container
       fi
   else
       echo "Error occurred during Docker build. Exiting..."
@@ -119,7 +121,6 @@ function create_container() {
         --mount type=bind,source=$BASEDIR/conf,target=/app/conf \
         --mount type=bind,source=$BASEDIR/experiments-data,target=/app/experiments-data \
         --mount type=bind,source=$HOME/.ssh,target=/root/.ssh \
-        --mount type=bind,source=/tmp/scalehub-tmp/,target=/tmp/ \
         $IMAGE_NAME
 }
 

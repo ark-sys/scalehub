@@ -5,7 +5,7 @@ FROM python:3.12-rc-slim
 WORKDIR /app
 RUN mkdir /app/script
 ENV PATH="$PATH:/app/script"
-ENV KUBECONFIG="/tmp/kubeconfig"
+ENV KUBECONFIG="/app/conf/kubeconfig"
 ENV TZ="Europe/Paris"
 
 # Install necessary dependencies
@@ -31,4 +31,5 @@ RUN cd /tmp && curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 
+# TODO add autocompletion for python script as describe here -> https://fishshell.com/docs/current/completions.html
 ENTRYPOINT ["sleep", "infinity"]

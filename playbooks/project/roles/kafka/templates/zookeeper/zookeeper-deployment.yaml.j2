@@ -22,7 +22,7 @@ spec:
       - env:
         - name: ZOOKEEPER_CLIENT_PORT
           value: "2181"
-        image: registry.gitlab.inria.fr/karsalan/arkcr/cp-zookeeper:latest
+        image: "{{zookeeper_image}}:{{zookeeper_tag}}"
         name: zookeeper
         ports:
         - containerPort: 2081

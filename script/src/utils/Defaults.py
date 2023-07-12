@@ -12,7 +12,7 @@ class ConfigKeys:
     TOPIC_SOURCES = "experiment.topic_sources"
     NUM_SENSORS = "experiment.num_sensors"
     INTERVAL_MS = "experiment.interval_ms"
-
+    DB_URL = "experiment.db_url"
     DEBUG_LEVEL = "debug.level"
 
     PLAYBOOKS_PATH = "scalehub.playbook"
@@ -46,3 +46,4 @@ class DefaultValues:
         topic_sources = ["input-topic1"]
         num_sensors = 100000
         interval_ms = 3000
+        db_url = "localhost:8428"

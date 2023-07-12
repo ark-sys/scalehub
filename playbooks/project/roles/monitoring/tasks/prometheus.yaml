@@ -12,5 +12,5 @@
         release_namespace: monitoring
         create_namespace: true
         release_name: prometheus
-        values: "{{ lookup('ansible.builtin.template', 'kube-prometheus-stack-values.yaml.j2') | from_yaml }}"
+        values: "{{ lookup('ansible.builtin.file', 'kube-prometheus-stack-values.yaml') | from_yaml }}"
 

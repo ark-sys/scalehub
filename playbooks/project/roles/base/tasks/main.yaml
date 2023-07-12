@@ -23,7 +23,7 @@
   tags: [ always ]
   kubernetes.core.k8s:
     state: present
-    definition: "{{ lookup('ansible.builtin.template', 'gitlab-arkcr.yaml') | from_yaml }}"
+    definition: "{{ lookup('ansible.builtin.file', 'gitlab-arkcr.yaml') | from_yaml }}"
 
 - name: Create the monitoring k8s namespace
   tags: [ always ]

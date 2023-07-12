@@ -22,17 +22,17 @@
     - name: Deploy secret gitlab access for transscale
       kubernetes.core.k8s:
         state: present
-        definition: "{{ lookup('ansible.builtin.template', 'gitlab-registry.yaml') | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.file', 'gitlab-registry.yaml') | from_yaml }}"
 
     - name: Deploy config file for transscale
       kubernetes.core.k8s:
         state: present
-        definition: "{{ lookup('ansible.builtin.template', 'transscale-config.yaml') | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.file', 'transscale-config.yaml') | from_yaml }}"
 
     - name: Deploy transscale
       kubernetes.core.k8s:
         state: present
-        definition: "{{ lookup('ansible.builtin.template', 'transscale-deployment.yaml') | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.template', 'transscale-deployment.yaml.j2') | from_yaml }}"
 
 - name: Delete transscale
   tags: [ delete ]
@@ -40,17 +40,17 @@
     - name: Delete transscale
       kubernetes.core.k8s:
         state: absent
-        definition: "{{ lookup('ansible.builtin.template', 'transscale-deployment.yaml') | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.template', 'transscale-deployment.yaml.j2') | from_yaml }}"
 
     - name: Delete transscale configmap
       kubernetes.core.k8s:
         state: absent
-        definition: "{{ lookup('ansible.builtin.template', 'transscale-config.yaml') | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.file', 'transscale-config.yaml') | from_yaml }}"
 
     - name: Delete secret gitlab access for transscale
       kubernetes.core.k8s:
         state: absent
-        definition: "{{ lookup('ansible.builtin.template', 'gitlab-registry.yaml') | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.file', 'gitlab-registry.yaml') | from_yaml }}"
 
 
 

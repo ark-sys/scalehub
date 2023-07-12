@@ -17,4 +17,9 @@ class Platform:
     def setup(self) -> dict:
         raise NotImplementedError()
 
+    def deploy_playbook(self):
+        raise NotImplementedError()
+
+    def delete_playbook(self):
+        raise NotImplementedError()
 

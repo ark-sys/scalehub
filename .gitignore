@@ -4,3 +4,4 @@ __pycache__/      imagePullSecrets:
 *$py.class
 .idea/
 experiments-data
+conf/kubeconfig

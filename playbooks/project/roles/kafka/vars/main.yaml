@@ -1,0 +1,13 @@
+---
+# vim: set ft=yaml:
+
+# Provide image name and tag for data stream components
+kafka_image: registry.gitlab.inria.fr/karsalan/arkcr/kafka
+kafka_tag: latest
+
+jmx_image: registry.gitlab.inria.fr/karsalan/arkcr/kafka-prometheus-jmx-exporter
+jmx_tag: latest
+
+zookeeper_image: registry.gitlab.inria.fr/karsalan/arkcr/cp-zookeeper
+zookeeper_tag: latest
+

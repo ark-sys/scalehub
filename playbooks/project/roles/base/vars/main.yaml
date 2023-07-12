@@ -1,5 +1,4 @@
 # vim: set ft=yaml:
-# vars file for helm
 storage_class_name: nfs-csi
 nfs_server_address: parasilo-srv-3.rennes.grid5000.fr
 nfs_server_share: /export/home/karsalane/mycluster-PVCs

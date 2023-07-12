@@ -20,7 +20,7 @@ spec:
         - name: gitlab-arkcr
       containers:
         - name: workload-generator
-          image: registry.gitlab.inria.fr/karsalan/arkcr/workload-generator:latest
+          image: "{{image}}:{{tag}}"
           ports:
             - containerPort: 5701
               name: coordination
