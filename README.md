@@ -1,4 +1,4 @@
-![Logo](scalehub.logo)
+![Logo](scalehub_logo.png)
 
 Scalehub is a tool that allows you to provision a cluster and deploy K3S and Flink on top of it.
 
