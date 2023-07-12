@@ -6,27 +6,6 @@ prometheus:
     podMonitorSelectorNilUsesHelmValues: false
     remoteWrite:
       - url: http://victoria-metrics-single-server.default.svc.cluster.local:8428/api/v1/write
-#    additionalScrapeConfigs:
-
-#      - job_name: 'kubernetes-nodes'
-#        kubernetes_sd_configs:
-#          - role: node
-#        relabel_configs:
-#          - action: labelmap
-#            regex: __meta_kubernetes_node_label_(.+)
-#          - target_label: __address__
-#            replacement: kubernetes.default.svc:443
-#          - source_labels: [ __meta_kubernetes_node_name ]
-#            target_label: instance
-
-
-#      - job_name: 'kafka-exporter-job'
-#        kubernetes_sd_configs:
-#          - role: service
-#        relabel_configs:
-#          - source_labels: [ __meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_service_port_name ]
-#            target_label: __metrics_path__
-#            replacement: /metrics
     nodeSelector:
       node-role.kubernetes.io/control-plane: "true"
   serviceMonitor:
@@ -35,14 +14,6 @@ prometheus:
         sourceLabels:
           - __meta_kubernetes_pod_node_name
         targetLabel: instance
-#  additionalServiceMonitors:
-#    - name: flink
-#      selector:
-#        matchLabels:
-#          app: flink
-#      endpoints:
-#        - port: metrics
-#          path: /metrics
 grafana:
   fullnameOverride: "grafana"
   nodeSelector:
@@ -154,40 +125,6 @@ kube-state-metrics:
           sourceLabels:
             - __meta_kubernetes_pod_node_name
           targetLabel: instance
-#prometheus-node-exporter:
-#  prometheus:
-#    monitor:
-#      relabelings:
-#        - action: replace
-#          sourceLabels:
-#            - __meta_kubernetes_pod_node_name
-#          targetLabel: instance
-#        - action: labelmap
-#          regex: __meta_kubernetes_node_label_(.+)
-#        - action: replace
-#          sourceLabels:
-#            - __address__
-#            - __meta_kubernetes_node_label_role
-#          targetLabel: __address__
-#          regex: (.+)(?::\d+)?;(.+)
-#          replacement: $1:9100
-#          # Add the following rule to include the `node_network_latency_seconds` metric
-#        - action: replace
-#          sourceLabels:
-#            - __address__
-#          targetLabel: __param_target
-#        - action: replace
-#          sourceLabels:
-#            - __param_target
-#          targetLabel: instance
-#        - action: labelmap
-#          regex: __meta_kubernetes_node_label_(.+)
-#        - target_label: __address__
-#          replacement:
-#        - source_labels: [ __address__ ]
-#          regex: '(.+):9100'
-#          target_label: instance
-#          replacement: '${1}'
 alertmanager:
   alertmanagerSpec:
     nodeSelector:

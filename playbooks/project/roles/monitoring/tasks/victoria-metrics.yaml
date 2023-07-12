@@ -20,11 +20,8 @@
             nodeSelector:
               node-role.kubernetes.io/control-plane: "true"
             image:
-              repository: registry.gitlab.inria.fr/karsalan/arkcr/victoria-metrics
-              tag: v1.86.1
-    #        spec:
-    #          imagePullSecrets:
-    #            - name: gitlab-arkcr
+              repository: "{{ vm_image }}"
+              tag: "{{ vm_tag }}"
 
     - name: Add Secret access to private repository for victoriametrics
       kubernetes.core.k8s:

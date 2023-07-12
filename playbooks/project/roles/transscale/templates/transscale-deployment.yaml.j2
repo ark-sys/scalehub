@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -12,7 +13,6 @@ spec:
     metadata:
       labels:
         app: transscale
-
     spec:
       terminationGracePeriodSeconds: 0
       imagePullSecrets:
@@ -21,11 +21,11 @@ spec:
         node-role.kubernetes.io/control-plane: "true"
       containers:
         - name: transscale
-          image: "registry.gitlab.inria.fr/apagliar/transscale:dockerization"
+          image: "{{image}}:{{tag}}"
           imagePullPolicy: Always
           resources:
             limits:
-              memory: 4Gi
+              memory: 1Gi
               cpu: 200m
           command: ['sleep', 'infinity']
           tty: true

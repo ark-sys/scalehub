@@ -7,17 +7,15 @@
     - name: Deploying Service Monitors
       kubernetes.core.k8s:
         state: present
-        definition: "{{ lookup('ansible.builtin.template', item) | from_yaml }}"
-      with_fileglob:
-        - "../templates/servicemonitors/*.yaml"
+        definition: "{{ lookup('ansible.builtin.file', item) | from_yaml }}"
+      with_fileglob: [ "servicemonitors/*.yaml" ]
 
 - name: Setup Service Monitors - Deletion block
   delegate_to: localhost
   tags: [ delete ]
   block:
-    - name: Deploying Service Monitors
+    - name: Delete Service Monitors
       kubernetes.core.k8s:
         state: absent
-        definition: "{{ lookup('ansible.builtin.template', item) | from_yaml }}"
-      with_fileglob:
-        - "../templates/servicemonitors/*.yaml"
+        definition: "{{ lookup('ansible.builtin.file', item) | from_yaml }}"
+      with_fileglob: [ "servicemonitors/*.yaml" ]

@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -22,10 +23,7 @@ spec:
         - name: gitlab-arkcr
       containers:
         - name: jobmanager
-#          image: sysark/my-custom-uc:latest
-#          image: "flink:1.17-java11"
-#          image: sysark/myjoin-uc-reactive:latest
-          image: registry.gitlab.inria.fr/karsalan/arkcr/flink:1.17-java11
+          image: "{{image}}:{{tag}}"
           env:
             - name: KAFKA_BOOTSTRAP_SERVERS
               value: "kafka-service:9092"
@@ -53,7 +51,6 @@ spec:
               cpu: 1000m
 #          args: ["standalone-job", "--job-classname", "rocks.theodolite.benchmarks.myjoin.flink.HistoryServiceFlinkJob"] # optional arguments: ["--job-id", "<job id>", "--fromSavepoint", "/path/to/savepoint", "--allowNonRestoredState"]
           args: ["jobmanager"]
-          #command: ['sleep', '60m']
           ports:
             - containerPort: 6123
               name: rpc

@@ -30,6 +30,7 @@ class Config:
         self.__config[Key.TOPIC_SOURCES] = Value.Experiment.topic_sources
         self.__config[Key.NUM_SENSORS] = Value.Experiment.num_sensors
         self.__config[Key.INTERVAL_MS] = Value.Experiment.interval_ms
+        self.__config[Key.DB_URL] = Value.Experiment.db_url
 
         self.__config[Key.DEBUG_LEVEL] = Value.System.Debug.level
 

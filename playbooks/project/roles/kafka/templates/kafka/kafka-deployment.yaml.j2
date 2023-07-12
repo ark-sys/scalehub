@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -20,7 +21,7 @@ spec:
         - name: gitlab-arkcr
       containers:
       - name: kafka
-        image: registry.gitlab.inria.fr/karsalan/arkcr/kafka:latest
+        image: "{{kafka_image}}:{{kafka_tag}}"
         env:
         - name: BROKER_ID_COMMAND
           value: "[[ `hostname` =~ -([0-9]+) ]] && echo ${BASH_REMATCH[1]}"
@@ -66,7 +67,7 @@ spec:
             memory: 4Gi
             cpu: 500m
       - name: prometheus-jmx-exporter
-        image: registry.gitlab.inria.fr/karsalan/arkcr/kafka-prometheus-jmx-exporter:latest
+        image: "{{jmx_image}}:{{jmx_tag}}"
         command:
           - java
           - -XX:+UnlockExperimentalVMOptions

@@ -1,0 +1,4 @@
+---
+# vim: set ft=yaml:
+image: registry.gitlab.inria.fr/karsalan/arkcr/flink
+tag: 1.17-java11

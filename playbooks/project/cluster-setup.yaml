@@ -90,8 +90,8 @@
   tasks:
     - name: Install k3s on controller
       environment:
-        INSTALL_K3S_EXEC: --disable=traefik --disable=local-storage --docker
-        INSTALL_K3S_VERSION: v1.24.8+k3s1
+        INSTALL_K3S_EXEC: --disable=traefik --disable=local-storage
+        INSTALL_K3S_VERSION: v1.25.11+k3s1
       shell:
         cmd: "curl -sfL https://get.k3s.io | sh -s -"
 
@@ -124,8 +124,8 @@
       environment:
         K3S_URL: https://{{ hostvars['CONTROLLER_DETAILS']['controller_ip'] }}:6443
         K3S_TOKEN: "{{ hostvars['CONTROLLER_DETAILS']['token'] }}"
-        INSTALL_K3S_EXEC: --docker
-        INSTALL_K3S_VERSION: v1.24.8+k3s1
+#        INSTALL_K3S_EXEC: --docker
+        INSTALL_K3S_VERSION: v1.25.11+k3s1
       shell:
         cmd: curl -sfL https://get.k3s.io | sh -s -
 
@@ -159,6 +159,11 @@
   gather_facts: false
   tags: [ always ]
   tasks:
+    - name: Wait for all k3s nodes to be ready
+      shell: kubectl wait --for=condition=Ready nodes --all --timeout=600s
+      register: nodes_ready
+    - debug: var=nodes_ready.stdout_lines
+
     - name: Read hosts file
       slurp:
         src: /tmp/hosts.json
@@ -193,17 +198,13 @@
 
     - name: Label nodes as worker-producer
       command:
-        cmd: "kubectl label nodes {{ item }} node-role.kubernetes.io/worker='producer' node-role.kubernetes.io/producer=''"
+        cmd: "kubectl label nodes {{ item }} --overwrite node-role.kubernetes.io/worker='producer' node-role.kubernetes.io/producer=''"
       with_items:
         - "{{ producer_hosts }}"
 
     - name: Label nodes as worker-consumer
       command:
-        cmd: "kubectl label nodes {{ item }} node-role.kubernetes.io/worker='consumer' node-role.kubernetes.io/consumer=''"
+        cmd: "kubectl label nodes {{ item }} --overwrite node-role.kubernetes.io/worker='consumer' node-role.kubernetes.io/consumer=''"
       with_items:
         - "{{ consumer_hosts }}"
 
-    - name: Wait for all k3s nodes to be ready
-      shell: kubectl wait --for=condition=Ready nodes --all --timeout=600s
-      register: nodes_ready
-    - debug: var=nodes_ready.stdout_lines

@@ -2,16 +2,34 @@
 # vim: set ft=yaml:
 - name: Deploy load generators
   tags: [ create ]
-  kubernetes.core.k8s:
-    state: present
-    definition: "{{ lookup('ansible.builtin.template', item) | from_yaml }}"
-  with_fileglob:
-    - "../templates/*.yaml"
+  block:
+    - name: Deploy services
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('ansible.builtin.file', item) | from_yaml }}"
+      with_fileglob:
+        - "*.yaml"
+
+    - name: Deploy load generators
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('ansible.builtin.template', item) | from_yaml }}"
+      with_fileglob:
+        - "*.yaml.j2"
 
 - name: Delete load generators
   tags: [ delete ]
-  kubernetes.core.k8s:
-    state: absent
-    definition: "{{ lookup('ansible.builtin.template', item) | from_yaml }}"
-  with_fileglob:
-    - "../templates/*.yaml"
+  block:
+    - name: Delete services
+      kubernetes.core.k8s:
+        state: absent
+        definition: "{{ lookup('ansible.builtin.file', item) | from_yaml }}"
+      with_fileglob:
+        - "*.yaml"
+
+    - name: Delete load generators
+      kubernetes.core.k8s:
+        state: absent
+        definition: "{{ lookup('ansible.builtin.template', item) | from_yaml }}"
+      with_fileglob:
+        - "*.yaml.j2"
