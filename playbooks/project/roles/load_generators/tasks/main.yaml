@@ -13,9 +13,12 @@
     - name: Deploy load generators
       kubernetes.core.k8s:
         state: present
-        definition: "{{ lookup('ansible.builtin.template', item) | from_yaml }}"
-      with_fileglob:
-        - "*.yaml.j2"
+        definition: "{{ lookup('ansible.builtin.template', 'myjoin-load-generator1-deployment.yaml.j2') | from_yaml }}"
+
+    - name: Deploy load generators
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('ansible.builtin.template', 'myjoin-load-generator2-deployment.yaml.j2') | from_yaml }}"
 
 - name: Delete load generators
   tags: [ delete ]
@@ -30,6 +33,9 @@
     - name: Delete load generators
       kubernetes.core.k8s:
         state: absent
-        definition: "{{ lookup('ansible.builtin.template', item) | from_yaml }}"
-      with_fileglob:
-        - "*.yaml.j2"
+        definition: "{{ lookup('ansible.builtin.template', 'myjoin-load-generator1-deployment.yaml.j2') | from_yaml }}"
+
+    - name: Delete load generators
+      kubernetes.core.k8s:
+        state: absent
+        definition: "{{ lookup('ansible.builtin.template', 'myjoin-load-generator2-deployment.yaml.j2') | from_yaml }}"

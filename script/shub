@@ -76,10 +76,10 @@ def export(config: Config):
     e.export_data_to_csv(exp_path="/tmp/test",time_series_name="flink_taskmanager_job_task_numRecordsOutPerSecond", start_timestamp=1688983791726, end_timestamp= 1688994160302 )
 def plot():
     # This metric polls the throughput
-    # sum by(task_name) (flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~"<operator_name>"})
+    # sum by(task_name) (flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~"$Operator"})
 
     # This metric polls the operator parallelism
-    # sum by(task_name) (count_values by() ("subtask_index", flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~"<operator_name>"}))
+    # sum by(task_name) (count_values by() ("subtask_index", flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~"$Operator"}))
     log.info("Plotting...")
 
 

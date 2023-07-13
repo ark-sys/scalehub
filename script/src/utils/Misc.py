@@ -1,5 +1,6 @@
 import os
-from kubernetes import client, config as kubeconfig
+import subprocess
+from kubernetes import client as Client, config as Kubeconfig
 
 class Misc:
     def create_credentials_file():
@@ -24,10 +25,11 @@ class Misc:
         except Exception as e:
             print(f'Error: {str(e)}')
 
-    def run_command(self, pod_name, command):
-        kubeconfig = kubeconfig.load_kube_config(os.environ["KUBECONFIG"])
-        client = client.CoreV1Api()
-        pod_list = self.client.list_pod_for_all_namespaces(watch=False)
+    def run_command( pod_name, command):
+        kubeconfig = Kubeconfig.load_kube_config(os.environ["KUBECONFIG"])
+
+        client = Client.CoreV1Api()
+        pod_list = client.list_pod_for_all_namespaces(watch=False)
         target_pod = None
         for pod in pod_list.items:
             if pod.metadata.name.startswith(pod_name):

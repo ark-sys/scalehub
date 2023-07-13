@@ -39,28 +39,11 @@ An active VPN connection to the Grid5000 network is required.
 
 ### Installation
 
-1. Clone the repository.
-    ```shell 
-    git clone git@gitlab.inria.fr:karsalan/scalehub.git
-2. If you intend to connect to Grid5000, generate Docker secrets with the deployment script.
-    ```shell
-    ./deploy.sh generate
-3. Build the image of the development environment with the deployment script.
-    ```shell
-   ./deploy.sh build
-4. Run the container and start an interactive shell with the deployment script
-    ```shell
-   ./deploy.sh shell
-  
-At this point you shuld be able to run the *shub* command from within the container.
-
-## Usage
+### Deployment Script
 
 The project provides a set of scripts and commands to build, deploy, and manage a containerized environment using Docker.
 
-### Deployment Script
-
-The deployment script (`deploy.sh`) provides the following options:
+The deployment script (`deploy.sh`) helps you setup the development environment for your experiments. It provides the following options:
 
 ```
 Usage: ./deploy.sh [option]
@@ -78,13 +61,24 @@ Options:
   push <registry>   Push the Docker image to a private registry
   help              Display this help message
 ```
+To correctly setup your environment, follow these steps:
 
-To start working with the container, use the shell option:
+1. Clone the repository.
+    ```shell 
+    git clone git@gitlab.inria.fr:karsalan/scalehub.git
+2. If you intend to connect to Grid5000, generate Docker secrets with the deployment script.
+    ```shell
+    ./deploy.sh generate
+3. Build the image of the development environment with the deployment script.
+    ```shell
+   ./deploy.sh build
+4. Run the container and start an interactive shell with the deployment script
+    ```shell
+   ./deploy.sh shell
+  
+At this point you should be able to run the *shub* command from within the container.
 
-```shell
-  ./deploy.sh shell
-```
-
+## Usage
 ### Scalehub Script
 The shub script, located in the script folder, is loaded into the Docker container and provides various actions and options for the deployment and execution of experiments. Here is the usage section of the script:
 
@@ -130,7 +124,6 @@ The other playbooks will perform the following actions:
 - **datastreamapps** : Deploys both flink and kafka in one command
 
 :point_up: You may want to run one of the applications with a different image. For that, you can modify **vars/main.yaml** file located in roles' folder of the application.
-
 
 ## Configuration
 The conf folder contains the configuration files for the project, specifically the configuration file for Scalehub. You can specify a custom path for the configuration file using the `-c` or `--conf` option when running the shub script.
