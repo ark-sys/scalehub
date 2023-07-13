@@ -117,13 +117,11 @@ After provisioning the cluster with K3S, the first playbook that should be deplo
 
 This playbook deploys the NFS plugin for storage access and various PVCs required by the data stream application.
 
-<div class="panel panel-warning">
-**Warning**
-{: .panel-heading}
-<div class="panel-body">
-You need to modify the variables in the **vars** folder of the **base** playbook in order to reflect your setup.
-</div>
-</div>
+
+:exclamation:  You need to modify the variables in the **vars** folder of the **base** playbook in order to reflect your setup.
+
+| :exclamation:  You need to modify the variables in the **vars** folder of the **base** playbook in order to reflect your setup.  |
+|----------------------------------------------------------------------------------------------------------------------------------|
 
 The other playbooks will perform the following actions:
 
