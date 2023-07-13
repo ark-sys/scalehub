@@ -1,3 +1,4 @@
+---
 - name: Deploy Flink
   hosts: localhost
   gather_facts: false
