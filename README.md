@@ -18,11 +18,13 @@ The purpose of the script is to ease the execution of repetitive tasks when runn
 ## Folder Structure
 The project has the following folder structure:
 
-- **Dockerfile**: Contains the Dockerfile for setting up the development environment.
-- **shell script**: Contains the deployment script `deploy.sh` for building, running, updating the Docker image, and managing Docker secrets.
+- **dockerfile**: Contains the Dockerfile for setting up the development environment.
+- **deploy.sh**:  Helps building, running, updating the Docker image, and managing Docker secrets.
+
+ 
+- **script**: Contains the shub Python script, which is loaded into the Docker container, that executes Ansible playbooks.
+- **conf**: Contains the configuration files for the Python script.
 - **playbook**: Contains Ansible playbooks for provisioning and configuring the environment.
-- **script**: Contains the shub Python script loaded into the Docker container to execute Ansible playbooks.
-- **conf**: Contains the configuration files for the project.
 
 ## Getting Started
 

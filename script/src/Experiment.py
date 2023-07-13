@@ -12,8 +12,8 @@ class Experiment:
     def __init__(self, config: Config):
 
         self.experiment = config.get_str(Key.NAME)
-        self.topic_sources = config.get(Key.TOPIC_SOURCES)
-        self.num_sensors = config.get_int(Key.NUM_SENSORS)
+        self.topic_sources = config.get_list_str(Key.TOPIC_SOURCES)
+        self.num_sensors = config.get_list_int(Key.NUM_SENSORS)
         self.interval_ms = config.get_int(Key.INTERVAL_MS)
 
         self.db_url = config.get_str(Key.DB_URL)

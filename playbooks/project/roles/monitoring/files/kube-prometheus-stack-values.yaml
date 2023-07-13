@@ -25,6 +25,11 @@ grafana:
     auth.anonymous:
       enabled: true
       org_role: Admin
+    panels:
+      enable_alpha: true
+    plugins:
+      plugin_admin_enabled: true
+      enable_alpha: true
   sidecar:
     datasources:
       enabled: false

@@ -70,8 +70,10 @@ def export(config: Config):
     # Get the current date in the format DD-MM-YYYY
     # current_date = date.today().strftime('%d-%m-%Y')
     # e.create_exp_folder(current_date)
-    e.get_current_timestamp()
-
+    # e.get_current_timestamp()
+    # TEST QUERY
+    # http://localhost:8428/api/v1/export/csv?match[]=flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~"TumblingEventTimeWindows"}&start=1688983650213&end=1688993691289&format="__name__,__value__,__timestamp__:__unix_s__"
+    e.export_data_to_csv(exp_path="/tmp/test",time_series_name="flink_taskmanager_job_task_numRecordsOutPerSecond", start_timestamp=1688983791726, end_timestamp= 1688994160302 )
 def plot():
     # This metric polls the throughput
     # sum by(task_name) (flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~"<operator_name>"})

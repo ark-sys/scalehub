@@ -28,7 +28,7 @@ function display_help() {
 
 # Function to build the Docker image
 function build_image() {
-  docker build -t $IMAGE_NAME .
+  docker build -t $IMAGE_NAME dockerfile
   # Check the exit code
   if [ $? -eq 0 ]; then
       echo "Docker build completed successfully."

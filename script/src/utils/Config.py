@@ -47,6 +47,12 @@ class Config:
     def get_str(self, key):
         return str(self.get(key))
 
+    def get_list_str(self,key):
+        return [str(value) for value in self.get_str(key).split(',')]
+
+    def get_list_int(self,key):
+        return [int(value) for value in self.get_str(key).split(',')]
+
     def set(self, key, value):
         self.__config[key] = value
 
