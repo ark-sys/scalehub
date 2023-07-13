@@ -117,11 +117,7 @@ After provisioning the cluster with K3S, the first playbook that should be deplo
 
 This playbook deploys the NFS plugin for storage access and various PVCs required by the data stream application.
 
-
-:exclamation:  You need to modify the variables in the **vars** folder of the **base** playbook in order to reflect your setup.
-
-| :exclamation:  You need to modify the variables in the **vars** folder of the **base** playbook in order to reflect your setup.  |
-|----------------------------------------------------------------------------------------------------------------------------------|
+:exclamation:  You need to modify the variables in **playbooks/project/roles/base/vars** folder order to reflect your setup.
 
 The other playbooks will perform the following actions:
 
@@ -132,6 +128,9 @@ The other playbooks will perform the following actions:
 - **load_generators** : Deploys a set of load generators that test Flink
 
 - **datastreamapps** : Deploys both flink and kafka in one command
+
+:point_up: You may want to run one of the applications with a different image. For that, you can modify **vars/main.yaml** file located in roles' folder of the application.
+
 
 ## Configuration
 The conf folder contains the configuration files for the project, specifically the configuration file for Scalehub. You can specify a custom path for the configuration file using the `-c` or `--conf` option when running the shub script.
