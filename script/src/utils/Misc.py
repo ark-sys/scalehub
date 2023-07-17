@@ -3,7 +3,9 @@ import subprocess
 from kubernetes import client as Client, config as Kubeconfig
 
 class Misc:
-    def create_credentials_file():
+    def __init__(self):
+        pass
+    def create_credentials_file(self):
 
         try:
             with open('/run/secrets/mysecretuser', 'r') as user_file, open('/run/secrets/mysecretpass',
@@ -25,7 +27,7 @@ class Misc:
         except Exception as e:
             print(f'Error: {str(e)}')
 
-    def run_command( pod_name, command):
+    def run_command(self,pod_name, command):
         kubeconfig = Kubeconfig.load_kube_config(os.environ["KUBECONFIG"])
 
         client = Client.CoreV1Api()

@@ -15,4 +15,5 @@
         values: "{{ lookup('ansible.builtin.file', 'kube-prometheus-stack-values.yaml') | from_yaml }}"
 
     - name: Enable port-forwarding for grafana
-      shell: kubectl port-forward -n monitoring deployments/grafana 3000:3000 &
+      shell:
+        cmd: kubectl port-forward --pod-running-timeout=1m0s -n monitoring deployments/grafana 3000:3000 &

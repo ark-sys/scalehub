@@ -9,7 +9,8 @@ class G5k(Platform):
         _ = en.init_logging()
 
         # Create .python-grid5000.yaml required by enoslib
-        Misc.create_credentials_file()
+        m: Misc= Misc()
+        m.create_credentials_file()
 
         en.check()
 
