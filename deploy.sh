@@ -4,9 +4,11 @@
 BASEDIR=$(dirname $0)
 IMAGE_NAME="scalehub"
 SERVICE_NAME="scalehub"
-# Retrieve the user ID
-userid=$UID
 
+# Retrieve the current user IDs and name
+userid=$(id -u)
+groupid=$(id -g)
+username=$(whoami)
 
 # Function to display help message
 function display_help() {
@@ -28,7 +30,7 @@ function display_help() {
 
 # Function to build the Docker image
 function build_image() {
-  docker build -t $IMAGE_NAME dockerfile
+  docker build --build-arg UID=$userid --build-arg GID=$groupid --build-arg UNAME=$username -t $IMAGE_NAME dockerfile
   # Check the exit code
   if [ $? -eq 0 ]; then
       echo "Docker build completed successfully."
@@ -120,7 +122,10 @@ function create_container() {
         --mount type=bind,source=$BASEDIR/playbooks,target=/app/playbooks \
         --mount type=bind,source=$BASEDIR/conf,target=/app/conf \
         --mount type=bind,source=$BASEDIR/experiments-data,target=/app/experiments-data \
-        --mount type=bind,source=$HOME/.ssh,target=/root/.ssh \
+        --mount type=bind,source=$HOME/.ssh,target=$HOME/.ssh \
+        --user $userid \
+        --group $groupid \
+        --hostname $SERVICE_NAME \
         $IMAGE_NAME
 }
 
@@ -132,7 +137,7 @@ function is_service_running() {
 # Function to get an interactive shell for the service
 function get_shell() {
     if is_service_running; then
-        docker exec -it $(docker ps -f name=$SERVICE_NAME --quiet) fish
+        docker exec -u $username -it $(docker ps -f name=$SERVICE_NAME --quiet) fish
     else
         create_container
         get_shell
