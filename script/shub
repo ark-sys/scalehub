@@ -3,6 +3,7 @@ import argparse
 # import argcomplete
 import json
 
+
 from src.utils.Logger import Logger
 from src.utils.Config import Config
 from src.utils.Defaults import ConfigKeys as Key,DefaultValues as Value
@@ -54,12 +55,13 @@ def delete(playbook):
 
 def run(action, config):
     log.info(f"Running action {action} ...")
+    m: Misc=Misc()
     match action:
         case "job":
-            Misc.run_command("flink-jobmanager","flink run -d -j /tmp/jobs/myjoin-all.jar")
+            m.run_command(pod_name="flink-jobmanager",command="flink run -d -j /tmp/jobs/myjoin-all.jar")
         case "transscale":
             e: Experiment = Experiment(config)
-            Misc.run_command("transscale","bash -c 'python run_transscale.py -e > /proc/1/fd/0'")
+            m.run_command(pod_name="transscale",command="bash -c 'python run_transscale.py -e > /proc/1/fd/0'")
         case _:
             log.error(f"Action {action} is not implemented.")
 
@@ -72,8 +74,10 @@ def export(config: Config):
     # e.create_exp_folder(current_date)
     # e.get_current_timestamp()
     # TEST QUERY
-    # http://localhost:8428/api/v1/export/csv?match[]=flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~"TumblingEventTimeWindows"}&start=1688983650213&end=1688993691289&format="__name__,__value__,__timestamp__:__unix_s__"
-    e.export_data_to_csv(exp_path="/tmp/test",time_series_name="flink_taskmanager_job_task_numRecordsOutPerSecond", start_timestamp=1688983791726, end_timestamp= 1688994160302 )
+    # http://localhost:8428/api/v1/export/csv?match[]=flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~"TumblingEventTimeWindows"}&start=1688983650213&end=1688993691289&fo
+    # rmat="__name__,__value__,__timestamp__:__unix_s__"
+    e.export_data_to_csv(exp_path="/tmp/test",time_series_name="flink_taskmanager_job_task_numRecordsOutPerSecond", start_timestamp=1688983791726, end_timestamp= 1688994160302)
+
 def plot():
     # This metric polls the throughput
     # sum by(task_name) (flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~"$Operator"})
@@ -81,7 +85,6 @@ def plot():
     # This metric polls the operator parallelism
     # sum by(task_name) (count_values by() ("subtask_index", flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~"$Operator"}))
     log.info("Plotting...")
-
 
 def add_time():
     pass

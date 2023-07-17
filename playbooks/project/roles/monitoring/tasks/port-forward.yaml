@@ -1,7 +1,0 @@
----
-- name: Port forward grafana
-  delegate_to: localhost
-  tags: [ create ]
-  shell:
-    cmd: nohup kubectl port-forward deployment/grafana 3000:3000
-
