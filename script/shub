@@ -58,7 +58,7 @@ def run(action, config):
     m: Misc=Misc()
     match action:
         case "job":
-            m.run_command(pod_name="flink-jobmanager",command="flink run -d -j /tmp/jobs/myjoin-all.jar")
+            m.run_command(pod_name="flink-jobmanager",command="flink run -d -j /tmp/jobs/myjoin-w-random.jar")
         case "transscale":
             e: Experiment = Experiment(config)
             m.run_command(pod_name="transscale",command="bash -c 'python run_transscale.py -e > /proc/1/fd/0'")
