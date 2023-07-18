@@ -17,7 +17,7 @@ data:
     
     flink.host = flink-jobmanager
     flink.port = 8081
-    flink.job.path = /etc/transscale/jobs/myjoin-all.jar
+    flink.job.path = /etc/transscale/jobs/myjoin-w-random.jar
     operator.name = TumblingEventTimeWindows
         
     debug.level = 1
