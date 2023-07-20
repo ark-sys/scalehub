@@ -6,3 +6,5 @@ metadata:
 data:
   .dockerconfigjson: ***REMOVED***
 type: kubernetes.io/dockerconfigjson
+
+

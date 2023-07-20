@@ -1,0 +1,11 @@
+---
+- name: Deploy base resources
+  hosts: localhost
+  gather_facts: false
+  roles:
+    - base
+    - monitoring
+    - kafka
+    - flink
+    - load_generators
+    - transscale
