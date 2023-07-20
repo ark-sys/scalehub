@@ -23,8 +23,8 @@ The project has the following folder structure:
 
  
 - **script**: Contains the shub Python script, which is loaded into the Docker container, that executes Ansible playbooks.
-- **conf**: Contains the configuration files for the Python script.
-- **playbook**: Contains Ansible playbooks for provisioning and configuring the environment.
+- **conf**: Contains the configuration files for the Python script and for Ansible.
+- **playbooks**: Contains Ansible playbooks for provisioning and configuring the environment.
 
 ## Getting Started
 
