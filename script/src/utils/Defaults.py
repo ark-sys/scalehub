@@ -9,6 +9,8 @@ class ConfigKeys:
     WALLTIME = "platform.walltime"
 
     NAME = "experiment.name"
+    JOB = "experiment.job_file"
+    TASK = "experiment.task_name"
     TOPIC_SOURCES = "experiment.topic_sources"
     NUM_SENSORS = "experiment.num_sensors"
     INTERVAL_MS = "experiment.interval_ms"
@@ -42,8 +44,10 @@ class DefaultValues:
         walltime = "1:00:00"
 
     class Experiment:
-        name = "scalehub1"
+        name = "scalehub"
+        job_file = "myjoin-all.jar"
+        task_name = "TumblingEventTimeWindows"
         topic_sources = ["input-topic1"]
-        num_sensors = 100000
+        num_sensors = [100000]
         interval_ms = 3000
         db_url = "localhost:8428"

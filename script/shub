@@ -3,15 +3,15 @@ import argparse
 # import argcomplete
 import json
 
-
 from src.utils.Logger import Logger
 from src.utils.Config import Config
-from src.utils.Defaults import ConfigKeys as Key,DefaultValues as Value
+from src.utils.Defaults import ConfigKeys as Key, DefaultValues as Value
 from src.utils.Misc import Misc
 from src.G5k import G5k
 from src.Platform import Platform
 from src.Playbooks import Playbooks
 from src.Experiment import Experiment
+
 
 def provision(config: Config):
     platform_type = config.get_str(Key.TYPE)
@@ -28,7 +28,7 @@ def provision(config: Config):
 
             # Setup cluster with docker, k3s and appropriate labels
             play: Playbooks = Playbooks()
-            play.deploy("cluster-setup")
+            return play.deploy("cluster-setup")
         case _:
             log.error(f"Provision is not implemented for platform {platform_type}")
 
@@ -39,55 +39,64 @@ def destroy(config: Config):
         case "Grid5000":
             # Initiate oardel request
             p: Platform = G5k(config)
-            p.destroy()
-        case _ :
+            return p.destroy()
+        case _:
             log.error(f"Destroy is not implemented for platform {platform_type}")
 
-def deploy(playbook):
+
+def deploy(playbook, config: Config):
     log.info(f"Executing deployment tasks in playbook : {playbook} ...")
     p: Playbooks = Playbooks()
-    p.deploy(playbook)
+    return p.deploy(playbook, job_file=config.get_str(Key.JOB), task_name=config.get_str(Key.TASK))
 
-def delete(playbook):
+
+def delete(playbook, config: Config):
     log.info(f"Executing deletion tasks in playbook : {playbook} ...")
     p: Playbooks = Playbooks()
-    p.delete(playbook)
+    return p.delete(playbook, job_file=config.get_str(Key.JOB))
+
 
 def run(action, config):
     log.info(f"Running action {action} ...")
-    m: Misc=Misc()
+    m: Misc = Misc()
     match action:
         case "job":
-            m.run_command(pod_name="flink-jobmanager",command="flink run -d -j /tmp/jobs/myjoin-w-random.jar")
+            return m.run_command(pod_name="flink-jobmanager", command=f"flink run -d -j /tmp/jobs/{config.get_str(Key.JOB)}")
         case "transscale":
             e: Experiment = Experiment(config)
-            m.run_command(pod_name="transscale",command="bash -c 'python run_transscale.py -e > /proc/1/fd/0'")
+            return m.run_command(pod_name="transscale", command="bash -c 'python run_transscale.py -e > /proc/1/fd/0'")
         case _:
             log.error(f"Action {action} is not implemented.")
 
 
 def export(config: Config):
     log.info("Exporting...")
-    e: Experiment = Experiment(config)
+    #TODO WIP
     # Get the current date in the format DD-MM-YYYY
     # current_date = date.today().strftime('%d-%m-%Y')
     # e.create_exp_folder(current_date)
     # e.get_current_timestamp()
     # TEST QUERY
-    # http://localhost:8428/api/v1/export/csv?match[]=flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~"TumblingEventTimeWindows"}&start=1688983650213&end=1688993691289&fo
-    # rmat="__name__,__value__,__timestamp__:__unix_s__"
-    e.export_data_to_csv(exp_path="/tmp/test",time_series_name="flink_taskmanager_job_task_numRecordsOutPerSecond", start_timestamp=1688983791726, end_timestamp= 1688994160302)
+    # "http://localhost:8428/api/v1/export/csv?match[]=flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~'TumblingEventTimeWindows'}&start=1688983791726&end=1688994160302&format='__name__,__value__,__timestamp__:__unix_s__'"
+    #  curl -o output.csv -d 'format=__name__,task_name,subtask_index,__value__,__timestamp__:unix_s' -d 'match[]=flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~"TumblingEventTimeWindows"}' -d 'start=1688983791' -d 'end=1688994160' http://localhost:8428/api/v1/export/csv
+    #  curl -o output.csv -d 'format=__name__,task_name,subtask_index,__value__,__timestamp__:unix_s' -d 'match[]=sum by(task_name) (flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~"TumblingEventTimeWindows"})' -d 'start=1688983791' -d 'end=1688994160' http://localhost:8428/api/v1/export/csv
+    e: Experiment = Experiment(config)
+    e.export_data_to_csv(exp_path="/tmp/test", time_series_name="flink_taskmanager_job_task_numRecordsOutPerSecond",
+                         start_timestamp=1688983791726, end_timestamp=1688994160302)
+
 
 def plot():
+    #TODO WIP
     # This metric polls the throughput
     # sum by(task_name) (flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~"$Operator"})
-
     # This metric polls the operator parallelism
     # sum by(task_name) (count_values by() ("subtask_index", flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~"$Operator"}))
     log.info("Plotting...")
 
+
 def add_time():
     pass
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -104,7 +113,7 @@ def main():
 
     # Deploy command
     deploy_parser = subparsers.add_parser("deploy", help="Executes deploy tasks of provided playbook.")
-    deploy_parser.add_argument("playbook",help="Name of the playbook.")
+    deploy_parser.add_argument("playbook", help="Name of the playbook.")
 
     # Delete command
     delete_parser = subparsers.add_parser("delete", help="Executes delete tasks of provided playbook.")
@@ -136,9 +145,9 @@ def main():
     if args.command == "provision":
         provision(config)
     elif args.command == "deploy":
-        deploy(args.playbook)
+        deploy(args.playbook, config)
     elif args.command == "delete":
-        delete(args.playbook)
+        delete(args.playbook, config)
     elif args.command == "destroy":
         destroy(config)
     elif args.command == "run":
@@ -149,6 +158,7 @@ def main():
         plot()
     else:
         parser.print_help()
+
 
 if __name__ == "__main__":
     log = Logger()

@@ -27,6 +27,8 @@ class Config:
         self.__config[Key.WALLTIME] = Value.Platform.walltime
 
         self.__config[Key.NAME] = Value.Experiment.name
+        self.__config[Key.JOB] = Value.Experiment.job_file
+        self.__config[Key.TASK] = Value.Experiment.task_name
         self.__config[Key.TOPIC_SOURCES] = Value.Experiment.topic_sources
         self.__config[Key.NUM_SENSORS] = Value.Experiment.num_sensors
         self.__config[Key.INTERVAL_MS] = Value.Experiment.interval_ms
