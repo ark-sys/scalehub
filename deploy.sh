@@ -30,7 +30,7 @@ function display_help() {
 
 # Function to build the Docker image
 function build_image() {
-  docker build --build-arg UID=$userid --build-arg GID=$groupid --build-arg UNAME=$username -t $IMAGE_NAME dockerfile
+  docker build --build-arg UID=$userid --build-arg GID=$groupid --build-arg UNAME=$username -t $IMAGE_NAME $BASEDIR/dockerfile
   # Check the exit code
   if [ $? -eq 0 ]; then
       echo "Docker build completed successfully."
@@ -58,7 +58,7 @@ function generate_secret() {
 
     if [[ $update_choice == "y" ]]; then
       # Remove old secrets
-      echo "Remobing service and secrets..."
+      echo "Removing service and secrets..."
       docker service rm $SERVICE_NAME
 #      docker service update --secret-rm mysecretuser $SERVICE_NAME
 #      docker service update --secret-rm mysecretpass $SERVICE_NAME
@@ -113,16 +113,20 @@ function restart_container(){
 
 # Function to create the Docker container
 function create_container() {
+  #TODO Should check if docker swarm is initialized https://stackoverflow.com/questions/43053013/how-do-i-check-that-a-docker-host-is-in-swarm-mode
+  #or find another way to run docker container with secret management
+
+
     docker service create \
         --name $SERVICE_NAME \
         --secret mysecretuser \
         --secret mysecretpass \
         --network host \
+        --mount type=bind,source=$HOME/.ssh,target=$HOME/.ssh \
+        --mount type=bind,source=$BASEDIR/conf,target=/app/conf \
         --mount type=bind,source=$BASEDIR/script,target=/app/script \
         --mount type=bind,source=$BASEDIR/playbooks,target=/app/playbooks \
-        --mount type=bind,source=$BASEDIR/conf,target=/app/conf \
         --mount type=bind,source=$BASEDIR/experiments-data,target=/app/experiments-data \
-        --mount type=bind,source=$HOME/.ssh,target=$HOME/.ssh \
         --user $userid \
         --group $groupid \
         --hostname $SERVICE_NAME \
