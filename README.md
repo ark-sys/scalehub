@@ -37,6 +37,10 @@ The project requires **Docker** to build and run the development environment.
 An active VPN connection to the Grid5000 network is required. 
    [Grid5000 VPN setup guide](https://www.grid5000.fr/w/VPN)
 
+:exclamation: This version requires Docker Swarm to be initialized in order to run scalehub as a Docker service. Initialize Docker Swarm with: 
+```shell
+  docker swarm init
+
 ### Installation
 
 ### Deployment Script
@@ -122,6 +126,9 @@ The other playbooks will perform the following actions:
 - **load_generators** : Deploys a set of load generators that test Flink
 
 - **datastreamapps** : Deploys both flink and kafka in one command
+
+
+- **all** : Deploys all the above playbooks in the correct order.
 
 :point_up: You may want to run one of the applications with a different image. For that, you can modify **vars/main.yaml** file located in roles' folder of the application.
 
