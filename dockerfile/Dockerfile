@@ -6,9 +6,10 @@ FROM python:3.12-rc-slim
 RUN mkdir /app/
 
 # Set default env variables
-ENV PATH="$PATH:/app/script"
-ENV KUBECONFIG="/app/conf/kubeconfig"
 ENV TZ="Europe/Paris"
+ENV KUBECONFIG="/app/conf/kubeconfig"
+ENV ANSIBLE_CONFIG="/app/conf/ansible.cfg"
+ENV PATH="$PATH:/app/script"
 
 # Replicate host user and group
 ARG UID
