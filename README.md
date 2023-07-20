@@ -40,8 +40,9 @@ An active VPN connection to the Grid5000 network is required.
 :exclamation: This version requires Docker Swarm to be initialized in order to run scalehub as a Docker service. Initialize Docker Swarm with: 
 ```shell
   docker swarm init
+```
 
-### Installation
+## Installation
 
 ### Deployment Script
 
@@ -84,7 +85,7 @@ At this point you should be able to run the *shub* command from within the conta
 
 ## Usage
 ### Scalehub Script
-The shub script, located in the script folder, is loaded into the Docker container and provides various actions and options for the deployment and execution of experiments. Here is the usage section of the script:
+The **shub** script, located in the script folder, is loaded into the Docker container and provides various actions and options for the deployment and execution of experiments. Here is the usage section of the script:
 
 ```
 usage: shub [-h] [-c CONF_FILE] {provision,destroy,deploy,delete,run,export,plot} ...
