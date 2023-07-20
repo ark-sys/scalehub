@@ -8,4 +8,5 @@
     - kafka
     - flink
     - load_generators
-    - transscale
+# Deploying this playbook individually to control transscale startup
+#    - transscale

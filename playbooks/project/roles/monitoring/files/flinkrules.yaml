@@ -3,9 +3,13 @@ apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
   labels:
-    app.kubernetes.io/name: kube-prometheus
-    app.kubernetes.io/part-of: kube-prometheus
-    prometheus: k8s
+    app.kubernetes.io/name: kube-prometheus-stack
+    app.kubernetes.io/part-of: kube-prometheus-stack
+    app.kubernetes.io/instance: prometheus
+    app.kubernetes.io/version: 39.9.0
+    chart: kube-prometheus-stack-39.9.0
+    heritage: Helm
+    release: prometheus
     role: record-rules
   name: flink-rules
   namespace: monitoring

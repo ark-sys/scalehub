@@ -27,7 +27,7 @@
     - name: Deploy config file for transscale
       kubernetes.core.k8s:
         state: present
-        definition: "{{ lookup('ansible.builtin.file', 'transscale-config.yaml') | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.template', 'transscale-config.yaml.j2') | from_yaml }}"
 
     - name: Deploy transscale
       kubernetes.core.k8s:
@@ -45,7 +45,7 @@
     - name: Delete transscale configmap
       kubernetes.core.k8s:
         state: absent
-        definition: "{{ lookup('ansible.builtin.file', 'transscale-config.yaml') | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.template', 'transscale-config.yaml.j2') | from_yaml }}"
 
     - name: Delete secret gitlab access for transscale
       kubernetes.core.k8s:

@@ -11,4 +11,4 @@ spec:
         app: flink
   endpoints:
     - port: metrics
-      interval: 1s
+      interval: 5s

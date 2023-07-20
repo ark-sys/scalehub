@@ -27,7 +27,7 @@ spec:
             limits:
               memory: 1Gi
               cpu: 200m
-          command: ['sleep', 'infinity']
+          command: ['python', 'run_transscale.py', '-e']
           tty: true
           volumeMounts:
             - name: transscale-config-volume
