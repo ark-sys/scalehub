@@ -14,6 +14,7 @@ prometheus:
         sourceLabels:
           - __meta_kubernetes_pod_node_name
         targetLabel: instance
+
 grafana:
   fullnameOverride: "grafana"
   nodeSelector:
@@ -21,7 +22,7 @@ grafana:
   enabled: true
   grafana.ini:
     dashboards:
-      min_refresh_rate: 1s
+      min_refresh_rate: 5
     auth.anonymous:
       enabled: true
       org_role: Admin
@@ -53,21 +54,7 @@ grafana:
     ##
     enabled: false
 
-
-
-additionalPrometheusRulesMap:
-  rule-name:
-    groups:
-    - name: flink_experiment_metrics
-      rules:
-      - record: flink_operator_throughput
-        expr: sum by(task_name) (flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~"TumblingEventTimeWindows"})
-      - record: flink_operator_parallelism
-        expr: sum by(task_name) (count_values by() ("subtask_index", flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~"TumblingEventTimeWindows"}))
-
-
-
-# I still need to check if all the stuff below is needed. For the moment i just keep everything here.
+# I still need to check if all the stuff below is needed. For the moment I just keep everything here.
 prometheusOperator:
   serviceMonitor:
     relabelings:
