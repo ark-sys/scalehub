@@ -28,19 +28,36 @@
       kubernetes.core.k8s:
         state: present
         definition: "{{ lookup('ansible.builtin.template', 'transscale-config.yaml.j2') | from_yaml }}"
+#
+#    - name: Deploy transscale
+#      kubernetes.core.k8s:
+#        state: present
+#        definition: "{{ lookup('ansible.builtin.template', 'transscale-deployment.yaml.j2') | from_yaml }}"
 
     - name: Deploy transscale
       kubernetes.core.k8s:
         state: present
-        definition: "{{ lookup('ansible.builtin.template', 'transscale-deployment.yaml.j2') | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.template', 'transscale-job.yaml.j2') | from_yaml }}"
+        wait: true
+        #TODO  Maybe there is a better way to handle wait timeout
+        wait_timeout: 18000
+        wait_sleep: 60
+        wait_condition:
+          type: Complete
+          status: "True"
+
 
 - name: Delete transscale
   tags: [ delete ]
   block:
+#    - name: Delete transscale
+#      kubernetes.core.k8s:
+#        state: absent
+#        definition: "{{ lookup('ansible.builtin.template', 'transscale-deployment.yaml.j2') | from_yaml }}"
     - name: Delete transscale
       kubernetes.core.k8s:
         state: absent
-        definition: "{{ lookup('ansible.builtin.template', 'transscale-deployment.yaml.j2') | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.template', 'transscale-job.yaml.j2') | from_yaml }}"
 
     - name: Delete transscale configmap
       kubernetes.core.k8s:

@@ -64,7 +64,12 @@ def run(action, config):
             return m.run_command(pod_name="flink-jobmanager", command=f"flink run -d -j /tmp/jobs/{config.get_str(Key.JOB)}")
         case "transscale":
             e: Experiment = Experiment(config)
-            return m.run_command(pod_name="transscale", command="bash -c 'python run_transscale.py -e > /proc/1/fd/0'")
+            print(f"starting experiment at {e.start_ts}")
+            ret = deploy("transscale", config)
+            print(f"Return value from ansible {ret}")
+            #TODO trigger experiment completion phase when ret value shows that the job succeded
+            print(f"finishing experiment at {e.get_current_timestamp()}")
+            # return m.run_command(pod_name="transscale", command="bash -c 'python run_transscale.py -e > /proc/1/fd/0'")
         case _:
             log.error(f"Action {action} is not implemented.")
 
