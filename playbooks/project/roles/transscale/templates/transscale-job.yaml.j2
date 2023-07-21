@@ -1,0 +1,50 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: transscale-job
+  namespace: default
+spec:
+    template:
+        spec:
+          imagePullSecrets:
+            - name: gitlab-registry-s
+          nodeSelector:
+            node-role.kubernetes.io/control-plane: "true"
+          restartPolicy: Never
+          containers:
+            - name: transscale
+              image: "{{image}}:{{tag}}"
+              resources:
+                limits:
+                  memory: 1Gi
+                  cpu: 200m
+              command: ['python', 'run_transscale.py', '-e']
+              volumeMounts:
+                - name: transscale-config-volume
+                  mountPath: /etc/transscale/conf
+                - name: kubeconfig-volume
+                  mountPath: /kubeconfig
+                  readOnly: true
+                - name: artifacts-volume
+                  mountPath: /etc/transscale/jobs
+          volumes:
+            - name: kubeconfig-volume
+              secret:
+                secretName: transscale-secret
+                items:
+                  - key: kubeconfig
+                    path: kubeconfig
+            - name: transscale-config-volume
+              configMap:
+                name: transscale-config
+                items:
+                  - key: transscale.conf
+                    path: transscale.conf
+            - name: artifacts-volume
+              persistentVolumeClaim:
+                claimName: artifacts-pvc
+          tolerations:
+            - key: node-role.kubernetes.io/master
+              operator: Exists
+              effect: NoSchedule
