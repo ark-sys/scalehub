@@ -47,13 +47,25 @@ def destroy(config: Config):
 def deploy(playbook, config: Config):
     log.info(f"Executing deployment tasks in playbook : {playbook} ...")
     p: Playbooks = Playbooks()
-    return p.deploy(playbook, job_file=config.get_str(Key.JOB), task_name=config.get_str(Key.TASK))
+    if playbook == "load_generators":
+        for lg_config in config.parse_load_generators():
+            p.deploy(playbook, lg_name=lg_config['name'], lg_topic=lg_config['topic'],
+                     lg_numsensors=int(lg_config['num_sensors']), lg_intervalms=int(lg_config['interval_ms']),
+                     lg_replicas=int(lg_config['replicas']))
+    else:
+        return p.deploy(playbook, job_file=config.get_str(Key.JOB), task_name=config.get_str(Key.TASK))
 
 
 def delete(playbook, config: Config):
     log.info(f"Executing deletion tasks in playbook : {playbook} ...")
     p: Playbooks = Playbooks()
-    return p.delete(playbook, job_file=config.get_str(Key.JOB))
+    if playbook == "load_generators":
+        for lg_config in config.parse_load_generators():
+            p.delete(playbook, lg_name=lg_config['name'], lg_topic=lg_config['topic'],
+                     lg_numsensors=int(lg_config['num_sensors']), lg_intervalms=int(lg_config['interval_ms']),
+                     lg_replicas=int(lg_config['replicas']))
+    else:
+        return p.delete(playbook, job_file=config.get_str(Key.JOB))
 
 
 def run(action, config):
@@ -61,22 +73,32 @@ def run(action, config):
     m: Misc = Misc()
     match action:
         case "job":
-            return m.run_command(pod_name="flink-jobmanager", command=f"flink run -d -j /tmp/jobs/{config.get_str(Key.JOB)}")
+            return m.run_command(pod_name="flink-jobmanager",
+                                 command=f"flink run -d -j /tmp/jobs/{config.get_str(Key.JOB)}")
         case "transscale":
             e: Experiment = Experiment(config)
-            print(f"starting experiment at {e.start_ts}")
-            ret = deploy("transscale", config)
-            print(f"Return value from ansible {ret}")
-            #TODO trigger experiment completion phase when ret value shows that the job succeded
-            print(f"finishing experiment at {e.get_current_timestamp()}")
+            # print(f"starting experiment at {e.start_ts}")
+            deploy("transscale", config)
+            e.end_experiment()
+            # print(f"Return value from ansible {ret}")
+            # #TODO trigger experiment completion phase when ret value shows that the job succeded
+            # end_timestamp=e.get_current_timestamp()
+            # print(f"finishing experiment at {end_timestamp}")
+            # e.export_data_to_csv(e.)
             # return m.run_command(pod_name="transscale", command="bash -c 'python run_transscale.py -e > /proc/1/fd/0'")
+        case "experiment":
+            e: Experiment = Experiment(config)
+            m.run_command(pod_name="flink-jobmanager", command=f"flink run -d -j /tmp/jobs/{config.get_str(Key.JOB)}")
+            deploy("transscale", config)
+            e.end_experiment()
+
         case _:
             log.error(f"Action {action} is not implemented.")
 
 
 def export(config: Config):
     log.info("Exporting...")
-    #TODO WIP
+    # TODO WIP
     # Get the current date in the format DD-MM-YYYY
     # current_date = date.today().strftime('%d-%m-%Y')
     # e.create_exp_folder(current_date)
@@ -85,22 +107,20 @@ def export(config: Config):
     # "http://localhost:8428/api/v1/export/csv?match[]=flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~'TumblingEventTimeWindows'}&start=1688983791726&end=1688994160302&format='__name__,__value__,__timestamp__:__unix_s__'"
     #  curl -o output.csv -d 'format=__name__,task_name,subtask_index,__value__,__timestamp__:unix_s' -d 'match[]=flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~"TumblingEventTimeWindows"}' -d 'start=1688983791' -d 'end=1688994160' http://localhost:8428/api/v1/export/csv
     #  curl -o output.csv -d 'format=__name__,task_name,subtask_index,__value__,__timestamp__:unix_s' -d 'match[]=sum by(task_name) (flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~"TumblingEventTimeWindows"})' -d 'start=1688983791' -d 'end=1688994160' http://localhost:8428/api/v1/export/csv
-    e: Experiment = Experiment(config)
-    e.export_data_to_csv(exp_path="/tmp/test", time_series_name="flink_taskmanager_job_task_numRecordsOutPerSecond",
-                         start_timestamp=1688983791726, end_timestamp=1688994160302)
+    # e: Experiment = Experiment(config)
+    # e.export_data_to_csv(exp_path="/tmp/test", time_series_name="flink_taskmanager_job_task_numRecordsOutPerSecond",
+    #                      start_timestamp=1688983791726, end_timestamp=1688994160302)
+    # print(config.get_str(Key.LOAD_GENERATORS).split("-"))
+    print(config.parse_load_generators())
 
 
 def plot():
-    #TODO WIP
+    # TODO WIP
     # This metric polls the throughput
     # sum by(task_name) (flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~"$Operator"})
     # This metric polls the operator parallelism
     # sum by(task_name) (count_values by() ("subtask_index", flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~"$Operator"}))
     log.info("Plotting...")
-
-
-def add_time():
-    pass
 
 
 def main():

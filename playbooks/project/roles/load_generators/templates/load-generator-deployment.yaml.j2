@@ -2,17 +2,17 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: load-generator1
+  name: "{{ lg_name }}"
   namespace: default
 spec:
   selector:
     matchLabels:
-      app: load-generator1
-  replicas: 3
+      app: "{{ lg_name }}"
+  replicas: {{ lg_replicas }}
   template:
     metadata:
       labels:
-        app: load-generator1
+        app: "{{ lg_name }}"
     spec:
       nodeSelector:
         node-role.kubernetes.io/worker: producer
@@ -31,23 +31,23 @@ spec:
                 fieldRef:
                   fieldPath: metadata.namespace
             - name: KUBERNETES_DNS_NAME
-              value: "load-generator1.$(KUBERNETES_NAMESPACE).svc.cluster.local"
+              value: "{{ lg_name }}.$(KUBERNETES_NAMESPACE).svc.cluster.local"
             - name: KAFKA_BOOTSTRAP_SERVERS
               value: "kafka-service:9092"
             - name: SCHEMA_REGISTRY_URL
               value: "http://schema-registry-service:8081"
             - name: KAFKA_INPUT_TOPIC
-              value: "input-topic1"
+              value: "{{lg_topic}}"
             - name: NUM_SENSORS
-              value: "100000"
+              value: "{{lg_numsensors}}"
             - name: PERIOD_MS
-              value: "3000"
+              value: "{{lg_intervalms}}"
             - name: VALUE
               value: "5"
             - name: THREADS
               value: "8"
             - name: CLUSTER_NAME_PREFIX
-              value: "load-generator1"
+              value: "{{ lg_name }}"
           resources:
             limits:
               memory: 2Gi

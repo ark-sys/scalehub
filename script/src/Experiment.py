@@ -16,7 +16,9 @@ from .utils.Defaults import DefaultValues as Value
 class Experiment:
     def __init__(self, config: Config):
 
-        # Get setting from configuration file
+        self.job_name = config.get_str(Key.JOB)
+
+        # Get settings from configuration file
         self.experiment = config.get_str(Key.NAME)
         self.topic_sources = config.get_list_str(Key.TOPIC_SOURCES)
         self.num_sensors = config.get_list_int(Key.NUM_SENSORS)
@@ -24,8 +26,7 @@ class Experiment:
 
         self.db_url = config.get_str(Key.DB_URL)
 
-        self.experiment_base_path = config.get_str(Key.EXPERIMENTS_DATA_PATH)
-
+        self.experiment_base_path = config.get_str(Key. EXPERIMENTS_DATA_PATH)
 
         # TODO remove this if it is not necessary. Base path should exist within the container as it is mounted at runtime.
         # # Create the base folder if it doesn't exist
@@ -34,7 +35,7 @@ class Experiment:
 
         self.start_ts = self.get_current_timestamp()
 
-        self.create_exp_folder(datetime.fromtimestamp(self.start_ts).strftime('%d-%m-%Y'))
+        self.exp_path = self.create_exp_folder(datetime.fromtimestamp(self.start_ts).strftime('%d-%m-%Y'))
 
     # Creates a folder for the results of the experiments
     def create_exp_folder(self, date):
@@ -54,8 +55,13 @@ class Experiment:
         # Return the path to the new subfolder
         return subfolder_path
 
-    def export_data_to_csv(self, exp_path, time_series_name, start_timestamp=None, end_timestamp=None,
-                           format_labels='__name__,__value__,__timestamp__:unix_s'):
+    def export_data_to_csv(self, exp_path: str, time_series_name: str, start_timestamp: int = None,
+                           end_timestamp: int = None,
+                           format_labels='__name__,__timestamp__:unix_s,__value__'):
+        if start_timestamp is None or end_timestamp is None:
+            print("Missing export timestamp for timeseries.")
+            exit(1)
+
         # VictoriaMetrics export CSV api
         api_url = f'http://{self.db_url}/api/v1/export/csv'
         params = {
@@ -77,26 +83,39 @@ class Experiment:
     def get_current_timestamp(self):
         return int(datetime.now().timestamp())
 
+    def end_experiment(self):
+        end_timestamp = self.get_current_timestamp()
+        log_file = os.path.join(self.exp_path, "exp_log.txt")
+        with open(log_file, "w") as file:
+            file.write(f"Job name : {self.job_name}\n")
+            file.write(f"Experiment start at : {self.start_ts}\n")
+            file.write(f"Experiment end at : {end_timestamp}\n")
+
+        self.export_data_to_csv(exp_path=self.exp_path, time_series_name="flink_job_operator_throughput",
+                                start_timestamp=self.start_ts, end_timestamp=end_timestamp)
+        self.export_data_to_csv(exp_path=self.exp_path, time_series_name="flink_job_operator_parallelism",
+                                start_timestamp=self.start_ts, end_timestamp=end_timestamp)
+
     def query_data(self, start_ts, end_ts, exp_folder):
         pass
 
-import requests
-
-class Query:
-    def __init__(self, metric_name, task_name):
-        self.base_url = "http://localhost:8428/api/v1/export/csv"
-        self.metric_name = metric_name
-        self.task_name = task_name
-
-    def execute(self, start_time, end_time):
-        url = f"{self.base_url}?match[]={self.metric_name}{{task_name=~\"{self.task_name}\"}}&format=__timestamp__:unix_s,__value__&start={start_time}&end={end_time}"
-        response = requests.get(url)
-
-        if response.status_code == 200:
-            # Process the response as needed
-            csv_data = response.content.decode('utf-8')
-            # Additional processing code can be added here
-            return csv_data
-        else:
-            print("Failed to execute the query.")
-            return None
+# import requests
+# 
+# class Query:
+#     def __init__(self, metric_name, task_name):
+#         self.base_url = "http://localhost:8428/api/v1/export/csv"
+#         self.metric_name = metric_name
+#         self.task_name = task_name
+# 
+#     def execute(self, start_time, end_time):
+#         url = f"{self.base_url}?match[]={self.metric_name}{{task_name=~\"{self.task_name}\"}}&format=__timestamp__:unix_s,__value__&start={start_time}&end={end_time}"
+#         response = requests.get(url)
+# 
+#         if response.status_code == 200:
+#             # Process the response as needed
+#             csv_data = response.content.decode('utf-8')
+#             # Additional processing code can be added here
+#             return csv_data
+#         else:
+#             print("Failed to execute the query.")
+#             return None

@@ -29,10 +29,13 @@ class Config:
         self.__config[Key.NAME] = Value.Experiment.name
         self.__config[Key.JOB] = Value.Experiment.job_file
         self.__config[Key.TASK] = Value.Experiment.task_name
-        self.__config[Key.TOPIC_SOURCES] = Value.Experiment.topic_sources
-        self.__config[Key.NUM_SENSORS] = Value.Experiment.num_sensors
-        self.__config[Key.INTERVAL_MS] = Value.Experiment.interval_ms
         self.__config[Key.DB_URL] = Value.Experiment.db_url
+
+        self.__config[Key.LOAD_GENERATORS] = Value.Experiment.LoadGenerator
+        # self.__config[Key.TOPIC_SOURCES] = Value.Experiment.topic_sources
+        # self.__config[Key.NUM_SENSORS] = Value.Experiment.num_sensors
+        # self.__config[Key.INTERVAL_MS] = Value.Experiment.interval_ms
+
 
         self.__config[Key.DEBUG_LEVEL] = Value.System.Debug.level
 
@@ -54,6 +57,30 @@ class Config:
 
     def get_list_int(self,key):
         return [int(value) for value in self.get_str(key).split(',')]
+
+    def parse_load_generators(self):
+        load_generators_section = self.get('experiment.load_generators')
+
+        load_generators = []
+        current_generator = None
+
+        for line in load_generators_section.split('\n'):
+            line = line.strip()
+            if not line:
+                continue
+
+            if line.startswith('- name'):
+                if current_generator:
+                    load_generators.append(current_generator)
+                current_generator = {'name': line.split('=')[1].strip()}
+            else:
+                key, value = map(str.strip, line.split('='))
+                current_generator[key] = value
+
+        if current_generator:
+            load_generators.append(current_generator)
+
+        return load_generators
 
     def set(self, key, value):
         self.__config[key] = value
