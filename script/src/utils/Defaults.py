@@ -1,4 +1,5 @@
 class ConfigKeys:
+    DEBUG_LEVEL = "debug.level"
 
     TYPE = "platform.type"
     SITE = "platform.site"
@@ -11,15 +12,18 @@ class ConfigKeys:
     NAME = "experiment.name"
     JOB = "experiment.job_file"
     TASK = "experiment.task_name"
+    DB_URL = "experiment.db_url"
+
+    LOAD_GENERATORS = "experiment.load_generators"
+
     TOPIC_SOURCES = "experiment.topic_sources"
     NUM_SENSORS = "experiment.num_sensors"
     INTERVAL_MS = "experiment.interval_ms"
-    DB_URL = "experiment.db_url"
-    DEBUG_LEVEL = "debug.level"
 
     PLAYBOOKS_PATH = "scalehub.playbook"
     INVENTORY_PATH = "scalehub.inventory"
     EXPERIMENTS_DATA_PATH = "scalehub.experiments"
+
 
 class DefaultValues:
     class System:
@@ -47,7 +51,11 @@ class DefaultValues:
         name = "scalehub"
         job_file = "myjoin-all.jar"
         task_name = "TumblingEventTimeWindows"
-        topic_sources = ["input-topic1"]
-        num_sensors = [100000]
-        interval_ms = 3000
         db_url = "localhost:8428"
+
+        class LoadGenerator:
+            name = "load_generator"
+            topic = "input-topic1"
+            num_sensors = 100000
+            interval_ms = 3000
+            replicas = 1
