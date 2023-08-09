@@ -28,11 +28,11 @@
       kubernetes.core.k8s:
         state: present
         definition: "{{ lookup('ansible.builtin.template', 'transscale-config.yaml.j2') | from_yaml }}"
-#
-#    - name: Deploy transscale
-#      kubernetes.core.k8s:
-#        state: present
-#        definition: "{{ lookup('ansible.builtin.template', 'transscale-deployment.yaml.j2') | from_yaml }}"
+    #
+    #    - name: Deploy transscale
+    #      kubernetes.core.k8s:
+    #        state: present
+    #        definition: "{{ lookup('ansible.builtin.template', 'transscale-deployment.yaml.j2') | from_yaml }}"
 
     - name: Deploy transscale
       kubernetes.core.k8s:
@@ -50,10 +50,10 @@
 - name: Delete transscale
   tags: [ delete ]
   block:
-#    - name: Delete transscale
-#      kubernetes.core.k8s:
-#        state: absent
-#        definition: "{{ lookup('ansible.builtin.template', 'transscale-deployment.yaml.j2') | from_yaml }}"
+    #    - name: Delete transscale
+    #      kubernetes.core.k8s:
+    #        state: absent
+    #        definition: "{{ lookup('ansible.builtin.template', 'transscale-deployment.yaml.j2') | from_yaml }}"
     - name: Delete transscale
       kubernetes.core.k8s:
         state: absent

@@ -16,13 +16,15 @@ Scalehub is a tool that allows you to provision a cluster and deploy K3S and Fli
 The purpose of the script is to ease the execution of repetitive tasks when running flink experiments on Kurbenetes.
 
 ## Folder Structure
+
 The project has the following folder structure:
 
 - **dockerfile**: Contains the Dockerfile for setting up the development environment.
 - **deploy.sh**:  Helps building, running, updating the Docker image, and managing Docker secrets.
 
- 
-- **script**: Contains the shub Python script, which is loaded into the Docker container, that executes Ansible playbooks.
+
+- **script**: Contains the shub Python script, which is loaded into the Docker container, that executes Ansible
+  playbooks.
 - **conf**: Contains the configuration files for the Python script and for Ansible.
 - **playbooks**: Contains Ansible playbooks for provisioning and configuring the environment.
 
@@ -34,10 +36,12 @@ To get started with the project, follow the steps below.
 
 The project requires **Docker** to build and run the development environment.
 
-An active VPN connection to the Grid5000 network is required. 
-   [Grid5000 VPN setup guide](https://www.grid5000.fr/w/VPN)
+An active VPN connection to the Grid5000 network is required.
+[Grid5000 VPN setup guide](https://www.grid5000.fr/w/VPN)
 
-:exclamation: This version requires Docker Swarm to be initialized in order to run scalehub as a Docker service. Initialize Docker Swarm with: 
+:exclamation: This version requires Docker Swarm to be initialized in order to run scalehub as a Docker service.
+Initialize Docker Swarm with:
+
 ```shell
   docker swarm init
 ```
@@ -46,9 +50,11 @@ An active VPN connection to the Grid5000 network is required.
 
 ### Deployment Script
 
-The project provides a set of scripts and commands to build, deploy, and manage a containerized environment using Docker.
+The project provides a set of scripts and commands to build, deploy, and manage a containerized environment using
+Docker.
 
-The deployment script (`deploy.sh`) helps you setup the development environment for your experiments. It provides the following options:
+The deployment script (`deploy.sh`) helps you setup the development environment for your experiments. It provides the
+following options:
 
 ```
 Usage: ./deploy.sh [option]
@@ -66,6 +72,7 @@ Options:
   push <registry>   Push the Docker image to a private registry
   help              Display this help message
 ```
+
 To correctly setup your environment, follow these steps:
 
 1. Clone the repository.
@@ -80,12 +87,15 @@ To correctly setup your environment, follow these steps:
 4. Run the container and start an interactive shell with the deployment script
     ```shell
    ./deploy.sh shell
-  
+
 At this point you should be able to run the *shub* command from within the container.
 
 ## Usage
+
 ### Scalehub Script
-The **shub** script, located in the script folder, is loaded into the Docker container and provides various actions and options for the deployment and execution of experiments. Here is the usage section of the script:
+
+The **shub** script, located in the script folder, is loaded into the Docker container and provides various actions and
+options for the deployment and execution of experiments. Here is the usage section of the script:
 
 ```
 usage: shub [-h] [-c CONF_FILE] {provision,destroy,deploy,delete,run,export,plot} ...
@@ -116,7 +126,8 @@ After provisioning the cluster with K3S, the first playbook that should be deplo
 
 This playbook deploys the NFS plugin for storage access and various PVCs required by the data stream application.
 
-:exclamation:  You need to modify the variables in **playbooks/project/roles/base/vars** folder order to reflect your setup.
+:exclamation:  You need to modify the variables in **playbooks/project/roles/base/vars** folder order to reflect your
+setup.
 
 The other playbooks will perform the following actions:
 
@@ -131,13 +142,18 @@ The other playbooks will perform the following actions:
 
 - **all** : Deploys all the above playbooks in the correct order.
 
-:point_up: You may want to run one of the applications with a different image. For that, you can modify **vars/main.yaml** file located in roles' folder of the application.
+:point_up: You may want to run one of the applications with a different image. For that, you can modify **vars/main.yaml
+** file located in roles' folder of the application.
 
 ## Configuration
-The conf folder contains the configuration files for the project, specifically the configuration file for Scalehub. You can specify a custom path for the configuration file using the `-c` or `--conf` option when running the shub script.
+
+The conf folder contains the configuration files for the project, specifically the configuration file for Scalehub. You
+can specify a custom path for the configuration file using the `-c` or `--conf` option when running the shub script.
 
 ## Contributing
-Contributions are welcome! If you have any ideas, suggestions, or bug reports, please create an issue or submit a pull request.
+
+Contributions are welcome! If you have any ideas, suggestions, or bug reports, please create an issue or submit a pull
+request.
 
 Please follow the contribution guidelines when making contributions.
 

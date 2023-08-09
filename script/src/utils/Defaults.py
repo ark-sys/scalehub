@@ -15,14 +15,17 @@ class ConfigKeys:
     DB_URL = "experiment.db_url"
 
     LOAD_GENERATORS = "experiment.load_generators"
-
-    TOPIC_SOURCES = "experiment.topic_sources"
-    NUM_SENSORS = "experiment.num_sensors"
-    INTERVAL_MS = "experiment.interval_ms"
+    DATA_SKIP_DURATION = "experiment.output.skip_s"
+    DATA_OUTPUT_PLOT = "experiment.output.plot"
+    DATA_OUTPUT_STATS = "experiment.output.stats"
 
     PLAYBOOKS_PATH = "scalehub.playbook"
     INVENTORY_PATH = "scalehub.inventory"
     EXPERIMENTS_DATA_PATH = "scalehub.experiments"
+
+    TRANSCCALE_PAR = "transscale.max_parallelism"
+    TRANSSCALE_WARMUP = "transscale.monitoring.warmup"
+    TRANSSCALE_INTERVAL = "transscale.monitoring.interval"
 
 
 class DefaultValues:
@@ -59,3 +62,14 @@ class DefaultValues:
             num_sensors = 100000
             interval_ms = 3000
             replicas = 1
+            value = 5
+
+        class ExperimentData:
+            skip_s = 100
+            stats = True
+            plot = True
+
+    class Transscale:
+        max_parallelism = 10
+        monitoring_warmup = 60
+        monitoring_interval = 60

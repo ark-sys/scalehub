@@ -1,8 +1,8 @@
 ---
 - name: Deploy Flink
-  tags : [ create ]
-  block :
-    - name : Deploy services
+  tags: [ create ]
+  block:
+    - name: Deploy services
       kubernetes.core.k8s:
         state: present
         definition: "{{ lookup('ansible.builtin.file', item) | from_yaml }}"
@@ -21,9 +21,9 @@
 
 
 - name: Delete Flink
-  tags : [ delete ]
-  block :
-    - name : Delete services
+  tags: [ delete ]
+  block:
+    - name: Delete services
       kubernetes.core.k8s:
         state: absent
         definition: "{{ lookup('ansible.builtin.file', item) | from_yaml }}"

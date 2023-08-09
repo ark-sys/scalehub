@@ -74,7 +74,7 @@ kubeApiServer:
 kubelet:
   serviceMonitor:
     relabelings:
-      - sourceLabels: [__metrics_path__]
+      - sourceLabels: [ __metrics_path__ ]
         targetLabel: metrics_path
       - action: replace
         sourceLabels:

@@ -1,22 +1,30 @@
+from os import getcwd
+from os.path import exists, join
+
 from .Defaults import DefaultValues as Value, ConfigKeys as Key
 from .Logger import Logger
-from os.path import exists, join
-from os import getcwd
+
+
 class Config:
     __config = {}
+
     def __init__(self, log: Logger, conf_path: str = None):
         self.__log = log
         self.__init_defaults()
 
         if conf_path is None or not exists(conf_path):
-            self.__log.warning(f"[CONFIG] Config file [{conf_path}] not specified or not existing.\n"
-                               f"\tUsing [{Value.System.CONF_PATH}] instead.")
+            self.__log.warning(
+                f"[CONFIG] Config file [{conf_path}] not specified or not existing.\n"
+                f"\tUsing [{Value.System.CONF_PATH}] instead."
+            )
             conf_path = join(getcwd(), Value.System.CONF_PATH)
         self.__read_config_file(conf_path)
+
     def __init_defaults(self):
         self.__config[Key.PLAYBOOKS_PATH] = Value.System.PLAYBOOKS_PATH
         self.__config[Key.INVENTORY_PATH] = Value.System.INVENTORY_PATH
         self.__config[Key.EXPERIMENTS_DATA_PATH] = Value.System.EXPERIMENTS_DATA_PATH
+        self.__config[Key.DEBUG_LEVEL] = Value.System.Debug.level
 
         self.__config[Key.TYPE] = Value.Platform.type
         self.__config[Key.SITE] = Value.Platform.site
@@ -32,12 +40,14 @@ class Config:
         self.__config[Key.DB_URL] = Value.Experiment.db_url
 
         self.__config[Key.LOAD_GENERATORS] = Value.Experiment.LoadGenerator
-        # self.__config[Key.TOPIC_SOURCES] = Value.Experiment.topic_sources
-        # self.__config[Key.NUM_SENSORS] = Value.Experiment.num_sensors
-        # self.__config[Key.INTERVAL_MS] = Value.Experiment.interval_ms
+        self.__config[Key.DATA_SKIP_DURATION] = Value.Experiment.ExperimentData.skip_s
+        self.__config[Key.DATA_OUTPUT_PLOT] = Value.Experiment.ExperimentData.plot
+        self.__config[Key.DATA_OUTPUT_STATS] = Value.Experiment.ExperimentData.stats
 
+        self.__config[Key.TRANSCCALE_PAR] = Value.Transscale.max_parallelism
+        self.__config[Key.TRANSSCALE_WARMUP] = Value.Transscale.monitoring_warmup
+        self.__config[Key.TRANSSCALE_INTERVAL] = Value.Transscale.monitoring_interval
 
-        self.__config[Key.DEBUG_LEVEL] = Value.System.Debug.level
 
     def get(self, key) -> any:
         if key in self.__config:
@@ -46,35 +56,38 @@ class Config:
     def get_int(self, key) -> int:
         return int(self.get(key))
 
+    def get_bool(self, key) -> bool:
+        return bool(self.get(key))
+
     def get_float(self, key) -> float:
         return float(self.get(key))
 
     def get_str(self, key):
         return str(self.get(key))
 
-    def get_list_str(self,key):
-        return [str(value) for value in self.get_str(key).split(',')]
+    def get_list_str(self, key):
+        return [str(value) for value in self.get_str(key).split(",")]
 
-    def get_list_int(self,key):
-        return [int(value) for value in self.get_str(key).split(',')]
+    def get_list_int(self, key):
+        return [int(value) for value in self.get_str(key).split(",")]
 
     def parse_load_generators(self):
-        load_generators_section = self.get('experiment.load_generators')
+        load_generators_section = self.get("experiment.load_generators")
 
         load_generators = []
         current_generator = None
 
-        for line in load_generators_section.split('\n'):
+        for line in load_generators_section.split("\n"):
             line = line.strip()
             if not line:
                 continue
 
-            if line.startswith('- name'):
+            if line.startswith("- name"):
                 if current_generator:
                     load_generators.append(current_generator)
-                current_generator = {'name': line.split('=')[1].strip()}
+                current_generator = {"name": line.split("=")[1].strip()}
             else:
-                key, value = map(str.strip, line.split('='))
+                key, value = map(str.strip, line.split("="))
                 current_generator[key] = value
 
         if current_generator:
@@ -89,6 +102,7 @@ class Config:
         if exists(conf_path):
 
             import configparser as cp
+
             dummy_header = "config"
 
             parser = cp.ConfigParser()
@@ -102,10 +116,10 @@ class Config:
                 if key in self.__config:
                     self.__config[key] = conf[key]
                 else:
-                    self.__log.error(f"[CONF] Specified key \"{key}\" does not exist")
+                    self.__log.error(f'[CONF] Specified key "{key}" does not exist')
         else:
             self.__log.warning(f"[CONF] No configuration file found")
 
     def validate(self):
-        #TODO validate config file format (stuff like minimum info)
+        # TODO validate config file format (stuff like minimum info)
         pass

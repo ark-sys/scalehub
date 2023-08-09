@@ -2,15 +2,17 @@
 import argparse
 # import argcomplete
 import json
+import os.path
+import re
 
-from src.utils.Logger import Logger
-from src.utils.Config import Config
-from src.utils.Defaults import ConfigKeys as Key, DefaultValues as Value
-from src.utils.Misc import Misc
+from src.Experiment import Experiment, ExperimentData
 from src.G5k import G5k
 from src.Platform import Platform
 from src.Playbooks import Playbooks
-from src.Experiment import Experiment
+from src.utils.Config import Config
+from src.utils.Defaults import ConfigKeys as Key, DefaultValues as Value
+from src.utils.Logger import Logger
+from src.utils.Misc import Misc
 
 
 def provision(config: Config):
@@ -19,7 +21,7 @@ def provision(config: Config):
         case "Grid5000":
             # Initiate oarsub request
             log.info("Reserving...")
-            p: Platform = G5k(config)
+            p: Platform = G5k(config, log)
             inventory = p.setup()
 
             # Dump list of requested nodes to file
@@ -38,7 +40,7 @@ def destroy(config: Config):
     match platform_type:
         case "Grid5000":
             # Initiate oardel request
-            p: Platform = G5k(config)
+            p: Platform = G5k(config, log)
             return p.destroy()
         case _:
             log.error(f"Destroy is not implemented for platform {platform_type}")
@@ -49,11 +51,30 @@ def deploy(playbook, config: Config):
     p: Playbooks = Playbooks()
     if playbook == "load_generators":
         for lg_config in config.parse_load_generators():
-            p.deploy(playbook, lg_name=lg_config['name'], lg_topic=lg_config['topic'],
-                     lg_numsensors=int(lg_config['num_sensors']), lg_intervalms=int(lg_config['interval_ms']),
-                     lg_replicas=int(lg_config['replicas']))
+            p.deploy(
+                playbook,
+                lg_name=lg_config["name"],
+                lg_topic=lg_config["topic"],
+                lg_numsensors=int(lg_config["num_sensors"]),
+                lg_intervalms=int(lg_config["interval_ms"]),
+                lg_replicas=int(lg_config["replicas"]),
+                lg_value=int(lg_config["value"]),
+            )
+    elif playbook == "transscale":
+        p.deploy(
+            playbook,
+            job_file=config.get_str(Key.JOB),
+            task_name=config.get_str(Key.TASK),
+            max_parallelism=config.get_int(Key.TRANSCCALE_PAR),
+            warmup=config.get_int(Key.TRANSSCALE_WARMUP),
+            interval=config.get_int(Key.TRANSSCALE_INTERVAL),
+        )
     else:
-        return p.deploy(playbook, job_file=config.get_str(Key.JOB), task_name=config.get_str(Key.TASK))
+        return p.deploy(
+            playbook,
+            job_file=config.get_str(Key.JOB),
+            task_name=config.get_str(Key.TASK),
+        )
 
 
 def delete(playbook, config: Config):
@@ -61,95 +82,118 @@ def delete(playbook, config: Config):
     p: Playbooks = Playbooks()
     if playbook == "load_generators":
         for lg_config in config.parse_load_generators():
-            p.delete(playbook, lg_name=lg_config['name'], lg_topic=lg_config['topic'],
-                     lg_numsensors=int(lg_config['num_sensors']), lg_intervalms=int(lg_config['interval_ms']),
-                     lg_replicas=int(lg_config['replicas']))
+            p.delete(
+                playbook,
+                lg_name=lg_config["name"],
+                lg_topic=lg_config["topic"],
+                lg_numsensors=int(lg_config["num_sensors"]),
+                lg_intervalms=int(lg_config["interval_ms"]),
+                lg_replicas=int(lg_config["replicas"]),
+            )
     else:
         return p.delete(playbook, job_file=config.get_str(Key.JOB))
 
 
 def run(action, config):
     log.info(f"Running action {action} ...")
-    m: Misc = Misc()
+    m: Misc = Misc(log)
     match action:
         case "job":
-            return m.run_command(pod_name="flink-jobmanager",
-                                 command=f"flink run -d -j /tmp/jobs/{config.get_str(Key.JOB)}")
+            return m.run_command(
+                pod_name="flink-jobmanager",
+                command=f"flink run -d -j /tmp/jobs/{config.get_str(Key.JOB)}",
+            )
         case "transscale":
-            e: Experiment = Experiment(config)
-            # print(f"starting experiment at {e.start_ts}")
-            deploy("transscale", config)
-            e.end_experiment()
-            # print(f"Return value from ansible {ret}")
-            # #TODO trigger experiment completion phase when ret value shows that the job succeded
-            # end_timestamp=e.get_current_timestamp()
-            # print(f"finishing experiment at {end_timestamp}")
-            # e.export_data_to_csv(e.)
-            # return m.run_command(pod_name="transscale", command="bash -c 'python run_transscale.py -e > /proc/1/fd/0'")
+            e: Experiment = Experiment(config, log)
+            e.transscale_only_run()
         case "experiment":
-            e: Experiment = Experiment(config)
-            m.run_command(pod_name="flink-jobmanager", command=f"flink run -d -j /tmp/jobs/{config.get_str(Key.JOB)}")
-            deploy("transscale", config)
-            e.end_experiment()
-
+            e: Experiment = Experiment(config, log)
+            e.full_run()
         case _:
             log.error(f"Action {action} is not implemented.")
 
 
-def export(config: Config):
+def export(config: Config, exp_path: str):
     log.info("Exporting...")
-    # TODO WIP
-    # Get the current date in the format DD-MM-YYYY
-    # current_date = date.today().strftime('%d-%m-%Y')
-    # e.create_exp_folder(current_date)
-    # e.get_current_timestamp()
-    # TEST QUERY
-    # "http://localhost:8428/api/v1/export/csv?match[]=flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~'TumblingEventTimeWindows'}&start=1688983791726&end=1688994160302&format='__name__,__value__,__timestamp__:__unix_s__'"
-    #  curl -o output.csv -d 'format=__name__,task_name,subtask_index,__value__,__timestamp__:unix_s' -d 'match[]=flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~"TumblingEventTimeWindows"}' -d 'start=1688983791' -d 'end=1688994160' http://localhost:8428/api/v1/export/csv
-    #  curl -o output.csv -d 'format=__name__,task_name,subtask_index,__value__,__timestamp__:unix_s' -d 'match[]=sum by(task_name) (flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~"TumblingEventTimeWindows"})' -d 'start=1688983791' -d 'end=1688994160' http://localhost:8428/api/v1/export/csv
-    # e: Experiment = Experiment(config)
-    # e.export_data_to_csv(exp_path="/tmp/test", time_series_name="flink_taskmanager_job_task_numRecordsOutPerSecond",
-    #                      start_timestamp=1688983791726, end_timestamp=1688994160302)
-    # print(config.get_str(Key.LOAD_GENERATORS).split("-"))
-    print(config.parse_load_generators())
+    # Generate full path from provided path name
+    # exp_path should be 'DD-MM-YYYY/N' where :
+    #   DD-MM-YYYY is the date of the experiments
+    #   N is the number of the experiment
+    full_exp_path = os.path.join(config.get_str(Key.EXPERIMENTS_DATA_PATH), exp_path)
+
+    # Verify that a log file exists for the chosen experiment
+    log_path = os.path.join(full_exp_path, "exp_log.txt")
+    if not os.path.exists(log_path):
+        log.error("Log file for experiment not found.")
+        exit(1)
+    else:
+        # Verify if experiment executed correctly by checking start and end timestamps
+        with open(log_path, 'r') as log_file:
+            logs = log_file.read()
+
+        start_match = re.search(r'Experiment start at : (\d+)', logs)
+        end_match = re.search(r'Experiment end at : (\d+)', logs)
+        if start_match and end_match:
+            start_timestamp = int(start_match.group(1))
+            end_timestamp = int(end_match.group(1))
+            data: ExperimentData = ExperimentData(log=log, exp_path=full_exp_path, start_ts=start_timestamp, end_ts=end_timestamp,
+                                 db_url=config.get_str(Key.DB_URL))
+            data.export_experiment_data()
+            stats, _ = data.eval_stats(skip_duration=config.get_int(Key.DATA_SKIP_DURATION))
+            if config.get_bool(Key.DATA_OUTPUT_PLOT):
+                data.eval_plot(stats)
+        else:
+            log.error("Log file is incomplete: missing timestamp.")
 
 
 def plot():
     # TODO WIP
-    # This metric polls the throughput
-    # sum by(task_name) (flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~"$Operator"})
-    # This metric polls the operator parallelism
-    # sum by(task_name) (count_values by() ("subtask_index", flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~"$Operator"}))
     log.info("Plotting...")
 
 
-def main():
+def main(log: Logger):
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="command")
 
-    parser.add_argument('-c', '--conf', dest='conf_file', action='store',
-                        default=Value.System.CONF_PATH,
-                        help="Specify a custom path for the configuration file of scalehub.")
+    parser.add_argument(
+        "-c",
+        "--conf",
+        dest="conf_file",
+        action="store",
+        default=Value.System.CONF_PATH,
+        help="Specify a custom path for the configuration file of scalehub.",
+    )
     # Provision command
-    subparsers.add_parser("provision", help="Provision platform specified in conf/scalehub.conf")
+    subparsers.add_parser(
+        "provision", help="Provision platform specified in conf/scalehub.conf"
+    )
 
     # Destroy command
-    subparsers.add_parser("destroy", help="Destroy platform specified in conf/scalehub.conf")
+    subparsers.add_parser(
+        "destroy", help="Destroy platform specified in conf/scalehub.conf"
+    )
 
     # Deploy command
-    deploy_parser = subparsers.add_parser("deploy", help="Executes deploy tasks of provided playbook.")
+    deploy_parser = subparsers.add_parser(
+        "deploy", help="Executes deploy tasks of provided playbook."
+    )
     deploy_parser.add_argument("playbook", help="Name of the playbook.")
 
     # Delete command
-    delete_parser = subparsers.add_parser("delete", help="Executes delete tasks of provided playbook.")
+    delete_parser = subparsers.add_parser(
+        "delete", help="Executes delete tasks of provided playbook."
+    )
     delete_parser.add_argument("playbook", help="Name of the playbook.")
 
     # Run command
     run_parser = subparsers.add_parser("run", help="Run action.")
-    run_parser.add_argument("action", help="Specify the action to be run. {job | transscale}")
+    run_parser.add_argument(
+        "action", help="Specify the action to be run. {job | transscale}"
+    )
 
     # Export command
-    subparsers.add_parser("export", help="Export data")
+    export_subparser = subparsers.add_parser("export", help="Export data")
+    export_subparser.add_argument("experiment", help="Provide experiment path in format 'DD-MM-YYYY/N'")
 
     # Plot command
     subparsers.add_parser("plot", help="Plot data")
@@ -178,7 +222,7 @@ def main():
     elif args.command == "run":
         run(args.action, config)
     elif args.command == "export":
-        export(config)
+        export(config, args.experiment)
     elif args.command == "plot":
         plot()
     else:
@@ -187,4 +231,4 @@ def main():
 
 if __name__ == "__main__":
     log = Logger()
-    main()
+    main(log)
