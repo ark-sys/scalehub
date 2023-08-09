@@ -124,7 +124,7 @@
       environment:
         K3S_URL: https://{{ hostvars['CONTROLLER_DETAILS']['controller_ip'] }}:6443
         K3S_TOKEN: "{{ hostvars['CONTROLLER_DETAILS']['token'] }}"
-#        INSTALL_K3S_EXEC: --docker
+        #        INSTALL_K3S_EXEC: --docker
         INSTALL_K3S_VERSION: v1.25.11+k3s1
       shell:
         cmd: curl -sfL https://get.k3s.io | sh -s -

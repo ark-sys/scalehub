@@ -1,17 +1,21 @@
 import enoslib as en
+
 from .Platform import Platform
+from .utils import Logger
 from .utils.Config import Config, Key
 from .utils.Misc import Misc
 
+
 class G5k(Platform):
-    def __init__(self,config: Config):
+    def __init__(self, config: Config, log: Logger):
         super().__init__()
         _ = en.init_logging()
 
         # Create .python-grid5000.yaml required by enoslib
-        m: Misc= Misc()
+        m: Misc = Misc(log)
         m.create_credentials_file()
 
+        # Check that Grid5000 is joinable
         en.check()
 
         self.name = config.get_str(Key.NAME)
@@ -22,6 +26,7 @@ class G5k(Platform):
         self.queue = config.get_str(Key.QUEUE_TYPE)
         self.walltime = config.get_str(Key.WALLTIME)
 
+        # Setup request of resources as specified in configuration file
         network = en.G5kNetworkConf(type="prod", roles=["my_network"], site=self.site)
         conf = (
             en.G5kConf.from_settings(
@@ -99,4 +104,3 @@ class G5k(Platform):
     def destroy(self):
         # Destroy all resources from Grid5000
         self.provider.destroy()
-

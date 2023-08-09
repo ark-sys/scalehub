@@ -8,7 +8,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-        app: kafka
+      app: kafka
   endpoints:
     - port: metrics
       interval: 5s

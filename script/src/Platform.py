@@ -22,4 +22,3 @@ class Platform:
 
     def delete_playbook(self):
         raise NotImplementedError()
-

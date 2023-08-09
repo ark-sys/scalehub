@@ -8,16 +8,16 @@ metadata:
     app: transscale
 data:
   transscale.conf: |+
-    sys.max.par = 8
+    sys.max.par = {{ max_parallelism }}
     sys.max.transp = 3
-    sys.monitoring.warmup = 300
-    sys.monitoring.interval = 90
+    sys.monitoring.warmup = {{ warmup }}
+    sys.monitoring.interval = {{ interval }}
     scaling.strategy.module = transscale.strategies.ParallelismOnly
     scaling.combined.threshold = 30
     
     flink.host = flink-jobmanager
     flink.port = 8081
     flink.job.path = /etc/transscale/jobs/{{ job_file }}
-    operator.name = TumblingEventTimeWindows
+    operator.name = {{ task_name }}
         
     debug.level = 1
