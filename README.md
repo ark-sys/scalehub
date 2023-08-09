@@ -134,16 +134,25 @@ The other playbooks will perform the following actions:
 - **monitoring** : Deploy the monitoring stack composed by Prometheus with NodeExporter-VictoriaMetrics-Grafana
 - **flink** : Deploys Flink
 - **kafka** : Deploys Kafka brokers with JMX-exporter for metrics
-- **transscale** : Deploys Transscale autoscaler
-- **load_generators** : Deploys a set of load generators that test Flink
-
-- **datastreamapps** : Deploys both flink and kafka in one command
-
 
 - **all** : Deploys all the above playbooks in the correct order.
 
+- **load_generators** : Deploys a set of load generators that test Flink
+
+- **transscale** : Deploys Transscale autoscaler
+
 :point_up: You may want to run one of the applications with a different image. For that, you can modify **vars/main.yaml
 ** file located in roles' folder of the application.
+
+For a more expedite execution mode, you can start an experiment with 
+```shell
+    shub run experiment
+```
+
+If you already started a job and you only want to launch transscale, then:
+```shell
+    shub run transscale
+```
 
 ## Configuration
 
