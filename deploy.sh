@@ -127,6 +127,8 @@ function create_container() {
         --mount type=bind,source=$BASEDIR/script,target=/app/script \
         --mount type=bind,source=$BASEDIR/playbooks,target=/app/playbooks \
         --mount type=bind,source=$BASEDIR/experiments-data,target=/app/experiments-data \
+        --mount type=bind,source=/tmp/.X11-unix,target=/tmp/.X11-unix \
+        --env DISPLAY=:1 \
         --user $userid \
         --group $groupid \
         --hostname $SERVICE_NAME \

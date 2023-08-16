@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+
 # import argcomplete
 import json
 import os.path
@@ -9,12 +10,13 @@ from src.Experiment import Experiment, ExperimentData
 from src.G5k import G5k
 from src.Platform import Platform
 from src.Playbooks import Playbooks
+from src.Plotter import Plotter
 from src.utils.Config import Config
 from src.utils.Defaults import ConfigKeys as Key, DefaultValues as Value
 from src.utils.Logger import Logger
 from src.utils.Misc import Misc
 
-
+# Build cluster and install dependencies
 def provision(config: Config):
     platform_type = config.get_str(Key.TYPE)
     match platform_type:
@@ -35,6 +37,7 @@ def provision(config: Config):
             log.error(f"Provision is not implemented for platform {platform_type}")
 
 
+# Destroy cluster
 def destroy(config: Config):
     platform_type = config.get_str(Key.TYPE)
     match platform_type:
@@ -46,6 +49,7 @@ def destroy(config: Config):
             log.error(f"Destroy is not implemented for platform {platform_type}")
 
 
+# Execute tasks with "deploy" tag for a given playbook
 def deploy(playbook, config: Config):
     log.info(f"Executing deployment tasks in playbook : {playbook} ...")
     p: Playbooks = Playbooks()
@@ -77,6 +81,7 @@ def deploy(playbook, config: Config):
         )
 
 
+# Execute tasks with "delete" tag for a given playbook
 def delete(playbook, config: Config):
     log.info(f"Executing deletion tasks in playbook : {playbook} ...")
     p: Playbooks = Playbooks()
@@ -94,6 +99,7 @@ def delete(playbook, config: Config):
         return p.delete(playbook, job_file=config.get_str(Key.JOB))
 
 
+# Quick action commands
 def run(action, config):
     log.info(f"Running action {action} ...")
     m: Misc = Misc(log)
@@ -113,6 +119,7 @@ def run(action, config):
             log.error(f"Action {action} is not implemented.")
 
 
+# Export data for a given date
 def export(config: Config, exp_path: str):
     log.info("Exporting...")
     # Generate full path from provided path name
@@ -128,27 +135,35 @@ def export(config: Config, exp_path: str):
         exit(1)
     else:
         # Verify if experiment executed correctly by checking start and end timestamps
-        with open(log_path, 'r') as log_file:
+        with open(log_path, "r") as log_file:
             logs = log_file.read()
 
-        start_match = re.search(r'Experiment start at : (\d+)', logs)
-        end_match = re.search(r'Experiment end at : (\d+)', logs)
+        start_match = re.search(r"Experiment start at : (\d+)", logs)
+        end_match = re.search(r"Experiment end at : (\d+)", logs)
         if start_match and end_match:
             start_timestamp = int(start_match.group(1))
             end_timestamp = int(end_match.group(1))
-            data: ExperimentData = ExperimentData(log=log, exp_path=full_exp_path, start_ts=start_timestamp, end_ts=end_timestamp,
-                                 db_url=config.get_str(Key.DB_URL))
+            data: ExperimentData = ExperimentData(
+                log=log,
+                exp_path=full_exp_path,
+                start_ts=start_timestamp,
+                end_ts=end_timestamp,
+                db_url=config.get_str(Key.DB_URL),
+            )
             data.export_experiment_data()
-            stats, _ = data.eval_stats(skip_duration=config.get_int(Key.DATA_SKIP_DURATION))
+            stats, _ = data.eval_stats(
+                skip_duration=config.get_int(Key.DATA_SKIP_DURATION)
+            )
             if config.get_bool(Key.DATA_OUTPUT_PLOT):
                 data.eval_plot(stats)
         else:
             log.error("Log file is incomplete: missing timestamp.")
 
 
-def plot():
-    # TODO WIP
-    log.info("Plotting...")
+# Generate plots for an experiment
+def plot(config: Config):
+    log.info("Starting plotter.")
+    p: Plotter = Plotter(config, log)
 
 
 def main(log: Logger):
@@ -193,10 +208,12 @@ def main(log: Logger):
 
     # Export command
     export_subparser = subparsers.add_parser("export", help="Export data")
-    export_subparser.add_argument("experiment", help="Provide experiment path in format 'DD-MM-YYYY/N'")
+    export_subparser.add_argument(
+        "experiment", help="Provide experiment path in format 'DD-MM-YYYY/N'"
+    )
 
     # Plot command
-    subparsers.add_parser("plot", help="Plot data")
+    subparsers.add_parser("plot", help="Starts interactive data plotter.")
 
     # TODO
     # # Setup autocomplete for the script
@@ -224,7 +241,7 @@ def main(log: Logger):
     elif args.command == "export":
         export(config, args.experiment)
     elif args.command == "plot":
-        plot()
+        plot(config)
     else:
         parser.print_help()
 

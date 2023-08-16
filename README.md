@@ -109,7 +109,7 @@ positional arguments:
     delete              Execute delete tasks of the provided playbook.
     run                 Run action.
     export              Export data
-    plot                Plot data
+    plot                Starts interactive plotter
 
 options:
   -h, --help            show this help message and exit
