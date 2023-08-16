@@ -48,6 +48,8 @@ class Config:
         self.__config[Key.TRANSSCALE_WARMUP] = Value.Transscale.monitoring_warmup
         self.__config[Key.TRANSSCALE_INTERVAL] = Value.Transscale.monitoring_interval
 
+    def set(self, key, value):
+        self.__config[key] = value
 
     def get(self, key) -> any:
         if key in self.__config:
@@ -95,9 +97,6 @@ class Config:
 
         return load_generators
 
-    def set(self, key, value):
-        self.__config[key] = value
-
     def __read_config_file(self, conf_path: str):
         if exists(conf_path):
 
@@ -120,6 +119,8 @@ class Config:
         else:
             self.__log.warning(f"[CONF] No configuration file found")
 
+    # def dump_experiment_config(self):
+    #     for key in conf
     def validate(self):
         # TODO validate config file format (stuff like minimum info)
         pass

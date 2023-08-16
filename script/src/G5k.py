@@ -46,7 +46,7 @@ class G5k(Platform):
                 roles=["worker"],
                 cluster=self.cluster,
                 nodes=self.workers,
-                primary_network=network
+                primary_network=network,
             )
             .finalize()
         )
@@ -58,9 +58,7 @@ class G5k(Platform):
         roles, networks = self.provider.init()
 
         # Initialize dictionary store for inventory
-        Inventory = {
-            "all": {
-                "children": {}}}
+        Inventory = {"all": {"children": {}}}
         for grp, hostset in roles.items():
             Inventory["all"]["children"][grp] = {}
             Inventory["all"]["children"][grp]["hosts"] = {}
@@ -89,12 +87,10 @@ class G5k(Platform):
         uri = f"https://api.grid5000.fr/3.0/sites/{self.job_site}/storage/home/{username}/access"
 
         import requests
+
         requests.post(
             uri,
-            json={
-                "termination": {
-                    "job": self.job_id,
-                    "site": self.job_site}},
+            json={"termination": {"job": self.job_id, "site": self.job_site}},
             auth=(username, password),
         )
 
