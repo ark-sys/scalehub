@@ -215,10 +215,6 @@ def main(log: Logger):
     # Plot command
     subparsers.add_parser("plot", help="Starts interactive data plotter.")
 
-    # TODO
-    # # Setup autocomplete for the script
-    # argcomplete.autocomplete(parser)
-
     # Parse command line arguments
     args = parser.parse_args()
 
