@@ -1,13 +1,15 @@
 import re
 import tkinter as tk
+from collections import defaultdict
 from datetime import datetime
-from tkinter import ttk
+from tkinter import ttk, DISABLED
 
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 import os
 import pandas as pd
+import seaborn as sns
 
 from .utils.Config import Config, Key
 from .utils.Logger import Logger
@@ -21,19 +23,51 @@ class TreeViewFrame(tk.Frame):
         self.__log = log
         self.tree = ttk.Treeview(
             self,
-            columns=("Name", "Path", "Date", "Job name", "Load", "Rate", "Duration"),
+            columns=(
+                "Name",
+                "Path",
+                "Date",
+                "Job name",
+                "Sensors",
+                "Rate",
+                "Load",
+                "Parallelism",
+                "Duration",
+            ),
             displaycolumns="#all",
         )
+        self.tree.column("#0", width=100)
+        self.tree.column("#1", width=100)
+        self.tree.column("#2", width=200)
+        self.tree.column("#3", width=150)
+        self.tree.column("#4", width=100)
+        self.tree.column("#5", width=80)
+        self.tree.column("#6", width=80)
+        self.tree.column("#7", width=80)
+        self.tree.column("#8", width=80)
+        self.tree.column("#9", width=80)
         self.tree.heading("#1", text="Name", command=lambda: self.sort_column("Name"))
         self.tree.heading("#2", text="Path", command=lambda: self.sort_column("Path"))
         self.tree.heading("#3", text="Date", command=lambda: self.sort_column("Date"))
         self.tree.heading(
             "#4", text="Job name", command=lambda: self.sort_column("Job name")
         )
-        self.tree.heading("#5", text="Load", command=lambda: self.sort_column("Load"))
-        self.tree.heading("#6", text="Rate", command=lambda: self.sort_column("Rate"))
         self.tree.heading(
-            "#7", text="Duration", command=lambda: self.sort_column("Duration")
+            "#5", text="N. Sensors", command=lambda: self.sort_column("Sensors")
+        )
+        self.tree.heading(
+            "#6", text="Rate (s)", command=lambda: self.sort_column("Rate")
+        )
+        self.tree.heading(
+            "#7", text="Load (sensors/s)", command=lambda: self.sort_column("Load")
+        )
+        self.tree.heading(
+            "#8",
+            text="Max Parallelism",
+            command=lambda: self.sort_column("Parallelism"),
+        )
+        self.tree.heading(
+            "#9", text="Exp Duration (s)", command=lambda: self.sort_column("Duration")
         )
 
         # self.sort_column("Name")
@@ -77,15 +111,50 @@ class TreeViewFrame(tk.Frame):
                         display_file_name = "/".join(item_path.split("/")[-2:])
                         creation_date = self.get_creation_date(item_path)
 
-                        m: Misc = Misc(self.__log)
-                        (
-                            job_name,
-                            num_sensors,
-                            avg_interval_ms,
-                            start_ts,
-                            end_ts,
-                        ) = m.parse_log(os.path.join(item_path, "exp_log.txt"))
+                        try:
+                            # Retrieve information from log file
+                            m: Misc = Misc(self.__log)
+                            (
+                                job_name,
+                                num_sensors,
+                                avg_interval_ms,
+                                start_ts,
+                                end_ts,
+                            ) = m.parse_log(os.path.join(item_path, "exp_log.txt"))
+                        except FileNotFoundError:
+                            job_name = "job"
+                            num_sensors = 200000
+                            avg_interval_ms = 3000
+                            # Try at least to recover timestamps from the raw file
+                            csv_files = [
+                                os.path.join(item_path, raw_file)
+                                for raw_file in os.listdir(item_path)
+                                if raw_file.endswith(".csv") and raw_file != "stats.csv"
+                            ]
+                            if len(csv_files) > 0:
+                                raw_file = pd.read_csv(csv_files[0])
+                                start_ts = (
+                                    raw_file["Time"].min() // 1000
+                                    if raw_file["Time"].min() > 1000000
+                                    else raw_file["Time"].min()
+                                )
+                                end_ts = (
+                                    raw_file["Time"].max() // 1000
+                                    if raw_file["Time"].max() > 1000000
+                                    else raw_file["Time"].max()
+                                )
+                            else:
+                                # Raw file not found, assign 0 to timestamps
+                                start_ts = 0
+                                end_ts = 0
 
+                        ###
+                        # TODO temporary solution for max parallelism
+                        # Read the CSV file into a DataFrame
+                        df = pd.read_csv(os.path.join(item_path, "stats.csv"))
+                        # Find the maximum value in the Parallelism column
+                        max_parallelism_value = df["Parallelism"].max()
+                        ###
                         self.tree.insert(
                             parent_id,
                             "end",
@@ -96,6 +165,9 @@ class TreeViewFrame(tk.Frame):
                                 job_name,
                                 num_sensors,
                                 avg_interval_ms,
+                                round((num_sensors / (avg_interval_ms / 1000)), 2),
+                                max_parallelism_value,
+                                (end_ts - start_ts),
                             ),
                             open=True,
                             text=display_file_name,
@@ -115,7 +187,6 @@ class TreeViewFrame(tk.Frame):
     def get_selected_file(self, selected_item):
         item_values = self.tree.item(selected_item, "values")
         item_tags = self.tree.item(selected_item, "tags")
-        print(f"Selected items are {selected_item}")
         if "date_directory" in item_tags:
             folder_path = item_values[1]
             selected_files = []
@@ -125,7 +196,6 @@ class TreeViewFrame(tk.Frame):
                     for file in os.listdir(item_path):
                         if file.lower().endswith("stats.csv"):
                             selected_files.append(os.path.join(item_path, file))
-            print(f"selected files are {selected_files}")
             return selected_files
         elif "exp_directory" in item_tags:
             if item_values:
@@ -158,16 +228,18 @@ class PlotControlFrame(tk.Frame):
         self.selected_plot_types = []
 
         # Create checkboxes
-        self.scatter_var = tk.IntVar(value=0)
+        self.scatter_var = tk.IntVar(value=1)
         self.box_var = tk.IntVar(value=0)
         self.stacked_var = tk.IntVar(value=0)
 
         self.scatter_checkbox = tk.Checkbutton(
             self, text="Scatter Plot", variable=self.scatter_var
         )
-        self.box_checkbox = tk.Checkbutton(self, text="Box Plot", variable=self.box_var)
+        self.box_checkbox = tk.Checkbutton(
+            self, text="Box Plot", variable=self.box_var, state=DISABLED
+        )
         self.stacked_checkbox = tk.Checkbutton(
-            self, text="Stacked Plot", variable=self.stacked_var
+            self, text="Stacked Plot", variable=self.stacked_var, state=DISABLED
         )
 
         # Create Generate Plot button
@@ -221,12 +293,11 @@ class PlotDisplayFrame(tk.Frame):
 
         plotter = CSVPlotter(None)  # Initialize your CSVPlotter with the CSV data
         num_subplots = len(plot_types)
-        colors = ["b", "g", "r", "c", "m", "y", "k"]  # Add more colors as needed
 
         for idx, plot_type in enumerate(plot_types, start=1):
             ax = self.figure.add_subplot(num_subplots, 1, idx)
             if plot_type == "scatter":
-                plotter.generate_scatter_plot(ax, csv_files, colors)
+                plotter.generate_scatter_plot(ax, csv_files)
             elif plot_type == "box":
                 plotter.generate_box_plot(ax)
             elif plot_type == "stacked":
@@ -243,16 +314,29 @@ class CSVPlotter:
         self.xlabel = "Parallelism"
         self.ylabel = "Throughput"
 
-    def generate_scatter_plot(self, ax, csv_files, colors):
+    def generate_scatter_plot(self, ax, csv_files):
         parent_folder_labels = [
             "/".join(os.path.dirname(csv_file).split("/")[-2:])
             for csv_file in csv_files
         ]
-        print(f"Generating {parent_folder_labels} for csv files {csv_files}")
-        for csv_file, color, label in zip(csv_files, colors, parent_folder_labels):
+
+        # Generate a color palette using seaborn's color_palette function
+        unique_dates = set(label.split("/")[0] for label in parent_folder_labels)
+        palette = sns.color_palette("Set1", n_colors=len(unique_dates))
+
+        print(f"Generating scatter plot for csv files {csv_files}")
+        for csv_file, label in zip(csv_files, parent_folder_labels):
             data = pd.read_csv(csv_file)
+            date_part = label.split("/")[0]
+            shade_part = label.split("/")[1]
+            date_color = palette[list(unique_dates).index(date_part)]
+            shade_factor = (int(shade_part) - 1) / 9  # Adjust shade based on 'N'
+
+            # Adjust color intensity by scaling the RGB components
+            color = [c * (1 - shade_factor) + shade_factor for c in date_color]
+
             ax.scatter(data["Parallelism"], data["mean"], color=color, label=label)
-        # ax.scatter(self.data['Parallelism'], self.data['mean'])
+
         ax.set_title("Scatter Plot")
         ax.set_xlabel(self.xlabel)
         ax.set_ylabel(self.ylabel)
