@@ -15,11 +15,12 @@ spec:
           containers:
             - name: transscale
               image: "{{image}}:{{tag}}"
+              imagePullPolicy: Always
               resources:
                 limits:
                   memory: 1Gi
                   cpu: 200m
-              command: ['python', 'run_transscale.py', '-e']
+              command: ['python3', '/run_transscale.py', '-e']
               volumeMounts:
                 - name: transscale-config-volume
                   mountPath: /etc/transscale/conf

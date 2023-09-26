@@ -40,14 +40,13 @@ spec:
             - name: FLINK_STATE_BACKEND
               value: "rocksdb"
             - name: CHECKPOINTING_INTERVAL_MS
-              value: "3000"
+              value: "4000"
             - name: JOB_WINDOW_SIZE
-              value: "2000"
+              value: "1000"
           resources:
             limits:
               memory: 4Gi
               cpu: 1000m
-#          args: ["standalone-job", "--job-classname", "rocks.theodolite.benchmarks.myjoin.flink.HistoryServiceFlinkJob"] # optional arguments: ["--job-id", "<job id>", "--fromSavepoint", "/path/to/savepoint", "--allowNonRestoredState"]
           args: ["jobmanager"]
           ports:
             - containerPort: 6123

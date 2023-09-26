@@ -42,6 +42,13 @@ RUN cd /tmp && curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 
+# Install auto-complete for kubectl
+COPY kubectl.fish /usr/share/fish/vendor_completions.d/
+# RUN curl -o /usr/share/fish/vendor_completions.d/kubectl.fish https://raw.githubusercontent.com/evanlucas/fish-kubectl-completions/main/completions/kubectl.fish
+
+# Install auto-completion for shub
+COPY shub.fish /usr/share/fish/vendor_completions.d/shub.fish
+
 # Setup host user within container with correct permissions
 RUN groupadd -g $GID $UNAME &&  \
     useradd -m -d /home/$UNAME -u $UID -g $GID -s /bin/fish $UNAME &&  \
@@ -52,5 +59,5 @@ RUN groupadd -g $GID $UNAME &&  \
 USER $UID:$GID
 WORKDIR /home/$UNAME
 
-# TODO add autocompletion for python script as describe here -> https://fishshell.com/docs/current/completions.html
 ENTRYPOINT ["sleep", "infinity"]
+#ENTRYPOINT ["fish"]

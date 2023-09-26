@@ -5,6 +5,7 @@ import argparse
 import json
 import os.path
 import re
+from time import sleep
 
 from src.Experiment import Experiment, ExperimentData
 from src.G5k import G5k
@@ -15,6 +16,7 @@ from src.utils.Config import Config
 from src.utils.Defaults import ConfigKeys as Key, DefaultValues as Value
 from src.utils.Logger import Logger
 from src.utils.Misc import Misc
+
 
 # Build cluster and install dependencies
 def provision(config: Config):
@@ -94,9 +96,29 @@ def delete(playbook, config: Config):
                 lg_numsensors=int(lg_config["num_sensors"]),
                 lg_intervalms=int(lg_config["interval_ms"]),
                 lg_replicas=int(lg_config["replicas"]),
+                lg_value=int(lg_config["value"]),
             )
+    elif playbook == "transscale":
+        p.delete(
+            playbook,
+            job_file=config.get_str(Key.JOB),
+            task_name=config.get_str(Key.TASK),
+            max_parallelism=config.get_int(Key.TRANSCCALE_PAR),
+            warmup=config.get_int(Key.TRANSSCALE_WARMUP),
+            interval=config.get_int(Key.TRANSSCALE_INTERVAL),
+        )
     else:
         return p.delete(playbook, job_file=config.get_str(Key.JOB))
+
+
+# Delete and re-deploy 'playbook' parameter
+def reload(playbook, config: Config):
+    # Delete running playbook
+    delete(playbook, config)
+    # Give some time for tasks to execute
+    sleep(5)
+    # Deploy again playbook
+    deploy(playbook, config)
 
 
 # Quick action commands
@@ -105,8 +127,8 @@ def run(action, config):
     m: Misc = Misc(log)
     match action:
         case "job":
-            return m.run_command(
-                pod_name="flink-jobmanager",
+            return m.execute_command_on_pod(
+                deployment_name="flink-jobmanager",
                 command=f"flink run -d -j /tmp/jobs/{config.get_str(Key.JOB)}",
             )
         case "transscale":
@@ -115,6 +137,18 @@ def run(action, config):
         case "experiment":
             e: Experiment = Experiment(config, log)
             e.full_run()
+            reload("flink", config)
+        case "clean":
+            # Clean flink jobs
+            m.execute_command_on_pod(
+                deployment_name="flink-jobmanager",
+                command="for job_id in $(flink list -r | awk -F ' : ' '/\(RUNNING\)/ {print $2}'); do flink cancel $job_id ;done",
+            )
+
+            # Scale down taskmanagers
+            m.scale_deployment("flink-taskmanager")
+            # Clean transscale job
+            m.delete_job("transscale-job")
         case _:
             log.error(f"Action {action} is not implemented.")
 
@@ -122,45 +156,74 @@ def run(action, config):
 # Export data for a given date
 def export(config: Config, exp_path: str):
     log.info("Exporting...")
+
+    def export_experiment(path):
+        # Verify that a log file exists for the chosen experiment
+        log_path = os.path.join(path, "exp_log.txt")
+        if not os.path.exists(log_path):
+            log.error("Log file for experiment not found.")
+            return
+        else:
+            # Verify if experiment executed correctly by checking start and end timestamps
+            with open(log_path, "r") as log_file:
+                logs = log_file.read()
+
+            start_match = re.search(r"Experiment start at : (\d+)", logs)
+            end_match = re.search(r"Experiment end at : (\d+)", logs)
+            if start_match and end_match:
+                start_timestamp = int(start_match.group(1))
+                end_timestamp = int(end_match.group(1))
+                data: ExperimentData = ExperimentData(
+                    log=log,
+                    exp_path=path,
+                    start_ts=start_timestamp,
+                    end_ts=end_timestamp,
+                    db_url=config.get_str(Key.DB_URL),
+                )
+                data.export_experiment_data()
+                stats, _ = data.eval_stats(
+                    skip_duration=config.get_int(Key.DATA_SKIP_DURATION)
+                )
+                if config.get_bool(Key.DATA_OUTPUT_PLOT):
+                    data.eval_plot(stats)
+                return
+            else:
+                log.error("Log file is incomplete: missing timestamp.")
+
     # Generate full path from provided path name
-    # exp_path should be 'DD-MM-YYYY/N' where :
+    # exp_path should be 'DD-MM-YYYY/N' where or 'DD-MM-YYYY' :
     #   DD-MM-YYYY is the date of the experiments
     #   N is the number of the experiment
-    full_exp_path = os.path.join(config.get_str(Key.EXPERIMENTS_DATA_PATH), exp_path)
 
-    # Verify that a log file exists for the chosen experiment
-    log_path = os.path.join(full_exp_path, "exp_log.txt")
-    if not os.path.exists(log_path):
-        log.error("Log file for experiment not found.")
-        exit(1)
+    # Define regular expression patterns for 'DD-MM-YYYY' and 'DD-MM-YYYY/N' formats
+    exact_format_pattern = r"^\d{2}-\d{2}-\d{4}$"
+    with_integer_pattern = r"^\d{2}-\d{2}-\d{4}/(\d+)$"
+
+    # Try to match the 'DD-MM-YYYY' format
+    exact_match = re.match(exact_format_pattern, exp_path)
+    # If it doesn't match the exact format, try the 'DD-MM-YYYY/N' format
+    with_integer_match = re.match(with_integer_pattern, exp_path)
+
+    if exact_match:
+        base_exp_path = os.path.join(
+            config.get_str(Key.EXPERIMENTS_DATA_PATH), exp_path
+        )
+        log.info(f"Exporting experiments for {base_exp_path}.")
+        # Iterate through each experiment folder of the base exp path
+        for exp in os.listdir(base_exp_path):
+            full_exp_path = os.path.join(base_exp_path, exp)
+            export_experiment(full_exp_path)
+    elif with_integer_match:
+        log.info(f"Exporting {exp_path} experiment.")
+        full_exp_path = os.path.join(
+            config.get_str(Key.EXPERIMENTS_DATA_PATH), exp_path
+        )
+        export_experiment(full_exp_path)
     else:
-        # Verify if experiment executed correctly by checking start and end timestamps
-        with open(log_path, "r") as log_file:
-            logs = log_file.read()
-
-        start_match = re.search(r"Experiment start at : (\d+)", logs)
-        end_match = re.search(r"Experiment end at : (\d+)", logs)
-        if start_match and end_match:
-            start_timestamp = int(start_match.group(1))
-            end_timestamp = int(end_match.group(1))
-            data: ExperimentData = ExperimentData(
-                log=log,
-                exp_path=full_exp_path,
-                start_ts=start_timestamp,
-                end_ts=end_timestamp,
-                db_url=config.get_str(Key.DB_URL),
-            )
-            data.export_experiment_data()
-            stats, _ = data.eval_stats(
-                skip_duration=config.get_int(Key.DATA_SKIP_DURATION)
-            )
-            if config.get_bool(Key.DATA_OUTPUT_PLOT):
-                data.eval_plot(stats)
-        else:
-            log.error("Log file is incomplete: missing timestamp.")
+        log.error("Error during export.")
 
 
-# Generate plots for an experiment
+# Start GUI for plot generation
 def plot(config: Config):
     log.info("Starting plotter.")
     p: Plotter = Plotter(config, log)
@@ -200,6 +263,12 @@ def main(log: Logger):
     )
     delete_parser.add_argument("playbook", help="Name of the playbook.")
 
+    # Reload command
+    reload_parser = subparsers.add_parser(
+        "reload", help="Executes reload tasks of provided playbook."
+    )
+    reload_parser.add_argument("playbook", help="Name of the playbook.")
+
     # Run command
     run_parser = subparsers.add_parser("run", help="Run action.")
     run_parser.add_argument(
@@ -230,6 +299,8 @@ def main(log: Logger):
         deploy(args.playbook, config)
     elif args.command == "delete":
         delete(args.playbook, config)
+    elif args.command == "reload":
+        reload(args.playbook, config)
     elif args.command == "destroy":
         destroy(config)
     elif args.command == "run":

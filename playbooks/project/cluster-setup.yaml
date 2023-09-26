@@ -8,7 +8,6 @@
     - name: Install python3-apt
       shell:
         cmd: apt-get install -y python3-apt
-
     - name: Install required system packages
       ansible.builtin.apt:
         name:
@@ -153,17 +152,16 @@
       ansible.builtin.file:
         path: "{{ kubeconfig_path }}"
         mode: "0600"
+    - name: Wait for all k3s nodes to be ready
+      shell: kubectl wait --for=condition=Ready nodes --all --timeout=600s
+      register: nodes_ready
+    - debug: var=nodes_ready.stdout_lines
 
 - name: Post-install configuration - Label worker nodes
   hosts: localhost
   gather_facts: false
   tags: [ always ]
   tasks:
-    - name: Wait for all k3s nodes to be ready
-      shell: kubectl wait --for=condition=Ready nodes --all --timeout=600s
-      register: nodes_ready
-    - debug: var=nodes_ready.stdout_lines
-
     - name: Read hosts file
       slurp:
         src: /tmp/hosts.json
