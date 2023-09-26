@@ -20,8 +20,8 @@ from .utils.Misc import Misc
 # 5. Retrieve timestamp at the end of execution and write it to file.
 # 6. Query VictoriaMetrics for csv data and save all files to experiment folder.
 class ExperimentData:
-    TPT_TIMESERIES = "flink_job_operator_throughput"
-    PAR_TIMESERIES = "flink_job_operator_parallelism"
+    TPT_TIMESERIES_BASE = "flink_job_operator_throughput"
+    PAR_TIMESERIES_BASE = "flink_job_operator_parallelism"
 
     def __init__(
         self, log: Logger, exp_path: str, start_ts: int, end_ts: int, db_url: str
@@ -31,6 +31,8 @@ class ExperimentData:
         self.start_ts = start_ts
         self.end_ts = end_ts
         self.db_url = db_url
+        self.tpt_timeseries = ""
+        self.par_timeseries = ""
 
     def export_data_to_csv(
         self,
@@ -65,16 +67,30 @@ class ExperimentData:
             self.__log.error(f"Error exporting data: {response.text}")
 
     def export_experiment_data(self):
+        # Check from logs for which operator name timeseries should be exported*
+        log_path = os.path.join(self.exp_path, "exp_log.txt")
+        with open(log_path, "r") as log_file:
+            content = log_file.read()
+        operator_name_match = re.search(r"Operator name :\s*(\w+)", content)
+        if operator_name_match:
+            operator_name = operator_name_match.group(1)
+            self.__log.info(f"Retrieving timeseries for operator {operator_name}")
+            self.tpt_timeseries = f"{self.TPT_TIMESERIES_BASE}_{operator_name}"
+            self.par_timeseries = f"{self.PAR_TIMESERIES_BASE}_{operator_name}"
+        else:
+            self.__log.warning("Could not find operator name for timeseries export")
+            exit(1)
+
         # Export timeseries from database to csv file
         tpt_timeseries_path = self.export_data_to_csv(
             exp_path=self.exp_path,
-            time_series_name=self.TPT_TIMESERIES,
+            time_series_name=self.tpt_timeseries,
             start_timestamp=self.start_ts,
             end_timestamp=self.end_ts,
         )
         par_timeseries_path = self.export_data_to_csv(
             exp_path=self.exp_path,
-            time_series_name=self.PAR_TIMESERIES,
+            time_series_name=self.par_timeseries,
             start_timestamp=self.start_ts,
             end_timestamp=self.end_ts,
         )
@@ -95,7 +111,7 @@ class ExperimentData:
             else:
                 # Join columns in one table and drop labels
                 df_merged = df2.merge(df1).drop(
-                    ["flink_job_operator_parallelism", "flink_job_operator_throughput"],
+                    [self.par_timeseries, self.tpt_timeseries],
                     axis=1,
                 )
                 # Provide column naming
@@ -115,6 +131,9 @@ class ExperimentData:
             # Add UTC+2 to datetime
             df["Time"] = df["Time"].dt.tz_convert(pytz.timezone("Europe/Paris"))
 
+            # Make sure that Parallelism values are integers and not floats
+            df["Parallelism"] = df["Parallelism"].astype(int)
+
             # Skip the specified duration for each degree of parallelism
             df = (
                 df.groupby("Parallelism")
@@ -130,6 +149,43 @@ class ExperimentData:
             # Calculate mean throughput and standard deviation for each parallelism
             stats = df.groupby("Parallelism")["Throughput"].agg(["mean", "std"])
 
+            # Check if transscale log exists
+            transscale_log = os.path.join(self.exp_path, "transscale_log.txt")
+            if os.path.exists(transscale_log):
+                # Transscale log found, try to extract predictions
+                def extract_predictions(log_path) -> dict[int, float]:
+                    predictions = {}
+                    target_pattern = (
+                        r"((?:.*\n){14}.*Setting target state: \((\d+),\d+\))"
+                    )
+
+                    with open(log_path, "r") as log_file:
+                        logs = log_file.read()
+
+                    # Extract strings from match to match-15 lines
+                    match_blocks = re.findall(target_pattern, logs)
+
+                    for match in match_blocks:
+                        block = match[0].strip()
+                        target_value = match[1]
+                        tpt_pattern = rf"\bpar, transp: {target_value}, \d+ target tput: \d+ new_tput %: (\d+\.\d+)"
+                        match_tpt = re.search(tpt_pattern, block)
+                        if match_tpt:
+                            target_tpt = float(match_tpt.group(1))
+                            predictions[target_value] = target_tpt
+
+                    # Return list of predictions
+                    return predictions
+
+                self.__log.info("Transscale log found. Preparing predictions export.")
+                predictions = extract_predictions(transscale_log)
+                if "Predictions" not in stats.columns:
+                    stats["Predictions"] = None
+                # Extend stats file with transscale predictions
+                for key, value in predictions.items():
+                    key = int(key)  # Convert key to integer
+                    stats.loc[stats.index == key, "Predictions"] = value
+
             # Save stats to a CSV file in the same path as the input filename
             output_path = os.path.join(os.path.dirname(filename), "stats.csv")
             stats.to_csv(output_path, index=True)
@@ -141,7 +197,7 @@ class ExperimentData:
             raise Exception(f"No data found to plot in file: {filename}")
 
     def eval_plot(self, stats):
-        fig, ax = plt.subplots()  # Create a new figure and axes for each plot
+        fig, ax = plt.subplots()  # Create a new figure and axes for plot
 
         # Place points and error bars
         ax.errorbar(
@@ -152,6 +208,16 @@ class ExperimentData:
             linestyle="-",
             capsize=4,
         )
+        # Check if 'Predictions' column exists, if so, add dashed line with its values to plot
+        if "Predictions" in stats.columns:
+            ax.plot(
+                stats.index,
+                stats["Predictions"],
+                linestyle="--",
+                marker="o",
+                color="r",
+                label="Predictions",
+            )
 
         # Set title and axis labels
         _, date, n = self.exp_path.split("/")[-3:]
@@ -165,7 +231,8 @@ class ExperimentData:
 
         # Parse log file for experiment info
         log_path = os.path.join(self.exp_path, "exp_log.txt")
-        job_name, num_sensors_sum, avg_interval_ms, start_ts, end_ts = Misc.parse_log(
+        m: Misc = Misc(self.__log)
+        job_name, num_sensors_sum, avg_interval_ms, start_ts, end_ts = m.parse_log(
             log_path
         )
 
@@ -191,188 +258,12 @@ class ExperimentData:
         )
 
         # Connect points with a line
-        ax.plot(stats.index, stats["mean"], linestyle="-", marker="o", color="r")
+        ax.plot(stats.index, stats["mean"], linestyle="-", marker="o", color="b")
 
         # Export plot to experiment path
         output_filename = os.path.join(self.exp_path, "plot.png")
         fig.savefig(output_filename)
         self.__log.info(f"Plot saved to: {output_filename}")
-
-    # def parse_log(self, log_path: str):
-    #     with open(log_path, "r") as log_file:
-    #         logs = log_file.read()
-    #
-    #     job_name_match = re.search(r"Job name : (.+)", logs)
-    #     lg_matches = re.finditer(
-    #         r"LG : (.+?)\s+topic : (.+?)\s+num_sensors : (\d+)\s+interval_ms : (\d+)",
-    #         logs,
-    #         re.DOTALL,
-    #     )
-    #     start_match = re.search(r"Experiment start at : (\d+)", logs)
-    #     end_match = re.search(r"Experiment end at : (\d+)", logs)
-    #     if job_name_match:
-    #         job_name = job_name_match.group(1)
-    #     else:
-    #         self.__log.error("Job name not found in log.")
-    #         exit(1)
-    #     if start_match and end_match:
-    #         start_timestamp = int(start_match.group(1))
-    #         end_timestamp = int(end_match.group(1))
-    #     else:
-    #         self.__log.error("Log file is incomplete: missing timestamp.")
-    #         exit(1)
-    #
-    #     num_sensors_sum = 0
-    #     interval_ms_sum = 0
-    #     lg_count = 0
-    #
-    #     for lg_match in lg_matches:
-    #         num_sensors = int(lg_match.group(3))
-    #         interval_ms = int(lg_match.group(4))
-    #         num_sensors_sum += num_sensors
-    #         interval_ms_sum += interval_ms
-    #         lg_count += 1
-    #
-    #     if lg_count == 0:
-    #         self.__log.error("No LG information found in log.")
-    #         exit(1)
-    #
-    #     avg_interval_ms = interval_ms_sum / lg_count
-    #
-    #     return (
-    #         job_name,
-    #         num_sensors_sum,
-    #         avg_interval_ms,
-    #         start_timestamp,
-    #         end_timestamp,
-    #     )
-
-
-# class ExperimentParams:
-#     experiment = ""
-#     job_name = ""
-#     task_name = ""
-#
-#     db_url = ""
-#     experiment_base_path = ""
-#     load_generators = []
-#
-#     skip_s = 0
-#     plot = 0
-#     stats = 0
-#
-#     interval = 0
-#     warmup = 0
-#     max_par = 0
-#
-#     def __init__(self, log: Logger):
-#         # Initialize experiment variables
-#         self.__log = log
-#         self.start_ts = 0
-#         self.end_ts = 0
-#         self.exp_path = ""
-#         self.log_file = ""
-#
-#     @classmethod
-#     def from_config(cls, config: Config, log: Logger):
-#         # Get settings from configuration file
-#         cls.job_name = config.get_str(Key.JOB)
-#         cls.experiment = config.get_str(Key.NAME)
-#         cls.task_name = config.get_str(Key.TASK)
-#
-#         cls.db_url = config.get_str(Key.DB_URL)
-#         cls.experiment_base_path = config.get_str(Key.EXPERIMENTS_DATA_PATH)
-#         cls.load_generators = config.parse_load_generators()
-#
-#         cls.skip_s = config.get_int(Key.DATA_SKIP_DURATION)
-#         cls.plot = config.get_bool(Key.DATA_OUTPUT_PLOT)
-#         cls.stats = config.get_bool(Key.DATA_OUTPUT_STATS)
-#
-#         cls.interval = config.get_int(Key.TRANSSCALE_INTERVAL)
-#         cls.warmup = config.get_int(Key.TRANSSCALE_WARMUP)
-#         cls.max_par = config.get_int(Key.TRANSCCALE_PAR)
-#         return cls
-#
-#     @classmethod
-#     def from_logs(cls, log_path):
-#         (
-#             job_name,
-#             num_sensors,
-#             interval_ms,
-#             start_ts,
-#             end_ts,
-#         ) = ExperimentParams.parse_log(log_path)
-#         cls.job_name = job_name
-#         pass
-#
-#     def dump_params(self):
-#         log_file_path = os.path.join(self.exp_path, "exp_log.txt")
-#
-#         with open(log_file_path, "a") as file:
-#             file.write("EXPERIMENT SPEC")
-#             file.write(f"Job name : {self.job_name}\n")
-#             file.write("Load generators : \n")
-#             for lg_config in self.load_generators:
-#                 file.write(f"   LG : {lg_config['name']}\n")
-#                 file.write(f"       topic : {lg_config['topic']}\n")
-#                 file.write(f"       num_sensors : {lg_config['num_sensors']}\n")
-#                 file.write(f"       interval_ms : {lg_config['interval_ms']}\n")
-#                 file.write(f"       replicas : {lg_config['replicas']}\n")
-#                 file.write(f"       value : {lg_config['value']}\n")
-#             file.write("Trasscale : \n")
-#             file.write(f"    max parallelism : {self.max_par}\n")
-#             file.write(f"    interval : {self.interval}\n")
-#             file.write(f"    warmup : {self.warmup}\n")
-#             file.write(f"\nExperiment start at : {self.start_ts}\n")
-#
-#     def parse_log(self, log_path: str):
-#         with open(log_path, "r") as log_file:
-#             logs = log_file.read()
-#
-#         job_name_match = re.search(r"Job name : (.+)", logs)
-#         lg_matches = re.finditer(
-#             r"LG : (.+?)\s+topic : (.+?)\s+num_sensors : (\d+)\s+interval_ms : (\d+)",
-#             logs,
-#             re.DOTALL,
-#         )
-#         start_match = re.search(r"Experiment start at : (\d+)", logs)
-#         end_match = re.search(r"Experiment end at : (\d+)", logs)
-#         if job_name_match:
-#             job_name = job_name_match.group(1)
-#         else:
-#             self.__log.error("Job name not found in log.")
-#             exit(1)
-#         if start_match and end_match:
-#             start_timestamp = int(start_match.group(1))
-#             end_timestamp = int(end_match.group(1))
-#         else:
-#             self.__log.error("Log file is incomplete: missing timestamp.")
-#             exit(1)
-#
-#         num_sensors_sum = 0
-#         interval_ms_sum = 0
-#         lg_count = 0
-#
-#         for lg_match in lg_matches:
-#             num_sensors = int(lg_match.group(3))
-#             interval_ms = int(lg_match.group(4))
-#             num_sensors_sum += num_sensors
-#             interval_ms_sum += interval_ms
-#             lg_count += 1
-#
-#         if lg_count == 0:
-#             self.__log.error("No LG information found in log.")
-#             exit(1)
-#
-#         avg_interval_ms = interval_ms_sum / lg_count
-#
-#         return (
-#             job_name,
-#             num_sensors_sum,
-#             avg_interval_ms,
-#             start_timestamp,
-#             end_timestamp,
-#         )
 
 
 class Experiment:
@@ -433,6 +324,7 @@ class Experiment:
             file.write(f"Site : {self.site}\n")
             file.write(f"Cluster : {self.cluster}\n")
             file.write(f"Job name : {self.job_name}\n")
+            file.write(f"Operator name : {self.task_name}\n")
             file.write("Load generators : \n")
             for lg_config in config.parse_load_generators():
                 file.write(f"   LG : {lg_config['name']}\n")
@@ -456,7 +348,7 @@ class Experiment:
         self.exp_path = self.create_exp_folder(
             datetime.fromtimestamp(self.start_ts).strftime("%d-%m-%Y")
         )
-        self.create_log_file(self)
+        self.log_file = self.create_log_file(self.exp_path, self.config)
 
     def end_experiment(self):
         # Get finish timestamp
@@ -479,8 +371,8 @@ class Experiment:
     def full_run(self):
         p: Playbooks = Playbooks()
         # Launch Flink Job
-        self.m.run_command(
-            pod_name="flink-jobmanager",
+        self.m.execute_command_on_pod(
+            deployment_name="flink-jobmanager",
             command=f"flink run -d -j /tmp/jobs/{self.job_name}",
         )
         # Start load generators
@@ -495,7 +387,7 @@ class Experiment:
                 lg_value=int(lg_config["value"]),
             )
         self.start_experiment()
-        p.deploy(
+        transscale_result = p.deploy(
             "transscale",
             job_file=self.job_name,
             task_name=self.task_name,
@@ -503,16 +395,52 @@ class Experiment:
             warmup=self.warmup,
             interval=self.interval,
         )
+
+        # Retrieve the logs from the execution of transscale
+        transscale_logs = transscale_result.to_dict(include_payload=True)[-1][
+            "payload"
+        ]["log_lines"]
+
+        # Generate the output path where the logs will be saved
+        transscale_log_path = os.path.join(self.exp_path, "transscale_log.txt")
+
+        # Save logs to file
+        log_lines_string = "\n".join(transscale_logs)
+        with open(transscale_log_path, "w") as file:
+            file.write(log_lines_string)
+
+        # Trigger the end of the experiment
         result_data = self.end_experiment()
+
+        # Save exported data from VM to file
         result_data.export_experiment_data()
+
         if self.stats:
             stats, _ = result_data.eval_stats(self.skip_s)
             if self.plot:
                 result_data.eval_plot(stats)
 
-    # TODO clean flink jobs
-    # TODO Scale down taskmanagers
-    # TODO Clean transscale job
+        # Clean flink jobs
+        self.m.execute_command_on_pod(
+            deployment_name="flink-jobmanager",
+            command="for job_id in $(flink list -r | awk -F ' : ' ' {print $2}'); do flink cancel $job_id ;done",
+        )
+
+        # Scale down taskmanagers
+        self.m.scale_deployment("flink-taskmanager")
+        # Clean transscale job
+        self.m.delete_job("transscale-job")
+        # Remove load generators
+        for lg_config in self.config.parse_load_generators():
+            p.delete(
+                "load_generators",
+                lg_name=lg_config["name"],
+                lg_topic=lg_config["topic"],
+                lg_numsensors=int(lg_config["num_sensors"]),
+                lg_intervalms=int(lg_config["interval_ms"]),
+                lg_replicas=int(lg_config["replicas"]),
+                lg_value=int(lg_config["value"]),
+            )
 
     def transscale_only_run(self):
         self.start_experiment()
@@ -525,13 +453,20 @@ class Experiment:
             warmup=self.warmup,
             interval=self.interval,
         )
-        result_data = self.end_experiment()
-        result_data.export_experiment_data()
-        if self.stats:
-            stats = result_data.eval_stats(self.skip_s)
-            if self.plot:
-                result_data.eval_plot(stats)
-
-    # TODO clean flink jobs
-    # TODO Scale down taskmanagers
-    # TODO Clean transscale job
+        # result_data = self.end_experiment()
+        # result_data.export_experiment_data()
+        # if self.stats:
+        #     stats, _ = result_data.eval_stats(self.skip_s)
+        #     if self.plot:
+        #         result_data.eval_plot(stats)
+        #
+        # # Clean flink jobs
+        # self.m.execute_command_on_pod(
+        #     deployment_name="flink-jobmanager",
+        #     command="for job_id in $(flink list -r | awk -F ' : ' '/\(RUNNING\)/ {print $2}'); do flink cancel $job_id ;done",
+        # )
+        #
+        # # Scale down taskmanagers
+        # self.m.scale_deployment("flink-taskmanager")
+        # Clean transscale job
+        self.m.delete_job("transscale-job")

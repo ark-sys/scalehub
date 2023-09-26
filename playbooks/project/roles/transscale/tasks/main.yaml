@@ -46,6 +46,13 @@
           type: Complete
           status: "True"
 
+    - name: Logs
+      kubernetes.core.k8s_log:
+        api_version: batch/v1
+        kind: Job
+        namespace: default
+        name: transscale-job
+      register: job_logs
 
 - name: Delete transscale
   tags: [ delete ]
@@ -68,6 +75,5 @@
       kubernetes.core.k8s:
         state: absent
         definition: "{{ lookup('ansible.builtin.file', 'gitlab-registry.yaml') | from_yaml }}"
-
 
 

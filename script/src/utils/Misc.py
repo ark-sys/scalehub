@@ -4,6 +4,10 @@ import subprocess
 from time import sleep
 
 from kubernetes import client as Client, config as Kubeconfig
+from kubernetes.client import Configuration
+from kubernetes.client.api import core_v1_api
+from kubernetes.client.rest import ApiException
+from kubernetes.stream import stream
 
 from .Logger import Logger
 
@@ -11,12 +15,13 @@ from .Logger import Logger
 class Misc:
     def __init__(self, log: Logger):
         self.__log = log
+        self.kubeconfig = Kubeconfig.load_kube_config(os.environ["KUBECONFIG"])
 
     def create_credentials_file(self):
 
         try:
             with open("/run/secrets/mysecretuser", "r") as user_file, open(
-                "/run/secrets/mysecretpass", "r"
+                    "/run/secrets/mysecretpass", "r"
             ) as password_file:
                 username = user_file.read().strip()
                 password = password_file.read().strip()
@@ -35,25 +40,88 @@ class Misc:
         except Exception as e:
             self.__log.error(f"Error: {str(e)}")
 
-    def run_command(self, pod_name, command):
-        kubeconfig = Kubeconfig.load_kube_config(os.environ["KUBECONFIG"])
+    def scale_deployment(self, deployment_name, replicas=1):
+        # Create a Kubernetes API client
+        api_instance = Client.AppsV1Api()
 
-        client = Client.CoreV1Api()
-        pod_list = client.list_pod_for_all_namespaces(watch=False)
+        # Fetch the deployment
+        try:
+            deployment = api_instance.read_namespaced_deployment(
+                name=deployment_name,
+                namespace='default'
+            )
+        except ApiException as e:
+            self.__log.error("Exception when calling AppsV1Api->read_namespaced_deployment: %s\n" % e)
+            return
+
+        # Scale down the deployment
+        deployment.spec.replicas = replicas
+        try:
+            api_instance.patch_namespaced_deployment(
+                name=deployment_name,
+                namespace='default',
+                body=deployment
+            )
+            self.__log.info(f"Deployment {deployment_name} scaled down to 1 replica.")
+        except ApiException as e:
+            self.__log.error("Exception when calling AppsV1Api->patch_namespaced_deployment: %s\n" % e)
+            return
+
+    def delete_job(self, job_name):
+        # Create a Kubernetes API client
+        api_instance = Client.BatchV1Api()
+
+        # Delete the job
+        try:
+            api_instance.delete_namespaced_job(
+                name=job_name,
+                namespace='default'
+            )
+            self.__log.info(f"Job {job_name} deleted.")
+        except Client.ApiException as e:
+            self.__log.error("Exception when calling BatchV1Api->delete_namespaced_job: %s\n" % e)
+
+    def execute_command_on_pod(self, deployment_name, command):
+
+        try:
+            c = Configuration().get_default_copy()
+        except AttributeError:
+            c = Configuration()
+            c.assert_hostname = False
+        Configuration.set_default(c)
+
+        core_v1 = core_v1_api.CoreV1Api()
+
+        pod_list = core_v1.list_pod_for_all_namespaces(watch=False)
         target_pod = None
         for pod in pod_list.items:
-            if pod.metadata.name.startswith(pod_name):
+            if pod.metadata.name.startswith(deployment_name):
                 target_pod = pod
                 break
 
         if not target_pod:
-            raise ValueError(f"No pod found with name: {pod_name}")
+            self.__log.error(f"No running pods found for deployment {deployment_name}")
+            return
 
-        # Execute the shell command on the pod
-        command = f"kubectl exec -it {target_pod.metadata.name} -- {command}"
-        subprocess.call(command, shell=True)
-        # Give a little bit of time for the command to complete
-        sleep(5)
+        pod_name = target_pod.metadata.name
+
+        try:
+            exec_command = [
+                "/bin/sh",
+                "-c",
+                command
+            ]
+            stream(core_v1.connect_get_namespaced_pod_exec,
+                   name=pod_name,
+                   namespace=target_pod.metadata.namespace,
+                   command=exec_command,
+                   stderr=True,
+                   stdin=False,
+                   stdout=True,
+                   tty=False,
+                   _preload_content=False)
+        except ApiException as e:
+            self.__log.error(f"Error executing command on pod {pod_name}: {e}")
 
     def add_time(self):
         command = 'ssh -t access.grid5000.fr "ssh \\$LOGNAME@rennes"'

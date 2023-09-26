@@ -1,23 +1,39 @@
 # shub.fish
-# Fish shell autocomplete configuration file for shub script
 
-# Set subcommands
-set -l commands provision destroy deploy delete run export plot
-set -l playbook_commands deploy delete
-
-# Define the command and its subcommands
+set -l shub_commands provision destroy deploy delete run export plot
 complete -c shub -f
-complete -c shub -n "not __fish_seen_subcommand_from $commands" -x -a "provision" -d "Provision the platform specified in conf/scalehub.co>
-complete -c shub -n "not __fish_seen_subcommand_from $commands" -x -a "destroy" -d "Destroy the platform specified in conf/scalehub.conf"
-complete -c shub -n "not __fish_seen_subcommand_from $commands" -x -a "deploy" -d "Execute deploy tasks of the provided playbook."
-complete -c shub -n "not __fish_seen_subcommand_from $commands" -x -a "delete" -d "Execute delete tasks of the provided playbook."
-complete -c shub -n "not __fish_seen_subcommand_from $commands" -x -a "run" -d "Run action."
-complete -c shub -n "not __fish_seen_subcommand_from $commands" -x -a "export" -d "Export data"
-complete -c shub -n "not __fish_seen_subcommand_from $commands" -x -a "plot" -d "Plot data"
 
-# Define options
-complete -c shub -s h --long-option help --description "Show this help message and exit"
-complete -c shub --long-option conf --description "Specify a custom path for the configuration file of scalehub. Default configuration is specified in conf/scalehub.conf"
+complete -c shub -n "not __fish_seen_subcommand_from $shub_commands" -a "provision destroy deploy delete reload run export plot"
 
-# Define arguments for specific subcommands
-complete --command shub --arguments "(ls /app/playbooks)" --condition "__fish_seen_subcommand_from $playbook_commands"
+# Autocompletion for the 'shub' script
+complete -c shub -n "__fish_use_subcommand" -a "provision" -d "Provision the platform specified in conf/scalehub.conf"
+complete -c shub -n "__fish_use_subcommand" -a "destroy" -d "Destroy the platform specified in conf/scalehub.conf"
+complete -c shub -n "__fish_use_subcommand" -a "deploy" -d "Execute deploy tasks of the provided playbook"
+complete -c shub -n "__fish_use_subcommand" -a "delete" -d "Execute delete tasks of the provided playbook"
+complete -c shub -n "__fish_use_subcommand" -a "reload" -d "Execute reload tasks of the provided playbook"
+complete -c shub -n "__fish_use_subcommand" -a "run" -d "Run action"
+complete -c shub -n "__fish_use_subcommand" -a "export" -d "Export data"
+complete -c shub -n "__fish_use_subcommand" -a "plot" -d "Starts interactive plotter"
+
+# Autocompletion for 'deploy' and 'delete' commands
+function __fish_shub_deploy_delete_complete
+    set playbook_files /app/playbooks/*.yaml
+    for file in $playbook_files
+        complete --no-files --arguments=(basename $file .yaml) --condition="test (count (commandline)) = 2"
+    end
+end
+
+complete --command shub --arguments '(__fish_shub_deploy_delete_complete)'
+#
+# # Autocompletion for 'run' command
+# complete --command shub --arguments '(string)' --condition="test (count (commandline)) = 2"
+#
+# # Autocompletion for 'export' command
+# function __fish_shub_export_complete
+#     set folder_names /app/experiments-data/*
+#     for folder in $folder_names
+#         complete --no-files --arguments=(basename $folder) --condition="test (count (commandline)) = 2"
+#     end
+# end
+#
+# complete --command shub --arguments '(__fish_shub_export_complete)'

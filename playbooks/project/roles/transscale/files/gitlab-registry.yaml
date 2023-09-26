@@ -4,7 +4,7 @@ metadata:
   name: gitlab-registry-s
   namespace: default
 data:
-  .dockerconfigjson: ewoJImF1dGhzIjogewoJCSJyZWdpc3RyeS5naXRsYWIuaW5yaWEuZnIiOiB7CgkJCSJhdXRoIjogIloybDBiR0ZpSzJSbGNHeHZlUzEwYjJ0bGJpMDFNalk2WmpkcWIyWTJSVlJ3ZVRoM2RpMUJVbFI1VFhRPSIKCQl9Cgl9Cn0=
+  .dockerconfigjson: ewoJImF1dGhzIjogewoJCSJyZWdpc3RyeS5naXRsYWIuaW5yaWEuZnIiOiB7CgkJCSJhdXRoIjogIlkyeDFjM1JsY2kxd2RXeHNaWEk2WjJ4d1lYUXRhVkZ2WVV0clVtTnplVzlYUWxCbmFtcFpPR2c9IgoJCX0KCX0KfQ==
 
 type: kubernetes.io/dockerconfigjson
 

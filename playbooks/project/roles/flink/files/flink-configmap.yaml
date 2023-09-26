@@ -33,6 +33,7 @@ data:
     state.checkpoints.dir: file:///mnt/checkpoints
     # gives metrics about inbound/outbound network queue lengths
     taskmanager.network.detailed-metrics: true
+    table.exec.state.ttl: 10 ms
     execution.checkpointing.mode: EXACTLY_ONCE
     execution.checkpointing.unaligned.enabled: true
     execution.checkpointing.aligned-checkpoint-timeout: 10 s
