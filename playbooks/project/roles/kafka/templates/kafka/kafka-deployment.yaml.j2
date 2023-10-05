@@ -18,7 +18,7 @@ spec:
       nodeSelector:
         node-role.kubernetes.io/worker: producer
       imagePullSecrets:
-        - name: gitlab-arkcr
+        - name: gitlab-scalehub
       containers:
       - name: kafka
         image: "{{kafka_image}}:{{kafka_tag}}"
