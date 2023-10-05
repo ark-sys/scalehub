@@ -4,7 +4,7 @@ metadata:
   name: gitlab-arkcr
   namespace: default
 data:
-  .dockerconfigjson: ewoJImF1dGhzIjogewoJCSJyZWdpc3RyeS5naXRsYWIuaW5yaWEuZnIiOiB7CgkJCSJhdXRoIjogImFXMWhaMlZmY0hWc2JHVnlPbWRzY0dGMExVaDRVRkIzYzFkUmFUaFVkR1prWmtwRllqVjQiCgkJfQoJfQp9
+  .dockerconfigjson: ewoJImF1dGhzIjogewoJCSJyZWdpc3RyeS5naXRsYWIuaW5yaWEuZnIiOiB7CgkJCSJhdXRoIjogImFXMWhaMlZmY0hWc2JHVnlPbWRzY0dGMExUaGZNVmxFWjNKTGMxZG9jRWhaYzB0a1ZEYzIiCgkJfQoJfQp9
 type: kubernetes.io/dockerconfigjson
 
 

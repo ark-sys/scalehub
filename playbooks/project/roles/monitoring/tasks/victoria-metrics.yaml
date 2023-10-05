@@ -21,6 +21,10 @@
             image:
               repository: "{{ vm_image }}"
               tag: "{{ vm_tag }}"
+            scrape:
+              config:
+                global:
+                  scrape_interval: 10s
 
     - name: Add Secret access to private repository for victoriametrics
       kubernetes.core.k8s:

@@ -71,5 +71,5 @@ class DefaultValues:
 
     class Transscale:
         max_parallelism = 10
-        monitoring_warmup = 60
+        monitoring_warmup = 66
         monitoring_interval = 60

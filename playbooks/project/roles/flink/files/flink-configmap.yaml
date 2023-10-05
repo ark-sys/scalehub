@@ -22,7 +22,7 @@ data:
     taskmanager.memory.managed.fraction: 0.6
     taskmanager.network.memory.buffer-debloat.enabled: true
     metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
-    metrics.reporter.prom.interval: 1 SECONDS
+    metrics.reporter.prom.interval: 15 SECONDS
     metrics.reporter.prom.port: 9249
     state.backend.latency-track.keyed-state-enabled: true
     state.backend.type: rocksdb
