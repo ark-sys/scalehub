@@ -38,7 +38,7 @@
             template:
               spec:
                 imagePullSecrets:
-                  - name: gitlab-arkcr
+                  - name: gitlab-scalehub
 
     #TODO should do rollout restart instead
     - name: Delete and recreate pod

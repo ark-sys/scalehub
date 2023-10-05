@@ -20,7 +20,7 @@ spec:
         node-role.kubernetes.io/worker: consumer
       terminationGracePeriodSeconds: 0
       imagePullSecrets:
-        - name: gitlab-arkcr
+        - name: gitlab-scalehub
       containers:
         - name: jobmanager
           image: "{{image}}:{{tag}}"
