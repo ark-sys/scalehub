@@ -27,8 +27,8 @@ spec:
                 - name: kubeconfig-volume
                   mountPath: /kubeconfig
                   readOnly: true
-                - name: artifacts-volume
-                  mountPath: /etc/transscale/jobs
+#                - name: artifacts-volume
+#                  mountPath: /etc/transscale/jobs
           volumes:
             - name: kubeconfig-volume
               secret:
@@ -42,9 +42,9 @@ spec:
                 items:
                   - key: transscale.conf
                     path: transscale.conf
-            - name: artifacts-volume
-              persistentVolumeClaim:
-                claimName: artifacts-pvc
+#            - name: artifacts-volume
+#              persistentVolumeClaim:
+#                claimName: artifacts-pvc
           tolerations:
             - key: node-role.kubernetes.io/master
               operator: Exists

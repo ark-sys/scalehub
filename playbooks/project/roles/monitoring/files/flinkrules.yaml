@@ -15,12 +15,17 @@ metadata:
 spec:
   groups:
     - name: flink.rules
+      interval: 10s
       rules:
-        - record: flink_job_operator_throughput_TumblingEventTimeWindows
-          expr: sum by(task_name) (flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~"TumblingEventTimeWindows"})
-        - record: flink_job_operator_parallelism_TumblingEventTimeWindows
-          expr: sum by(task_name) (count_values by() ("subtask_index", flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~"TumblingEventTimeWindows"}))
-        - record: flink_job_operator_throughput_Map
+        - record: flink_operator_TumblingEventTimeWindows_throughput_out
+          expr: sum by(task_name) (flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~".*TumblingEventTimeWindows.*"})
+        - record: flink_operator_TumblingEventTimeWindows_throughput_in
+          expr: sum by(task_name) (flink_taskmanager_job_task_numRecordsInPerSecond{task_name=~".*TumblingEventTimeWindows.*"})
+        - record: flink_operator_TumblingEventTimeWindows_parallelism
+          expr: sum by(task_name) (count_values by() ("subtask_index", flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~".*TumblingEventTimeWindows.*"}))
+        - record: flink_operator_Map_throughput_out
           expr: sum by(task_name) (flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~"Map"})
-        - record: flink_job_operator_parallelism_Map
+        - record: flink_operator_Map_throughput_in
+          expr: sum by(task_name) (flink_taskmanager_job_task_numRecordsInPerSecond{task_name=~"Map"})
+        - record: flink_operator_Map_parallelism
           expr: sum by(task_name) (count_values by() ("subtask_index", flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~"Map"}))

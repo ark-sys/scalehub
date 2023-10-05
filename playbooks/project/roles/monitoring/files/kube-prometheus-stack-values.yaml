@@ -2,6 +2,7 @@
 # vim: set ft=yaml:
 prometheus:
   prometheusSpec:
+    scrapeInterval: 10s
     serviceMonitorSelectorNilUsesHelmValues: false
     podMonitorSelectorNilUsesHelmValues: false
     remoteWrite:

@@ -2,9 +2,12 @@ import os
 import re
 from datetime import datetime
 
+import numpy as np
 import pandas as pd
+import pandas.errors
 import pytz
 from matplotlib import pyplot as plt
+from matplotlib.legend_handler import HandlerTuple
 
 from .Playbooks import Playbooks
 from .utils.Config import Key as Key, Config
@@ -20,8 +23,7 @@ from .utils.Misc import Misc
 # 5. Retrieve timestamp at the end of execution and write it to file.
 # 6. Query VictoriaMetrics for csv data and save all files to experiment folder.
 class ExperimentData:
-    TPT_TIMESERIES_BASE = "flink_job_operator_throughput"
-    PAR_TIMESERIES_BASE = "flink_job_operator_parallelism"
+    BASE_TIMESERIES = "flink_operator"
 
     def __init__(
         self, log: Logger, exp_path: str, start_ts: int, end_ts: int, db_url: str
@@ -31,7 +33,9 @@ class ExperimentData:
         self.start_ts = start_ts
         self.end_ts = end_ts
         self.db_url = db_url
-        self.tpt_timeseries = ""
+        # Placeholders for throughput_in, throughput_out and parallelism timeseries
+        self.tpo_timeseries = ""
+        self.tpi_timeseries = ""
         self.par_timeseries = ""
 
     def export_data_to_csv(
@@ -75,16 +79,21 @@ class ExperimentData:
         if operator_name_match:
             operator_name = operator_name_match.group(1)
             self.__log.info(f"Retrieving timeseries for operator {operator_name}")
-            self.tpt_timeseries = f"{self.TPT_TIMESERIES_BASE}_{operator_name}"
-            self.par_timeseries = f"{self.PAR_TIMESERIES_BASE}_{operator_name}"
+            self.tpo_timeseries = (
+                f"{self.BASE_TIMESERIES}_{operator_name}_throughput_out"
+            )
+            self.tpi_timeseries = (
+                f"{self.BASE_TIMESERIES}_{operator_name}_throughput_in"
+            )
+            self.par_timeseries = f"{self.BASE_TIMESERIES}_{operator_name}_parallelism"
         else:
             self.__log.warning("Could not find operator name for timeseries export")
             exit(1)
 
         # Export timeseries from database to csv file
-        tpt_timeseries_path = self.export_data_to_csv(
+        tpo_timeseries_path = self.export_data_to_csv(
             exp_path=self.exp_path,
-            time_series_name=self.tpt_timeseries,
+            time_series_name=self.tpo_timeseries,
             start_timestamp=self.start_ts,
             end_timestamp=self.end_ts,
         )
@@ -95,13 +104,24 @@ class ExperimentData:
             end_timestamp=self.end_ts,
         )
 
-        if tpt_timeseries_path is None or par_timeseries_path is None:
+        tpi_timeseries_path = self.export_data_to_csv(
+            exp_path=self.exp_path,
+            time_series_name=self.tpi_timeseries,
+            start_timestamp=self.start_ts,
+            end_timestamp=self.end_ts,
+        )
+
+        if (
+            tpo_timeseries_path is None
+            or par_timeseries_path is None
+            or tpi_timeseries_path is None
+        ):
             self.__log.error(
                 "Failed to process path for timeseries: could not join data. Something went wrong during export."
             )
             exit(1)
         else:
-            df1 = pd.read_csv(tpt_timeseries_path).dropna()
+            df1 = pd.read_csv(tpo_timeseries_path).dropna()
             df2 = pd.read_csv(par_timeseries_path).dropna()
             if df1.empty or df2.empty:
                 self.__log.error(
@@ -111,13 +131,23 @@ class ExperimentData:
             else:
                 # Join columns in one table and drop labels
                 df_merged = df2.merge(df1).drop(
-                    [self.par_timeseries, self.tpt_timeseries],
+                    [self.par_timeseries, self.tpo_timeseries],
                     axis=1,
                 )
+
+                df3 = pd.read_csv(tpi_timeseries_path).dropna()
+                # Add input metrics to output csv
+                df_merged["Throughput_IN"] = df3.iloc[:, 2]
                 # Provide column naming
-                df_merged.columns = ["Time", "Parallelism", "Throughput"]
+                df_merged.columns = [
+                    "Time",
+                    "Parallelism",
+                    "Throughput_OUT",
+                    "Throughput_IN",
+                ]
+
                 output_file = os.path.join(self.exp_path, "joined_output.csv")
-                df_merged.to_csv(output_file, index=False)
+                df_merged.dropna().to_csv(output_file, index=False)
 
     def eval_stats(self, skip_duration):
         filename = os.path.join(self.exp_path, "joined_output.csv")
@@ -147,17 +177,21 @@ class ExperimentData:
             )
 
             # Calculate mean throughput and standard deviation for each parallelism
-            stats = df.groupby("Parallelism")["Throughput"].agg(["mean", "std"])
-
+            stats_tpo = df.groupby("Parallelism")["Throughput_OUT"].agg(["mean", "std"])
+            stats_tpi = df.groupby("Parallelism")["Throughput_IN"].agg(["mean", "std"])
+            # Combine the mean and std for 'Throughput' and 'Input' into a single DataFrame
+            stats = pd.concat(
+                [stats_tpo, stats_tpi], axis=1, keys=["Throughput_OUT", "Throughput_IN"]
+            )
+            # Reset index for better formatting
+            stats.reset_index(inplace=True)
             # Check if transscale log exists
             transscale_log = os.path.join(self.exp_path, "transscale_log.txt")
             if os.path.exists(transscale_log):
                 # Transscale log found, try to extract predictions
                 def extract_predictions(log_path) -> dict[int, float]:
                     predictions = {}
-                    target_pattern = (
-                        r"((?:.*\n){14}.*Setting target state: \((\d+),\d+\))"
-                    )
+                    target_pattern = r"((?:.*\n){14}.*Re-configuring PARALLELISM\n.*Current Parallelism: (\d+)\n.*Target Parallelism: (\d+))"
 
                     with open(log_path, "r") as log_file:
                         logs = log_file.read()
@@ -167,8 +201,8 @@ class ExperimentData:
 
                     for match in match_blocks:
                         block = match[0].strip()
-                        target_value = match[1]
-                        tpt_pattern = rf"\bpar, transp: {target_value}, \d+ target tput: \d+ new_tput %: (\d+\.\d+)"
+                        target_value = match[2]
+                        tpt_pattern = rf"\bpar, transp: {target_value}, 1 target tput: \d+ new_tput %: (\d+\.\d+)"
                         match_tpt = re.search(tpt_pattern, block)
                         if match_tpt:
                             target_tpt = float(match_tpt.group(1))
@@ -184,11 +218,11 @@ class ExperimentData:
                 # Extend stats file with transscale predictions
                 for key, value in predictions.items():
                     key = int(key)  # Convert key to integer
-                    stats.loc[stats.index == key, "Predictions"] = value
+                    stats.loc[stats["Parallelism"] == key, "Predictions"] = value
 
             # Save stats to a CSV file in the same path as the input filename
             output_path = os.path.join(os.path.dirname(filename), "stats.csv")
-            stats.to_csv(output_path, index=True)
+            stats.to_csv(output_path, index=False)
             self.__log.info(f"Stats saved to: {output_path}")
             return stats, output_path
         except FileNotFoundError:
@@ -199,19 +233,29 @@ class ExperimentData:
     def eval_plot(self, stats):
         fig, ax = plt.subplots()  # Create a new figure and axes for plot
 
-        # Place points and error bars
+        # # Place points and error bars
         ax.errorbar(
-            stats.index,
-            stats["mean"],
-            yerr=stats["std"],
+            stats["Parallelism"],
+            stats["Throughput_OUT"]["mean"],
+            yerr=stats["Throughput_OUT"]["std"],
             fmt="o",
             linestyle="-",
+            color="g",
             capsize=4,
+            label="Throughput Out",
+        )
+        ax.plot(
+            stats["Parallelism"],
+            stats["Throughput_IN"]["mean"],
+            linestyle="-",
+            marker="o",
+            color="b",
+            label="Throughput In",
         )
         # Check if 'Predictions' column exists, if so, add dashed line with its values to plot
         if "Predictions" in stats.columns:
             ax.plot(
-                stats.index,
+                stats["Parallelism"],
                 stats["Predictions"],
                 linestyle="--",
                 marker="o",
@@ -228,6 +272,8 @@ class ExperimentData:
             ylabel="Throughput",
             xticks=list(range(1, len(stats.index) + 1)),
         )
+
+        ax.legend(loc="lower right", handler_map={tuple: HandlerTuple(ndivide=None)})
 
         # Parse log file for experiment info
         log_path = os.path.join(self.exp_path, "exp_log.txt")
@@ -256,9 +302,6 @@ class ExperimentData:
             verticalalignment="top",
             bbox=props,
         )
-
-        # Connect points with a line
-        ax.plot(stats.index, stats["mean"], linestyle="-", marker="o", color="b")
 
         # Export plot to experiment path
         output_filename = os.path.join(self.exp_path, "plot.png")
