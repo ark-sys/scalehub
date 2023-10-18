@@ -5,6 +5,7 @@ metadata:
   name: flink-taskmanager
   labels:
     app: flink
+    component: taskmanager
 spec:
   type: ClusterIP
   clusterIP: None

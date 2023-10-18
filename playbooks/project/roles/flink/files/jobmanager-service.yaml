@@ -5,6 +5,8 @@ metadata:
   namespace: default
   labels:
     app: flink
+    component: jobmanager
+
 spec:
   type: ClusterIP
   clusterIP: None

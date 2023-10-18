@@ -16,8 +16,10 @@ data:
     scaling.combined.threshold = 30
     
     flink.host = flink-jobmanager
-    flink.port = 8081
+    flink.port = 8081    
     flink.job.path = /tmp/jobs/{{ job_file }}
     operator.name = {{ task_name }}
         
+    consul.host = consul-server-0.consul-server.consul.svc.cluster.local
+    consul.port = 8500
     debug.level = 1

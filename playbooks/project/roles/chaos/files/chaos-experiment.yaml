@@ -1,0 +1,18 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: network-delay
+spec:
+  # All values are described here https://chaos-mesh.org/docs/simulate-network-chaos-on-kubernetes/#field-description
+  action: delay # the specific chaos action to inject
+  mode: random-max-percent # the mode to run chaos action; supported modes are one/all/fixed/fixed-percent/random-max-percent
+  selector: # pods where to inject chaos actions
+    namespaces:
+      - default
+    labelSelectors:
+      'app': 'flink' # the label of the pod for chaos injection
+      component: taskmanager #TODO maybe here i can target both jobmanager and taskmanager
+  delay:
+    latency: '90ms'
+    correlation: '50'
+#  duration: '12s'

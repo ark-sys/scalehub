@@ -3,6 +3,9 @@ kind: Service
 metadata:
   name: flink-jobmanager-rest
   namespace: default
+  labels:
+    app: flink
+    component: jobmanager
 spec:
   type: NodePort
   ports:

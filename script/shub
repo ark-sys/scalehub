@@ -30,11 +30,12 @@ def provision(config: Config):
 
             # Dump list of requested nodes to file
             with open(config.get_str(Key.INVENTORY_PATH), "w") as f:
-                json.dump(inventory, f, ensure_ascii=False, indent=4)
+                f.write(inventory)
 
-            # Setup cluster with docker, k3s and appropriate labels
+            # Setup cluster with kubernetes
             play: Playbooks = Playbooks()
-            return play.deploy("cluster-setup")
+            kubernetes_type = f"cluster-setup.{config.get_str(Key.KUBERNETES_TYPE)}"
+            return play.deploy(kubernetes_type)
         case _:
             log.error(f"Provision is not implemented for platform {platform_type}")
 
@@ -75,6 +76,9 @@ def deploy(playbook, config: Config):
             warmup=config.get_int(Key.TRANSSCALE_WARMUP),
             interval=config.get_int(Key.TRANSSCALE_INTERVAL),
         )
+    elif playbook == "chaos":
+        p.deploy(playbook,
+                 kubernetes_type=config.get_str(Key.KUBERNETES_TYPE))
     else:
         return p.deploy(
             playbook,

@@ -1,0 +1,66 @@
+- name: Deploy Consul
+  tags: [ create ]
+  block:
+    - name: Create a Consul namespace
+      kubernetes.core.k8s:
+        name: consul
+        kind: Namespace
+        state: present
+    - name: Deploy pvc for Consul
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('ansible.builtin.template', 'consul-pvc.yaml.j2') | from_yaml }}"
+    - name: Add Consul chart repository
+      kubernetes.core.helm_repository:
+        name: hashicorp
+        repo_url: https://helm.releases.hashicorp.com
+    - name: Install Consul
+      kubernetes.core.helm:
+        chart_ref: "hashicorp/consul"
+        release_namespace: consul
+        create_namespace: true
+        release_name: consul
+        values:
+          # Configure global settings in this section.
+          global:
+            name: consul
+            enabled: true
+            acls:
+              manageSystemACLs: false
+            # Gossip encryption
+            gossipEncryption:
+              autoGenerate: true
+            metrics:
+              enabled: true
+              enableAgentMetrics: true
+              agentMetricsRetentionTime: "1m"
+          # Enable and configure the Consul UI.
+          ui:
+            enabled: true
+            metrics:
+              enabled: true
+              provider: "prometheus"
+              baseURL: http://victoria-metrics-single-server.default.svc.cluster.local:8428/api/v1/write
+          # Enable Consul connect pod injection
+          connectInject:
+            enabled: true
+            default: false
+          controller:
+            enabled: true
+          # Configure server params
+          server:
+            enabled: true
+            storageClass: "{{ storage_class_name }}"
+            nodeSelector: 'node-role.kubernetes.io/control-plane: "true"'
+          # Configure client params
+          client:
+            enabled: true
+- name: Delete Consul
+  tags: [ delete ]
+  block:
+    - name: Remove chart
+      kubernetes.core.helm:
+        chart_ref: "hashicorp/consul"
+        release_namespace: consul
+        release_name: consul
+        release_state: absent

@@ -1,6 +1,6 @@
 ---
 - name: Common setup for both workers and controller
-  hosts: control, worker
+  hosts: control, workers
   become: true
   gather_facts: true
   tags: [ always ]
@@ -113,7 +113,7 @@
         flat: true
 
 - name: Setup Workers
-  hosts: worker
+  hosts: workers
   become: true
   gather_facts: false
   strategy: free
@@ -162,21 +162,13 @@
   gather_facts: false
   tags: [ always ]
   tasks:
-    - name: Read hosts file
-      slurp:
-        src: /tmp/hosts.json
-      register: hosts_file
-
-    - name: Parse hosts file
+    - name: Retrieve worker nodes from inventory
       set_fact:
-        worker_nodes: "{{ hosts_file.content | b64decode | from_json }}"
-
-    - name: Extract worker hosts
+        worker_hosts: "{{ groups['workers'] }}"
+    - name: Retrieve control node from inventory
       set_fact:
-        worker_hosts: "{{ worker_nodes.all.children.worker.hosts.keys() | list }}"
+        control_host: "{{ groups['control'][0] }}"
 
-    #########################################################################
-    #TODO this part should execute if producer_nodes or consumer_nodes don't exist
     - name: Define total_nodes variable
       set_fact:
         total_nodes: "{{ worker_hosts | length | int }}"
@@ -188,21 +180,34 @@
     - name: Calculate number of consumer nodes
       set_fact:
         consumer_nodes: "{{ total_nodes | int - producer_nodes | int }}"
-    #########################################################################
+
     - name: Slice worker_hosts list
       set_fact:
         producer_hosts: "{{ worker_hosts[:producer_nodes | int] }}"
         consumer_hosts: "{{ worker_hosts[producer_nodes | int:] }}"
 
-    - name: Label nodes as worker-producer
-      command:
-        cmd: "kubectl label nodes {{ item }} --overwrite node-role.kubernetes.io/worker='producer' node-role.kubernetes.io/producer=''"
-      with_items:
-        - "{{ producer_hosts }}"
+    - name: Label nodes based on node count
+      block:
+        - name: Label nodes as worker-producer
+          command:
+            cmd: "kubectl label nodes {{ item }} --overwrite node-role.kubernetes.io/worker='producer' node-role.kubernetes.io/producer=''"
+          with_items:
+            - "{{ producer_hosts }}"
 
-    - name: Label nodes as worker-consumer
-      command:
-        cmd: "kubectl label nodes {{ item }} --overwrite node-role.kubernetes.io/worker='consumer' node-role.kubernetes.io/consumer=''"
-      with_items:
-        - "{{ consumer_hosts }}"
+        - name: Label nodes as worker-consumer
+          command:
+            cmd: "kubectl label nodes {{ item }} --overwrite node-role.kubernetes.io/worker='consumer' node-role.kubernetes.io/consumer=''"
+          with_items:
+            - "{{ consumer_hosts }}"
+      when: total_nodes | int >= 3
 
+    - name: Label all nodes as worker-producer and worker-consumer
+      command:
+        cmd: "kubectl label nodes {{ item }} --overwrite node-role.kubernetes.io/worker='producer' node-role.kubernetes.io/producer='' node-role.kubernetes.io/consumer=''"
+      with_items:
+        - "{{ worker_hosts }}"
+      when: total_nodes | int < 3
+
+    - name: Label control node
+      command:
+        cmd: "kubectl label nodes {{ control_host }} --overwrite node-role.kubernetes.io/control-plane=true"
