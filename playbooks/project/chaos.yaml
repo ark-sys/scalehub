@@ -1,0 +1,6 @@
+---
+- name: Deploy Chaos Mesh experiment
+  hosts: localhost
+  gather_facts: false
+  roles:
+    - chaos
