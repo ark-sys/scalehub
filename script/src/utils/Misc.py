@@ -17,29 +17,6 @@ class Misc:
         self.__log = log
         self.kubeconfig = Kubeconfig.load_kube_config(os.environ["KUBECONFIG"])
 
-    def create_credentials_file(self):
-
-        try:
-            with open("/run/secrets/mysecretuser", "r") as user_file, open(
-                "/run/secrets/mysecretpass", "r"
-            ) as password_file:
-                username = user_file.read().strip()
-                password = password_file.read().strip()
-            home_directory = os.path.expanduser("~")
-            file_path = os.path.join(home_directory, ".python-grid5000.yaml")
-
-            # Store credentials file
-            with open(file_path, "w") as credentials_file:
-                credentials_file.write(f"username: {username}\n")
-                credentials_file.write(f"password: {password}\n")
-            os.chmod(file_path, 0o600)
-            self.__log.info("Credentials file created successfully.")
-
-        except FileNotFoundError:
-            self.__log.error("Error: Secrets files not found.")
-        except Exception as e:
-            self.__log.error(f"Error: {str(e)}")
-
     def scale_deployment(self, deployment_name, replicas=1):
         # Create a Kubernetes API client
         api_instance = Client.AppsV1Api()

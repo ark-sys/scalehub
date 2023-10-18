@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: serf-agent
+  name: serf-agent
+  namespace: default
+spec:
+  clusterIP: "None"
+  ports:
+    - name: "serf-tcp"
+      port: 7946
+      targetPort: 7946
+      protocol: TCP
+    - name: "serf-udp"
+      port: 7946
+      targetPort: 7946
+      protocol: UDP
+    - name: "serf-tcp-rpc"
+      port: 7373
+      targetPort: 7373
+      protocol: TCP
+    - name: "serf-udp-rpc"
+      port: 7373
+      targetPort: 7373
+      protocol: UDP
+  selector:
+    app: serf-agent

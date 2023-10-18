@@ -1,19 +1,19 @@
 import enoslib as en
+import os
 
 from .Platform import Platform
 from .utils import Logger
 from .utils.Config import Config, Key
-from .utils.Misc import Misc
 
 
 class G5k(Platform):
     def __init__(self, config: Config, log: Logger):
         super().__init__()
         _ = en.init_logging()
+        self.__log = log
 
         # Create .python-grid5000.yaml required by enoslib
-        m: Misc = Misc(log)
-        m.create_credentials_file()
+        self.create_credentials_file()
 
         # Check that Grid5000 is joinable
         en.check()
@@ -43,7 +43,7 @@ class G5k(Platform):
                 primary_network=network,
             )
             .add_machine(
-                roles=["worker"],
+                roles=["workers"],
                 cluster=self.cluster,
                 nodes=self.workers,
                 primary_network=network,
@@ -56,18 +56,22 @@ class G5k(Platform):
     def setup(self):
         # Request resources from Grid5000
         roles, networks = self.provider.init()
+        inventory = ""
 
-        # Initialize dictionary store for inventory
-        Inventory = {"all": {"children": {}}}
-        for grp, hostset in roles.items():
-            Inventory["all"]["children"][grp] = {}
-            Inventory["all"]["children"][grp]["hosts"] = {}
-            for host in hostset:
-                Inventory["all"]["children"][grp]["hosts"][host.alias] = None
+        for role, hosts in roles.items():
+            # Add role header
+            inventory += f"[{role}]\n"
+
+            # Add hosts for the role
+            for host in hosts:
+                inventory += f"{host.alias}\n"
+
+            # Add an extra newline to separate roles
+            inventory += "\n"
         self.post_setup()
 
         # Return inventory dictionary
-        return Inventory
+        return inventory
 
     def post_setup(self):
         # Retrieve running job info
@@ -93,7 +97,28 @@ class G5k(Platform):
             json={"termination": {"job": self.job_id, "site": self.job_site}},
             auth=(username, password),
         )
+    def create_credentials_file(self):
 
+        try:
+            with open("/run/secrets/mysecretuser", "r") as user_file, open(
+                "/run/secrets/mysecretpass", "r"
+            ) as password_file:
+                username = user_file.read().strip()
+                password = password_file.read().strip()
+            home_directory = os.path.expanduser("~")
+            file_path = os.path.join(home_directory, ".python-grid5000.yaml")
+
+            # Store credentials file
+            with open(file_path, "w") as credentials_file:
+                credentials_file.write(f"username: {username}\n")
+                credentials_file.write(f"password: {password}\n")
+            os.chmod(file_path, 0o600)
+            self.__log.info("Credentials file created successfully.")
+
+        except FileNotFoundError:
+            self.__log.error("Error: Secrets files not found.")
+        except Exception as e:
+            self.__log.error(f"Error: {str(e)}")
     def get_platform_metadata(self) -> dict[str, str]:
         return dict(job_id=self.job_id)
 

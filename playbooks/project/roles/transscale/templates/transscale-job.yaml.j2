@@ -14,7 +14,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: transscale
-              image: "{{image}}:{{tag}}"
+              image: "{{transscale_image}}:{{transscale_tag}}"
               imagePullPolicy: Always
               resources:
                 limits:

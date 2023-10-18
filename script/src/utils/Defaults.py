@@ -8,6 +8,7 @@ class ConfigKeys:
     NUM_WORKERS = "platform.workers"
     QUEUE_TYPE = "platform.queue"
     WALLTIME = "platform.walltime"
+    KUBERNETES_TYPE = "platform.kubernetes_type"
 
     NAME = "experiment.name"
     JOB = "experiment.job_file"
@@ -33,7 +34,7 @@ class DefaultValues:
         CONF_PATH = "/app/conf/scalehub.conf"
         PLAYBOOKS_PATH = "/app/playbooks/project"
         EXPERIMENTS_DATA_PATH = "/app/experiments-data"
-        INVENTORY_PATH = "/tmp/hosts.json"
+        INVENTORY_PATH = "/tmp/hosts"
 
         class Debug:
             DISABLED = 0
@@ -49,6 +50,7 @@ class DefaultValues:
         workers = 2
         queue = "default"
         walltime = "1:00:00"
+        kubernetes_type = "k3s"
 
     class Experiment:
         name = "scalehub"

@@ -14,7 +14,7 @@ class Platform:
     def get_platform_metadata(self) -> dict:
         raise NotImplementedError()
 
-    def setup(self) -> dict:
+    def setup(self) -> str:
         raise NotImplementedError()
 
     def deploy_playbook(self):
