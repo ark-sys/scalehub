@@ -17,6 +17,7 @@ spec:
     spec:
       nodeSelector:
         node-role.kubernetes.io/worker: consumer
+        node-role.kubernetes.io/autoscaling: SCHEDULABLE
       terminationGracePeriodSeconds: 0
       imagePullSecrets:
         - name: gitlab-scalehub

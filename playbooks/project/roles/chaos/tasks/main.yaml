@@ -16,21 +16,24 @@
         release_namespace: chaos-mesh
         create_namespace: true
         release_name: chaos-mesh
-        state: present
-        set_values:
-          - value: chaosDaemon.runtime=containerd
-          - value: chaosDaemon.socketPath=/run/k3s/containerd/containerd.sock
-            when: kubernetes_type == "k3s"
-          - value:  chaosDaemon.socketPath=/var/snap/microk8s/common/run/containerd.sock
-            when: kubernetes_type == "microk8s"
+        release_state: present
+        values:
+          dashboard:
+            securityMode: false
+          chaosDaemon:
+            runtime: containerd
+            socketPath: /run/k3s/containerd/containerd.sock
+#        set_values:
+#          - value: chaosDaemon.runtime=containerd
+#          - value: chaosDaemon.socketPath=/run/k3s/containerd/containerd.sock
+#            when: kubernetes_type == "k3s"
+#          - value:  chaosDaemon.socketPath=/var/snap/microk8s/common/run/containerd.sock
+#            when: kubernetes_type == "microk8s"
     - name: Deploy cluster account for chaos-mesh
       kubernetes.core.k8s:
         state: present
         definition: "{{ lookup('ansible.builtin.file', 'chaos-mesh-rbac.yaml') | from_yaml_all }}"
-    - name: Deploy chaos experiment
-      kubernetes.core.k8s:
-        state: present
-        definition: "{{ lookup('ansible.builtin.file', 'chaos-experiment.yaml') | from_yaml }}"
+
 
 - name: Delete Chaos Mesh
   tags: [ delete ]
@@ -44,8 +47,11 @@
         state: absent
         definition: "{{ lookup('ansible.builtin.file', 'chaos-mesh-rbac.yaml') | from_yaml_all }}"
     - name : Remove helm chart
-      chart_ref: "chaos-mesh/chaos-mesh"
-      state: absent
+      kubernetes.core.helm:
+        chart_ref: "chaos-mesh/chaos-mesh"
+        release_name: chaos-mesh
+        release_namespace: chaos-mesh
+        release_state: absent
     - name: Remove namespace
       kubernetes.core.k8s:
         name: chaos-mesh

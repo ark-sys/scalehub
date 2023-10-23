@@ -1,0 +1,14 @@
+- name: Deploy Chaos Mesh
+  tags: [ create ]
+  block:
+    - name: Deploy chaos experiment
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('ansible.builtin.file', 'chaos-experiment.yaml') | from_yaml }}"
+- name: Delete Chaos Mesh
+  tags: [ delete ]
+  block:
+    - name: Delete chaos experiment
+      kubernetes.core.k8s:
+        state: absent
+        definition: "{{ lookup('ansible.builtin.file', 'chaos-experiment.yaml') | from_yaml }}"

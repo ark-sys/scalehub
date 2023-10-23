@@ -21,13 +21,14 @@ spec:
         node-role.kubernetes.io/control-plane: "true"
       containers:
         - name: transscale
-          image: "{{image}}:{{tag}}"
+          image: "{{transscale_image}}:{{transscale_tag}}"
           imagePullPolicy: Always
           resources:
             limits:
               memory: 1Gi
               cpu: 200m
-          command: ['python', 'run_transscale.py', '-e']
+#          command: ['python', 'run_transscale.py', '-e']
+          command: ["/bin/sh", "-c", "trap : TERM INT; sleep infinity & wait"]
           tty: true
           volumeMounts:
             - name: transscale-config-volume

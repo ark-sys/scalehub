@@ -11,6 +11,7 @@ from matplotlib.legend_handler import HandlerTuple
 
 from .Playbooks import Playbooks
 from .utils.Config import Key as Key, Config
+from .utils.Defaults import DefaultValues as Values
 from .utils.Logger import Logger
 from .utils.Misc import Misc
 
@@ -75,7 +76,7 @@ class ExperimentData:
         log_path = os.path.join(self.exp_path, "exp_log.txt")
         with open(log_path, "r") as log_file:
             content = log_file.read()
-        operator_name_match = re.search(r"Operator name :\s*(\w+)", content)
+        operator_name_match = re.search(r"experiment.task_name =\s*(\w+)", content)
         if operator_name_match:
             operator_name = operator_name_match.group(1)
             self.__log.info(f"Retrieving timeseries for operator {operator_name}")
@@ -358,28 +359,14 @@ class Experiment:
         # Return the path to the new subfolder
         return subfolder_path
 
-    def create_log_file(self, exp_path, config):
+    def create_log_file(self, exp_path):
         # Create log file
         log_file_path = os.path.join(exp_path, "exp_log.txt")
 
         # Dump experiment information to log file
-        with open(log_file_path, "w") as file:
-            file.write(f"Site : {self.site}\n")
-            file.write(f"Cluster : {self.cluster}\n")
-            file.write(f"Job name : {self.job_name}\n")
-            file.write(f"Operator name : {self.task_name}\n")
-            file.write("Load generators : \n")
-            for lg_config in config.parse_load_generators():
-                file.write(f"   LG : {lg_config['name']}\n")
-                file.write(f"       topic : {lg_config['topic']}\n")
-                file.write(f"       num_sensors : {lg_config['num_sensors']}\n")
-                file.write(f"       interval_ms : {lg_config['interval_ms']}\n")
-                file.write(f"       replicas : {lg_config['replicas']}\n")
-                file.write(f"       value : {lg_config['value']}\n")
-            file.write("Trasscale : \n")
-            file.write(f"    max parallelism : {config.get_int(Key.TRANSCCALE_PAR)}\n")
-            file.write(f"    interval : {config.get_int(Key.TRANSSCALE_INTERVAL)}\n")
-            file.write(f"    warmup : {config.get_int(Key.TRANSSCALE_WARMUP)}\n")
+        with open(log_file_path, "w") as file, open(Values.System.CONF_PATH) as config:
+            for line in config:
+                file.write(line)
             file.write(f"\nExperiment start at : {self.start_ts}\n")
         return log_file_path
 
@@ -391,7 +378,7 @@ class Experiment:
         self.exp_path = self.create_exp_folder(
             datetime.fromtimestamp(self.start_ts).strftime("%d-%m-%Y")
         )
-        self.log_file = self.create_log_file(self.exp_path, self.config)
+        self.log_file = self.create_log_file(self.exp_path)
 
     def end_experiment(self):
         # Get finish timestamp

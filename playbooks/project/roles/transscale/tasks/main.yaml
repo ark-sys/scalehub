@@ -8,6 +8,4 @@
         force: yes
         definition: "{{ lookup('ansible.builtin.file', 'gitlab-registry.yaml') | from_yaml }}"
 
-- import_tasks: consul.yaml
-
 - import_tasks: transscale.yaml

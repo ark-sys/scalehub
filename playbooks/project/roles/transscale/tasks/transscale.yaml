@@ -1,11 +1,6 @@
 - name: Deploy transscale
   tags: [ create ]
   block:
-    - name: Read hosts file
-      slurp:
-        src: /tmp/hosts.json
-      register: hosts_file
-
     - name: Get kubeconfig from cluster
       shell: kubectl config view --raw --minify
       register: kubeconfig
@@ -27,11 +22,7 @@
       kubernetes.core.k8s:
         state: present
         definition: "{{ lookup('ansible.builtin.template', 'transscale-config.yaml.j2') | from_yaml }}"
-    #
-    #    - name: Deploy transscale
-    #      kubernetes.core.k8s:
-    #        state: present
-    #        definition: "{{ lookup('ansible.builtin.template', 'transscale-deployment.yaml.j2') | from_yaml }}"
+
 
     - name: Deploy transscale
       kubernetes.core.k8s:
@@ -56,10 +47,6 @@
 - name: Delete transscale
   tags: [ delete ]
   block:
-    #    - name: Delete transscale
-    #      kubernetes.core.k8s:
-    #        state: absent
-    #        definition: "{{ lookup('ansible.builtin.template', 'transscale-deployment.yaml.j2') | from_yaml }}"
     - name: Delete transscale
       kubernetes.core.k8s:
         state: absent

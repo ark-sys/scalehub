@@ -27,9 +27,6 @@
             enabled: true
             acls:
               manageSystemACLs: false
-            # Gossip encryption
-            gossipEncryption:
-              autoGenerate: true
             metrics:
               enabled: true
               enableAgentMetrics: true
@@ -40,7 +37,7 @@
             metrics:
               enabled: true
               provider: "prometheus"
-              baseURL: http://victoria-metrics-single-server.default.svc.cluster.local:8428/api/v1/write
+              baseURL: http://victoria-metrics-single-server.default.svc.cluster.local:8428/
           # Enable Consul connect pod injection
           connectInject:
             enabled: true
@@ -55,6 +52,8 @@
           # Configure client params
           client:
             enabled: true
+            nodeSelector: |
+              node-role.kubernetes.io/worker: consumer
 - name: Delete Consul
   tags: [ delete ]
   block:

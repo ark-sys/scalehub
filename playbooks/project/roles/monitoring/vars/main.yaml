@@ -1,2 +1,4 @@
 vm_image: registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/victoria-metrics
 vm_tag: v1.86.1
+
+storage_class_name: nfs-csi
