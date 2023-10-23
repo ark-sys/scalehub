@@ -2,7 +2,4 @@
 transscale_image: registry.gitlab.inria.fr/stream-processing-autoscaling/transscale
 transscale_tag: combined-testing
 
-serf_image: registry.gitlab.inria.fr/stream-processing-autoscaling/transscale/serf
-serf_tag: latest
 
-storage_class_name: nfs-csi

@@ -21,6 +21,7 @@ spec:
                   memory: 1Gi
                   cpu: 200m
               command: ['python3', '/run_transscale.py', '-e']
+#              command: ["/bin/sh", "-c", "trap : TERM INT; sleep infinity & wait"]
               volumeMounts:
                 - name: transscale-config-volume
                   mountPath: /etc/transscale/conf

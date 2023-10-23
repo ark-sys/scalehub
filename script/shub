@@ -2,7 +2,6 @@
 import argparse
 
 # import argcomplete
-import json
 import os.path
 import re
 from time import sleep
@@ -77,8 +76,10 @@ def deploy(playbook, config: Config):
             interval=config.get_int(Key.TRANSSCALE_INTERVAL),
         )
     elif playbook == "chaos":
-        p.deploy(playbook,
-                 kubernetes_type=config.get_str(Key.KUBERNETES_TYPE))
+        p.deploy(
+            playbook,
+            kubernetes_type=config.get_str(Key.KUBERNETES_TYPE),
+        )
     else:
         return p.deploy(
             playbook,
@@ -111,6 +112,11 @@ def delete(playbook, config: Config):
             warmup=config.get_int(Key.TRANSSCALE_WARMUP),
             interval=config.get_int(Key.TRANSSCALE_INTERVAL),
         )
+    elif playbook == "chaos":
+        p.delete(
+            playbook,
+            kubernetes_type=config.get_str(Key.KUBERNETES_TYPE),
+        )
     else:
         return p.delete(playbook, job_file=config.get_str(Key.JOB))
 
@@ -142,6 +148,10 @@ def run(action, config):
             e: Experiment = Experiment(config, log)
             e.full_run()
             reload("flink", config)
+        case "chaos":
+            m.apply_kubernetes_resource(
+                "/app/playbooks/project/roles/chaos/files/chaos-experiment.yaml"
+            )
         case "clean":
             # Clean flink jobs
             m.execute_command_on_pod(
@@ -153,6 +163,8 @@ def run(action, config):
             m.scale_deployment("flink-taskmanager")
             # Clean transscale job
             m.delete_job("transscale-job")
+        case "test":
+            pass
         case _:
             log.error(f"Action {action} is not implemented.")
 

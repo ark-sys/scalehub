@@ -1,14 +1,11 @@
 import os
 import re
-import subprocess
-from time import sleep
-
-from kubernetes import client as Client, config as Kubeconfig
+import yaml
+from kubernetes import client as Client, config as Kubeconfig, utils
 from kubernetes.client import Configuration
 from kubernetes.client.api import core_v1_api
 from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
-
 from .Logger import Logger
 
 
@@ -101,6 +98,30 @@ class Misc:
         except ApiException as e:
             self.__log.error(f"Error executing command on pod {pod_name}: {e}")
 
+    def apply_kubernetes_resource(self, file_path):
+        """
+        Apply Kubernetes resource from the specified file path.
+
+        Args:
+            file_path (str): Path to the file containing Kubernetes resource.
+
+        Returns:
+            bool: True if the resource was applied successfully, False otherwise.
+        """
+        try:
+            api_instance = Client.ApiClient()
+
+            # Apply each resource
+            utils.create_from_yaml(api_instance, file_path)
+            self.__log.info("Kubernetes resource applied successfully.")
+        except ApiException as e:
+            self.__log.error(f"Error applying Kubernetes resource: {str(e)}")
+            return
+
+        except Exception as e:
+            self.__log.error(f"An unexpected error occurred: {str(e)}")
+            return
+
     def add_time(self):
         command = 'ssh -t access.grid5000.fr "ssh \\$LOGNAME@rennes"'
         add_time = " oarwalltime $(oarstat -u | tail -n 1 | cut -d ' ' -f 1) +1"
@@ -109,9 +130,9 @@ class Misc:
         with open(log_path, "r") as log_file:
             logs = log_file.read()
 
-        job_name_match = re.search(r"Job name : (.+)", logs)
+        job_name_match = re.search(r"experiment.job_file = (.+)", logs)
         lg_matches = re.finditer(
-            r"LG : (.+?)\s+topic : (.+?)\s+num_sensors : (\d+)\s+interval_ms : (\d+)",
+            r"name = (.+?)\s+topic = (.+?)\s+num_sensors = (\d+)\s+interval_ms = (\d+)",
             logs,
             re.DOTALL,
         )

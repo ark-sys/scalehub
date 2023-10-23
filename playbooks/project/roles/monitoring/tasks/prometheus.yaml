@@ -11,9 +11,31 @@
         release_namespace: monitoring
         create_namespace: true
         release_name: prometheus
+        release_state: present
+
         values: "{{ lookup('ansible.builtin.file', 'kube-prometheus-stack-values.yaml') | from_yaml }}"
 
     - name: Deploying Flink rules
       kubernetes.core.k8s:
         state: present
+        definition: "{{ lookup('ansible.builtin.file', 'flinkrules.yaml') | from_yaml }}"
+
+- name: Setup Prometheus - Deletion block
+  delegate_to: localhost
+  tags: [ delete ]
+  block:
+    - name: Delete Prometheus chart
+      kubernetes.core.helm:
+        chart_ref: "kube-prometheus-stack"
+        chart_version: 51.9.0
+        chart_repo_url: https://prometheus-community.github.io/helm-charts
+        release_namespace: monitoring
+        create_namespace: true
+        release_name: prometheus
+        release_state: absent
+        values: "{{ lookup('ansible.builtin.file', 'kube-prometheus-stack-values.yaml') | from_yaml }}"
+
+    - name: Delete Flink rules
+      kubernetes.core.k8s:
+        state: absent
         definition: "{{ lookup('ansible.builtin.file', 'flinkrules.yaml') | from_yaml }}"

@@ -1,18 +1,49 @@
-apiVersion: chaos-mesh.org/v1alpha1
 kind: NetworkChaos
+apiVersion: chaos-mesh.org/v1alpha1
 metadata:
-  name: network-delay
+  namespace: default
+  name: flink-chaos
 spec:
-  # All values are described here https://chaos-mesh.org/docs/simulate-network-chaos-on-kubernetes/#field-description
-  action: delay # the specific chaos action to inject
-  mode: random-max-percent # the mode to run chaos action; supported modes are one/all/fixed/fixed-percent/random-max-percent
-  selector: # pods where to inject chaos actions
+  selector:
     namespaces:
       - default
     labelSelectors:
-      'app': 'flink' # the label of the pod for chaos injection
-      component: taskmanager #TODO maybe here i can target both jobmanager and taskmanager
+      app: flink
+      component: taskmanager
+  #    nodeSelectors:
+  #      'node-role.kubernetes.io/worker': 'consumer'
+  # All values are described here https://chaos-mesh.org/docs/simulate-network-chaos-on-kubernetes/#field-description
+  mode: random-max-percent
+  value: '100'
+  action: delay
   delay:
-    latency: '90ms'
+    latency: 40ms
     correlation: '50'
-#  duration: '12s'
+    jitter: 0ms
+  direction: to
+
+---
+
+kind: NetworkChaos
+apiVersion: chaos-mesh.org/v1alpha1
+metadata:
+  namespace: default
+  name: consul-chaos
+spec:
+  selector:
+    namespaces:
+      - consul
+    labelSelectors:
+      app: consul
+      component: client
+  #    nodeSelectors:
+  #      'node-role.kubernetes.io/worker': 'consumer'
+  # All values are described here https://chaos-mesh.org/docs/simulate-network-chaos-on-kubernetes/#field-description
+  mode: random-max-percent
+  value: '100'
+  action: delay
+  delay:
+    latency: 40ms
+    correlation: '50'
+    jitter: 0ms
+  direction: to
