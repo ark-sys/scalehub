@@ -7,43 +7,41 @@ spec:
   selector:
     namespaces:
       - default
-    labelSelectors:
-      app: flink
-      component: taskmanager
-  #    nodeSelectors:
-  #      'node-role.kubernetes.io/worker': 'consumer'
-  # All values are described here https://chaos-mesh.org/docs/simulate-network-chaos-on-kubernetes/#field-description
-  mode: random-max-percent
-  value: '100'
-  action: delay
-  delay:
-    latency: 40ms
-    correlation: '50'
-    jitter: 0ms
-  direction: to
-
----
-
-kind: NetworkChaos
-apiVersion: chaos-mesh.org/v1alpha1
-metadata:
-  namespace: default
-  name: consul-chaos
-spec:
-  selector:
-    namespaces:
       - consul
-    labelSelectors:
-      app: consul
-      component: client
-  #    nodeSelectors:
-  #      'node-role.kubernetes.io/worker': 'consumer'
+    nodeSelectors:
+      'node-role.kubernetes.io/worker': 'consumer'
   # All values are described here https://chaos-mesh.org/docs/simulate-network-chaos-on-kubernetes/#field-description
-  mode: random-max-percent
-  value: '100'
+  mode: fixed-percent
+  value: 50
   action: delay
   delay:
-    latency: 40ms
-    correlation: '50'
+    latency: 20ms
+    correlation: '10'
     jitter: 0ms
   direction: to
+
+#---
+#
+#kind: NetworkChaos
+#apiVersion: chaos-mesh.org/v1alpha1
+#metadata:
+#  namespace: default
+#  name: consul-chaos
+#spec:
+#  selector:
+#    namespaces:
+#      - consul
+#    labelSelectors:
+#      app: consul
+#      component: client
+#  #    nodeSelectors:
+#  #      'node-role.kubernetes.io/worker': 'consumer'
+#  # All values are described here https://chaos-mesh.org/docs/simulate-network-chaos-on-kubernetes/#field-description
+#  mode: random-max-percent
+#  value: '80'
+#  action: delay
+#  delay:
+#    latency: 20ms
+#    correlation: '50'
+#    jitter: 0ms
+#  direction: to

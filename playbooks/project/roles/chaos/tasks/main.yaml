@@ -20,9 +20,16 @@
         values:
           dashboard:
             securityMode: false
+            nodeSelector:
+              node-role.kubernetes.io/control-plane: "true"
           chaosDaemon:
             runtime: containerd
             socketPath: /run/k3s/containerd/containerd.sock
+            nodeSelector:
+              node-role.kubernetes.io/worker: "consumer"
+          controllerManager:
+            nodeSelector:
+              node-role.kubernetes.io/control-plane: "true"
 #        set_values:
 #          - value: chaosDaemon.runtime=containerd
 #          - value: chaosDaemon.socketPath=/run/k3s/containerd/containerd.sock
