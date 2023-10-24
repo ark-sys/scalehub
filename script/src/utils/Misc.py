@@ -112,7 +112,8 @@ class Misc:
             api_instance = Client.ApiClient()
 
             # Apply each resource
-            utils.create_from_yaml(api_instance, file_path)
+            utils.create_from_yaml(api_instance, file_path, verbose=True)
+
             self.__log.info("Kubernetes resource applied successfully.")
         except ApiException as e:
             self.__log.error(f"Error applying Kubernetes resource: {str(e)}")

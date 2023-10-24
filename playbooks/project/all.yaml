@@ -7,6 +7,7 @@
     - monitoring
     - kafka
     - flink
+    - chaos
+# Deploy these playbooks individually to control transscale startup
 #    - load_generators
-# Deploy this playbook individually to control transscale startup
 #    - transscale

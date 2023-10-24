@@ -211,3 +211,10 @@
     - name: Label control node
       command:
         cmd: "kubectl label nodes {{ control_host }} --overwrite node-role.kubernetes.io/control-plane=true"
+
+    - name: Randomly select a consumer node
+      set_fact:
+        random_consumer_node: "{{ consumer_hosts | random(seed=42) }}"
+    - name: Label a random consumer node with autoscaling
+      command:
+        cmd: "kubectl label node {{ random_consumer_node }} --overwrite node-role.kubernetes.io/autoscaling='SCHEDULABLE'"
