@@ -1,14 +1,55 @@
+---
 - name: Deploy Chaos Mesh
-  tags: [ create ]
   block:
-    - name: Deploy chaos experiment
+    - name: Remove label (chaos=true) from all nodes
+      shell: |
+        for node in $(kubectl get nodes -l chaos=true -o jsonpath='{.items[*].metadata.name}'); do
+          kubectl label nodes $node chaos-
+        done
+
+    - name: Deploy chaos experiment on consul
       kubernetes.core.k8s:
         state: present
-        definition: "{{ lookup('ansible.builtin.file', 'chaos-experiment.yaml') | from_yaml }}"
-- name: Delete Chaos Mesh
-  tags: [ delete ]
-  block:
-    - name: Delete chaos experiment
-      kubernetes.core.k8s:
-        state: absent
-        definition: "{{ lookup('ansible.builtin.file', 'chaos-experiment.yaml') | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.file', 'consul/fixed-latency.yaml') | from_yaml }}"
+
+    - name: Retrieve list of impacted pod instances
+      shell: >
+        kubectl get networkchaos fixed-latency-consul -o=jsonpath='{.status.instances}'
+      register: result
+    - set_fact:
+        impacted_pod_list: "{{ result.stdout | regex_replace('consul/', '') }}"
+    - set_fact:
+        impacted_pod_names: "{{ impacted_pod_list.keys() | list }}"
+
+    - name: Add a label (chaos:true) to every node that hosts an impacted pod
+      shell: |
+        node=$(kubectl get pod -n consul {{ item }} -o jsonpath='{.spec.nodeName}')
+        echo $node
+        kubectl label nodes $node chaos=true
+      loop: "{{ impacted_pod_names }}"
+
+
+
+
+
+
+
+
+
+
+#    - name: Retrieve the list of instances of the service consul
+#      ansible.builtin.command: kubectl get pods -n consul -l app=consul -l component=client -o jsonpath='{range .items[*]}{"\n"}{.metadata.name}{":\t"}{.spec.nodeName}{end}'
+#      register: consul_info
+#
+#    - name: Retrieve the list of taskmanagers pod and the nodes on which they are running
+#      ansible.builtin.command: kubectl get pods -l app=flink -l component=taskmanager -o jsonpath='{range .items[*]}{"\n"}{.metadata.name}{":\t"}{.spec.nodeName}{end}'
+#      register: taskmanager_info
+#
+#
+#    - name: Apply the label 'chaos=true' to each instance of consul that runs on an impacted node
+#      ansible.builtin.command: kubectl label -n consul pod {{ item.split(':')[0] }} chaos=true
+#      loop: "{{ consul_info.stdout_lines }}"
+#      when:
+#        - item != ''
+#        - item.split('\t')[1] in taskmanager_info.stdout_lines | map('split', '\t') | map('last') | list
+

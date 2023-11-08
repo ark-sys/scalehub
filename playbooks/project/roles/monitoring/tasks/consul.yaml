@@ -20,6 +20,7 @@
         release_namespace: consul
         create_namespace: true
         release_name: consul
+        wait: true
         values:
           # Configure global settings in this section.
           global:

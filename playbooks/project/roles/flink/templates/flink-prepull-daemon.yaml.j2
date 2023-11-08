@@ -1,0 +1,28 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: flink-prepuller
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      name: prepuller
+  template:
+    metadata:
+      labels:
+        name: prepuller
+    spec:
+      nodeSelector:
+        node-role.kubernetes.io/worker: consumer
+      imagePullSecrets:
+        - name: gitlab-scalehub
+      initContainers:
+        - name: prepuller-1
+          image: "{{image}}:{{tag}}"
+          command: ["sh", "-c", "'true'"]
+      # Use the pause container to ensure the Pod goes into a `Running` phase
+      # but doesn't take up resource on the cluster
+      containers:
+        - name: pause
+          image: gcr.io/google_containers/pause
