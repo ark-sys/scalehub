@@ -2,6 +2,7 @@ import json
 import os
 import re
 from datetime import datetime
+from typing import Dict, Any, List
 
 import numpy as np
 import pandas as pd
@@ -152,7 +153,37 @@ class ExperimentData:
                 output_file = os.path.join(self.exp_path, "joined_output.csv")
                 df_merged.dropna().to_csv(output_file, index=False)
 
+    # This function takes a join.csv file, which contains throughput and parallelism metric from an experiment And
+    # evaluates mean and stdev throughput for each parallelism. If predictions are found for experiment,
+    # they are added to output file named stats.csv
     def eval_stats(self, skip_duration):
+        def extract_predictions(log_path) -> dict[Any, list[Any]]:
+            predictions = {}
+            target_pattern = r"((?:.*\n){14}.*Re-configuring PARALLELISM\n.*Current Parallelism: (\d+)\n.*Target Parallelism: (\d+))"
+
+            with open(log_path, "r") as log_file:
+                logs = log_file.read()
+
+                # Extract strings from match to match-15 lines
+                match_blocks = re.findall(target_pattern, logs)
+                for match in match_blocks:
+                    block = match[0].strip()
+                    target_parallelism = match[2]
+                    tpt_pattern = rf"\bpar, transp: {target_parallelism}, 1 target tput: \d+ new_tput %: (\d+\.\d+)"
+                    prediction = re.search(tpt_pattern, block)
+                    if prediction:
+                        prediction_value = float(prediction.group(1))
+
+                        # Initialize an empty list if target_parallelism doesn't exist in predictions
+                        if target_parallelism not in predictions:
+                            predictions[target_parallelism] = []
+
+                        # Calculate region
+                        region = len(predictions[target_parallelism]) + 1
+
+                        predictions[target_parallelism].append((region, prediction_value))
+                # Return list of predictions
+                return predictions
         filename = os.path.join(self.exp_path, "joined_output.csv")
         try:
             # Read the CSV file with comma delimiter
@@ -192,36 +223,17 @@ class ExperimentData:
             transscale_log = os.path.join(self.exp_path, "transscale_log.txt")
             if os.path.exists(transscale_log):
                 # Transscale log found, try to extract predictions
-                def extract_predictions(log_path) -> dict[int, float]:
-                    predictions = {}
-                    target_pattern = r"((?:.*\n){14}.*Re-configuring PARALLELISM\n.*Current Parallelism: (\d+)\n.*Target Parallelism: (\d+))"
-
-                    with open(log_path, "r") as log_file:
-                        logs = log_file.read()
-
-                    # Extract strings from match to match-15 lines
-                    match_blocks = re.findall(target_pattern, logs)
-
-                    for match in match_blocks:
-                        block = match[0].strip()
-                        target_value = match[2]
-                        tpt_pattern = rf"\bpar, transp: {target_value}, 1 target tput: \d+ new_tput %: (\d+\.\d+)"
-                        match_tpt = re.search(tpt_pattern, block)
-                        if match_tpt:
-                            target_tpt = float(match_tpt.group(1))
-                            predictions[target_value] = target_tpt
-
-                    # Return list of predictions
-                    return predictions
-
                 self.__log.info("Transscale log found. Preparing predictions export.")
                 predictions = extract_predictions(transscale_log)
-                if "Predictions" not in stats.columns:
-                    stats["Predictions"] = None
-                # Extend stats file with transscale predictions
-                for key, value in predictions.items():
-                    key = int(key)  # Convert key to integer
-                    stats.loc[stats["Parallelism"] == key, "Predictions"] = value
+
+                # Create a new DataFrame from the dictionary
+                pred_df = pd.DataFrame(
+                    [(int(k), *i) for k, v in predictions.items() for i in v],
+                    columns=["Parallelism", "region", "Predictions"],
+                )
+                # # Set 'Parallelism' and 'region' as index in the new DataFrame
+                pred_df.set_index(["Parallelism", "region"], inplace=True)
+                stats = pd.concat([stats, pred_df], axis=1)
 
             # Save stats to a CSV file in the same path as the input filename
             output_path = os.path.join(os.path.dirname(filename), "stats.csv")
@@ -242,17 +254,6 @@ class ExperimentData:
         job_name, num_sensors_sum, avg_interval_ms, start_ts, end_ts = m.parse_log(
             log_path
         )
-        # # # Place points and error bars
-        # ax.errorbar(
-        #     stats["Parallelism"],
-        #     stats["Throughput_OUT"]["mean"],
-        #     yerr=stats["Throughput_OUT"]["std"],
-        #     fmt="o",
-        #     linestyle="-",
-        #     color="g",
-        #     capsize=4,
-        #     label="Throughput Out",
-        # )
 
         ax.errorbar(
             stats["Parallelism"],
@@ -264,14 +265,7 @@ class ExperimentData:
             capsize=4,
             label="Throughput In",
         )
-        # ax.plot(
-        #     stats["Parallelism"],
-        #     stats["Throughput_IN"]["mean"],
-        #     linestyle="-",
-        #     marker="o",
-        #     color="b",
-        #     label="Throughput In",
-        # )
+
         # Check if 'Predictions' column exists, if so, add dashed line with its values to plot
         if "Predictions" in stats.columns:
             ax.plot(
