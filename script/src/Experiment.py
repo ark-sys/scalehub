@@ -195,30 +195,41 @@ class ExperimentData:
             # Add UTC+2 to datetime
             df["Time"] = df["Time"].dt.tz_convert(pytz.timezone("Europe/Paris"))
 
-            # Make sure that Parallelism values are integers and not floats
-            df["Parallelism"] = df["Parallelism"].astype(int)
+            # Create a temporary 'region' column
+            df["temp_region"] = (df["Parallelism"].diff(1) != 0).astype("int").cumsum()
 
-            # Skip the specified duration for each degree of parallelism
-            df = (
-                df.groupby("Parallelism")
-                .apply(
-                    lambda x: x[
-                        x["Time"]
-                        >= x["Time"].min() + pd.Timedelta(seconds=skip_duration)
+            # Filter out rows where the count of 'Parallelism' in the 'temp_region' is less than 6
+            df = df[df.groupby("temp_region")["Parallelism"].transform("count") > 5]
+
+            # Drop the temporary 'region' column
+            df = df.drop(columns=["temp_region"])
+
+            # Now create the actual 'region' column on the filtered DataFrame
+            df["region"] = (df["Parallelism"].diff(1) != 0).astype("int").cumsum()
+
+            # Now you can group by 'Parallelism' and 'region'
+            grouped = df.groupby(["Parallelism", "region"])
+
+            # For each group, skip the first X seconds
+            filtered_df = grouped.apply(
+                lambda x: x[
+                    x["Time"] >= x["Time"].min() + pd.Timedelta(seconds=skip_duration)
                     ]
-                )
-                .reset_index(drop=True)
-            )
+            ).reset_index(drop=True)
+
+            # Make sure that Parallelism values are integers and not floats
+            filtered_df["Parallelism"] = filtered_df["Parallelism"].astype(int)
 
             # Calculate mean throughput and standard deviation for each parallelism
-            stats_tpo = df.groupby("Parallelism")["Throughput_OUT"].agg(["mean", "std"])
-            stats_tpi = df.groupby("Parallelism")["Throughput_IN"].agg(["mean", "std"])
+            stats_tpo = filtered_df.groupby("Parallelism")["Throughput_OUT"].agg(["mean", "std"])
+            stats_tpi = filtered_df.groupby("Parallelism")["Throughput_IN"].agg(["mean", "std"])
             # Combine the mean and std for 'Throughput' and 'Input' into a single DataFrame
             stats = pd.concat(
                 [stats_tpo, stats_tpi], axis=1, keys=["Throughput_OUT", "Throughput_IN"]
             )
-            # Reset index for better formatting
-            stats.reset_index(inplace=True)
+            stats["region"] = stats.groupby("Parallelism").cumcount() + 1
+            stats.index = stats.index.droplevel("region")
+            stats.set_index("region", append=True, inplace=True)
             # Check if transscale log exists
             transscale_log = os.path.join(self.exp_path, "transscale_log.txt")
             if os.path.exists(transscale_log):

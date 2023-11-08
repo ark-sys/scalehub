@@ -170,6 +170,7 @@ def run(action, config):
             p.delete("load_generators")
 
         case "test":
+            e: ExperimentData()
             pass
         case _:
             log.error(f"Action {action} is not implemented.")
