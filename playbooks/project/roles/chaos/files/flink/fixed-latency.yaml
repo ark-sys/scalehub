@@ -1,0 +1,34 @@
+---
+kind: NetworkChaos
+apiVersion: chaos-mesh.org/v1alpha1
+metadata:
+  namespace: default
+  name: fixed-latency-flink
+spec:
+  selector:
+    namespaces:
+      - default
+    labelSelectors:
+        app: flink
+        component: taskmanager
+    nodeSelectors:
+        chaos: 'true'
+  # All values are described here
+  # https://chaos-mesh.org/docs/simulate-network-chaos-on-kubernetes/#field-description
+  mode: all
+  action: delay
+  delay:
+    latency: 25ms
+    correlation: '0'
+    jitter: 0ms
+  direction: to
+
+
+
+
+#commands
+# Targeted instances
+# kubectl get networkchaos fixed-latency-flink -o=jsonpath='{.status.instances}'
+# Taskmanagers nodes
+# kubectl get pods -l app=flink -l component=taskmanager -o jsonpath='{range .items[*]}{"\n"}{.metadata.name}{":\t"}{.spec.nodeName}{end}'
+# kubectl get pods -n consul -l app=consul -l component=client -o jsonpath='{range .items[*]}{"\n"}{.metadata.name}{":\t"}{.spec.nodeName}{end}'

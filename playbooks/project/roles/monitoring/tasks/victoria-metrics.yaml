@@ -8,7 +8,7 @@
       kubernetes.core.helm:
         name: victoria-metrics-single
         chart_ref: "victoria-metrics-single"
-        chart_version: 0.8.41
+        chart_version: 0.9.7
         chart_repo_url: https://victoriametrics.github.io/helm-charts/
         release_namespace: default
         values:

@@ -9,21 +9,29 @@ metadata:
 data:
   flink-conf.yaml: |+
     #scheduler-mode: reactive
-    akka.framesize: 104857600b
-    jobmanager.rpc.address: flink-jobmanager
     web.upload.dir: /mnt/data
-    taskmanager.numberOfTaskSlots: 1
+    io.tmp.dirs: /mnt/data/tmp
+    
+    akka.framesize: 104857600b
     blob.server.port: 6124
-    jobmanager.rpc.port: 6123
-    taskmanager.rpc.port: 6122
-    queryable-state.proxy.ports: 6125
+    
+    jobmanager.rpc.address: flink-jobmanager
     jobmanager.memory.process.size: 4Gb
+    jobmanager.rpc.port: 6123
+    queryable-state.proxy.ports: 6125
+    
+    taskmanager.numberOfTaskSlots: 1
+    taskmanager.rpc.port: 6122
     taskmanager.memory.process.size: 4Gb
-    taskmanager.memory.managed.fraction: 0.6
+    taskmanager.memory.managed.fraction: 0.2
+    taskmanager.memory.task.off-heap.size: 2048mb
     taskmanager.network.memory.buffer-debloat.enabled: true
+    taskmanager.network.detailed-metrics: true
+    
     metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
     metrics.reporter.prom.interval: 15 SECONDS
     metrics.reporter.prom.port: 9249
+    
     state.backend.latency-track.keyed-state-enabled: true
     state.backend.type: rocksdb
     state.backend.rocksdb.memory.managed: true
@@ -31,14 +39,14 @@ data:
     state.backend.rocksdb.localdir: /mnt/data/tmp
     state.checkpoint-storage: filesystem
     state.checkpoints.dir: file:///mnt/checkpoints
+    state.savepoints.dir: file:///mnt/checkpoints
+    
     # gives metrics about inbound/outbound network queue lengths
-    taskmanager.network.detailed-metrics: true
     table.exec.state.ttl: 10 ms
     execution.checkpointing.mode: EXACTLY_ONCE
     execution.checkpointing.unaligned.enabled: true
     execution.checkpointing.aligned-checkpoint-timeout: 10 s
     execution.checkpointing.checkpoints-after-tasks-finish.enabled: true
-    io.tmp.dirs: /mnt/data/tmp
   log4j-console.properties: |+
     # This affects logging for both user code and Flink
     rootLogger.level = INFO

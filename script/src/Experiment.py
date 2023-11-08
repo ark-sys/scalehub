@@ -1,3 +1,4 @@
+import json
 import os
 import re
 from datetime import datetime
@@ -6,6 +7,7 @@ import numpy as np
 import pandas as pd
 import pandas.errors
 import pytz
+import yaml
 from matplotlib import pyplot as plt
 from matplotlib.legend_handler import HandlerTuple
 
@@ -14,7 +16,7 @@ from .utils.Config import Key as Key, Config
 from .utils.Defaults import DefaultValues as Values
 from .utils.Logger import Logger
 from .utils.Misc import Misc
-
+from .utils.KubernetesManager import KubernetesManager
 
 # Setup for an experiment:
 # 1. Get timestamp at the beginning of the experiment.
@@ -234,25 +236,42 @@ class ExperimentData:
     def eval_plot(self, stats):
         fig, ax = plt.subplots()  # Create a new figure and axes for plot
 
-        # # Place points and error bars
+        # Parse log file for experiment info
+        log_path = os.path.join(self.exp_path, "exp_log.txt")
+        m: Misc = Misc(self.__log)
+        job_name, num_sensors_sum, avg_interval_ms, start_ts, end_ts = m.parse_log(
+            log_path
+        )
+        # # # Place points and error bars
+        # ax.errorbar(
+        #     stats["Parallelism"],
+        #     stats["Throughput_OUT"]["mean"],
+        #     yerr=stats["Throughput_OUT"]["std"],
+        #     fmt="o",
+        #     linestyle="-",
+        #     color="g",
+        #     capsize=4,
+        #     label="Throughput Out",
+        # )
+
         ax.errorbar(
             stats["Parallelism"],
-            stats["Throughput_OUT"]["mean"],
-            yerr=stats["Throughput_OUT"]["std"],
+            stats["Throughput_IN"]["mean"],
+            yerr=stats["Throughput_IN"]["std"],
             fmt="o",
             linestyle="-",
-            color="g",
-            capsize=4,
-            label="Throughput Out",
-        )
-        ax.plot(
-            stats["Parallelism"],
-            stats["Throughput_IN"]["mean"],
-            linestyle="-",
-            marker="o",
             color="b",
+            capsize=4,
             label="Throughput In",
         )
+        # ax.plot(
+        #     stats["Parallelism"],
+        #     stats["Throughput_IN"]["mean"],
+        #     linestyle="-",
+        #     marker="o",
+        #     color="b",
+        #     label="Throughput In",
+        # )
         # Check if 'Predictions' column exists, if so, add dashed line with its values to plot
         if "Predictions" in stats.columns:
             ax.plot(
@@ -266,43 +285,16 @@ class ExperimentData:
 
         # Set title and axis labels
         _, date, n = self.exp_path.split("/")[-3:]
-        plot_title = "Date: {} N: {}".format(date, n)
+        operator_name = job_name.split("-")[0]
+        plot_title = "Join" if operator_name == "myjoin" else "Map"
         ax.set_title(plot_title)
         ax.set(
             xlabel="Parallelism",
-            ylabel="Throughput",
+            ylabel="Throughput (records/s)",
             xticks=list(range(1, len(stats.index) + 1)),
         )
 
         ax.legend(loc="lower right", handler_map={tuple: HandlerTuple(ndivide=None)})
-
-        # Parse log file for experiment info
-        log_path = os.path.join(self.exp_path, "exp_log.txt")
-        m: Misc = Misc(self.__log)
-        job_name, num_sensors_sum, avg_interval_ms, start_ts, end_ts = m.parse_log(
-            log_path
-        )
-
-        # Add text box with experiment info
-        textstr = "\n".join(
-            (
-                r"job_name=%s" % (job_name,),
-                r"load (sensors)=%d" % (num_sensors_sum,),
-                r"rate (ms)=%d" % (avg_interval_ms,),
-                r"duration (s)=%d" % (end_ts - start_ts,),
-            )
-        )
-
-        props = dict(boxstyle="round", facecolor="wheat", alpha=0.5)
-        ax.text(
-            0.05,
-            0.95,
-            textstr,
-            transform=ax.transAxes,
-            fontsize=9,
-            verticalalignment="top",
-            bbox=props,
-        )
 
         # Export plot to experiment path
         output_filename = os.path.join(self.exp_path, "plot.png")
@@ -316,6 +308,7 @@ class Experiment:
         self.config = config
         self.__log = log
         self.m: Misc = Misc(log)
+        self.k: KubernetesManager = KubernetesManager(log)
 
         self.cluster = config.get_str(Key.CLUSTER)
         self.site = config.get_str(Key.SITE)
@@ -401,7 +394,7 @@ class Experiment:
     def full_run(self):
         p: Playbooks = Playbooks()
         # Launch Flink Job
-        self.m.execute_command_on_pod(
+        self.k.execute_command_on_pod(
             deployment_name="flink-jobmanager",
             command=f"flink run -d -j /tmp/jobs/{self.job_name}",
         )
@@ -417,7 +410,37 @@ class Experiment:
                 lg_value=int(lg_config["value"]),
             )
         self.start_experiment()
-        transscale_result = p.deploy(
+        # transscale_result = p.deploy(
+        #     "transscale",
+        #     job_file=self.job_name,
+        #     task_name=self.task_name,
+        #     max_parallelism=self.max_par,
+        #     warmup=self.warmup,
+        #     interval=self.interval,
+        # )
+
+        transscale_params = {
+            "job_file": self.job_name,
+            "task_name": self.task_name,
+            "max_parallelism": self.max_par,
+            "warmup": self.warmup,
+            "interval": self.interval,
+        }
+
+        transscale_playbook = (
+            f"{self.config.get_str(Key.PLAYBOOKS_PATH)}/roles/transscale"
+        )
+        vars_file = os.path.join(transscale_playbook, "vars/main.yaml")
+        job_file = os.path.join(transscale_playbook, "templates/transscale-job.yaml.j2")
+
+        # Add image and tag definition from values
+        try:
+            with open(vars_file) as vars:
+                transscale_params.update(yaml.safe_load(vars))
+        except FileNotFoundError as e:
+            print(f"Config file not found: {e}")
+
+        p.deploy(
             "transscale",
             job_file=self.job_name,
             task_name=self.task_name,
@@ -425,19 +448,19 @@ class Experiment:
             warmup=self.warmup,
             interval=self.interval,
         )
-
         # Retrieve the logs from the execution of transscale
-        transscale_logs = transscale_result.to_dict(include_payload=True)[-1][
-            "payload"
-        ]["log_lines"]
+        transscale_logs = self.k.run_job(job_file, params=transscale_params)
+        # transscale_logs = transscale_result.to_dict(include_payload=True)[-1][
+        #     "payload"
+        # ]["log_lines"]
 
         # Generate the output path where the logs will be saved
         transscale_log_path = os.path.join(self.exp_path, "transscale_log.txt")
 
         # Save logs to file
-        log_lines_string = "\n".join(transscale_logs)
+        # log_lines_string = "\n".join(transscale_logs)
         with open(transscale_log_path, "w") as file:
-            file.write(log_lines_string)
+            file.write(transscale_logs)
 
         # Trigger the end of the experiment
         result_data = self.end_experiment()
@@ -451,15 +474,15 @@ class Experiment:
                 result_data.eval_plot(stats)
 
         # Clean flink jobs
-        self.m.execute_command_on_pod(
+        self.k.execute_command_on_pod(
             deployment_name="flink-jobmanager",
             command="for job_id in $(flink list -r | awk -F ' : ' ' {print $2}'); do flink cancel $job_id ;done",
         )
 
         # Scale down taskmanagers
-        self.m.scale_deployment("flink-taskmanager")
+        self.k.scale_deployment("flink-taskmanager")
         # Clean transscale job
-        self.m.delete_job("transscale-job")
+        self.k.delete_job("transscale-job")
         # Remove load generators
         for lg_config in self.config.parse_load_generators():
             p.delete(
@@ -499,4 +522,4 @@ class Experiment:
         # # Scale down taskmanagers
         # self.m.scale_deployment("flink-taskmanager")
         # Clean transscale job
-        self.m.delete_job("transscale-job")
+        self.k.delete_job("transscale-job")

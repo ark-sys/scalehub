@@ -15,6 +15,7 @@ from src.utils.Config import Config
 from src.utils.Defaults import ConfigKeys as Key, DefaultValues as Value
 from src.utils.Logger import Logger
 from src.utils.Misc import Misc
+from src.utils.KubernetesManager import KubernetesManager
 
 
 # Build cluster and install dependencies
@@ -134,10 +135,11 @@ def reload(playbook, config: Config):
 # Quick action commands
 def run(action, config):
     log.info(f"Running action {action} ...")
-    m: Misc = Misc(log)
+    k: KubernetesManager = KubernetesManager(log)
+    p: Playbooks = Playbooks()
     match action:
         case "job":
-            return m.execute_command_on_pod(
+            return k.execute_command_on_pod(
                 deployment_name="flink-jobmanager",
                 command=f"flink run -d -j /tmp/jobs/{config.get_str(Key.JOB)}",
             )
@@ -149,20 +151,24 @@ def run(action, config):
             e.full_run()
             reload("flink", config)
         case "chaos":
-            m.apply_kubernetes_resource(
-                "/app/playbooks/project/roles/chaos/files/chaos-experiment.yaml"
-            )
+            # k.apply_kubernetes_resource(
+            #     "/app/playbooks/project/roles/chaos/files/chaos-experiment.yaml"
+            # )
+            p.run_playbook("chaos", tags=["experiment"])
         case "clean":
             # Clean flink jobs
-            m.execute_command_on_pod(
+            k.execute_command_on_pod(
                 deployment_name="flink-jobmanager",
                 command="for job_id in $(flink list -r | awk -F ' : ' '/\(RUNNING\)/ {print $2}'); do flink cancel $job_id ;done",
             )
 
             # Scale down taskmanagers
-            m.scale_deployment("flink-taskmanager")
+            k.scale_deployment("flink-taskmanager")
             # Clean transscale job
-            m.delete_job("transscale-job")
+            k.delete_job("transscale-job")
+            # Delete load generators
+            p.delete("load_generators")
+
         case "test":
             pass
         case _:

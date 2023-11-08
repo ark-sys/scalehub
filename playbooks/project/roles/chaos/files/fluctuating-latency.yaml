@@ -1,0 +1,22 @@
+kind: NetworkChaos
+apiVersion: chaos-mesh.org/v1alpha1
+metadata:
+  namespace: default
+  name: fluctuating-latency
+spec:
+  selector:
+    namespaces:
+      - default
+      - consul
+    nodeSelectors:
+      'node-role.kubernetes.io/worker': 'consumer'
+  # All values are described here
+  # https://chaos-mesh.org/docs/simulate-network-chaos-on-kubernetes/#field-description
+  mode: fixed-percent
+  value: '50'
+  action: delay
+  delay:
+    latency: 35ms
+    correlation: '100'
+    jitter: 10ms
+  direction: to

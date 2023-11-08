@@ -12,7 +12,7 @@
         create_namespace: true
         release_name: prometheus
         release_state: present
-
+        wait: true
         values: "{{ lookup('ansible.builtin.file', 'kube-prometheus-stack-values.yaml') | from_yaml }}"
 
     - name: Deploying Flink rules
