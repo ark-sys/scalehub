@@ -221,8 +221,8 @@ class ExperimentData:
             filtered_df["Parallelism"] = filtered_df["Parallelism"].astype(int)
 
             # Calculate mean throughput and standard deviation for each parallelism
-            stats_tpo = filtered_df.groupby("Parallelism")["Throughput_OUT"].agg(["mean", "std"])
-            stats_tpi = filtered_df.groupby("Parallelism")["Throughput_IN"].agg(["mean", "std"])
+            stats_tpo = filtered_df.groupby(["Parallelism", "region"])["Throughput_OUT"].agg(["mean", "std"])
+            stats_tpi = filtered_df.groupby(["Parallelism", "region"])["Throughput_IN"].agg(["mean", "std"])
             # Combine the mean and std for 'Throughput' and 'Input' into a single DataFrame
             stats = pd.concat(
                 [stats_tpo, stats_tpi], axis=1, keys=["Throughput_OUT", "Throughput_IN"]
@@ -248,7 +248,7 @@ class ExperimentData:
 
             # Save stats to a CSV file in the same path as the input filename
             output_path = os.path.join(os.path.dirname(filename), "stats.csv")
-            stats.to_csv(output_path, index=False)
+            stats.to_csv(output_path, index=True)
             self.__log.info(f"Stats saved to: {output_path}")
             return stats, output_path
         except FileNotFoundError:
@@ -262,14 +262,21 @@ class ExperimentData:
         # Parse log file for experiment info
         log_path = os.path.join(self.exp_path, "exp_log.txt")
         m: Misc = Misc(self.__log)
-        job_name, num_sensors_sum, avg_interval_ms, start_ts, end_ts = m.parse_log(
-            log_path
-        )
+        job_name, num_sensors_sum, avg_interval_ms, start_ts, end_ts = m.parse_log(log_path)
+
+        #TODO Change this in the future to properly show throughput in case of scale down
+        filtered_stats = stats[stats.index.get_level_values("region") == 1]
+
+        # Extract the data from the MultiIndex DataFrame
+        parallelism_values = filtered_stats.index.get_level_values("Parallelism")
+        throughput_mean = filtered_stats[('Throughput_IN', 'mean')]
+        throughput_std = filtered_stats[('Throughput_IN', 'std')]
+        predictions = filtered_stats["Predictions"] if "Predictions" in filtered_stats.columns else None
 
         ax.errorbar(
-            stats["Parallelism"],
-            stats["Throughput_IN"]["mean"],
-            yerr=stats["Throughput_IN"]["std"],
+            parallelism_values,
+            throughput_mean,
+            yerr=throughput_std,
             fmt="o",
             linestyle="-",
             color="b",
@@ -278,15 +285,19 @@ class ExperimentData:
         )
 
         # Check if 'Predictions' column exists, if so, add dashed line with its values to plot
-        if "Predictions" in stats.columns:
+        if predictions is not None:
             ax.plot(
-                stats["Parallelism"],
-                stats["Predictions"],
+                parallelism_values,
+                predictions,
                 linestyle="--",
                 marker="o",
                 color="r",
                 label="Predictions",
             )
+        # Calculate percentage error and add it to the plot
+        percentage_error = ((predictions - throughput_mean) / throughput_mean) * 100
+        for x, y, error in zip(parallelism_values, predictions, percentage_error):
+            ax.annotate(f"{error:.2f}%", (x, y), textcoords="offset points", xytext=(0, 10), ha="center")
 
         # Set title and axis labels
         _, date, n = self.exp_path.split("/")[-3:]
@@ -296,7 +307,7 @@ class ExperimentData:
         ax.set(
             xlabel="Parallelism",
             ylabel="Throughput (records/s)",
-            xticks=list(range(1, len(stats.index) + 1)),
+            xticks=list(range(1, len(parallelism_values) + 1)),
         )
 
         ax.legend(loc="lower right", handler_map={tuple: HandlerTuple(ndivide=None)})
@@ -455,9 +466,6 @@ class Experiment:
         )
         # Retrieve the logs from the execution of transscale
         transscale_logs = self.k.run_job(job_file, params=transscale_params)
-        # transscale_logs = transscale_result.to_dict(include_payload=True)[-1][
-        #     "payload"
-        # ]["log_lines"]
 
         # Generate the output path where the logs will be saved
         transscale_log_path = os.path.join(self.exp_path, "transscale_log.txt")
