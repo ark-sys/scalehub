@@ -176,43 +176,34 @@ def run(action, config):
 
 
 # Export data for a given date
-def export(config: Config, exp_path: str):
+def export(config: Config, exp_path: str, type=None):
     log.info("Exporting...")
 
-    def export_experiment(path):
+    def get_timestamp_from_log(path):
         # Verify that a log file exists for the chosen experiment
         log_path = os.path.join(path, "exp_log.txt")
         if not os.path.exists(log_path):
             log.error("Log file for experiment not found.")
-            return
+            exit(1)
         else:
             # Verify if experiment executed correctly by checking start and end timestamps
-            with open(log_path, "r") as log_file:
-                logs = log_file.read()
+            try:
+                with open(log_path, "r") as log_file:
+                    logs = log_file.read()
 
-            start_match = re.search(r"Experiment start at : (\d+)", logs)
-            end_match = re.search(r"Experiment end at : (\d+)", logs)
-            if start_match and end_match:
-                start_timestamp = int(start_match.group(1))
-                end_timestamp = int(end_match.group(1))
-                data: ExperimentData = ExperimentData(
-                    log=log,
-                    exp_path=path,
-                    start_ts=start_timestamp,
-                    end_ts=end_timestamp,
-                    db_url=config.get_str(Key.DB_URL),
-                )
-                data.export_experiment_data()
-                stats, _ = data.eval_stats(
-                    skip_duration=config.get_int(Key.DATA_SKIP_DURATION)
-                )
-                if config.get_bool(Key.DATA_OUTPUT_PLOT):
-                    data.eval_plot(stats)
-                return
-            else:
-                log.error("Log file is incomplete: missing timestamp.")
-
-    # Generate full path from provided path name
+                start_match = re.search(r"Experiment start at : (\d+)", logs)
+                end_match = re.search(r"Experiment end at : (\d+)", logs)
+                if start_match and end_match:
+                    start_timestamp = int(start_match.group(1))
+                    end_timestamp = int(end_match.group(1))
+                    return start_timestamp,end_timestamp
+                else:
+                    log.error("Log file is incomplete: missing timestamp.")
+                    exit(1)
+            except FileNotFoundError:
+                log.error("Log file not found.")
+                return 0,0
+    # Build full path from exp_path name
     # exp_path should be 'DD-MM-YYYY/N' where or 'DD-MM-YYYY' :
     #   DD-MM-YYYY is the date of the experiments
     #   N is the number of the experiment
@@ -234,13 +225,55 @@ def export(config: Config, exp_path: str):
         # Iterate through each experiment folder of the base exp path
         for exp in os.listdir(base_exp_path):
             full_exp_path = os.path.join(base_exp_path, exp)
-            export_experiment(full_exp_path)
+            # Retrieve timestamps from logs
+            start_ts, end_ts = get_timestamp_from_log(full_exp_path)
+            data: ExperimentData = ExperimentData(
+                log=log,
+                exp_path=full_exp_path,
+                start_ts=start_ts,
+                end_ts=end_ts,
+                db_url=config.get_str(Key.DB_URL),
+            )
+            match type:
+                case 'stats':
+                    # If stats, only generate stats.csv with mean throughputs, parallelism and transscale predictions
+                    # This options requires a joined_outputs.csv file containing throughput and parallelism data
+                    data.eval_stats(skip_duration=config.get_int(Key.DATA_SKIP_DURATION))
+                case 'plot':
+                    # If plot, only generate a plot.png
+                    # This options requires a stats.csv file
+                    stats, _ = data.eval_stats(skip_duration=config.get_int(Key.DATA_SKIP_DURATION))
+                    data.eval_plot(stats)
+                case _:
+                    # Default option is to retrieve experiment data from DataBase and save it in a joined_output.csv for stats and plot generation
+                    data.export_experiment_data()
     elif with_integer_match:
         log.info(f"Exporting {exp_path} experiment.")
         full_exp_path = os.path.join(
             config.get_str(Key.EXPERIMENTS_DATA_PATH), exp_path
         )
-        export_experiment(full_exp_path)
+        # Retrieve timestamps from logs
+        start_ts, end_ts = get_timestamp_from_log(full_exp_path)
+        data: ExperimentData = ExperimentData(
+            log=log,
+            exp_path=full_exp_path,
+            start_ts=start_ts,
+            end_ts=end_ts,
+            db_url=config.get_str(Key.DB_URL),
+        )
+        match type:
+            case 'stats':
+                # If stats, only generate stats.csv with mean throughputs, parallelism and transscale predictions
+                # This options requires a joined_outputs.csv file containing throughput and parallelism data
+                data.eval_stats(skip_duration=config.get_int(Key.DATA_SKIP_DURATION))
+            case 'plot':
+                # If plot, only generate a plot.png
+                # This options requires a stats.csv file
+                stats, _ = data.eval_stats(skip_duration=config.get_int(Key.DATA_SKIP_DURATION))
+                data.eval_plot(stats)
+            case _:
+            # Default option is to retrieve experiment data from DataBase and save it in a joined_output.csv for stats and plot generation
+                data.export_experiment_data()
     else:
         log.error("Error during export.")
 
@@ -300,7 +333,10 @@ def main(log: Logger):
     # Export command
     export_subparser = subparsers.add_parser("export", help="Export data")
     export_subparser.add_argument(
-        "experiment", help="Provide experiment path in format 'DD-MM-YYYY/N'"
+        "date", help="Provide experiment path in format 'DD-MM-YYYY/N'"
+    )
+    export_subparser.add_argument(
+        "type", help="Choose what to export between 'stats', 'plot' or 'all'", nargs='?', default=None
     )
 
     # Plot command
@@ -328,7 +364,12 @@ def main(log: Logger):
     elif args.command == "run":
         run(args.action, config)
     elif args.command == "export":
-        export(config, args.experiment)
+        date = args.date
+        type = args.type
+        if type is not None:
+            export(config, date, type)
+        else:
+            export(config, date)
     elif args.command == "plot":
         plot(config)
     else:
