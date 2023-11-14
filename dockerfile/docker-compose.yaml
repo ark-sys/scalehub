@@ -6,7 +6,7 @@ secrets:
     file: secrets/Grid5000_creds.yaml
     # Setup correct path for grid5000 private key in `source` field
   ssh_key:
-    file: secrets/grid5000
+    file: secrets/grid5000.pk
 
 networks:
   scalehub_net:
