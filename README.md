@@ -94,6 +94,7 @@ To correctly setup your environment, follow these steps:
 At this point you should be able to run the *shub* command from within the container.
 
 ## Usage
+![Scalehub Setup](scalehub_setup.png)
 
 ### Scalehub Script
 
