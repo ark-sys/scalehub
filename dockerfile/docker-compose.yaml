@@ -4,6 +4,9 @@ secrets:
   creds:
     # Fill this file with personal Grid5000 credentials
     file: secrets/Grid5000_creds.yaml
+    # Setup correct path for grid5000 private key in `source` field
+  ssh_key:
+    file: secrets/grid5000
 
 networks:
   scalehub_net:
@@ -15,20 +18,17 @@ services:
       - vpn
     # Use network stack from vpn service
     network_mode: service:vpn
-    environment:
-      - DISPLAY=:1
     secrets:
       - source: creds
         target: /root/.python-grid5000.yaml
+      - source: ssh_key
+        target: /root/.ssh/id_rsa
+        mode: 600
     build:
       context: .
       dockerfile: Dockerfile
     # Source paths refer to scalehub root path
     volumes:
-      - type: bind
-        # Setup correct path for grid5000 private key in `source` field
-        source: $HOME/.ssh/grid5000
-        target: /root/.ssh/id_rsa
       - type: bind
         source: ../conf
         target: /app/conf
@@ -41,10 +41,6 @@ services:
       - type: bind
         source: ../experiments-data
         target: /app/experiments-data
-      - type: bind
-        source: /tmp/.X11-unix
-        target: /tmp/.X11-unix
-
   vpn:
     image: dperson/openvpn-client
     # cap_add, security_opt, and volume required for the image to function
