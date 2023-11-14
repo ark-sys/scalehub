@@ -13,7 +13,7 @@ generate_config() {
 
     # Check if username is available
     if [ -n "$username" ]; then
-        sudo bash -c "cat << EOF > $HOME_PATH/.ssh/config
+        bash -c "cat << EOF > $HOME_PATH/.ssh/config
 Host access.grid5000.fr
   User $username
   Hostname access.grid5000.fr
@@ -36,7 +36,7 @@ EOF"
 }
 
 # Change default shell to fish
-sudo chsh -s /usr/bin/fish
+chsh -s /usr/bin/fish
 
 # Generate config file based on credentials file
 generate_config

@@ -15,37 +15,31 @@ services:
       - vpn
     # Use network stack from vpn service
     network_mode: service:vpn
-    user: ${username}
     environment:
       - DISPLAY=:1
     secrets:
       - source: creds
-        target: /home/${username}/.python-grid5000.yaml
+        target: /root/.python-grid5000.yaml
     build:
       context: .
       dockerfile: Dockerfile
-      # In order to correctly retrieve these values, deploy with deploy.sh script
-      args:
-        - UID=${userid}
-        - GID=${groupid}
-        - UNAME=${username}
     # Source paths refer to scalehub root path
     volumes:
       - type: bind
         # Setup correct path for grid5000 private key in `source` field
         source: $HOME/.ssh/grid5000
-        target: $HOME/.ssh/id_rsa
+        target: /root/.ssh/id_rsa
       - type: bind
-        source: ${SCALEHUB_BASEDIR}/conf
+        source: ../conf
         target: /app/conf
       - type: bind
-        source: ${SCALEHUB_BASEDIR}/playbooks
+        source: ../playbooks
         target: /app/playbooks
       - type: bind
-        source: ${SCALEHUB_BASEDIR}/script
+        source: ../script
         target: /app/script
       - type: bind
-        source: ${SCALEHUB_BASEDIR}/experiments-data
+        source: ../experiments-data
         target: /app/experiments-data
       - type: bind
         source: /tmp/.X11-unix
@@ -73,6 +67,7 @@ services:
       - ./secrets:/vpn
     environment:
       - DNS
-    #     -D          Don't use the connection as the default route -> don't break ssh connections from scalehub
+      - TZ=Europe/Paris
     command:
       - -D
+    # Option description of -D : Don't use the connection as the default route -> don't break ssh connections from scalehub to g5k

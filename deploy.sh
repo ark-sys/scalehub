@@ -5,10 +5,10 @@ export SCALEHUB_BASEDIR=$(dirname $0)
 IMAGE_NAME="scalehub"
 SERVICE_NAME="scalehub"
 
-# Retrieve the current user IDs and name
-export userid=$(id -u)
-export groupid=$(id -g)
-export username=$(whoami)
+## Retrieve the current user IDs and name
+#export userid=$(id -u)
+#export groupid=$(id -g)
+#export username=$(whoami)
 
 # Set credentials path
 export g5k_creds_path="$SCALEHUB_BASEDIR/dockerfile/secrets/Grid5000_creds.yaml"
@@ -47,6 +47,7 @@ function generate_secret() {
 
         if [ -f "$g5k_creds_path" ]; then
             echo -e "\nFile modified successfully."
+            git update-index --assume-unchanged $g5k_creds_path
         else
             echo -e "\nFile created successfully."
         fi
