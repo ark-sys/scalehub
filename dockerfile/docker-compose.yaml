@@ -1,0 +1,78 @@
+version: "3.6"
+
+secrets:
+  creds:
+    # Fill this file with personal Grid5000 credentials
+    file: secrets/Grid5000_creds.yaml
+
+networks:
+  scalehub_net:
+
+services:
+  scalehub:
+    container_name: scalehub
+    depends_on:
+      - vpn
+    # Use network stack from vpn service
+    network_mode: service:vpn
+    user: ${username}
+    environment:
+      - DISPLAY=:1
+    secrets:
+      - source: creds
+        target: /home/${username}/.python-grid5000.yaml
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # In order to correctly retrieve these values, deploy with deploy.sh script
+      args:
+        - UID=${userid}
+        - GID=${groupid}
+        - UNAME=${username}
+    # Source paths refer to scalehub root path
+    volumes:
+      - type: bind
+        # Setup correct path for grid5000 private key in `source` field
+        source: $HOME/.ssh/grid5000
+        target: $HOME/.ssh/id_rsa
+      - type: bind
+        source: ${SCALEHUB_BASEDIR}/conf
+        target: /app/conf
+      - type: bind
+        source: ${SCALEHUB_BASEDIR}/playbooks
+        target: /app/playbooks
+      - type: bind
+        source: ${SCALEHUB_BASEDIR}/script
+        target: /app/script
+      - type: bind
+        source: ${SCALEHUB_BASEDIR}/experiments-data
+        target: /app/experiments-data
+      - type: bind
+        source: /tmp/.X11-unix
+        target: /tmp/.X11-unix
+
+  vpn:
+    image: dperson/openvpn-client
+    # cap_add, security_opt, and volume required for the image to function
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    networks:
+      - scalehub_net
+    tmpfs:
+      - /run
+      - /tmp
+    restart: unless-stopped
+    security_opt:
+      - label:disable
+    stdin_open: true
+    tty: true
+    volumes:
+      - /dev/net:/dev/net:z
+      - ./secrets:/vpn
+    environment:
+      - DNS
+    #     -D          Don't use the connection as the default route -> don't break ssh connections from scalehub
+    command:
+      - -D

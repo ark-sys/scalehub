@@ -4,3 +4,9 @@ __pycache__/
 .idea/
 experiments-data
 conf/kubeconfig
+/dockerfile/secrets/Grid5000_VPN.ovpn
+/dockerfile/secrets/karsalane.crt
+/dockerfile/secrets/karsalane.key
+/dockerfile/secrets/ta.key
+/dockerfile/secrets/vpn.cert_auth
+/dockerfile/secrets/cavpn.crt

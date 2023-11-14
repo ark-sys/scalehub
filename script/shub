@@ -32,10 +32,13 @@ def provision(config: Config):
             with open(config.get_str(Key.INVENTORY_PATH), "w") as f:
                 f.write(inventory)
 
+            nfs_server, nfs_share = p.post_setup()
+
             # Setup cluster with kubernetes
             play: Playbooks = Playbooks()
             kubernetes_type = f"cluster-setup.{config.get_str(Key.KUBERNETES_TYPE)}"
-            return play.deploy(kubernetes_type)
+            return play.deploy(kubernetes_type,nfs_server_address=nfs_server, nfs_share=nfs_share)
+
         case _:
             log.error(f"Provision is not implemented for platform {platform_type}")
 
@@ -159,7 +162,7 @@ def run(action, config):
             # Clean flink jobs
             k.execute_command_on_pod(
                 deployment_name="flink-jobmanager",
-                command="for job_id in $(flink list -r | awk -F ' : ' '/\(RUNNING\)/ {print $2}'); do flink cancel $job_id ;done",
+                command=r"for job_id in $(flink list -r | awk -F ' : ' '/\(RUNNING\)/ {print $2}'); do flink cancel $job_id ;done",
             )
 
             # Scale down taskmanagers
@@ -196,13 +199,14 @@ def export(config: Config, exp_path: str, type=None):
                 if start_match and end_match:
                     start_timestamp = int(start_match.group(1))
                     end_timestamp = int(end_match.group(1))
-                    return start_timestamp,end_timestamp
+                    return start_timestamp, end_timestamp
                 else:
                     log.error("Log file is incomplete: missing timestamp.")
                     exit(1)
             except FileNotFoundError:
                 log.error("Log file not found.")
-                return 0,0
+                return 0, 0
+
     # Build full path from exp_path name
     # exp_path should be 'DD-MM-YYYY/N' where or 'DD-MM-YYYY' :
     #   DD-MM-YYYY is the date of the experiments
@@ -235,14 +239,18 @@ def export(config: Config, exp_path: str, type=None):
                 db_url=config.get_str(Key.DB_URL),
             )
             match type:
-                case 'stats':
+                case "stats":
                     # If stats, only generate stats.csv with mean throughputs, parallelism and transscale predictions
                     # This options requires a joined_outputs.csv file containing throughput and parallelism data
-                    data.eval_stats(skip_duration=config.get_int(Key.DATA_SKIP_DURATION))
-                case 'plot':
+                    data.eval_stats(
+                        skip_duration=config.get_int(Key.DATA_SKIP_DURATION)
+                    )
+                case "plot":
                     # If plot, only generate a plot.png
                     # This options requires a stats.csv file
-                    stats, _ = data.eval_stats(skip_duration=config.get_int(Key.DATA_SKIP_DURATION))
+                    stats, _ = data.eval_stats(
+                        skip_duration=config.get_int(Key.DATA_SKIP_DURATION)
+                    )
                     data.eval_plot(stats)
                 case _:
                     # Default option is to retrieve experiment data from DataBase and save it in a joined_output.csv for stats and plot generation
@@ -262,17 +270,19 @@ def export(config: Config, exp_path: str, type=None):
             db_url=config.get_str(Key.DB_URL),
         )
         match type:
-            case 'stats':
+            case "stats":
                 # If stats, only generate stats.csv with mean throughputs, parallelism and transscale predictions
                 # This options requires a joined_outputs.csv file containing throughput and parallelism data
                 data.eval_stats(skip_duration=config.get_int(Key.DATA_SKIP_DURATION))
-            case 'plot':
+            case "plot":
                 # If plot, only generate a plot.png
                 # This options requires a stats.csv file
-                stats, _ = data.eval_stats(skip_duration=config.get_int(Key.DATA_SKIP_DURATION))
+                stats, _ = data.eval_stats(
+                    skip_duration=config.get_int(Key.DATA_SKIP_DURATION)
+                )
                 data.eval_plot(stats)
             case _:
-            # Default option is to retrieve experiment data from DataBase and save it in a joined_output.csv for stats and plot generation
+                # Default option is to retrieve experiment data from DataBase and save it in a joined_output.csv for stats and plot generation
                 data.export_experiment_data()
     else:
         log.error("Error during export.")
@@ -336,7 +346,10 @@ def main(log: Logger):
         "date", help="Provide experiment path in format 'DD-MM-YYYY/N'"
     )
     export_subparser.add_argument(
-        "type", help="Choose what to export between 'stats', 'plot' or 'all'", nargs='?', default=None
+        "type",
+        help="Choose what to export between 'stats', 'plot' or 'all'",
+        nargs="?",
+        default=None,
     )
 
     # Plot command

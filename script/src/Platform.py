@@ -11,9 +11,6 @@ class Platform:
     def post_teardown(self):
         raise NotImplementedError()
 
-    def get_platform_metadata(self) -> dict:
-        raise NotImplementedError()
-
     def setup(self) -> str:
         raise NotImplementedError()
 

@@ -4,6 +4,11 @@
   tags: [ create ]
   delegate_to: localhost
   block:
+    - name: Deploy NFS Storage Class Manifest
+      kubernetes.core.k8s:
+        state: present
+        definition: "{ { lookup('ansible.builtin.template', 'nfs-sc.yaml.j2') | from_yaml } }"
+
     - name: Deploy PVC for Grafana
       kubernetes.core.k8s:
         state: present
@@ -28,6 +33,11 @@
   tags: [ delete ]
   delegate_to: localhost
   block:
+    - name: Deploy NFS Storage Class Manifest
+      kubernetes.core.k8s:
+        state: absent
+        definition: "{ { lookup('ansible.builtin.template', 'nfs-sc.yaml.j2') | from_yaml } }"
+
     - name: Deploy PVC for Grafana
       kubernetes.core.k8s:
         state: absent

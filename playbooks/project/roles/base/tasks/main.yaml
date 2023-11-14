@@ -14,8 +14,6 @@
     kind: Namespace
     state: present
 
-- import_tasks: nfs.yaml
-
 - import_tasks: pvc.yaml
 
 

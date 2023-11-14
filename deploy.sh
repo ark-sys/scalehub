@@ -1,14 +1,17 @@
 #!/bin/bash
 
 # Script location
-BASEDIR=$(dirname $0)
+export SCALEHUB_BASEDIR=$(dirname $0)
 IMAGE_NAME="scalehub"
 SERVICE_NAME="scalehub"
 
 # Retrieve the current user IDs and name
-userid=$(id -u)
-groupid=$(id -g)
-username=$(whoami)
+export userid=$(id -u)
+export groupid=$(id -g)
+export username=$(whoami)
+
+# Set credentials path
+export g5k_creds_path="$SCALEHUB_BASEDIR/dockerfile/secrets/Grid5000_creds.yaml"
 
 # Function to display help message
 function display_help() {
@@ -19,133 +22,78 @@ function display_help() {
     echo "At runtime, a python script is loaded in the container, which allows to reserve and provision nodes on Grid5000."
     echo " "
     echo "Options:"
-    echo "  build             Build the Docker image"
-    echo "  generate          Generate Docker secret with credentials"
+    echo "  generate          Generate credentials file for grid5000"
     echo "  create            Create the Docker container"
+    echo "  remove            Remove the Docker container"
     echo "  restart           Restart the Docker container"
     echo "  shell             Spawn an interactive shell in the container"
     echo "  push <registry>   Push the Docker image to a private registry"
     echo "  help              Display this help message"
 }
 
-# Function to build the Docker image
-function build_image() {
-  docker build --build-arg UID=$userid --build-arg GID=$groupid --build-arg UNAME=$username -t $IMAGE_NAME $BASEDIR/dockerfile
-  # Check the exit code
-  if [ $? -eq 0 ]; then
-      echo "Docker build completed successfully."
-      echo "Updating service image..."
-      # Check if a Docker service with the image already exists
-      if docker service ls -q --filter "name=$SERVICE_NAME" | grep -q .; then
-          # If the service exists, update it to use the latest image
-          docker service update --image $IMAGE_NAME $SERVICE_NAME
-      else
-        create_container
-      fi
-  else
-      echo "Error occurred during Docker build. Exiting..."
-      exit 1
-  fi
-}
-
 # Function to generate Docker secret with credentials
 function generate_secret() {
-  # Check if both secrets exist
-  if docker secret ls -q --filter "name=mysecretuser" | grep -q . || docker secret ls -q --filter "name=mysecretpass" | grep -q .; then
-    echo "Secrets 'mysecretuser' and 'mysecretpass' already exist."
-    echo "Do you want to update them? (y/n)"
-    read -r update_choice
-
-    if [[ $update_choice == "y" ]]; then
-      # Remove old secrets
-      echo "Removing service and secrets..."
-      docker service rm $SERVICE_NAME
-#      docker service update --secret-rm mysecretuser $SERVICE_NAME
-#      docker service update --secret-rm mysecretpass $SERVICE_NAME
-      docker secret rm mysecretuser
-      docker secret rm mysecretpass
-
-      # Prompt the user to update the secrets via standard input
-      echo "Enter updated Grid5000 username:"
-      read -r mysecretuser
-      echo "Enter updated Grid5000 password:"
-      read -r mysecretpass
-
-      # Update the secrets
-      if [[ -n $mysecretuser ]]; then
-        echo -n "$mysecretuser" | docker secret create mysecretuser - --label "updated_at=$(date +%Y-%m-%d)"
-      fi
-      if [[ -n $mysecretpass ]]; then
-        echo -n "$mysecretpass" | docker secret create mysecretpass - --label "updated_at=$(date +%Y-%m-%d)"
-      fi
-      echo "Secrets 'mysecretuser' and 'mysecretpass' updated."
-      create_container
+    if [ -f "$g5k_creds_path" ]; then
+        read -p "File exists at $g5k_creds_path. Do you want to modify it? (y/n): " answer
     else
-      echo "Exiting..."
-      exit 0
+        read -p "File doesn't exist at $g5k_creds_path. Do you want to create it? (y/n): " answer
     fi
-  else
-    # Prompt the user to provide the secrets via standard input
-    echo "Enter Grid5000 username:"
-    read -r mysecretuser
-    echo "Enter Grid5000 password:"
-    read -r mysecretpass
 
-    # Create the secrets
-    if [[ -n $mysecretuser ]]; then
-      echo -n "$mysecretuser" | docker secret create mysecretuser - --label "created_at=$(date +%Y-%m-%d)"
+    if [ "$answer" = "y" ]; then
+        read -p "Enter username: " username
+        read -s -p "Enter password: " password
+        echo "username: $username" > "$g5k_creds_path"
+        echo -e "\npassword: $password" >> "$g5k_creds_path"
+
+        if [ -f "$g5k_creds_path" ]; then
+            echo -e "\nFile modified successfully."
+        else
+            echo -e "\nFile created successfully."
+        fi
+    else
+        if [ -f "$g5k_creds_path" ]; then
+            echo "No modifications made."
+        else
+            echo "No file created."
+        fi
     fi
-    if [[ -n $mysecretpass ]]; then
-      echo -n "$mysecretpass" | docker secret create mysecretpass - --label "created_at=$(date +%Y-%m-%d)"
-    fi
-    echo "Secrets 'mysecretuser' and 'mysecretpass' created."
-  fi
+
 }
 
-function restart_container(){
+function restart_service(){
     if is_service_running; then
-        docker service rm $SERVICE_NAME
-        create_container
+        remove_service
+        create_service
     else
       echo "Service is not running."
     fi
 }
 
 # Function to create the Docker container
-function create_container() {
-  #TODO Should check if docker swarm is initialized https://stackoverflow.com/questions/43053013/how-do-i-check-that-a-docker-host-is-in-swarm-mode
-  #or find another way to run docker container with secret management
+function create_service() {
+  docker-compose -f $SCALEHUB_BASEDIR/dockerfile/docker-compose.yaml up --build -d
+}
 
-
-    docker service create \
-        --name $SERVICE_NAME \
-        --secret mysecretuser \
-        --secret mysecretpass \
-        --network host \
-        --mount type=bind,source=$HOME/.ssh,target=$HOME/.ssh \
-        --mount type=bind,source=$BASEDIR/conf,target=/app/conf \
-        --mount type=bind,source=$BASEDIR/script,target=/app/script \
-        --mount type=bind,source=$BASEDIR/playbooks,target=/app/playbooks \
-        --mount type=bind,source=$BASEDIR/experiments-data,target=/app/experiments-data \
-        --mount type=bind,source=/tmp/.X11-unix,target=/tmp/.X11-unix \
-        --env DISPLAY=:1 \
-        --user $userid \
-        --group $groupid \
-        --hostname $SERVICE_NAME \
-        $IMAGE_NAME
+function remove_service() {
+  docker-compose -f $SCALEHUB_BASEDIR/dockerfile/docker-compose.yaml down --rmi all --remove-orphans
 }
 
 # Function to check if the service is running
 function is_service_running() {
-    docker service ls --format '{{.Name}}' | grep -q $SERVICE_NAME
+    if docker ps --format '{{.Names}}' | grep -q "$SERVICE_NAME"; then
+        echo "Container $SERVICE_NAME is running."
+    else
+        echo "Container $SERVICE_NAME is not running."
+    fi
 }
 
 # Function to get an interactive shell for the service
 function get_shell() {
     if is_service_running; then
-        docker exec -u $username -it $(docker ps -f name=$SERVICE_NAME --quiet) fish
+        docker exec -it $(docker ps -f name=$SERVICE_NAME --quiet) fish
+
     else
-        create_container
+        create_service
         get_shell
     fi
 }
@@ -166,10 +114,13 @@ case "$1" in
         generate_secret
         ;;
     create)
-        create_container
+        create_service
+        ;;
+    remove)
+        remove_service
         ;;
     restart)
-        restart_container
+        restart_service
         ;;
     shell)
         get_shell
