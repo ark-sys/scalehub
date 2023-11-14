@@ -40,7 +40,7 @@ The VPN connection files for Grid5000 are required. Please follow the guide to d
 [Grid5000 VPN setup guide](https://www.grid5000.fr/w/VPN)
 
 :exclamation: The VPN files, such as **.ovpn** **.key** and **.crt** must be extracted in `dockerfile/secrets` so that they can be mounted into the scalehub container.
-
+:exclamation: An ssh private key for grid500 must be created (see documentation [Grid5000 SSH setup guide](https://www.grid5000.fr/w/SSH#Generating_keys_for_use_with_Grid'5000)) and copied to `dockerfile/secrets`. Depending on how you name it, fix the secret filename field in `dockerfile/docker-compose.yaml`
 
 ## Installation
 
@@ -74,13 +74,20 @@ To correctly setup your environment, follow these steps:
 1. Clone the repository.
     ```shell 
     git clone git@gitlab.inria.fr:karsalan/scalehub.git
+   
 2. If you intend to connect to Grid5000, generate a credentials file with the deployment script. This file will be used by scalehub to interact with Grid5000 Frontend.
     ```shell
     ./deploy.sh generate
-3. Download and extract your personal Grid5000 VPN connection files to `dockerfile/secrets`.
-4. Correctly setup your ssh private key for Grid5000 in `source` field of the `dockerfile/docker-compose.yaml` 
-5. Run the container and start an interactive shell with the deployment script
+3. Download and extract your personal Grid5000 VPN connection files to `dockerfile/secrets`
+
+4. Correctly setup your ssh private key for Grid5000 in `dockerfile/secrets` and in the **secrets** field of the `dockerfile/docker-compose.yaml`
+
+5. Run the container 
     ```shell
+   ./deploy.sh create
+   
+6. Start an interactive shell with the deployment script
+   ```
    ./deploy.sh shell
 
 At this point you should be able to run the *shub* command from within the container.
