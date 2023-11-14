@@ -36,15 +36,11 @@ To get started with the project, follow the steps below.
 
 The project requires **Docker** to build and run the development environment.
 
-An active VPN connection to the Grid5000 network is required.
+The VPN connection files for Grid5000 are required. Please follow the guide to download your personal VPN files.
 [Grid5000 VPN setup guide](https://www.grid5000.fr/w/VPN)
 
-:exclamation: This version requires Docker Swarm to be initialized in order to run scalehub as a Docker service.
-Initialize Docker Swarm with:
+:exclamation: The VPN files, such as **.ovpn** **.key** and **.crt** must be extracted in `dockerfile/secrets` so that they can be mounted into the scalehub container.
 
-```shell
-  docker swarm init
-```
 
 ## Installation
 
@@ -64,9 +60,9 @@ The built image contains Ansible and enoslib.
 At runtime, a Python script is loaded in the container, which allows reserving and provisioning nodes on Grid5000.
 
 Options:
-  build             Build the Docker image
   generate          Generate Docker secret with credentials
   create            Create the Docker container
+  remove            Remove the Docker container
   restart           Restart the Docker container
   shell             Spawn an interactive shell in the container
   push <registry>   Push the Docker image to a private registry
@@ -78,13 +74,12 @@ To correctly setup your environment, follow these steps:
 1. Clone the repository.
     ```shell 
     git clone git@gitlab.inria.fr:karsalan/scalehub.git
-2. If you intend to connect to Grid5000, generate Docker secrets with the deployment script.
+2. If you intend to connect to Grid5000, generate a credentials file with the deployment script. This file will be used by scalehub to interact with Grid5000 Frontend.
     ```shell
     ./deploy.sh generate
-3. Build the image of the development environment with the deployment script.
-    ```shell
-   ./deploy.sh build
-4. Run the container and start an interactive shell with the deployment script
+3. Download and extract your personal Grid5000 VPN connection files to `dockerfile/secrets`.
+4. Correctly setup your ssh private key for Grid5000 in `source` field of the `dockerfile/docker-compose.yaml` 
+5. Run the container and start an interactive shell with the deployment script
     ```shell
    ./deploy.sh shell
 
@@ -125,9 +120,6 @@ Refer to the script's help section for detailed information on each action.
 After provisioning the cluster with K3S, the first playbook that should be deployed is **base**.
 
 This playbook deploys the NFS plugin for storage access and various PVCs required by the data stream application.
-
-:exclamation:  You need to modify the variables in **playbooks/project/roles/base/vars** folder order to reflect your
-setup.
 
 The other playbooks will perform the following actions:
 

@@ -218,3 +218,21 @@
     - name: Label a random consumer node with autoscaling
       command:
         cmd: "kubectl label node {{ random_consumer_node }} --overwrite node-role.kubernetes.io/autoscaling='SCHEDULABLE'"
+
+
+    # Setup NFS
+    - name: Setup NFS
+      delegate_to: localhost
+      tags: [ always ]
+      block:
+        - name: Deploy NFS Storage provisioner
+          kubernetes.core.helm:
+            name: csi-driver-nfs
+            chart_ref: "csi-driver-nfs"
+            chart_version: 4.1.0
+            chart_repo_url: https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
+            release_namespace: csi-driver-nfs
+            create_namespace: true
+            wait: true
+          register: csi_driver
+

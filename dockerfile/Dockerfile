@@ -18,6 +18,8 @@ ARG UNAME
 
 # Install necessary dependencies
 RUN apt-get update && apt-get install -y \
+    iproute2 \
+    procps \
     openssh-client \
     python3-pip \
     gcc \
@@ -56,8 +58,17 @@ RUN groupadd -g $GID $UNAME &&  \
     adduser $UNAME sudo && \
     echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
+# Copy the lines to modify .bashrc and jump directly to fish at container spawn
+RUN echo 'if [[ $(ps --no-header --pid=$PPID --format=comm) != "fish" && -z ${BASH_EXECUTION_STRING} ]]; then\n\
+    shopt -q login_shell && LOGIN_OPTION="--login" || LOGIN_OPTION=""\n\
+    exec fish $LOGIN_OPTION\n\
+fi' >> /home/$UNAME/.bashrc
+
+COPY entrypoint.sh /entrypoint.sh
+
+RUN chmod +x /entrypoint.sh
+
 USER $UID:$GID
 WORKDIR /home/$UNAME
 
-ENTRYPOINT ["sleep", "infinity"]
-#ENTRYPOINT ["fish"]
+ENTRYPOINT ["/entrypoint.sh"]

@@ -1,5 +1,9 @@
+import json
+
 import enoslib as en
 import os
+
+import yaml
 
 from .Platform import Platform
 from .utils import Logger
@@ -9,11 +13,13 @@ from .utils.Config import Config, Key
 class G5k(Platform):
     def __init__(self, config: Config, log: Logger):
         super().__init__()
+        self.password = None
+        self.username = None
         _ = en.init_logging()
         self.__log = log
 
         # Create .python-grid5000.yaml required by enoslib
-        self.create_credentials_file()
+        self.check_credentials_file()
 
         # Check that Grid5000 is joinable
         en.check()
@@ -79,48 +85,63 @@ class G5k(Platform):
         self.job_id = jobs[0].uid
         self.job_site = jobs[0].site
 
-        # Setup NFS access
-        self.enable_g5k_nfs_access()
+        # Return home server and nfs share
+        return self.retrieve_home_nfs()
 
-    def enable_g5k_nfs_access(self):
-        with open("/run/secrets/mysecretuser") as f:
-            username = f.read()
-        with open("/run/secrets/mysecretpass") as f:
-            password = f.read()
-
-        uri = f"https://api.grid5000.fr/3.0/sites/{self.job_site}/storage/home/{username}/access"
-
+    def retrieve_home_nfs(self):
         import requests
 
-        requests.post(
-            uri,
-            json={"termination": {"job": self.job_id, "site": self.job_site}},
-            auth=(username, password),
-        )
-    def create_credentials_file(self):
-
         try:
-            with open("/run/secrets/mysecretuser", "r") as user_file, open(
-                "/run/secrets/mysecretpass", "r"
-            ) as password_file:
-                username = user_file.read().strip()
-                password = password_file.read().strip()
-            home_directory = os.path.expanduser("~")
-            file_path = os.path.join(home_directory, ".python-grid5000.yaml")
+            uri = f"https://api.grid5000.fr/3.0/sites/{self.job_site}/storage/home/{self.username}/access"
 
-            # Store credentials file
-            with open(file_path, "w") as credentials_file:
-                credentials_file.write(f"username: {username}\n")
-                credentials_file.write(f"password: {password}\n")
-            os.chmod(file_path, 0o600)
-            self.__log.info("Credentials file created successfully.")
+            resp=requests.get(
+                uri,
+                auth=(self.username, self.password)
+            )
 
-        except FileNotFoundError:
-            self.__log.error("Error: Secrets files not found.")
-        except Exception as e:
-            self.__log.error(f"Error: {str(e)}")
-    def get_platform_metadata(self) -> dict[str, str]:
-        return dict(job_id=self.job_id)
+            # Load the JSON content
+            data = json.loads(resp.content)
+
+            # Iterate through the dictionary keys to find 'nfs_address'
+            for key, value in data.items():
+                nfs_address = value.get('nfs_address')
+                if nfs_address:
+                    nfs_server, server_share = nfs_address.split(':', 1)
+                    return nfs_server, server_share
+
+            return None, None
+        except(json.JSONDecodeError, AttributeError, ValueError) as e:
+            self.__log.error(f"Error extracting NFS info: {e}")
+            return None, None
+        except requests.exceptions.RequestException as e:
+            self.__log.error(f"Error requesting NFS info: {e}")
+
+    def check_credentials_file(self):
+        # Get the home directory
+        home_directory = os.path.expanduser("~")
+
+        # Specify the path to the credentials file
+        credentials_file_path = os.path.join(home_directory, ".python-grid5000.yaml")
+
+        # Check if the file exists
+        if os.path.exists(credentials_file_path):
+            # Load the YAML content from the file
+            with open(credentials_file_path, "r") as file:
+                credentials = yaml.safe_load(file)
+
+                # Check if 'username' and 'password' keys exist in the YAML content
+                if "username" in credentials and "password" in credentials:
+                    # Check if 'username' and 'password' values are not empty
+                    if credentials["username"] and credentials["password"]:
+                        self.username = credentials["username"]
+                        self.password = credentials["password"]
+                        return True  # Credentials are present and non-empty
+                    else:
+                        return False  # Either 'username' or 'password' is empty
+                else:
+                    return False  # Either 'username' or 'password' is missing
+        else:
+            return False  # File does not exist
 
     def destroy(self):
         # Destroy all resources from Grid5000

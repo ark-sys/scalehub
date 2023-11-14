@@ -25,6 +25,7 @@ spec:
         direction: to
         action: delay
         mode: fixed-percent
+        value: '50'
         selector:
           namespaces:
             - consul
@@ -49,6 +50,7 @@ spec:
         direction: to
         action: delay
         mode: fixed-percent
+        value: '50'
         selector:
           namespaces:
             - consul
@@ -73,6 +75,7 @@ spec:
         direction: to
         action: delay
         mode: fixed-percent
+        value: '50'
         selector:
           namespaces:
             - consul
@@ -97,6 +100,7 @@ spec:
         direction: to
         action: delay
         mode: fixed-percent
+        value: '50'
         selector:
           namespaces:
             - consul
@@ -121,6 +125,7 @@ spec:
         direction: to
         action: delay
         mode: fixed-percent
+        value: '50'
         selector:
           namespaces:
             - consul
