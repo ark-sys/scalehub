@@ -1,4 +1,4 @@
-![Logo](scalehub_logo.png)
+![Logo](images/scalehub_logo.png)
 
 Scalehub is a tool that allows you to provision a cluster and deploy K3S and Flink on top of it.
 
@@ -83,7 +83,7 @@ To correctly setup your environment, follow these steps:
 
 4. Correctly setup your ssh private key for Grid5000 in `dockerfile/secrets` and in the **secrets** field of the `dockerfile/docker-compose.yaml`
 
-5. Run the container 
+5. Run the deployment (or manually start docker-compose.yaml from its directory)
     ```shell
    ./deploy.sh create
    
@@ -92,9 +92,14 @@ To correctly setup your environment, follow these steps:
    ./deploy.sh shell
 
 At this point you should be able to run the *shub* command from within the container.
+The scalehub container will use the network stack from the VPN container to interact with Grid5000.
+
+By mounting `script/`, `playbooks/`, `experiments-data/` and `conf/`, the user can quickly modify the deployment description and execute tests. 
+
+![Scalehub Setup](images/scalehub_setup.png)
+
 
 ## Usage
-![Scalehub Setup](scalehub_setup.png)
 
 ### Scalehub Script
 
@@ -130,7 +135,17 @@ After provisioning the cluster with K3S, the first playbook that should be deplo
 
 This playbook deploys the NFS plugin for storage access and various PVCs required by the data stream application.
 
+A third of the requested worker nodes will be labeled as **Producer** and the reminder as **Consumer**. 
+
+The cluster will look like this after a provisioning and the deployment of the **base** playbook.
+
+![after_playbook_base](images/cluster-deployment-base.png)
+
 The other playbooks will perform the following actions:
+
+<div style="overflow: auto;">
+    <img src="images/deployed_playbooks.png" alt="playbooks" style="float: right; margin-left: 10px;"/>
+    <div style="line-height: 30px; padding-top: 150px;">
 
 - **monitoring** : Deploy the monitoring stack composed by Prometheus with NodeExporter-VictoriaMetrics-Grafana
 - **flink** : Deploys Flink
@@ -139,13 +154,25 @@ The other playbooks will perform the following actions:
 - **all** : Deploys all the above playbooks in the correct order.
 
 - **load_generators** : Deploys a set of load generators that test Flink
-
 - **transscale** : Deploys Transscale autoscaler
+ 
+    </div>
+</div>
 
-:point_up: You may want to run one of the applications with a different image. For that, you can modify **vars/main.yaml
-** file located in roles' folder of the application.
 
-For a more expedite execution mode, you can start an experiment with 
+The deployment of all playbooks will lead the cluster at this state:
+
+![cluster_state](images/cluster-full-deployment.png)
+
+:point_up: You may want to run one of the applications with a different image. For that, you can modify **vars/main.yaml** file located in the role folder of the application.
+
+At this point the cluster is ready for experiments. You may want to:
+1. Deploy a flink a job
+2. Deploy the transscale job
+3. Deploy a chaos experiment
+4. Monitor the resources
+
+For a more expedite execution mode, you can start an experiment with (this is my scripted shortcut to run a job, transscale and retrieve data and logs when the experiment ends):
 ```shell
     shub run experiment
 ```
@@ -154,6 +181,7 @@ If you already started a job and you only want to launch transscale, then:
 ```shell
     shub run transscale
 ```
+Otherwie you can go manual and define your order execution. If you want to script your execution order, you may add an **action** to the `run()` function in shub.
 
 ## Configuration
 
