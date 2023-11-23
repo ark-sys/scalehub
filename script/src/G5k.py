@@ -36,7 +36,6 @@ class G5k(Platform):
         network = en.G5kNetworkConf(type="prod", roles=["my_network"], site=self.site)
         conf = (
             en.G5kConf.from_settings(
-                job_type="allow_classic_ssh",
                 job_name=self.name,
                 queue=self.queue,
                 walltime=self.walltime,

@@ -218,14 +218,11 @@
     - name: Label a random consumer node with autoscaling
       command:
         cmd: "kubectl label node {{ random_consumer_node }} --overwrite node-role.kubernetes.io/autoscaling='SCHEDULABLE'"
-
-
+    # Todo: this part should be parameterizable
     # Setup NFS
     - name: Setup NFS
-      delegate_to: localhost
-      tags: [ always ]
       block:
-        - name: Deploy NFS Storage provisioner
+        - name: Install NFS Storage provisioner
           kubernetes.core.helm:
             name: csi-driver-nfs
             chart_ref: "csi-driver-nfs"
@@ -235,4 +232,21 @@
             create_namespace: true
             wait: true
           register: csi_driver
+        - name: Deploy NFS Storage
+          kubernetes.core.k8s:
+            state: present
+            definition:
+              apiVersion: storage.k8s.io/v1
+              kind: StorageClass
+              metadata:
+                name: nfs-csi
+              provisioner: nfs.csi.k8s.io
+              parameters:
+                server: "{{ nfs_server_address }}"
+                share: "{{ nfs_share }}"
+                subDir: "${pvc.metadata.namespace}-${pvc.metadata.name}"
+              reclaimPolicy: Delete
+              volumeBindingMode: Immediate
+              mountOptions:
+                - nconnect=16
 

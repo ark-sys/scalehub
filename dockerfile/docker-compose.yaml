@@ -67,3 +67,7 @@ services:
     command:
       - -D
     # Option description of -D : Don't use the connection as the default route -> don't break ssh connections from scalehub to g5k
+  kubernetes_dashboard:
+    depends_on:
+     - scalehub
+    image: kubernetesui/dashboard

@@ -5,3 +5,4 @@ argcomplete
 pandas
 matplotlib
 seaborn
+networkx
