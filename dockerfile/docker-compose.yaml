@@ -23,7 +23,6 @@ services:
         target: /root/.python-grid5000.yaml
       - source: ssh_key
         target: /root/.ssh/id_rsa
-        mode: 600
     build:
       context: .
       dockerfile: Dockerfile
@@ -41,15 +40,19 @@ services:
       - type: bind
         source: ../experiments-data
         target: /app/experiments-data
+  # OpenVPN client service to connect to Grid5000
   vpn:
     image: dperson/openvpn-client
     # cap_add, security_opt, and volume required for the image to function
     cap_add:
       - NET_ADMIN
-    devices:
-      - /dev/net/tun
+    extra_hosts:
+      # Initialize ingreess.scalehub.local in /etc/hosts with dummy IP
+      - "ingress.scalehub.local:127.0.0.1"
     networks:
       - scalehub_net
+    ports:
+      - "80:80"
     tmpfs:
       - /run
       - /tmp
@@ -67,7 +70,3 @@ services:
     command:
       - -D
     # Option description of -D : Don't use the connection as the default route -> don't break ssh connections from scalehub to g5k
-  kubernetes_dashboard:
-    depends_on:
-     - scalehub
-    image: kubernetesui/dashboard

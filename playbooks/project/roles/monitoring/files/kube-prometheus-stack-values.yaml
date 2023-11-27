@@ -1,7 +1,15 @@
 ---
 # vim: set ft=yaml:
 prometheus:
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: nginx
+    hosts: [ 'prometheus.scalehub.local' ]
+    paths: [ '/' ]
   prometheusSpec:
+    externalUrl: "http://prometheus.scalehub.local/"
+    routePrefix: /
     scrapeInterval: 10s
     serviceMonitorSelectorNilUsesHelmValues: false
     podMonitorSelectorNilUsesHelmValues: false
@@ -15,8 +23,14 @@ prometheus:
         sourceLabels:
           - __meta_kubernetes_pod_node_name
         targetLabel: instance
-
 grafana:
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: nginx
+    hosts:
+      - grafana.scalehub.local
+    path: /
   fullnameOverride: "grafana"
   nodeSelector:
     node-role.kubernetes.io/control-plane: "true"
@@ -32,6 +46,9 @@ grafana:
     plugins:
       plugin_admin_enabled: true
       enable_alpha: true
+    server:
+      root_url: "%(protocol)s://%(domain)s:%(http_port)s/grafana"
+      serve_from_sub_path: true
   sidecar:
     datasources:
       enabled: false
