@@ -17,7 +17,7 @@ spec:
         component: jobmanager
     spec:
       nodeSelector:
-        node-role.kubernetes.io/worker: consumer
+        node-role.kubernetes.io/consumer: ''
       terminationGracePeriodSeconds: 0
       imagePullSecrets:
         - name: gitlab-scalehub

@@ -26,7 +26,7 @@ spec:
                   app: flink
                   component: taskmanager
       nodeSelector:
-        node-role.kubernetes.io/worker: consumer
+        node-role.kubernetes.io/consumer: ''
         node-role.kubernetes.io/autoscaling: SCHEDULABLE
       terminationGracePeriodSeconds: 0
       imagePullSecrets:
