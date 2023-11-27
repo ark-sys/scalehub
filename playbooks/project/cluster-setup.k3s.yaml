@@ -243,9 +243,8 @@
               provisioner: nfs.csi.k8s.io
               parameters:
                 server: "{{ nfs_server_address }}"
-                share: "{{ nfs_share }}"
+                share: "{{ nfs_share }}/scalehub-pvc"
                 subDir: "${pvc.metadata.namespace}-${pvc.metadata.name}"
-              reclaimPolicy: Delete
               volumeBindingMode: Immediate
               mountOptions:
                 - nconnect=16

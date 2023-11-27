@@ -1,9 +1,10 @@
 ---
-- name: Deploy base resources
+- name: Deploy storage resources
   hosts: localhost
   gather_facts: false
   roles:
-    - base
+    - storage
+    - network
     - monitoring
     - kafka
     - flink
