@@ -39,6 +39,20 @@
               enabled: true
               provider: "prometheus"
               baseURL: http://victoria-metrics-single-server.default.svc.cluster.local:8428/
+            # Configure ingress on consul.scalehub.local
+            ingress:
+              enabled: true
+              annotations: |
+                kubernetes.io/ingress.class: nginx
+                nginx.ingress.kubernetes.io/rewrite-target: /
+              hosts:
+                - host: consul.scalehub.local
+                  backend:
+                    serviceName: consul-ui
+                    servicePort: 80
+                  paths:
+                    - /
+              pathType: Prefix
           # Enable Consul connect pod injection
           connectInject:
             enabled: true

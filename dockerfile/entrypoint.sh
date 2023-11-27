@@ -41,5 +41,8 @@ chsh -s /usr/bin/fish
 # Generate config file based on credentials file
 generate_config
 
+# Start nginx service in background
+service nginx start
+
 # Keep the container running
 tail -f /dev/null

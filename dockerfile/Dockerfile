@@ -23,7 +23,11 @@ RUN apt-get update && apt-get install -y \
     rustc \
     fish \
     iputils-ping \
-    tk
+    tk \
+    nginx
+# Install python requirements
+COPY requirements.txt requirements.txt
+RUN pip install -r requirements.txt
 
 # Install kubectl
 RUN curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl" && \
@@ -32,10 +36,6 @@ RUN curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -
 
 # Install Helm
 RUN cd /tmp && curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 && chmod 700 get_helm.sh && ./get_helm.sh && rm ./get_helm.sh
-
-# Install python requirements
-COPY requirements.txt requirements.txt
-RUN pip install -r requirements.txt
 
 # Install auto-complete for kubectl
 COPY kubectl.fish /usr/share/fish/vendor_completions.d/
@@ -53,5 +53,8 @@ fi' >> ~/.bashrc
 COPY entrypoint.sh /entrypoint.sh
 
 RUN chmod +x /entrypoint.sh
+
+# Copy reverse-proxy config
+COPY nginx.conf /etc/nginx/conf.d/scalehub.conf
 
 ENTRYPOINT ["/entrypoint.sh"]
