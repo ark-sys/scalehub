@@ -1,7 +1,6 @@
 ---
-- name: Deploy base resources
+- name: Deploy network resources
   hosts: localhost
   gather_facts: false
   roles:
-    - storage
     - network
