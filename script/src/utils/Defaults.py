@@ -8,6 +8,7 @@ class ConfigKeys:
     NUM_WORKERS = "platform.workers"
     QUEUE_TYPE = "platform.queue"
     WALLTIME = "platform.walltime"
+    WALLTIME_EXTENSION = "platform.walltime_extension"
     KUBERNETES_TYPE = "platform.kubernetes_type"
 
     NAME = "experiment.name"
@@ -50,6 +51,7 @@ class DefaultValues:
         workers = 2
         queue = "default"
         walltime = "1:00:00"
+        walltime_extension = "0:30:00"
         kubernetes_type = "k3s"
 
     class Experiment:

@@ -33,6 +33,7 @@ class Config:
         self.__config[Key.NUM_WORKERS] = Value.Platform.workers
         self.__config[Key.QUEUE_TYPE] = Value.Platform.queue
         self.__config[Key.WALLTIME] = Value.Platform.walltime
+        self.__config[Key.WALLTIME_EXTENSION] = Value.Platform.walltime_extension
         self.__config[Key.KUBERNETES_TYPE] = Value.Platform.kubernetes_type
 
         self.__config[Key.NAME] = Value.Experiment.name

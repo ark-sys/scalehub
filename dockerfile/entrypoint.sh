@@ -13,7 +13,7 @@ generate_config() {
 
     # Check if username is available
     if [ -n "$username" ]; then
-        bash -c "cat << EOF > $HOME_PATH/.ssh/config
+        bash -c "cat << 'EOF' > $HOME_PATH/.ssh/config
 Host access.grid5000.fr
   User $username
   Hostname access.grid5000.fr
@@ -21,6 +21,19 @@ Host access.grid5000.fr
   ForwardAgent no
   StrictHostKeyChecking no
 
+Host g5k
+  User $username
+  Hostname access.grid5000.fr
+  IdentityFile ~/.ssh/id_rsa
+  ForwardAgent no
+  StrictHostKeyChecking no
+
+Host *.g5k
+  User $username
+  ProxyCommand ssh g5k -W \$(basename %h .g5k):%p
+  IdentityFile ~/.ssh/id_rsa
+  ForwardAgent no
+  StrictHostKeyChecking no
 
 Host *.*.grid5000.fr
   User $username
