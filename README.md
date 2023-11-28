@@ -137,7 +137,7 @@ This playbook deploys the NFS plugin for storage access and various PVCs require
 
 A third of the requested worker nodes will be labeled as **Producer** and the reminder as **Consumer**. 
 
-The cluster will look like this after a provisioning and the deployment of the **base** playbook.
+The cluster will look like this after a provisioning and the deployment of the **base** playbook (which deploys **storage** and **network** roles).
 
 ![after_playbook_base](images/cluster-deployment-base.png)
 
@@ -165,13 +165,28 @@ The deployment of all playbooks will lead the cluster at this state:
 
 :point_up: You may want to run one of the applications with a different image. For that, you can modify **vars/main.yaml** file located in the role folder of the application.
 
+A nginx server is started in the scalehub container. It's purpose is reverse-proxy requests from localhost to the cluster. The nginx server is configured to proxy requests to the following services:
+
+- **grafana** : http://localhost/grafana
+- **flink** : http://localhost/flink/
+- **chaos** : http://localhost/chaos/
+- **kubernetes-dashboard** : http://localhost/kube/
+- **prometheus** : http://localhost/prometheus/ (WIP: Prometheus is not yet completely configured)
+- **consul** : http://localhost/consul/ (WIP: Consul is not yet completely configured)
+
+The **kubernetes-dashboard** requires an access token to be accessed. The token is generated at the end of the deployment of the **kube-dash** role in **monitoring** playbook. You can retrieve the token with the following command in the scalehub container:
+
+```shell
+  kubectl get secret admin-user -n kubernetes-dashboard -o jsonpath={".data.token"} | base64 -d
+```
+
 At this point the cluster is ready for experiments. You may want to:
 1. Deploy a flink a job
 2. Deploy the transscale job
 3. Deploy a chaos experiment
 4. Monitor the resources
 
-For a more expedite execution mode, you can start an experiment with (this is my scripted shortcut to run a job, transscale and retrieve data and logs when the experiment ends):
+For a more expedite execution mode, you can start an experiment, based on what is defined in the scalehub.conf, with (this is my scripted shortcut to run a job, transscale and retrieve data and logs when the experiment ends):
 ```shell
     shub run experiment
 ```
