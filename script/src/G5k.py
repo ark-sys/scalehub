@@ -93,23 +93,20 @@ class G5k(Platform):
         try:
             uri = f"https://api.grid5000.fr/3.0/sites/{self.job_site}/storage/home/{self.username}/access"
 
-            resp=requests.get(
-                uri,
-                auth=(self.username, self.password)
-            )
+            resp = requests.get(uri, auth=(self.username, self.password))
 
             # Load the JSON content
             data = json.loads(resp.content)
 
             # Iterate through the dictionary keys to find 'nfs_address'
             for key, value in data.items():
-                nfs_address = value.get('nfs_address')
+                nfs_address = value.get("nfs_address")
                 if nfs_address:
-                    nfs_server, server_share = nfs_address.split(':', 1)
+                    nfs_server, server_share = nfs_address.split(":", 1)
                     return nfs_server, server_share
 
             return None, None
-        except(json.JSONDecodeError, AttributeError, ValueError) as e:
+        except (json.JSONDecodeError, AttributeError, ValueError) as e:
             self.__log.error(f"Error extracting NFS info: {e}")
             return None, None
         except requests.exceptions.RequestException as e:
@@ -142,6 +139,10 @@ class G5k(Platform):
         else:
             return False  # File does not exist
 
+    # def extend_reservation(self, walltime):
+    #     # Extend the reservation
+    #     self.provider.driver.extend_job(self.job_id, walltime)
+    # ssh rennes.g5k "oarwalltime \$(oarstat -u | tail -n 1 | cut -d ' ' -f 1) +0:10"
     def destroy(self):
         # Destroy all resources from Grid5000
         self.provider.destroy()
