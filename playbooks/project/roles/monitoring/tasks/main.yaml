@@ -1,9 +1,9 @@
 ---
 # Main monitoring
 
-- import_tasks: kube-dash.yaml
-#- import_tasks: victoria-metrics.yaml
+#- import_tasks: kube-dash.yaml
+- import_tasks: victoria-metrics.yaml
 #- import_tasks: prometheus.yaml
 #- import_tasks: service-monitors.yaml
 #- import_tasks: consul.yaml
-#
+
