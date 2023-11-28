@@ -25,7 +25,7 @@
     - name: Deploy ingress for Flink
       kubernetes.core.k8s:
         state: present
-        definition: "{{ lookup('ansible.builtin.file', 'scalehub-ingress.yaml') | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.file', 'flink-ingress.yaml') | from_yaml }}"
 
 - name: Ingress - Deletion block
   tags: [ delete ]

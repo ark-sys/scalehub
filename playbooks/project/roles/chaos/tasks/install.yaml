@@ -19,6 +19,15 @@
         release_state: present
         values:
           dashboard:
+            ingress:
+              enabled: true
+              ingressClassName: nginx
+              hosts:
+                - host:
+                  name: chaos-mesh.scalehub.local
+                  paths:
+                    - /
+              pathType: Prefix
             securityMode: false
             nodeSelector:
               node-role.kubernetes.io/control-plane: "true"
