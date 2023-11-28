@@ -165,7 +165,7 @@ The deployment of all playbooks will lead the cluster at this state:
 
 :point_up: You may want to run one of the applications with a different image. For that, you can modify **vars/main.yaml** file located in the role folder of the application.
 
-A nginx server is started in the scalehub container. It's purpose is reverse-proxy requests from localhost to the cluster. The nginx server is configured to proxy requests to the following services:
+A nginx server is started in the scalehub container. Its purpose is to reverse-proxy requests from localhost to the cluster. The nginx server is configured to proxy requests to the following services:
 
 - **grafana** : http://localhost/grafana
 - **flink** : http://localhost/flink/
