@@ -4,6 +4,11 @@
   delegate_to: localhost
   tags: [ create ]
   block:
+    - name: Add VictoriaMetrics repo
+      kubernetes.core.helm_repository:
+        name: victoria-metrics
+        repo_url: https://victoriametrics.github.io/helm-charts/
+        state: present
     - name: Deploy latest version of VictoriaMetrics chart for long term storage of experiment results
       kubernetes.core.helm:
         name: victoria-metrics-single
@@ -25,7 +30,14 @@
               config:
                 global:
                   scrape_interval: 10s
-
+            ingress:
+              enabled: true
+              annotations:
+                kubernetes.io/ingress.class: nginx
+              hosts:
+                - name: victoriametrics.scalehub.local
+                  path: /
+              pathType: Prefix
     - name: Add Secret access to private repository for victoriametrics
       kubernetes.core.k8s:
         api_version: apps/v1
@@ -48,3 +60,15 @@
         name: victoria-metrics-single-server-0
         namespace: default
         state: absent
+
+- name: Setup VM - Deletion block
+  delegate_to: localhost
+  tags: [ delete ]
+  block:
+    - name: Delete VictoriaMetrics
+      kubernetes.core.helm:
+        name: victoria-metrics-single
+        chart_ref: "victoria-metrics-single"
+        chart_repo_url: https://victoriametrics.github.io/helm-charts/
+        release_namespace: default
+        release_state: absent
