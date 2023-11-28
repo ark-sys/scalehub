@@ -141,23 +141,9 @@ The cluster will look like this after a provisioning and the deployment of the *
 
 ![after_playbook_base](images/cluster-deployment-base.png)
 
-The other playbooks will deploy:
+The other playbooks will deploy the following applications:
 
-<div style="overflow: auto;">
-    <img src="images/deployed_playbooks.png" alt="playbooks" style="float: right; margin-left: 10px;"/>
-    <div style="line-height: 30px; padding-top: 150px;">
-
-- **monitoring** : Deploy the monitoring stack with Prometheus-NodeExporter-VictoriaMetrics-Grafana-Consul
-- **kafka** : Deploys Kafka brokers with JMX-exporter for metrics
-- **flink** : Deploys Flink
-- **chaos** : Deploys Chaos-mesh
-- **all** : Deploys all the above playbooks in the correct order.
-- **load_generators** : Deploys a set of load generators that test Flink
-- **transscale** : Deploys Transscale autoscaler
-    </div>
-</div>
-
-
+![playbooks](images/deployed_playbooks.png)
 
 The deployment of all playbooks will lead the cluster at this state:
 
