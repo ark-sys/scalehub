@@ -27,8 +27,8 @@ spec:
 
 
 #commands
-# Targeted instances
+# Get targeted instances
 # kubectl get networkchaos fixed-latency-flink -o=jsonpath='{.status.instances}'
-# Taskmanagers nodes
+# Get apps node names
 # kubectl get pods -l app=flink -l component=taskmanager -o jsonpath='{range .items[*]}{"\n"}{.metadata.name}{":\t"}{.spec.nodeName}{end}'
 # kubectl get pods -n consul -l app=consul -l component=client -o jsonpath='{range .items[*]}{"\n"}{.metadata.name}{":\t"}{.spec.nodeName}{end}'

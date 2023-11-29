@@ -142,7 +142,7 @@ class G5k(Platform):
     # def extend_reservation(self, walltime):
     #     # Extend the reservation
     #     self.provider.driver.extend_job(self.job_id, walltime)
-    # ssh rennes.g5k "oarwalltime \$(oarstat -u | tail -n 1 | cut -d ' ' -f 1) +0:10"
+    # ssh rennes.g5k "oarwalltime \$(oarstat -u | tail -n 1 | cut -d ' ' -f 1) +2:00"
     def destroy(self):
         # Destroy all resources from Grid5000
         self.provider.destroy()

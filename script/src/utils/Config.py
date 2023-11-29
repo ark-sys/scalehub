@@ -40,6 +40,7 @@ class Config:
         self.__config[Key.JOB] = Value.Experiment.job_file
         self.__config[Key.TASK] = Value.Experiment.task_name
         self.__config[Key.DB_URL] = Value.Experiment.db_url
+        self.__config[Key.LATENCY_TEST] = Value.Experiment.latency_test
 
         self.__config[Key.LOAD_GENERATORS] = Value.Experiment.LoadGenerator
         self.__config[Key.DATA_SKIP_DURATION] = Value.Experiment.ExperimentData.skip_s
@@ -61,7 +62,7 @@ class Config:
         return int(self.get(key))
 
     def get_bool(self, key) -> bool:
-        return bool(self.get(key))
+        return eval(self.get(key))
 
     def get_float(self, key) -> float:
         return float(self.get(key))
