@@ -1,4 +1,6 @@
 import os
+import threading
+from time import sleep
 
 import jinja2
 import yaml
@@ -169,3 +171,51 @@ class KubernetesManager:
 
         except ApiException as e:
             self.__log.error(f"Exception when getting Job logs: {e}")
+
+    def monitor_injection_thread(self):
+        deployment_name = "flink-taskmanager"
+        type_of_test = "fixed-latency"
+        reset_thread = threading.Thread(target=self.__reset_latency, args=(deployment_name, type_of_test))
+        reset_thread.start()
+    def __reset_latency(self, deployment_name, type_of_test):
+        FLINK_LATENCY_TESTS = f"/app/playbooks/project/roles/chaos/files/flink"
+
+        # Create API instances
+        apps_v1 = Client.AppsV1Api()
+        custom_api = Client.CustomObjectsApi()
+
+        latency_test_file = f"{type_of_test}.yaml"
+
+        path_to_latency_test = os.path.join(FLINK_LATENCY_TESTS, latency_test_file)
+        # Watch for changes in the deployment
+        stream = watch.Watch().stream(apps_v1.list_namespaced_deployment, namespace='default')
+        old_replica_count = None
+        for event in stream:
+            deployment = event['object']
+            if deployment.metadata.name == deployment_name:
+                if event['type'] == 'DELETED':
+                    self.__log.info("Deployment has been deleted. Exiting...")
+                    break
+                new_replica_count = deployment.spec.replicas
+                if new_replica_count != old_replica_count:
+                    self.__log.info("Detected replica change. Triggering latency experiment reset.")
+                    # Delete the NetworkChaos resource
+                    custom_api.delete_namespaced_custom_object(
+                        group="chaos-mesh.org",
+                        version="v1alpha1",
+                        namespace="default",
+                        plural="networkchaos",
+                        name=f"{type_of_test}-flink"
+                    )
+                    sleep(3)
+                    # Recreate the NetworkChaos resource
+                    with open(path_to_latency_test) as f:
+                        resource_definition = yaml.safe_load(f)
+                    custom_api.create_namespaced_custom_object(
+                        group="chaos-mesh.org",
+                        version="v1alpha1",
+                        namespace="default",
+                        plural="networkchaos",
+                        body=resource_definition
+                    )
+                    old_replica_count = new_replica_count

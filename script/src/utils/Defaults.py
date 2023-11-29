@@ -15,6 +15,7 @@ class ConfigKeys:
     JOB = "experiment.job_file"
     TASK = "experiment.task_name"
     DB_URL = "experiment.db_url"
+    LATENCY_TEST = "experiment.latency_test"
 
     LOAD_GENERATORS = "experiment.load_generators"
     DATA_SKIP_DURATION = "experiment.output.skip_s"
@@ -58,7 +59,8 @@ class DefaultValues:
         name = "scalehub"
         job_file = "myjoin-all.jar"
         task_name = "TumblingEventTimeWindows"
-        db_url = "localhost:8428"
+        db_url = "localhost/vm"
+        latency_test = False
 
         class LoadGenerator:
             name = "load_generator"

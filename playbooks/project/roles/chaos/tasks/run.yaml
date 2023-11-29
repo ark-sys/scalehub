@@ -21,13 +21,17 @@
     - set_fact:
         impacted_pod_names: "{{ impacted_pod_list.keys() | list }}"
 
-    - name: Add a label (chaos:true) to every node that hosts an impacted pod
+    - name: Add a label (chaos:true) to every node that hosts an impacted consul pod
       shell: |
         node=$(kubectl get pod -n consul {{ item }} -o jsonpath='{.spec.nodeName}')
         echo $node
         kubectl label nodes $node chaos=true
       loop: "{{ impacted_pod_names }}"
 
+    - name: Deploy chaos experiment on Flink
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('ansible.builtin.file', 'flink/fixed-latency.yaml') | from_yaml }}"
 
 
 

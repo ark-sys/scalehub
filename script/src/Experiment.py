@@ -409,6 +409,16 @@ class Experiment:
 
     def full_run(self):
         p: Playbooks = Playbooks()
+
+        # Check if chaos is enabled
+        if self.config.get_bool(Key.LATENCY_TEST):
+            # Run chaos
+            self.__log.info("Chaos injection enabled. Deploying chaos resources on Consul and Flink.")
+            p.run_playbook("chaos", tags=["experiment"])
+            # Start chaos injection thread
+            self.__log.info("Starting monitoring thread on scaling events. Reset chaos injection on rescale.")
+            self.k.monitor_injection_thread()
+
         # Launch Flink Job
         self.k.execute_command_on_pod(
             deployment_name="flink-jobmanager",
@@ -426,15 +436,7 @@ class Experiment:
                 lg_value=int(lg_config["value"]),
             )
         self.start_experiment()
-        # transscale_result = p.deploy(
-        #     "transscale",
-        #     job_file=self.job_name,
-        #     task_name=self.task_name,
-        #     max_parallelism=self.max_par,
-        #     warmup=self.warmup,
-        #     interval=self.interval,
-        # )
-
+        # Run transscale
         transscale_params = {
             "job_file": self.job_name,
             "task_name": self.task_name,
