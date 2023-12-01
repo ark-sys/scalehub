@@ -1,9 +1,6 @@
 # Base image
 FROM python:slim-bullseye
 
-# Set the working directory
-RUN mkdir /app/
-
 # Set default env variables
 ENV TZ="Europe/Paris"
 ENV KUBECONFIG="/app/conf/kubeconfig"
@@ -70,6 +67,10 @@ RUN sudo chmod +x /entrypoint.sh
 
 # Copy reverse-proxy config
 COPY nginx/nginx.conf /etc/nginx/conf.d/scalehub.conf
+
+# Create working directory for the script at the root. This easily allows to mount a volume to this directory
+# Also set the permissions to rwx for all users to avoid permission issues
+RUN sudo mkdir -m a=rwx /app/
 
 # Set the working directory to /app
 WORKDIR /app/
