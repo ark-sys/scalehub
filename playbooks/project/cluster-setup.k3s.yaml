@@ -156,6 +156,12 @@
       shell: kubectl wait --for=condition=Ready nodes --all --timeout=600s
       register: nodes_ready
     - debug: var=nodes_ready.stdout_lines
+    - name: Create monitoring namespace
+      kubernetes.core.k8s:
+        name: monitoring
+        api_version: v1
+        kind: Namespace
+        state: present
 
 - name: Post-install configuration - Label worker nodes
   hosts: localhost
@@ -168,6 +174,9 @@
     - name: Retrieve control node from inventory
       set_fact:
         control_host: "{{ groups['control'][0] }}"
+    - name: Retrieve storage node from inventory
+      set_fact:
+        storage_host: "{{ groups['storage'][0] }}"
 
     - name: Define total_nodes variable
       set_fact:
@@ -211,6 +220,9 @@
     - name: Label control node
       command:
         cmd: "kubectl label nodes {{ control_host }} --overwrite node-role.kubernetes.io/control-plane=true"
+    - name: Label storage node
+      command:
+        cmd: "kubectl label nodes {{ storage_host }} --overwrite node-role.kubernetes.io/storage=true node-role.kubernetes.io/scalehub-storage=true"
 
     - name: Randomly select a consumer node
       set_fact:
@@ -218,34 +230,3 @@
     - name: Label a random consumer node with autoscaling
       command:
         cmd: "kubectl label node {{ random_consumer_node }} --overwrite node-role.kubernetes.io/autoscaling='SCHEDULABLE'"
-    # Todo: this part should be parameterizable
-    # Setup NFS
-    - name: Setup NFS
-      block:
-        - name: Install NFS Storage provisioner
-          kubernetes.core.helm:
-            name: csi-driver-nfs
-            chart_ref: "csi-driver-nfs"
-            chart_version: 4.1.0
-            chart_repo_url: https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
-            release_namespace: csi-driver-nfs
-            create_namespace: true
-            wait: true
-          register: csi_driver
-        - name: Deploy NFS Storage
-          kubernetes.core.k8s:
-            state: present
-            definition:
-              apiVersion: storage.k8s.io/v1
-              kind: StorageClass
-              metadata:
-                name: nfs-csi
-              provisioner: nfs.csi.k8s.io
-              parameters:
-                server: "{{ nfs_server_address }}"
-                share: "{{ nfs_share }}/scalehub-pvc"
-                subDir: "${pvc.metadata.namespace}-${pvc.metadata.name}"
-              volumeBindingMode: Immediate
-              mountOptions:
-                - nconnect=16
-

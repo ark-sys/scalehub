@@ -6,10 +6,9 @@ metadata:
   name: "{{ storage_class_name }}"
 provisioner: nfs.csi.k8s.io
 parameters:
-  server: "{{ nfs_server_address }}"
-  share: "{{ nfs_server_share }}"
+  server: "{{ server_address }}"
+  share: "{{ server_share }}/scalehub-pvc"
   subDir: "${pvc.metadata.namespace}-${pvc.metadata.name}"
-reclaimPolicy: Delete
 volumeBindingMode: Immediate
 mountOptions:
   - nconnect=16

@@ -181,9 +181,12 @@ class ExperimentData:
                         # Calculate region
                         region = len(predictions[target_parallelism]) + 1
 
-                        predictions[target_parallelism].append((region, prediction_value))
+                        predictions[target_parallelism].append(
+                            (region, prediction_value)
+                        )
                 # Return list of predictions
                 return predictions
+
         filename = os.path.join(self.exp_path, "joined_output.csv")
         try:
             # Read the CSV file with comma delimiter
@@ -214,15 +217,19 @@ class ExperimentData:
             filtered_df = grouped.apply(
                 lambda x: x[
                     x["Time"] >= x["Time"].min() + pd.Timedelta(seconds=skip_duration)
-                    ]
+                ]
             ).reset_index(drop=True)
 
             # Make sure that Parallelism values are integers and not floats
             filtered_df["Parallelism"] = filtered_df["Parallelism"].astype(int)
 
             # Calculate mean throughput and standard deviation for each parallelism
-            stats_tpo = filtered_df.groupby(["Parallelism", "region"])["Throughput_OUT"].agg(["mean", "std"])
-            stats_tpi = filtered_df.groupby(["Parallelism", "region"])["Throughput_IN"].agg(["mean", "std"])
+            stats_tpo = filtered_df.groupby(["Parallelism", "region"])[
+                "Throughput_OUT"
+            ].agg(["mean", "std"])
+            stats_tpi = filtered_df.groupby(["Parallelism", "region"])[
+                "Throughput_IN"
+            ].agg(["mean", "std"])
             # Combine the mean and std for 'Throughput' and 'Input' into a single DataFrame
             stats = pd.concat(
                 [stats_tpo, stats_tpi], axis=1, keys=["Throughput_OUT", "Throughput_IN"]
@@ -262,16 +269,27 @@ class ExperimentData:
         # Parse log file for experiment info
         log_path = os.path.join(self.exp_path, "exp_log.txt")
         m: Misc = Misc(self.__log)
-        job_name, num_sensors_sum, avg_interval_ms, start_ts, end_ts = m.parse_log(log_path)
+        (
+            job_name,
+            num_sensors_sum,
+            avg_interval_ms,
+            start_ts,
+            end_ts,
+            latency_test,
+        ) = m.parse_log(log_path)
 
-        #TODO Change this in the future to properly show throughput in case of scale down
+        # TODO Change this in the future to properly show throughput in case of scale down
         filtered_stats = stats[stats.index.get_level_values("region") == 1]
 
         # Extract the data from the MultiIndex DataFrame
         parallelism_values = filtered_stats.index.get_level_values("Parallelism")
-        throughput_mean = filtered_stats[('Throughput_IN', 'mean')]
-        throughput_std = filtered_stats[('Throughput_IN', 'std')]
-        predictions = filtered_stats["Predictions"] if "Predictions" in filtered_stats.columns else None
+        throughput_mean = filtered_stats[("Throughput_IN", "mean")]
+        throughput_std = filtered_stats[("Throughput_IN", "std")]
+        predictions = (
+            filtered_stats["Predictions"]
+            if "Predictions" in filtered_stats.columns
+            else None
+        )
 
         ax.errorbar(
             parallelism_values,
@@ -297,7 +315,13 @@ class ExperimentData:
         # Calculate percentage error and add it to the plot
         percentage_error = ((predictions - throughput_mean) / throughput_mean) * 100
         for x, y, error in zip(parallelism_values, predictions, percentage_error):
-            ax.annotate(f"{error:.2f}%", (x, y), textcoords="offset points", xytext=(0, 10), ha="center")
+            ax.annotate(
+                f"{error:.2f}%",
+                (x, y),
+                textcoords="offset points",
+                xytext=(0, 10),
+                ha="center",
+            )
 
         # Set title and axis labels
         _, date, n = self.exp_path.split("/")[-3:]
@@ -311,9 +335,11 @@ class ExperimentData:
         )
 
         ax.legend(loc="lower right", handler_map={tuple: HandlerTuple(ndivide=None)})
-
+        # Set the output filename
+        latency_enabled = "latency" if latency_test.lower() == "true" else "nolatency"
+        filename = f"{job_name.split('.')[0]}_{latency_enabled}.png"
         # Export plot to experiment path
-        output_filename = os.path.join(self.exp_path, "plot.png")
+        output_filename = os.path.join(self.exp_path, filename)
         fig.savefig(output_filename)
         self.__log.info(f"Plot saved to: {output_filename}")
 
@@ -413,10 +439,14 @@ class Experiment:
         # Check if chaos is enabled
         if self.config.get_bool(Key.LATENCY_TEST):
             # Run chaos
-            self.__log.info("Chaos injection enabled. Deploying chaos resources on Consul and Flink.")
+            self.__log.info(
+                "Chaos injection enabled. Deploying chaos resources on Consul and Flink."
+            )
             p.run_playbook("chaos", tags=["experiment"])
             # Start chaos injection thread
-            self.__log.info("Starting monitoring thread on scaling events. Reset chaos injection on rescale.")
+            self.__log.info(
+                "Starting monitoring thread on scaling events. Reset chaos injection on rescale."
+            )
             self.k.monitor_injection_thread()
 
         # Launch Flink Job
