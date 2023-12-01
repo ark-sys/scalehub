@@ -9,6 +9,7 @@ generate_config() {
     local username
     if [ -f $SECRETS_PATH/.python-grid5000.yaml ]; then
         username=$(cat $SECRETS_PATH/.python-grid5000.yaml | grep 'username' | awk '{print $2}')
+        cp $SECRETS_PATH/.python-grid5000.yaml $HOME_PATH/.python-grid5000.yaml
     fi
 
     # Create .ssh directory if it doesn't exist
