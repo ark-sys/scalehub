@@ -1,6 +1,6 @@
 ---
 - name: Common setup for both workers and controller
-  hosts: control, workers
+  hosts: control, workers, storage
   become: true
   gather_facts: true
   tags: [ always ]
@@ -112,8 +112,9 @@
         dest: "{{ kubeconfig_path }}"
         flat: true
 
+#TODO Fix these tasks
 - name: Setup Workers
-  hosts: workers
+  hosts: workers, storage
   become: true
   gather_facts: false
   strategy: free
@@ -128,6 +129,7 @@
       shell:
         cmd: curl -sfL https://get.k3s.io | sh -s -
 
+#TODO Fix these tasks
 - name: Post-install configuration - kubeconfig
   hosts: localhost
   gather_facts: false
