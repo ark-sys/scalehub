@@ -47,16 +47,7 @@
         path: /tmp/experiment-data
         state: directory
         mode: "0777"
-    - name: Create tmp folder for flink
-      ansible.builtin.file:
-        path: /tmp/experiment-data/flink/tmp
-        state: directory
-        mode: "0777"
-    - name: Create tmp folder for flink checkpoints
-      ansible.builtin.file:
-        path: /tmp/experiment-data/flink/checkpoints
-        state: directory
-        mode: "0777"
+
 
 - name: Configure user permission on microk8s
   hosts: control, workers
