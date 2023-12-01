@@ -1,5 +1,5 @@
-version: "3.6"
 
+version: "3.6"
 secrets:
   creds:
     # Fill this file with personal Grid5000 credentials
@@ -20,12 +20,16 @@ services:
     network_mode: service:vpn
     secrets:
       - source: creds
-        target: /root/.python-grid5000.yaml
+        target: .python-grid5000.yaml
       - source: ssh_key
-        target: /root/.ssh/id_rsa
+        target: id_rsa
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - UID=${UID}
+        - GID=${GID}
+        - USER=${USER}
     # Source paths refer to scalehub root path
     volumes:
       - type: bind
@@ -44,6 +48,7 @@ services:
   vpn:
     image: dperson/openvpn-client
     # cap_add, security_opt, and volume required for the image to function
+    hostname: scalehub
     cap_add:
       - NET_ADMIN
     extra_hosts:
