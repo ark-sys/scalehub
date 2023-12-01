@@ -45,11 +45,11 @@ RUN curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -
 RUN cd /tmp && curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 && chmod 700 get_helm.sh && ./get_helm.sh && rm ./get_helm.sh
 
 # Install auto-complete for kubectl
-COPY kubectl.fish /usr/share/fish/vendor_completions.d/
+COPY fish/kubectl.fish /usr/share/fish/vendor_completions.d/
 # RUN curl -o /usr/share/fish/vendor_completions.d/kubectl.fish https://raw.githubusercontent.com/evanlucas/fish-kubectl-completions/main/completions/kubectl.fish
 
 # Install auto-completion for shub
-COPY shub.fish /usr/share/fish/vendor_completions.d/shub.fish
+COPY fish/shub.fish /usr/share/fish/vendor_completions.d/shub.fish
 
 # Set host user id and group id without password
 RUN groupadd -g $GID $USER && \
@@ -69,7 +69,7 @@ COPY entrypoint.sh /entrypoint.sh
 RUN sudo chmod +x /entrypoint.sh
 
 # Copy reverse-proxy config
-COPY nginx.conf /etc/nginx/conf.d/scalehub.conf
+COPY nginx/nginx.conf /etc/nginx/conf.d/scalehub.conf
 
 # Set the working directory to /app
 WORKDIR /app/
