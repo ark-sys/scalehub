@@ -53,6 +53,12 @@ class G5k(Platform):
                 nodes=self.workers,
                 primary_network=network,
             )
+            .add_machine(
+                roles=["storage"],
+                cluster=self.cluster,
+                nodes=1,
+                primary_network=network,
+            )
             .finalize()
         )
         self.conf = conf
@@ -73,8 +79,6 @@ class G5k(Platform):
 
             # Add an extra newline to separate roles
             inventory += "\n"
-        self.post_setup()
-
         # Return inventory dictionary
         return inventory
 

@@ -1,0 +1,40 @@
+---
+- name: Setting up MinIO - Creation block
+  tags: [create]
+  delegate_to: localhost
+  block:
+    - name: Add MinIo chart
+      kubernetes.core.helm_repository:
+        name: minio-operator
+        repo_url: https://operator.min.io/
+    - name: Install MinIO Operator
+      kubernetes.core.helm:
+        name: minio-operator
+        chart_ref: "minio-operator/operator"
+        chart_version: 5.0.10
+        release_namespace: minio-operator
+        create_namespace: true
+        release_state: present
+        wait: true
+        values:
+          operator:
+            nodeSelector:
+              node-role.kubernetes.io/scalehub-storage: "true"
+          console:
+            nodeSelector:
+              node-role.kubernetes.io/scalehub-storage: "true"
+            ingress:
+              enabled: true
+              hosts:
+                - host: minio.scalehub.local
+                  paths:
+                    - /
+              pathType: Prefix
+              annotations:
+                kubernetes.io/ingress.class: nginx
+                nginx.ingress.kubernetes.io/rewrite-target: /
+    - name: Deploy MinIO tenant
+      kubernetes.core.helm:
+        name: minio-tenant
+        chart_ref: "minio-operator/tenant"
+        chart_version: 5.0.10

@@ -1,6 +1,7 @@
 import re
 from .Logger import Logger
 
+
 class Misc:
     def __init__(self, log: Logger):
         self.__log = log
@@ -21,6 +22,10 @@ class Misc:
         )
         start_match = re.search(r"Experiment start at : (\d+)", logs)
         end_match = re.search(r"Experiment end at : (\d+)", logs)
+
+        # Check if experiment.latency_test = False
+        latency_test_match = re.search(r"experiment.latency_test = (.+)", logs)
+
         if job_name_match:
             job_name = job_name_match.group(1)
         else:
@@ -32,7 +37,11 @@ class Misc:
         else:
             self.__log.error("Log file is incomplete: missing timestamp.")
             exit(1)
-
+        if latency_test_match:
+            latency_test = latency_test_match.group(1)
+        else:
+            self.__log.error("Latency test information not found in log.")
+            latency_test = False
         num_sensors_sum = 0
         interval_ms_sum = 0
         lg_count = 0
@@ -56,4 +65,5 @@ class Misc:
             avg_interval_ms,
             start_timestamp,
             end_timestamp,
+            latency_test,
         )

@@ -28,22 +28,22 @@
   tags: [ delete ]
   delegate_to: localhost
   block:
-    - name: Deploy PVC for Grafana
+    - name: Delete PVC for Grafana
       kubernetes.core.k8s:
         state: absent
         definition: "{{ lookup('ansible.builtin.template', 'pvc/grafana-pvc.yaml.j2') | from_yaml }}"
 
-    - name: Deploy PVC for VictoriaMetrics
+    - name: Delete PVC for VictoriaMetrics
       kubernetes.core.k8s:
         state: absent
         definition: "{{ lookup('ansible.builtin.template', 'pvc/vm-pvc.yaml.j2') | from_yaml }}"
 
-    - name: Deploy PVC for Flink checkpoints
+    - name: Delete PVC for Flink checkpoints
       kubernetes.core.k8s:
         state: absent
         definition: "{{ lookup('ansible.builtin.template', 'pvc/checkpoint-pvc.yaml.j2') | from_yaml }}"
 
-    - name: Deploy PVC for .jar artifacts
+    - name: Delete PVC for .jar artifacts
       kubernetes.core.k8s:
         state: absent
         definition: "{{ lookup('ansible.builtin.template', 'pvc/artifacts-pvc.yaml.j2') | from_yaml }}"

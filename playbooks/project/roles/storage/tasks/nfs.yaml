@@ -1,0 +1,56 @@
+---
+# Setup NFS
+- name : Setting up NFS - Creation block
+  tags: [ create ]
+  delegate_to: localhost
+  # Path to g5k credential files in container's home directory
+  vars:
+    # TODO Hardcoding the NFS server address for now
+    job_site: "rennes"
+  block:
+    - name: Include credentials file
+      include_vars: "~/.python-grid5000.yaml"
+    - name: retrieve JSON content
+      shell: curl -u "{{ username }}:{{ password }}" -k "https://api.grid5000.fr/3.0/sites/{{ job_site }}/storage/home/{{ username }}/access"
+      register: response
+    - name: From dict response, get value of key "nfs_address"
+      set_fact:
+        nfs_server: "{{ response.stdout | from_yaml | dict2items | json_query('[0].value.nfs_address') }}"
+
+    - name: Get content of nfs_server
+      set_fact:
+        server_address: "{{ nfs_server.split(':')[0] }}"
+        server_share: "{{ nfs_server.split(':')[1] }}"
+
+    - name: Install NFS Storage provisioner
+      kubernetes.core.helm:
+       name: csi-driver-nfs
+       chart_ref: "csi-driver-nfs"
+       chart_version: 4.1.0
+       chart_repo_url: https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
+       release_namespace: csi-driver-nfs
+       create_namespace: true
+       wait: true
+      register: csi_driver
+    - name: Deploy NFS Storage class
+      kubernetes.core.k8s:
+       state: present
+       definition: "{{ lookup('ansible.builtin.template', 'nfs-sc.yaml.j2') }}"
+- name : Setting up NFS - Deletion block
+  tags: [ delete ]
+  delegate_to: localhost
+  block:
+    - name: Delete NFS Storage class
+      kubernetes.core.k8s:
+       state: absent
+       definition:
+         apiVersion: storage.k8s.io/v1
+         kind: StorageClass
+         metadata:
+           name: nfs-csi
+    - name: Delete NFS Storage provisioner
+      kubernetes.core.helm:
+       release_namespace: csi-driver-nfs
+       release_state: absent
+       release_name: csi-driver-nfs
+       chart_ref: "csi-driver-nfs"

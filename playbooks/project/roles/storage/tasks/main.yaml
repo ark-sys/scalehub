@@ -5,16 +5,11 @@
     state: present
     definition: "{{ lookup('ansible.builtin.file', 'gitlab-scalehub.yaml') | from_yaml }}"
 
-- name: Create the monitoring k8s namespace
-  tags: [ always ]
-  delegate_to: localhost
-  kubernetes.core.k8s:
-    name: monitoring
-    api_version: v1
-    kind: Namespace
-    state: present
+- import_tasks: minio.yaml
 
-- import_tasks: pvc.yaml
+#- import_tasks: nfs.yaml
+
+#- import_tasks: pvc.yaml
 
 
 

@@ -32,12 +32,12 @@ def provision(config: Config):
             with open(config.get_str(Key.INVENTORY_PATH), "w") as f:
                 f.write(inventory)
 
-            nfs_server, nfs_share = p.post_setup()
+            # nfs_server, nfs_share = p.post_setup()
 
             # Setup cluster with kubernetes
             play: Playbooks = Playbooks()
             kubernetes_type = f"cluster-setup.{config.get_str(Key.KUBERNETES_TYPE)}"
-            return play.deploy(kubernetes_type,nfs_server_address=nfs_server, nfs_share=nfs_share)
+            return play.deploy(kubernetes_type)
 
         case _:
             log.error(f"Provision is not implemented for platform {platform_type}")
