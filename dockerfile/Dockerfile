@@ -10,6 +10,11 @@ ENV KUBECONFIG="/app/conf/kubeconfig"
 ENV ANSIBLE_CONFIG="/app/conf/ansible.cfg"
 ENV PATH="$PATH:/app/script"
 
+# Get build arguments, default to 1000:1000 if not set
+ARG UID=1000
+ARG GID=1000
+ARG USER=rakim
+
 # Install necessary dependencies
 RUN apt-get update && apt-get install -y \
     iproute2 \
@@ -24,7 +29,9 @@ RUN apt-get update && apt-get install -y \
     fish \
     iputils-ping \
     tk \
-    nginx
+    nginx \
+    sudo
+
 # Install python requirements
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
@@ -44,6 +51,13 @@ COPY kubectl.fish /usr/share/fish/vendor_completions.d/
 # Install auto-completion for shub
 COPY shub.fish /usr/share/fish/vendor_completions.d/shub.fish
 
+# Set host user id and group id without password
+RUN groupadd -g $GID $USER && \
+    useradd -m -u $UID -g $GID -o -s /usr/bin/fish $USER && \
+    echo "$USER ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+# Set username
+USER $USER
+
 # Copy the lines to modify .bashrc and jump directly to fish at container spawn
 RUN echo 'if [[ $(ps --no-header --pid=$PPID --format=comm) != "fish" && -z ${BASH_EXECUTION_STRING} ]]; then\n\
     shopt -q login_shell && LOGIN_OPTION="--login" || LOGIN_OPTION=""\n\
@@ -52,9 +66,12 @@ fi' >> ~/.bashrc
 
 COPY entrypoint.sh /entrypoint.sh
 
-RUN chmod +x /entrypoint.sh
+RUN sudo chmod +x /entrypoint.sh
 
 # Copy reverse-proxy config
 COPY nginx.conf /etc/nginx/conf.d/scalehub.conf
+
+# Set the working directory to /app
+WORKDIR /app/
 
 ENTRYPOINT ["/entrypoint.sh"]

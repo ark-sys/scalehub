@@ -5,11 +5,6 @@ export SCALEHUB_BASEDIR=$(dirname $0)
 IMAGE_NAME="scalehub"
 SERVICE_NAME="scalehub"
 
-## Retrieve the current user IDs and name
-#export userid=$(id -u)
-#export groupid=$(id -g)
-#export username=$(whoami)
-
 # Set credentials path
 export g5k_creds_path="$SCALEHUB_BASEDIR/dockerfile/secrets/Grid5000_creds.yaml"
 
@@ -72,7 +67,7 @@ function restart_service(){
 
 # Function to create the Docker container
 function create_service() {
-  docker-compose -f $SCALEHUB_BASEDIR/dockerfile/docker-compose.yaml up --build -d
+  env UID=$(id -u) GID=$(id -g) docker-compose -f $SCALEHUB_BASEDIR/dockerfile/docker-compose.yaml up --build -d
 }
 
 function remove_service() {
@@ -92,7 +87,6 @@ function is_service_running() {
 function get_shell() {
     if is_service_running; then
         docker exec -it $(docker ps -f name=$SERVICE_NAME --quiet) fish
-
     else
         create_service
         get_shell
