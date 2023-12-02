@@ -190,3 +190,22 @@
     - name: Label a random consumer node with autoscaling
       command:
         cmd: "kubectl label node {{ random_consumer_node }} --overwrite node-role.kubernetes.io/autoscaling='SCHEDULABLE'"
+
+# TODO: find another way to do this
+- name: Add kubernetes secret to pull images from private registry
+  hosts: localhost
+  gather_facts: false
+  tags: [ always ]
+  tasks:
+    - name: Create Secret resource
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: gitlab-scalehub
+            namespace: default
+          type: kubernetes.io/dockerconfigjson
+          data:
+            .dockerconfigjson: ewoJImF1dGhzIjogewoJCSJyZWdpc3RyeS5naXRsYWIuaW5yaWEuZnIiOiB7CgkJCSJhdXRoIjogImFXMWhaMlZmY0hWc2JHVnlPbWRzY0dGMExUSkJla1ZET1hkd2RtUnJYMFZHTmxWdVlqUnUiCgkJfQoJfQp9

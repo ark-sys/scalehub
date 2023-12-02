@@ -1,15 +1,11 @@
 ---
-- name: Deploy secret gitlab access for private registry
-  tags: [ always ]
-  kubernetes.core.k8s:
-    state: present
-    definition: "{{ lookup('ansible.builtin.file', 'gitlab-scalehub.yaml') | from_yaml }}"
 
+# Long term storage
+- import_tasks: nfs.yaml
+- import_tasks: pvc.yaml
+
+# Experiments storage
 - import_tasks: minio.yaml
-
-#- import_tasks: nfs.yaml
-
-#- import_tasks: pvc.yaml
 
 
 
