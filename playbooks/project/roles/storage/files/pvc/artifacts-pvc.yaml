@@ -1,14 +1,15 @@
 ---
 # vim: set ft=yaml:
+# This volume will hold all .jar jobs that will be needed by flink and transscale
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: vm-pvc
+  name: artifacts-pvc
   namespace: default
 spec:
-  storageClassName: "{{ storage_class_name }}"
+  storageClassName: nfs-csi
   accessModes:
     - ReadWriteMany
   resources:
     requests:
-      storage: 20Gi
+      storage: 5Gi

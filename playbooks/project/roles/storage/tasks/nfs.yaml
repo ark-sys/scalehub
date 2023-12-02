@@ -32,10 +32,21 @@
        create_namespace: true
        wait: true
       register: csi_driver
-    - name: Deploy NFS Storage class
+
+    - name: Install NFS Storage class
       kubernetes.core.k8s:
        state: present
-       definition: "{{ lookup('ansible.builtin.template', 'nfs-sc.yaml.j2') }}"
+       definition:
+          apiVersion: storage.k8s.io/v1
+          kind: StorageClass
+          metadata:
+            name: nfs-csi
+          provisioner: nfs.csi.k8s.io
+          parameters:
+            server: "{{ server_address }}"
+            share: "{{ server_share }}/scalehub-pvc"
+            subDir: "${pvc.metadata.namespace}-${pvc.metadata.name}"
+
 - name : Setting up NFS - Deletion block
   tags: [ delete ]
   delegate_to: localhost

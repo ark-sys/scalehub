@@ -6,7 +6,7 @@ metadata:
   name: grafana-pvc
   namespace: monitoring
 spec:
-  storageClassName: "{{ storage_class_name }}"
+  storageClassName: nfs-csi
   accessModes:
     - ReadWriteMany
   resources:
