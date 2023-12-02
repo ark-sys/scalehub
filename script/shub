@@ -154,10 +154,15 @@ def run(action, config):
             e.full_run()
             reload("flink", config)
         case "chaos":
-            # k.apply_kubernetes_resource(
-            #     "/app/playbooks/project/roles/chaos/files/chaos-experiment.yaml"
-            # )
-            p.run_playbook("chaos", tags=["experiment"])
+            if config.get_bool(Key.DELAY_ENABLE):
+                experiment = {
+                    "latency": config.get_str(Key.DELAY_LATENCY),
+                    "jitter": config.get_str(Key.DELAY_JITTER),
+                    "correlation": config.get_str(Key.DELAY_CORRELATION),
+                }
+                p.run_playbook("chaos", tags=["experiment", "create"],extra_vars=experiment)
+            else:
+                p.run_playbook("chaos", tags=["experiment", "create"])
         case "clean":
             # Clean flink jobs
             k.execute_command_on_pod(

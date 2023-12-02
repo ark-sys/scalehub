@@ -15,7 +15,11 @@ class ConfigKeys:
     JOB = "experiment.job_file"
     TASK = "experiment.task_name"
     DB_URL = "experiment.db_url"
-    LATENCY_TEST = "experiment.latency_test"
+
+    DELAY_ENABLE = "experiment.delay.enable"
+    DELAY_LATENCY = "experiment.delay.latency"
+    DELAY_JITTER = "experiment.delay.jitter"
+    DELAY_CORRELATION = "experiment.delay.correlation"
 
     LOAD_GENERATORS = "experiment.load_generators"
     DATA_SKIP_DURATION = "experiment.output.skip_s"
@@ -60,7 +64,11 @@ class DefaultValues:
         job_file = "myjoin-all.jar"
         task_name = "TumblingEventTimeWindows"
         db_url = "localhost/vm"
-        latency_test = False
+        class Delay:
+            enable = False
+            latency = "25ms"
+            jitter = "0ms"
+            correlation = "0"
 
         class LoadGenerator:
             name = "load_generator"

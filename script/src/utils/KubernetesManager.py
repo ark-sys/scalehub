@@ -172,21 +172,20 @@ class KubernetesManager:
         except ApiException as e:
             self.__log.error(f"Exception when getting Job logs: {e}")
 
-    def monitor_injection_thread(self):
+    def monitor_injection_thread(self, experiment_params):
         deployment_name = "flink-taskmanager"
-        type_of_test = "fixed-latency"
-        reset_thread = threading.Thread(target=self.__reset_latency, args=(deployment_name, type_of_test))
+        reset_thread = threading.Thread(target=self.__reset_latency, args=(deployment_name,experiment_params))
         reset_thread.start()
-    def __reset_latency(self, deployment_name, type_of_test):
-        FLINK_LATENCY_TESTS = f"/app/playbooks/project/roles/chaos/files/flink"
+    def __reset_latency(self, deployment_name, experiment_params):
+        latency_test_file = f"/app/playbooks/project/roles/chaos/templates/flink-latency.yaml.j2"
+        with open(latency_test_file) as f:
+            render = jinja2.Template(f.read()).render(experiment_params)
+        resource_definition = yaml.safe_load(render)
 
         # Create API instances
         apps_v1 = Client.AppsV1Api()
         custom_api = Client.CustomObjectsApi()
 
-        latency_test_file = f"{type_of_test}.yaml"
-
-        path_to_latency_test = os.path.join(FLINK_LATENCY_TESTS, latency_test_file)
         # Watch for changes in the deployment
         stream = watch.Watch().stream(apps_v1.list_namespaced_deployment, namespace='default')
         old_replica_count = None
@@ -205,12 +204,11 @@ class KubernetesManager:
                         version="v1alpha1",
                         namespace="default",
                         plural="networkchaos",
-                        name=f"{type_of_test}-flink"
+                        name="flink-latency"
                     )
                     sleep(3)
                     # Recreate the NetworkChaos resource
-                    with open(path_to_latency_test) as f:
-                        resource_definition = yaml.safe_load(f)
+
                     custom_api.create_namespaced_custom_object(
                         group="chaos-mesh.org",
                         version="v1alpha1",

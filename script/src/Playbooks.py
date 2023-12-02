@@ -12,11 +12,14 @@ class Playbooks:
             # Raise an error with the file path
             raise FileNotFoundError(f"The file doesn't exist: {playbook_filename}")
         arg_tags = kwargs.get("tags", None)
+        extra_vars = kwargs.get("extra_vars", None)
+        extra_vars.update({"kubeconfig_path": os.environ["KUBECONFIG"]})
+        # Run the playbook with additional tags and extra vars
         en.run_ansible(
             playbooks=[playbook_filename],
-            inventory_path=Value.System.INVENTORY_PATH,
             tags=arg_tags,
-            extra_vars={"kubeconfig_path": os.environ["KUBECONFIG"], **kwargs},
+            extra_vars=extra_vars,
+            inventory_path=Value.System.INVENTORY_PATH
         )
 
     def deploy(self, playbook, **kwargs):

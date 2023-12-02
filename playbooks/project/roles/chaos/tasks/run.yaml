@@ -1,5 +1,6 @@
 ---
 - name: Deploy Chaos Mesh
+  tags: [ create ]
   block:
     - name: Remove label (chaos=true) from all nodes
       shell: |
@@ -10,11 +11,11 @@
     - name: Deploy chaos experiment on consul
       kubernetes.core.k8s:
         state: present
-        definition: "{{ lookup('ansible.builtin.file', 'consul/fixed-latency.yaml') | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.template', 'consul-latency.yaml.j2') | from_yaml }}"
 
     - name: Retrieve list of impacted pod instances
       shell: >
-        kubectl get networkchaos fixed-latency-consul -o=jsonpath='{.status.instances}'
+        kubectl get networkchaos consul-latency -o=jsonpath='{.status.instances}'
       register: result
     - set_fact:
         impacted_pod_list: "{{ result.stdout | regex_replace('consul/', '') }}"
@@ -31,8 +32,26 @@
     - name: Deploy chaos experiment on Flink
       kubernetes.core.k8s:
         state: present
-        definition: "{{ lookup('ansible.builtin.file', 'flink/fixed-latency.yaml') | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.template', 'flink-latency.yaml.j2') | from_yaml }}"
 
+- name: Remove Chaos Mesh
+  tags: [ delete ]
+  block:
+    - name: Remove label (chaos=true) from all nodes
+      shell: |
+        for node in $(kubectl get nodes -l chaos=true -o jsonpath='{.items[*].metadata.name}'); do
+          kubectl label nodes $node chaos-
+        done
+
+    - name: Remove chaos experiment on consul
+      kubernetes.core.k8s:
+        state: absent
+        definition: "{{ lookup('ansible.builtin.template', 'consul-latency.yaml.j2') | from_yaml }}"
+
+    - name: Remove chaos experiment on Flink
+      kubernetes.core.k8s:
+        state: absent
+        definition: "{{ lookup('ansible.builtin.template', 'flink-latency.yaml.j2') | from_yaml }}"
 
 
 

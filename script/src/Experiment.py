@@ -363,6 +363,11 @@ class Experiment:
         self.db_url = config.get_str(Key.DB_URL)
         self.experiment_base_path = config.get_str(Key.EXPERIMENTS_DATA_PATH)
 
+        self.experiment_delay = config.get_bool(Key.DELAY_ENABLE)
+        self.delay_latency = config.get_str(Key.DELAY_LATENCY)
+        self.delay_jitter = config.get_str(Key.DELAY_JITTER)
+        self.delay_correlation = config.get_str(Key.DELAY_CORRELATION)
+
         self.skip_s = config.get_int(Key.DATA_SKIP_DURATION)
         self.plot = config.get_bool(Key.DATA_OUTPUT_PLOT)
         self.stats = config.get_bool(Key.DATA_OUTPUT_STATS)
@@ -437,17 +442,23 @@ class Experiment:
         p: Playbooks = Playbooks()
 
         # Check if chaos is enabled
-        if self.config.get_bool(Key.LATENCY_TEST):
+        if self.experiment_delay:
             # Run chaos
             self.__log.info(
                 "Chaos injection enabled. Deploying chaos resources on Consul and Flink."
             )
-            p.run_playbook("chaos", tags=["experiment"])
+            experiment_delay = {
+                "latency": self.delay_latency,
+                "jitter": self.delay_jitter,
+                "correlation": self.delay_correlation,
+            }
+            p.run_playbook("chaos", tags=["experiment"], extra_vars=experiment_delay)
+
             # Start chaos injection thread
             self.__log.info(
                 "Starting monitoring thread on scaling events. Reset chaos injection on rescale."
             )
-            self.k.monitor_injection_thread()
+            self.k.monitor_injection_thread(experiment_delay)
 
         # Launch Flink Job
         self.k.execute_command_on_pod(

@@ -40,8 +40,10 @@ class Config:
         self.__config[Key.JOB] = Value.Experiment.job_file
         self.__config[Key.TASK] = Value.Experiment.task_name
         self.__config[Key.DB_URL] = Value.Experiment.db_url
-        self.__config[Key.LATENCY_TEST] = Value.Experiment.latency_test
-
+        self.__config[Key.DELAY_ENABLE] = Value.Experiment.Delay.enable
+        self.__config[Key.DELAY_LATENCY] = Value.Experiment.Delay.latency
+        self.__config[Key.DELAY_JITTER] = Value.Experiment.Delay.jitter
+        self.__config[Key.DELAY_CORRELATION] = Value.Experiment.Delay.correlation
         self.__config[Key.LOAD_GENERATORS] = Value.Experiment.LoadGenerator
         self.__config[Key.DATA_SKIP_DURATION] = Value.Experiment.ExperimentData.skip_s
         self.__config[Key.DATA_OUTPUT_PLOT] = Value.Experiment.ExperimentData.plot
@@ -62,7 +64,10 @@ class Config:
         return int(self.get(key))
 
     def get_bool(self, key) -> bool:
-        return eval(self.get(key))
+        if self.get_str(key).lower() == "true":
+            return True
+        else:
+            return False
 
     def get_float(self, key) -> float:
         return float(self.get(key))
