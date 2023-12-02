@@ -7,11 +7,6 @@
         state: present
         definition: "{{ lookup('ansible.builtin.template', 'flink-prepull-daemon.yaml.j2') | from_yaml }}"
 
-    - name: Clean old checkpoint and savepoint data from PVC
-      kubernetes.core.k8s:
-        state: present
-        definition: "{{ lookup('ansible.builtin.file', 'checkpoints-cleaner.yaml') | from_yaml }}"
-
     - name: Deploy services
       kubernetes.core.k8s:
         state: present

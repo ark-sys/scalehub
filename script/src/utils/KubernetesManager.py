@@ -219,3 +219,12 @@ class KubernetesManager:
                         body=resource_definition
                     )
                     old_replica_count = new_replica_count
+    # get_token(secret_name, namespace)
+    def get_token(self, secret_name, namespace):
+        import base64
+        core_v1 = core_v1_api.CoreV1Api()
+        secret = core_v1.read_namespaced_secret(secret_name, namespace)
+        token = secret.data["token"]
+        # decode token from base64
+
+        return base64.b64decode(token).decode("utf-8")

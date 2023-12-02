@@ -38,9 +38,13 @@ data:
     state.backend.rocksdb.async-threads: 4
     state.backend.rocksdb.localdir: /mnt/data/tmp
     state.checkpoint-storage: filesystem
-    state.checkpoints.dir: file:///mnt/checkpoints
-    state.savepoints.dir: file:///mnt/checkpoints
-    
+    state.checkpoints.dir: s3://flink-bucket/checkpoints
+    state.savepoints.dir: s3://flink-bucket/savepoints
+    s3.path.style.access: true
+    s3.endpoint: http://minio.minio-operator.svc.cluster.local
+    s3.access-key: minio
+    s3.secret-key: minio123
+
     # gives metrics about inbound/outbound network queue lengths
     table.exec.state.ttl: 10 ms
     execution.checkpointing.mode: EXACTLY_ONCE

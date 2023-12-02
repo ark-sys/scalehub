@@ -171,7 +171,15 @@ def run(action, config):
             k.delete_job("transscale-job")
             # Delete load generators
             p.delete("load_generators")
+        # Get tokens
+        case "tokens":
+            # Retrieve token for minio console
+            minio_console_token = k.get_token("console-sa-secret","minio-operator")
+            kubernetes_dashboard_token = k.get_token("admin-user", "kubernetes-dashboard")
 
+            # Print tokens in a readable format and easy to copy-paste
+            print(f"Minio Console Token : \n{minio_console_token}\n\n")
+            print(f"Kubernetes Dashboard Token : \n{kubernetes_dashboard_token}\n\n")
         case "test":
             pass
         case _:
