@@ -5,10 +5,14 @@ prometheus:
     enabled: true
     annotations:
       kubernetes.io/ingress.class: nginx
+      nginx.ingress.kubernetes.io/rewrite-target: /
+
     hosts: [ 'prometheus.scalehub.local' ]
-    paths: [ '/' ]
+    paths:
+      - /
+      - /prometheus
   prometheusSpec:
-    externalUrl: "http://prometheus.scalehub.local/"
+#    externalUrl: "http://prometheus.scalehub.local"
     routePrefix: /
     scrapeInterval: 10s
     serviceMonitorSelectorNilUsesHelmValues: false
