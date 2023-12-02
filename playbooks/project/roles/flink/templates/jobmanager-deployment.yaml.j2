@@ -67,8 +67,8 @@ spec:
               mountPath: /opt/flink/conf
             - name: data-volume
               mountPath: /mnt/data
-            - name: checkpoint-volume
-              mountPath: /mnt/checkpoints
+#            - name: checkpoint-volume
+#              mountPath: /mnt/checkpoints
             - name: artifacts-volume
               mountPath: /tmp/jobs
           securityContext:
@@ -82,12 +82,12 @@ spec:
                 path: flink-conf.yaml
               - key: log4j-console.properties
                 path: log4j-console.properties
-        - name: checkpoint-volume
-          persistentVolumeClaim:
-            claimName: checkpoint-pvc
+#        - name: checkpoint-volume
+#          persistentVolumeClaim:
+#            claimName: checkpoint-pvc
         - name: data-volume
           hostPath:
-            path: /tmp/experiment-data/flink
+            path: /tmp/experiment-data
         - name: artifacts-volume
           persistentVolumeClaim:
             claimName: artifacts-pvc
