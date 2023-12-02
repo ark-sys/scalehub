@@ -1,48 +1,10 @@
 - name: Deploy transscale
   tags: [ create ]
   block:
-    - name: Get kubeconfig from cluster
-      shell: kubectl config view --raw --minify
-      register: kubeconfig
-
-    - name: Create Secret with kubeconfig for transscale
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: v1
-          kind: Secret
-          type: Opaque
-          metadata:
-            name: transscale-secret
-            namespace: default
-          data:
-            kubeconfig: "{{ kubeconfig.stdout | b64encode }}"
-
     - name: Deploy config file for transscale
       kubernetes.core.k8s:
         state: present
         definition: "{{ lookup('ansible.builtin.template', 'transscale-config.yaml.j2') | from_yaml }}"
-
-
-#    - name: Deploy transscale
-#      kubernetes.core.k8s:
-#        state: present
-#        definition: "{{ lookup('ansible.builtin.template', 'transscale-job.yaml.j2') | from_yaml }}"
-#        wait: true
-#        #TODO  Maybe there is a better way to handle wait timeout
-#        wait_timeout: 18000
-#        wait_sleep: 60
-#        wait_condition:
-#          type: Complete
-#          status: "True"
-#
-#    - name: Logs
-#      kubernetes.core.k8s_log:
-#        api_version: batch/v1
-#        kind: Job
-#        namespace: default
-#        name: transscale-job
-#      register: job_logs
 
 - name: Delete transscale
   tags: [ delete ]

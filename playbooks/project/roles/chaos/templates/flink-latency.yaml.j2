@@ -1,0 +1,24 @@
+---
+kind: NetworkChaos
+apiVersion: chaos-mesh.org/v1alpha1
+metadata:
+  namespace: default
+  name: flink-latency
+spec:
+  selector:
+    namespaces:
+      - default
+    labelSelectors:
+        app: flink
+        component: taskmanager
+    nodeSelectors:
+        chaos: 'true'
+  # All values are described here
+  # https://chaos-mesh.org/docs/simulate-network-chaos-on-kubernetes/#field-description
+  mode: all
+  action: delay
+  delay:
+    latency: "{{ latency }}"
+    correlation: "{{ correlation }}"
+    jitter: "{{ jitter }}"
+  direction: to

@@ -3,7 +3,7 @@ kind: NetworkChaos
 apiVersion: chaos-mesh.org/v1alpha1
 metadata:
   namespace: default
-  name: fixed-latency-consul
+  name: consul-latency
 spec:
   selector:
     namespaces:
@@ -19,7 +19,7 @@ spec:
   value: '50'
   action: delay
   delay:
-    latency: 25ms
-    correlation: '0'
-    jitter: 0ms
+    latency: "{{ latency }}"
+    correlation: "{{ correlation }}"
+    jitter: "{{ jitter }}"
   direction: to
