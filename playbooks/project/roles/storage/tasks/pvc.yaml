@@ -7,22 +7,17 @@
     - name: Deploy PVC for Grafana
       kubernetes.core.k8s:
         state: present
-        definition: "{{ lookup('ansible.builtin.template', 'pvc/grafana-pvc.yaml.j2') | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.file', 'pvc/grafana-pvc.yaml') | from_yaml }}"
 
     - name: Deploy PVC for VictoriaMetrics
       kubernetes.core.k8s:
         state: present
-        definition: "{{ lookup('ansible.builtin.template', 'pvc/vm-pvc.yaml.j2') | from_yaml }}"
-
-    - name: Deploy PVC for Flink checkpoints
-      kubernetes.core.k8s:
-        state: present
-        definition: "{{ lookup('ansible.builtin.template', 'pvc/checkpoint-pvc.yaml.j2') | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.file', 'pvc/vm-pvc.yaml') | from_yaml }}"
 
     - name: Deploy PVC for .jar artifacts
       kubernetes.core.k8s:
         state: present
-        definition: "{{ lookup('ansible.builtin.template', 'pvc/artifacts-pvc.yaml.j2') | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.file', 'pvc/artifacts-pvc.yaml') | from_yaml }}"
 
 - name: Setting up PrivateVolumeClaims - Deletion block
   tags: [ delete ]
@@ -31,19 +26,14 @@
     - name: Delete PVC for Grafana
       kubernetes.core.k8s:
         state: absent
-        definition: "{{ lookup('ansible.builtin.template', 'pvc/grafana-pvc.yaml.j2') | from_yaml }}"
-
-    - name: Delete PVC for VictoriaMetrics
-      kubernetes.core.k8s:
-        state: absent
-        definition: "{{ lookup('ansible.builtin.template', 'pvc/vm-pvc.yaml.j2') | from_yaml }}"
-
-    - name: Delete PVC for Flink checkpoints
-      kubernetes.core.k8s:
-        state: absent
-        definition: "{{ lookup('ansible.builtin.template', 'pvc/checkpoint-pvc.yaml.j2') | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.file', 'pvc/grafana-pvc.yaml') | from_yaml }}"
 
     - name: Delete PVC for .jar artifacts
       kubernetes.core.k8s:
         state: absent
-        definition: "{{ lookup('ansible.builtin.template', 'pvc/artifacts-pvc.yaml.j2') | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.file', 'pvc/artifacts-pvc.yaml') | from_yaml }}"
+
+    - name: Delete PVC for VictoriaMetrics
+      kubernetes.core.k8s:
+        state: absent
+        definition: "{{ lookup('ansible.builtin.file', 'pvc/vm-pvc.yaml') | from_yaml }}"
