@@ -25,6 +25,9 @@ class Misc:
 
         # Check if experiment.delay.enable
         latency_test_match = re.search(r"experiment.delay.enable = (.+)", logs)
+        latency_delay_match = re.search(r"experiment.delay.latency = (.+)", logs)
+        latency_jitter_match = re.search(r"experiment.delay.jitter = (.+)", logs)
+        latency_correlation_match = re.search(r"experiment.delay.correlation = (.+)", logs)
 
         if job_name_match:
             job_name = job_name_match.group(1)
@@ -37,11 +40,37 @@ class Misc:
         else:
             self.__log.error("Log file is incomplete: missing timestamp.")
             exit(1)
+        # Check if latency for the experiment has been enabled
+        latency_delay = "0ms"
+        latency_jitter = "0ms"
+        latency_correlation = "0"
         if latency_test_match:
             latency_test = latency_test_match.group(1)
+            if latency_test.lower() == "true":
+                latency_enabled = True
+                if latency_delay_match:
+                    latency_delay = latency_delay_match.group(1)
+                else:
+                    self.__log.error("Latency delay not found in log.")
+                    exit(1)
+                if latency_jitter_match:
+                    latency_jitter = latency_jitter_match.group(1)
+                else:
+                    self.__log.error("Latency jitter not found in log.")
+                    exit(1)
+                if latency_correlation_match:
+                    latency_correlation = latency_correlation_match.group(1)
+                else:
+                    self.__log.error("Latency correlation not found in log.")
+                    exit(1)
+            else:
+                latency_enabled = False
+                latency_delay = "0ms"
+                latency_jitter = "0ms"
+                latency_correlation = "0"
         else:
             self.__log.error("Latency test information not found in log.")
-            latency_test = "False"
+            latency_enabled = False
         num_sensors_sum = 0
         interval_ms_sum = 0
         lg_count = 0
@@ -65,5 +94,8 @@ class Misc:
             avg_interval_ms,
             start_timestamp,
             end_timestamp,
-            latency_test,
+            latency_enabled,
+            latency_delay,
+            latency_jitter,
+            latency_correlation,
         )

@@ -1,0 +1,17 @@
+- name: Remove Chaos Mesh
+  block:
+    - name: Remove label (chaos=true) from all nodes
+      shell: |
+        for node in $(kubectl get nodes -l chaos=true -o jsonpath='{.items[*].metadata.name}'); do
+          kubectl label nodes $node chaos-
+        done
+
+    - name: Remove chaos experiment on consul
+      kubernetes.core.k8s:
+        state: absent
+        definition: "{{ lookup('ansible.builtin.template', 'consul-latency.yaml.j2') | from_yaml }}"
+
+    - name: Remove chaos experiment on Flink
+      kubernetes.core.k8s:
+        state: absent
+        definition: "{{ lookup('ansible.builtin.template', 'flink-latency.yaml.j2') | from_yaml }}"

@@ -13,7 +13,10 @@ class Playbooks:
             raise FileNotFoundError(f"The file doesn't exist: {playbook_filename}")
         arg_tags = kwargs.get("tags", None)
         extra_vars = kwargs.get("extra_vars", None)
-        extra_vars.update({"kubeconfig_path": os.environ["KUBECONFIG"]})
+        if not extra_vars:
+            extra_vars = {"kubeconfig_path": os.environ["KUBECONFIG"]}
+        else:
+            extra_vars.update({"kubeconfig_path": os.environ["KUBECONFIG"]})
         # Run the playbook with additional tags and extra vars
         en.run_ansible(
             playbooks=[playbook_filename],

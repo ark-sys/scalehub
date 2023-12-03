@@ -1,4 +1,10 @@
 ---
 - import_tasks: install.yaml
+
 - import_tasks: run.yaml
   tags: [ experiment ]
+  when: run_experiment | default(false)
+
+- import_tasks: delete.yaml
+  tags: [ experiment ]
+  when: delete_experiment | default(false)

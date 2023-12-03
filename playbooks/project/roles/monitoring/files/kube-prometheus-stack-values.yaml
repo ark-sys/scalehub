@@ -12,7 +12,6 @@ prometheus:
       - /
       - /prometheus
   prometheusSpec:
-#    externalUrl: "http://prometheus.scalehub.local"
     routePrefix: /
     scrapeInterval: 10s
     serviceMonitorSelectorNilUsesHelmValues: false
