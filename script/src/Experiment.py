@@ -328,8 +328,24 @@ class ExperimentData:
 
         # Set title and axis labels
         _, date, n = self.exp_path.split("/")[-3:]
-        operator_name = job_name.split("-")[0]
-        plot_title = "Join" if operator_name == "myjoin" else "Map"
+        # Job name is in the format: my<operator_name>-transscale-<type>-all.jar
+        # We want to extract only the operator name and the type (which can be null).
+        # Example: mymap-transscale-all.jar -> Map
+        # Example: myjoin-transscale-all.jar -> Join (key-key)
+        # Example: myjoin-transscale-kv-all.jar -> Join (key-value)
+        # Example: myjoin-transscale-vv-all.jar -> Join (value-value)
+        # Set plot title based on job name
+        plot_title = ""
+        if "map" in job_name:
+            plot_title = f"Map operator"
+        elif "join" in job_name:
+            if "kv" in job_name:
+                plot_title = f"Join (key-value)"
+            elif "vv" in job_name:
+                plot_title = f"Join (value-value)"
+            else:
+                plot_title = f"Join (key-key)"
+
         ax.set_title(plot_title)
         ax.set(
             xlabel="Parallelism",
@@ -341,11 +357,12 @@ class ExperimentData:
         ax.legend(loc="lower right", handler_map={tuple: HandlerTuple(ndivide=None)})
 
         # Add text to upper left corner with latency information if enabled, otherwise add text with no latency
-        if latency_enabled == "true":
+        if latency_enabled:
+            values_text = f"Latency: {latency_delay}\nJitter: {latency_jitter}\nCorrelation: {latency_correlation}"
             ax.text(
                 0.02,
                 0.95,
-                f"Latency: {latency_delay}\n{latency_jitter}\n{latency_correlation}",
+                values_text,
                 transform=ax.transAxes,
                 fontsize=10,
                 verticalalignment="top",
@@ -361,9 +378,8 @@ class ExperimentData:
             )
 
 
-
         # Set the output filename
-        latency_value_filename = "latency" if latency_enabled == "true" else "nolatency"
+        latency_value_filename = "latency" if latency_enabled else "nolatency"
         filename = f"{job_name.split('.')[0]}_{latency_value_filename}.png"
 
         # Export plot to experiment path
@@ -481,13 +497,15 @@ class Experiment:
                 "jitter": self.delay_jitter,
                 "correlation": self.delay_correlation,
             }
-            p.run_playbook("chaos", extra_vars=experiment_delay)
+
+            p.run_playbook("chaos",tags=["experiment"], extra_vars=experiment_delay)
 
             # Start chaos injection thread
             self.__log.info(
                 "Starting monitoring thread on scaling events. Reset chaos injection on rescale."
             )
             self.k.monitor_injection_thread(experiment_delay)
+
 
         # Launch Flink Job
         self.k.execute_command_on_pod(
@@ -542,7 +560,6 @@ class Experiment:
         transscale_log_path = os.path.join(self.exp_path, "transscale_log.txt")
 
         # Save logs to file
-        # log_lines_string = "\n".join(transscale_logs)
         with open(transscale_log_path, "w") as file:
             file.write(transscale_logs)
 
@@ -581,7 +598,15 @@ class Experiment:
                 "load_generators",
                 extra_vars=load_generators_params,
             )
-
+        # Setup parameters chaos playbook deletion
+        experiment = {
+            "delete_experiment": "true",
+            "latency": "0ms",
+            "jitter": "0ms",
+            "correlation": "0",
+        }
+        # Delete chaos experiments
+        p.run_playbook("chaos", tags=["experiment"], extra_vars=experiment)
     def transscale_only_run(self):
         self.start_experiment()
         p: Playbooks = Playbooks()

@@ -71,7 +71,6 @@
               requestAutoCert: false
             name: scalehub-tenant
             replicas: 1
-            prometheusOperator: true
             pools:
               - servers: 1
                 volumesPerServer: 1
