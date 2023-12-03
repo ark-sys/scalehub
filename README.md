@@ -31,6 +31,14 @@ The purpose of the script is to ease the execution of repetitive tasks when runn
 The project has the following folder structure:
 
 - **dockerfile**: Contains the Dockerfile for setting up the development environment.
+  - **`secrets`**: Contains the Grid5000 VPN connection files and the ssh private key for Grid5000.
+  - **`fish`**: Contains the fish shell autocomplete configuration files.
+  - **`nginx`**: Contains the nginx configuration files.
+
+  - **Dockerfile**: Contains the Dockerfile for building the scalehub container.
+  - **requirements.txt**: Contains the Python dependencies for the scalehub container.
+  - **entrypoint.sh**: Contains the entrypoint script for the scalehub container.
+  - **docker-compose.yaml**: Contains the configuration for the deployment of the local scalehub container.
 - **deploy.sh**:  Helps building, running, updating the Docker image, and managing Docker secrets.
 
 

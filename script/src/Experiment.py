@@ -275,7 +275,10 @@ class ExperimentData:
             avg_interval_ms,
             start_ts,
             end_ts,
-            latency_test,
+            latency_enabled,
+            latency_delay,
+            latency_jitter,
+            latency_correlation
         ) = m.parse_log(log_path)
 
         # TODO Change this in the future to properly show throughput in case of scale down
@@ -334,10 +337,35 @@ class ExperimentData:
             xticks=list(range(1, len(parallelism_values) + 1)),
         )
 
+        # Set legend for lines on lower right corner
         ax.legend(loc="lower right", handler_map={tuple: HandlerTuple(ndivide=None)})
+
+        # Add text to upper left corner with latency information if enabled, otherwise add text with no latency
+        if latency_enabled == "true":
+            ax.text(
+                0.02,
+                0.95,
+                f"Latency: {latency_delay}\n{latency_jitter}\n{latency_correlation}",
+                transform=ax.transAxes,
+                fontsize=10,
+                verticalalignment="top",
+            )
+        else:
+            ax.text(
+                0.02,
+                0.95,
+                "No latency",
+                transform=ax.transAxes,
+                fontsize=10,
+                verticalalignment="top",
+            )
+
+
+
         # Set the output filename
-        latency_enabled = "latency" if latency_test.lower() == "true" else "nolatency"
-        filename = f"{job_name.split('.')[0]}_{latency_enabled}.png"
+        latency_value_filename = "latency" if latency_enabled == "true" else "nolatency"
+        filename = f"{job_name.split('.')[0]}_{latency_value_filename}.png"
+
         # Export plot to experiment path
         output_filename = os.path.join(self.exp_path, filename)
         fig.savefig(output_filename)
@@ -448,11 +476,12 @@ class Experiment:
                 "Chaos injection enabled. Deploying chaos resources on Consul and Flink."
             )
             experiment_delay = {
+                "run_experiment": "true",
                 "latency": self.delay_latency,
                 "jitter": self.delay_jitter,
                 "correlation": self.delay_correlation,
             }
-            p.run_playbook("chaos", tags=["experiment"], extra_vars=experiment_delay)
+            p.run_playbook("chaos", extra_vars=experiment_delay)
 
             # Start chaos injection thread
             self.__log.info(
@@ -467,15 +496,16 @@ class Experiment:
         )
         # Start load generators
         for lg_config in self.config.parse_load_generators():
-            p.deploy(
-                "load_generators",
-                lg_name=lg_config["name"],
-                lg_topic=lg_config["topic"],
-                lg_numsensors=int(lg_config["num_sensors"]),
-                lg_intervalms=int(lg_config["interval_ms"]),
-                lg_replicas=int(lg_config["replicas"]),
-                lg_value=int(lg_config["value"]),
-            )
+            load_generators_params = {
+                "lg_name": lg_config["name"],
+                "lg_topic": lg_config["topic"],
+                "lg_numsensors": int(lg_config["num_sensors"]),
+                "lg_intervalms": int(lg_config["interval_ms"]),
+                "lg_replicas": int(lg_config["replicas"]),
+                "lg_value": int(lg_config["value"]),
+            }
+            p.deploy("load_generators", extra_vars=load_generators_params)
+
         self.start_experiment()
         # Run transscale
         transscale_params = {
@@ -499,15 +529,13 @@ class Experiment:
         except FileNotFoundError as e:
             print(f"Config file not found: {e}")
 
+        # Deploy transscale setup
         p.deploy(
             "transscale",
-            job_file=self.job_name,
-            task_name=self.task_name,
-            max_parallelism=self.max_par,
-            warmup=self.warmup,
-            interval=self.interval,
+             extra_vars=transscale_params,
         )
-        # Retrieve the logs from the execution of transscale
+
+        # Run transscale job and retrieve the logs from the execution of transscale
         transscale_logs = self.k.run_job(job_file, params=transscale_params)
 
         # Generate the output path where the logs will be saved
@@ -541,14 +569,17 @@ class Experiment:
         self.k.delete_job("transscale-job")
         # Remove load generators
         for lg_config in self.config.parse_load_generators():
+            load_generators_params = {
+                "lg_name": lg_config["name"],
+                "lg_topic": lg_config["topic"],
+                "lg_numsensors": int(lg_config["num_sensors"]),
+                "lg_intervalms": int(lg_config["interval_ms"]),
+                "lg_replicas": int(lg_config["replicas"]),
+                "lg_value": int(lg_config["value"]),
+            }
             p.delete(
                 "load_generators",
-                lg_name=lg_config["name"],
-                lg_topic=lg_config["topic"],
-                lg_numsensors=int(lg_config["num_sensors"]),
-                lg_intervalms=int(lg_config["interval_ms"]),
-                lg_replicas=int(lg_config["replicas"]),
-                lg_value=int(lg_config["value"]),
+                extra_vars=load_generators_params,
             )
 
     def transscale_only_run(self):

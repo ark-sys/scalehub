@@ -61,14 +61,17 @@ def deploy(playbook, config: Config):
     p: Playbooks = Playbooks()
     if playbook == "load_generators":
         for lg_config in config.parse_load_generators():
+            load_generator_params={
+                "lg_name": lg_config["name"],
+                "lg_topic": lg_config["topic"],
+                "lg_numsensors": int(lg_config["num_sensors"]),
+                "lg_intervalms": int(lg_config["interval_ms"]),
+                "lg_replicas": int(lg_config["replicas"]),
+                "lg_value": int(lg_config["value"]),
+            }
             p.deploy(
                 playbook,
-                lg_name=lg_config["name"],
-                lg_topic=lg_config["topic"],
-                lg_numsensors=int(lg_config["num_sensors"]),
-                lg_intervalms=int(lg_config["interval_ms"]),
-                lg_replicas=int(lg_config["replicas"]),
-                lg_value=int(lg_config["value"]),
+                extra_vars=load_generator_params
             )
     elif playbook == "transscale":
         p.deploy(
@@ -98,15 +101,24 @@ def delete(playbook, config: Config):
     p: Playbooks = Playbooks()
     if playbook == "load_generators":
         for lg_config in config.parse_load_generators():
-            p.delete(
-                playbook,
-                lg_name=lg_config["name"],
-                lg_topic=lg_config["topic"],
-                lg_numsensors=int(lg_config["num_sensors"]),
-                lg_intervalms=int(lg_config["interval_ms"]),
-                lg_replicas=int(lg_config["replicas"]),
-                lg_value=int(lg_config["value"]),
-            )
+            load_generator_params = {
+                "lg_name": lg_config["name"],
+                "lg_topic": lg_config["topic"],
+                "lg_numsensors": int(lg_config["num_sensors"]),
+                "lg_intervalms": int(lg_config["interval_ms"]),
+                "lg_replicas": int(lg_config["replicas"]),
+                "lg_value": int(lg_config["value"]),
+            }
+            p.delete(playbook, extra_vars=load_generator_params)
+            # p.delete(
+            #     playbook,
+            #     lg_name=lg_config["name"],
+            #     lg_topic=lg_config["topic"],
+            #     lg_numsensors=int(lg_config["num_sensors"]),
+            #     lg_intervalms=int(lg_config["interval_ms"]),
+            #     lg_replicas=int(lg_config["replicas"]),
+            #     lg_value=int(lg_config["value"]),
+            # )
     elif playbook == "transscale":
         p.delete(
             playbook,
@@ -154,15 +166,15 @@ def run(action, config):
             e.full_run()
             reload("flink", config)
         case "chaos":
+            experiment = {
+                "run_experiment": "true",
+            }
             if config.get_bool(Key.DELAY_ENABLE):
-                experiment = {
-                    "latency": config.get_str(Key.DELAY_LATENCY),
-                    "jitter": config.get_str(Key.DELAY_JITTER),
-                    "correlation": config.get_str(Key.DELAY_CORRELATION),
-                }
-                p.run_playbook("chaos", tags=["experiment", "create"],extra_vars=experiment)
-            else:
-                p.run_playbook("chaos", tags=["experiment", "create"])
+                experiment.update(
+                    {"latency": config.get_str(Key.DELAY_LATENCY), "jitter": config.get_str(Key.DELAY_JITTER), "correlation": config.get_str(Key.DELAY_CORRELATION)}
+                )
+            p.run_playbook("chaos", tags=["experiment", "create"],extra_vars=experiment)
+
         case "clean":
             # Clean flink jobs
             k.execute_command_on_pod(
