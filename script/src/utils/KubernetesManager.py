@@ -227,6 +227,15 @@ class KubernetesManager:
 
         return base64.b64decode(token).decode("utf-8")
 
+    def delete_pods_by_label(self, label_selector,namespace="default"):
+        v1 = Client.CoreV1Api()
+        # Step 1: Query pods with the label "app=flink"
+        pods = v1.list_namespaced_pod(label_selector=label_selector, namespace=namespace)
+        for pod in pods.items:
+            # Step 2: Delete the pod
+            v1.delete_namespaced_pod(pod.metadata.name, pod.metadata.namespace)
+            self.__log.info(f"Pod {pod.metadata.name} deleted")
+
     def reset_autoscaling_nodes(self, list_of_nodes):
         v1 = Client.CoreV1Api()
         # Step 1: Query nodes with the label "node-role.kubernetes.io/worker=consumer"

@@ -584,6 +584,8 @@ class Experiment:
         self.k.scale_deployment("flink-taskmanager")
         # Clean transscale job
         self.k.delete_job("transscale-job")
+        self.k.delete_pods_by_label("job-name=transscale-job")
+
         # Remove load generators
         for lg_config in self.config.parse_load_generators():
             load_generators_params = {

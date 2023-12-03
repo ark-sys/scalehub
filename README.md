@@ -93,14 +93,14 @@ To correctly setup your environment, follow these steps:
 
 1. Clone the repository.
     ```shell 
-    git clone git@gitlab.inria.fr:karsalan/scalehub.git
+    git clone git@gitlab.inria.fr:stream-processing-autoscaling/scalehub.git
    
 2. If you intend to connect to Grid5000, generate a credentials file with the deployment script. This file will be used by scalehub to interact with Grid5000 Frontend.
     ```shell
     ./deploy.sh generate
 3. Download and extract your personal Grid5000 VPN connection files to `dockerfile/secrets`
 
-4. Correctly setup your ssh private key for Grid5000 in `dockerfile/secrets` and in the **secrets** field of the `dockerfile/docker-compose.yaml`
+4. Correctly set up your ssh private key for Grid5000 in `dockerfile/secrets` and in the **secrets** field of the `dockerfile/docker-compose.yaml`
 
 5. Run the deployment (or manually start docker-compose.yaml from its directory)
     ```shell
