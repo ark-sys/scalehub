@@ -160,11 +160,11 @@ class KubernetesManager:
             pod_list = core_v1.list_namespaced_pod(
                 namespace, label_selector=f"job-name={job_name}"
             )
-
+            logs = []
             if pod_list.items:
-                pod_name = pod_list.items[0].metadata.name
-                resp = core_v1.read_namespaced_pod_log(pod_name, namespace)
-                return resp
+                for pod in pod_list.items:
+                    logs.append(core_v1.read_namespaced_pod_log(pod.metadata.name, namespace))
+                return "\n".join(logs)
             else:
                 self.__log.error(f"No pods found for Job {job_name}.")
                 return ""
@@ -226,3 +226,24 @@ class KubernetesManager:
         # decode token from base64
 
         return base64.b64decode(token).decode("utf-8")
+
+    def reset_autoscaling_nodes(self, list_of_nodes):
+        v1 = Client.CoreV1Api()
+        # Step 1: Query nodes with the label "node-role.kubernetes.io/worker=consumer"
+        label_selector = f"node-role.kubernetes.io/worker=consumer"
+        nodes = v1.list_node(label_selector=label_selector)
+        node_mapping = {}  # A dictionary to map short node names to full node names
+
+        for node in nodes.items:
+            # Step 2: Apply the label "node-role.kubernetes.io/autoscaling='UNSCHEDULABLE'"
+            new_labels = {'node-role.kubernetes.io/autoscaling': 'UNSCHEDULABLE'}
+            v1.patch_node(node.metadata.name, {"metadata": {"labels": new_labels}})
+            # Create a mapping for the short node name to the full node name
+            node_mapping[node.metadata.name.split(".")[0]] = node.metadata.name
+            print(f"Applying label {new_labels}")
+        # Step 3: Apply the label "role.kubernetes.io/autoscaling='SCHEDULABLE'" to specified nodes
+        for short_node_name in list_of_nodes:
+            if short_node_name in node_mapping:
+                full_node_name = node_mapping[short_node_name]
+                new_labels = {'node-role.kubernetes.io/autoscaling': 'SCHEDULABLE'}
+                v1.patch_node(full_node_name, {'metadata': {'labels': new_labels}})

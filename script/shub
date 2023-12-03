@@ -148,7 +148,7 @@ def reload(playbook, config: Config):
 
 
 # Quick action commands
-def run(action, config):
+def run(action,type, config):
     log.info(f"Running action {action} ...")
     k: KubernetesManager = KubernetesManager(log)
     p: Playbooks = Playbooks()
@@ -166,14 +166,28 @@ def run(action, config):
             e.full_run()
             reload("flink", config)
         case "chaos":
-            experiment = {
-                "run_experiment": "true",
-            }
-            if config.get_bool(Key.DELAY_ENABLE):
-                experiment.update(
-                    {"latency": config.get_str(Key.DELAY_LATENCY), "jitter": config.get_str(Key.DELAY_JITTER), "correlation": config.get_str(Key.DELAY_CORRELATION)}
-                )
-            p.run_playbook("chaos", tags=["experiment", "create"],extra_vars=experiment)
+            # Check if chaos has to be created or deleted
+            match type:
+                case "create":
+                    experiment = {
+                        "run_experiment": "true",
+                    }
+                    if config.get_bool(Key.DELAY_ENABLE):
+                        experiment.update(
+                            {"latency": config.get_str(Key.DELAY_LATENCY), "jitter": config.get_str(Key.DELAY_JITTER),
+                             "correlation": config.get_str(Key.DELAY_CORRELATION)}
+                        )
+                    p.run_playbook("chaos", tags=["experiment"], extra_vars=experiment)
+                case "delete":
+                    experiment = {
+                        "delete_experiment": "true",
+                        "latency": "0ms",
+                        "jitter": "0ms",
+                        "correlation": "0",
+                    }
+                    p.run_playbook("chaos", tags=["experiment"],extra_vars=experiment)
+                case _:
+                    log.warning(f"default case, nothing happened")
 
         case "clean":
             # Clean flink jobs
@@ -362,7 +376,13 @@ def main(log: Logger):
     # Run command
     run_parser = subparsers.add_parser("run", help="Run action.")
     run_parser.add_argument(
-        "action", help="Specify the action to be run. {job | transscale}"
+        "action", help="Specify the action to be run. {job | transscale | chaos}"
+    )
+    run_parser.add_argument(
+        "type",
+        help="Specify if {create | delete} action should be run. Only for 'chaos', 'transscale' and 'job' actions. Default is 'create'.",
+        nargs="?",
+        default="create",
     )
 
     # Export command
@@ -400,7 +420,9 @@ def main(log: Logger):
     elif args.command == "destroy":
         destroy(config)
     elif args.command == "run":
-        run(args.action, config)
+        action = args.action
+        type = args.type
+        run(action, type, config)
     elif args.command == "export":
         date = args.date
         type = args.type

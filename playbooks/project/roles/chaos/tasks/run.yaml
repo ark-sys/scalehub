@@ -6,7 +6,6 @@
         for node in $(kubectl get nodes -l chaos=true -o jsonpath='{.items[*].metadata.name}'); do
           kubectl label nodes $node chaos-
         done
-
     - name: Deploy chaos experiment on consul
       kubernetes.core.k8s:
         state: present
