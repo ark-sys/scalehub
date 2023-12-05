@@ -236,23 +236,30 @@ class KubernetesManager:
             v1.delete_namespaced_pod(pod.metadata.name, pod.metadata.namespace)
             self.__log.info(f"Pod {pod.metadata.name} deleted")
 
-    def reset_autoscaling_nodes(self, list_of_nodes):
+    # Reset the autoscaling labels so that flink runs first on worker nodes not impacted by chaos
+    def reset_autoscaling_labels(self):
         v1 = Client.CoreV1Api()
-        # Step 1: Query nodes with the label "node-role.kubernetes.io/worker=consumer"
-        label_selector = f"node-role.kubernetes.io/worker=consumer"
-        nodes = v1.list_node(label_selector=label_selector)
-        node_mapping = {}  # A dictionary to map short node names to full node names
+        # Query nodes with the label "node-role.kubernetes.io/worker=consumer"
+        worker_label_selector = f"node-role.kubernetes.io/worker=consumer"
+        worker_nodes = v1.list_node(label_selector=worker_label_selector)
+        self.__log.info(f"Found {len(worker_nodes.items)} worker nodes.")
 
-        for node in nodes.items:
-            # Step 2: Apply the label "node-role.kubernetes.io/autoscaling='UNSCHEDULABLE'"
-            new_labels = {'node-role.kubernetes.io/autoscaling': 'UNSCHEDULABLE'}
-            v1.patch_node(node.metadata.name, {"metadata": {"labels": new_labels}})
-            # Create a mapping for the short node name to the full node name
-            node_mapping[node.metadata.name.split(".")[0]] = node.metadata.name
-            print(f"Applying label {new_labels}")
-        # Step 3: Apply the label "role.kubernetes.io/autoscaling='SCHEDULABLE'" to specified nodes
-        for short_node_name in list_of_nodes:
-            if short_node_name in node_mapping:
-                full_node_name = node_mapping[short_node_name]
-                new_labels = {'node-role.kubernetes.io/autoscaling': 'SCHEDULABLE'}
-                v1.patch_node(full_node_name, {'metadata': {'labels': new_labels}})
+        # Query nodes with the label chaos=true
+        chaos_label_selector = f"chaos=true"
+        chaos_nodes = v1.list_node(label_selector=chaos_label_selector)
+        self.__log.info(f"Found {len(chaos_nodes.items)} chaos nodes.")
+
+        # Setup schedulability tag
+        unschedulable_label = {'node-role.kubernetes.io/autoscaling': 'UNSCHEDULABLE'}
+        schedulable_label = {'node-role.kubernetes.io/autoscaling': 'SCHEDULABLE'}
+
+
+        self.__log.info(f"Marking some worker nodes as schedulable")
+        # Choas nodes are a subset of worker nodes;
+        # Mark chaos nodes as unschedulable
+        # Mark other worker nodes as schedulable
+        for node in worker_nodes.items:
+            if node.metadata.name in [node2.metadata.name for node2 in chaos_nodes.items]:
+                v1.patch_node(node.metadata.name, {"metadata": {"labels": unschedulable_label}})
+            else:
+                v1.patch_node(node.metadata.name, {"metadata": {"labels": schedulable_label}})

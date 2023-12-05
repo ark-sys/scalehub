@@ -159,7 +159,7 @@ class ExperimentData:
     def eval_stats(self, skip_duration):
         def extract_predictions(log_path) -> dict[Any, list[Any]]:
             predictions = {}
-            target_pattern = r"((?:.*\n){14}.*Re-configuring PARALLELISM\n.*Current Parallelism: (\d+)\n.*Target Parallelism: (\d+))"
+            target_pattern = r"((?:.*\n){20}.*Re-configuring PARALLELISM\n.*Current Parallelism: (\d+)\n.*Target Parallelism: (\d+))"
 
             with open(log_path, "r") as log_file:
                 logs = log_file.read()
@@ -505,6 +505,16 @@ class Experiment:
                 "Starting monitoring thread on scaling events. Reset chaos injection on rescale."
             )
             self.k.monitor_injection_thread(experiment_delay)
+
+            # Reset nodes labels
+            self.__log.info("Resetting nodes labels.")
+            self.k.reset_autoscaling_labels()
+
+            # Reset taskmanager replicas
+            self.__log.info("Resetting taskmanager replicas.")
+            # Reset to 0 and back to 1 to trigger placement of taskmanager on different relabelled nodes
+            self.k.scale_deployment("flink-taskmanager", replicas=0)
+            self.k.scale_deployment("flink-taskmanager", replicas=1)
 
 
         # Launch Flink Job
