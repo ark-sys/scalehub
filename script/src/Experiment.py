@@ -278,7 +278,7 @@ class ExperimentData:
             latency_enabled,
             latency_delay,
             latency_jitter,
-            latency_correlation
+            latency_correlation,
         ) = m.parse_log(log_path)
 
         # TODO Change this in the future to properly show throughput in case of scale down
@@ -337,7 +337,7 @@ class ExperimentData:
         # Set plot title based on job name
         plot_title = ""
         if "map" in job_name:
-            plot_title = f"Map operator"
+            plot_title = f"Map"
         elif "join" in job_name:
             if "kv" in job_name:
                 plot_title = f"Join (key-value)"
@@ -376,7 +376,6 @@ class ExperimentData:
                 fontsize=10,
                 verticalalignment="top",
             )
-
 
         # Set the output filename
         latency_value_filename = "latency" if latency_enabled else "nolatency"
@@ -498,7 +497,7 @@ class Experiment:
                 "correlation": self.delay_correlation,
             }
 
-            p.run_playbook("chaos",tags=["experiment"], extra_vars=experiment_delay)
+            p.run_playbook("chaos", tags=["experiment"], extra_vars=experiment_delay)
 
             # Start chaos injection thread
             self.__log.info(
@@ -515,7 +514,6 @@ class Experiment:
             # Reset to 0 and back to 1 to trigger placement of taskmanager on different relabelled nodes
             self.k.scale_deployment("flink-taskmanager", replicas=0)
             self.k.scale_deployment("flink-taskmanager", replicas=1)
-
 
         # Launch Flink Job
         self.k.execute_command_on_pod(
@@ -560,7 +558,7 @@ class Experiment:
         # Deploy transscale setup
         p.deploy(
             "transscale",
-             extra_vars=transscale_params,
+            extra_vars=transscale_params,
         )
 
         # Run transscale job and retrieve the logs from the execution of transscale
@@ -619,6 +617,7 @@ class Experiment:
         }
         # Delete chaos experiments
         p.run_playbook("chaos", tags=["experiment"], extra_vars=experiment)
+
     def transscale_only_run(self):
         self.start_experiment()
         p: Playbooks = Playbooks()
