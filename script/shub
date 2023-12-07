@@ -61,7 +61,7 @@ def deploy(playbook, config: Config):
     p: Playbooks = Playbooks()
     if playbook == "load_generators":
         for lg_config in config.parse_load_generators():
-            load_generator_params={
+            load_generator_params = {
                 "lg_name": lg_config["name"],
                 "lg_topic": lg_config["topic"],
                 "lg_numsensors": int(lg_config["num_sensors"]),
@@ -69,10 +69,7 @@ def deploy(playbook, config: Config):
                 "lg_replicas": int(lg_config["replicas"]),
                 "lg_value": int(lg_config["value"]),
             }
-            p.deploy(
-                playbook,
-                extra_vars=load_generator_params
-            )
+            p.deploy(playbook, extra_vars=load_generator_params)
     elif playbook == "transscale":
         p.deploy(
             playbook,
@@ -110,15 +107,6 @@ def delete(playbook, config: Config):
                 "lg_value": int(lg_config["value"]),
             }
             p.delete(playbook, extra_vars=load_generator_params)
-            # p.delete(
-            #     playbook,
-            #     lg_name=lg_config["name"],
-            #     lg_topic=lg_config["topic"],
-            #     lg_numsensors=int(lg_config["num_sensors"]),
-            #     lg_intervalms=int(lg_config["interval_ms"]),
-            #     lg_replicas=int(lg_config["replicas"]),
-            #     lg_value=int(lg_config["value"]),
-            # )
     elif playbook == "transscale":
         p.delete(
             playbook,
@@ -148,7 +136,7 @@ def reload(playbook, config: Config):
 
 
 # Quick action commands
-def run(action,type, config):
+def run(action, type, config):
     log.info(f"Running action {action} ...")
     k: KubernetesManager = KubernetesManager(log)
     p: Playbooks = Playbooks()
@@ -174,8 +162,11 @@ def run(action,type, config):
                     }
                     if config.get_bool(Key.DELAY_ENABLE):
                         experiment.update(
-                            {"latency": config.get_str(Key.DELAY_LATENCY), "jitter": config.get_str(Key.DELAY_JITTER),
-                             "correlation": config.get_str(Key.DELAY_CORRELATION)}
+                            {
+                                "latency": config.get_str(Key.DELAY_LATENCY),
+                                "jitter": config.get_str(Key.DELAY_JITTER),
+                                "correlation": config.get_str(Key.DELAY_CORRELATION),
+                            }
                         )
                     p.run_playbook("chaos", tags=["experiment"], extra_vars=experiment)
                 case "delete":
@@ -185,28 +176,26 @@ def run(action,type, config):
                         "jitter": "0ms",
                         "correlation": "0",
                     }
-                    p.run_playbook("chaos", tags=["experiment"],extra_vars=experiment)
+                    p.run_playbook("chaos", tags=["experiment"], extra_vars=experiment)
                 case _:
                     log.warning(f"default case, nothing happened")
 
         case "clean":
-            # Clean flink jobs
-            k.execute_command_on_pod(
-                deployment_name="flink-jobmanager",
-                command=r"for job_id in $(flink list -r | awk -F ' : ' '/\(RUNNING\)/ {print $2}'); do flink cancel $job_id ;done",
-            )
 
-            # Scale down taskmanagers
-            k.scale_deployment("flink-taskmanager")
-            # Clean transscale job
-            k.delete_job("transscale-job")
             # Delete load generators
-            p.delete("load_generators")
+            delete("load_generators", config)
+            # Restart Flink
+            reload("flink", config)
+            # Remove chaos
+            run("chaos", "delete", config)
+
         # Get tokens
         case "tokens":
             # Retrieve token for minio console
-            minio_console_token = k.get_token("console-sa-secret","minio-operator")
-            kubernetes_dashboard_token = k.get_token("admin-user", "kubernetes-dashboard")
+            minio_console_token = k.get_token("console-sa-secret", "minio-operator")
+            kubernetes_dashboard_token = k.get_token(
+                "admin-user", "kubernetes-dashboard"
+            )
 
             # Print tokens in a readable format and easy to copy-paste
             print(f"Minio Console Token : \n{minio_console_token}\n\n")
