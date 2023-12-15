@@ -34,8 +34,18 @@
           chaosDaemon:
             runtime: containerd
             socketPath: /run/k3s/containerd/containerd.sock
-            nodeSelector:
-              node-role.kubernetes.io/worker: "consumer"
+#            nodeSelector:
+#              node-role.kubernetes.io/worker: "consumer"
+            affinity:
+             nodeAffinity:
+               requiredDuringSchedulingIgnoredDuringExecution:
+                 nodeSelectorTerms:
+                   - matchExpressions:
+                       - key: node-role.kubernetes.io/worker
+                         operator: In
+                         values:
+                           - consumer
+                           - storage
           controllerManager:
             nodeSelector:
               node-role.kubernetes.io/control-plane: "true"

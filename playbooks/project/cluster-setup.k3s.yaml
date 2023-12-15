@@ -155,6 +155,10 @@
         producer_hosts: "{{ worker_hosts[:producer_nodes | int] }}"
         consumer_hosts: "{{ worker_hosts[producer_nodes | int:] }}"
 
+    - name: Clean all labels from nodes all nodes
+      command:
+        cmd: "kubectl label nodes --all --overwrite node-role.kubernetes.io/worker- node-role.kubernetes.io/producer- node-role.kubernetes.io/consumer- node-role.kubernetes.io/storage- node-role.kubernetes.io/autoscaling-"
+
     - name: Label nodes based on node count
       block:
         - name: Label nodes as worker-producer
@@ -182,7 +186,7 @@
         cmd: "kubectl label nodes {{ control_host }} --overwrite node-role.kubernetes.io/control-plane=true"
     - name: Label storage node
       command:
-        cmd: "kubectl label nodes {{ storage_host }} --overwrite node-role.kubernetes.io/storage=true node-role.kubernetes.io/scalehub-storage=true"
+        cmd: "kubectl label nodes {{ storage_host }} --overwrite node-role.kubernetes.io/storage=true node-role.kubernetes.io/worker='storage'"
 
     - name: Randomly select a consumer node
       set_fact:
