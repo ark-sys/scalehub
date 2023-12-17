@@ -23,7 +23,7 @@
         values:
           operator:
             nodeSelector:
-              node-role.kubernetes.io/worker: "storage"
+              node-role.kubernetes.io/control-plane: "true"
           console:
             enabled: true
             env:
@@ -36,7 +36,7 @@
               - name: MINIO_PROMETHEUS_URL
                 value : "http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local"
             nodeSelector:
-              node-role.kubernetes.io/worker: "storage"
+              node-role.kubernetes.io/control-plane: "true"
             affinity:
               podAntiAffinity:
                 requiredDuringSchedulingIgnoredDuringExecution:
@@ -72,13 +72,13 @@
             name: scalehub-tenant
             replicas: 1
             pools:
-              - servers: 1
+              - servers: 11
                 volumesPerServer: 1
                 name: flink-pool
                 size: 50Gi
                 storageClassName: local-storage
             nodeSelector:
-              node-role.kubernetes.io/worker: "storage"
+              node-role.kubernetes.io/worker: "consumer"
             buckets:
               - name: flink-bucket
                 policy: public

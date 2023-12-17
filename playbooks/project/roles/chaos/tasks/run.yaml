@@ -31,7 +31,10 @@
       kubernetes.core.k8s:
         state: present
         definition: "{{ lookup('ansible.builtin.template', 'flink-latency.yaml.j2') | from_yaml }}"
-
+    - name: Deploy chaos experiment on Minio
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('ansible.builtin.template', 'storage-latency.yaml.j2') | from_yaml }}"
 
 
 

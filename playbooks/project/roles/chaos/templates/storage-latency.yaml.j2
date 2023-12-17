@@ -10,6 +10,9 @@ spec:
             - minio-operator
         labelSelectors:
             app: minio
+            v1.min.io/tenant: scalehub-tenant
+        nodeSelectors:
+            chaos: 'true'
     # All values are described here
     # https://chaos-mesh.org/docs/simulate-network-chaos-on-kubernetes/#field-description
     mode: all
