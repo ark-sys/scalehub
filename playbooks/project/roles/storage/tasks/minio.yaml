@@ -3,14 +3,16 @@
   tags: [create]
   delegate_to: localhost
   block:
-    - name: Deploy PV for MinIO
-      kubernetes.core.k8s:
-        state: present
-        definition: "{{ lookup('ansible.builtin.file', 'tenant-pv.yaml') | from_yaml }}"
     - name: Add MinIo chart
       kubernetes.core.helm_repository:
         name: minio-operator
         repo_url: https://operator.min.io/
+    - name: Get count of worker consumer nodes
+      kubernetes.core.k8s_info:
+        kind: Node
+        label_selectors:
+          - node-role.kubernetes.io/worker=consumer
+      register: consumer_nodes
     - name: Install MinIO Operator
       kubernetes.core.helm:
         name: minio-operator
@@ -72,11 +74,22 @@
             name: scalehub-tenant
             replicas: 1
             pools:
-              - servers: 11
+              # Deploy one server per consumer node
+              - servers: "{{ consumer_nodes.resources | length }}"
                 volumesPerServer: 1
                 name: flink-pool
                 size: 50Gi
-                storageClassName: local-storage
+                storageClassName: local-path
+                # deploy one tenant on each worker node
+                affinity:
+                  nodeAffinity:
+                    requiredDuringSchedulingIgnoredDuringExecution:
+                      nodeSelectorTerms:
+                        - matchExpressions:
+                            - key: node-role.kubernetes.io/worker
+                              operator: In
+                              values:
+                                - consumer
             nodeSelector:
               node-role.kubernetes.io/worker: "consumer"
             buckets:
@@ -114,7 +127,3 @@
         name: minio-operator
         repo_url: https://operator.min.io/
         state: absent
-    - name: Delete PV for MinIO
-      kubernetes.core.k8s:
-          state: absent
-          definition: "{{ lookup('ansible.builtin.file', 'tenant-pv.yaml') | from_yaml }}"
