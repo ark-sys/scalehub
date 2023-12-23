@@ -10,6 +10,7 @@ ENV PATH="$PATH:/app/script"
 # Get build arguments, default to 1000:1000 if not set
 ARG UID=1000
 ARG GID=1000
+# Eric B. is on the cut and my name is
 ARG USER=rakim
 
 # Install necessary dependencies

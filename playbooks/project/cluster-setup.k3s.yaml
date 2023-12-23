@@ -107,7 +107,7 @@
       delegate_to: "{{ groups['control'][0] }}"
       shell: "cat /var/lib/rancher/k3s/server/node-token"
       register: node_token
-    - name: Install k3s on workers and storage
+    - name: Install k3s on workers
       environment:
         K3S_URL: "https://{{ hostvars[groups['control'][0]]['ansible_default_ipv4']['address'] }}:6443"
         K3S_TOKEN: "{{ node_token.stdout }}"
@@ -154,7 +154,7 @@
 
     - name: Clean all labels from nodes all nodes
       command:
-        cmd: "kubectl label nodes --all --overwrite node-role.kubernetes.io/worker- node-role.kubernetes.io/producer- node-role.kubernetes.io/consumer- node-role.kubernetes.io/storage- node-role.kubernetes.io/autoscaling-"
+        cmd: "kubectl label nodes --all --overwrite node-role.kubernetes.io/worker- node-role.kubernetes.io/producer- node-role.kubernetes.io/consumer- node-role.kubernetes.io/autoscaling-"
 
     - name: Label nodes based on node count
       block:
