@@ -14,7 +14,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: transscale
-              image: "{{transscale_image}}:{{transscale_tag}}"
+              image: registry.gitlab.inria.fr/stream-processing-autoscaling/transscale:combined-testing
               imagePullPolicy: Always
               resources:
                 limits:
@@ -28,8 +28,6 @@ spec:
                 - name: kubeconfig-volume
                   mountPath: /kubeconfig
                   readOnly: true
-#                - name: artifacts-volume
-#                  mountPath: /etc/transscale/jobs
           volumes:
             - name: kubeconfig-volume
               secret:
@@ -43,9 +41,6 @@ spec:
                 items:
                   - key: transscale.conf
                     path: transscale.conf
-#            - name: artifacts-volume
-#              persistentVolumeClaim:
-#                claimName: artifacts-pvc
           tolerations:
             - key: node-role.kubernetes.io/master
               operator: Exists

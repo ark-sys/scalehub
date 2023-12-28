@@ -18,6 +18,10 @@
       kubernetes.core.k8s:
         state: present
         definition: "{{ lookup('ansible.builtin.file', 'pvc/artifacts-pvc.yaml') | from_yaml }}"
+    - name: Deploy PVC for experiments
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('ansible.builtin.file', 'pvc/experiments-pvc.yaml') | from_yaml }}"
 
 - name: Setting up PrivateVolumeClaims - Deletion block
   tags: [ delete ]
@@ -37,3 +41,8 @@
       kubernetes.core.k8s:
         state: absent
         definition: "{{ lookup('ansible.builtin.file', 'pvc/vm-pvc.yaml') | from_yaml }}"
+
+    - name: Delete PVC for experiments
+      kubernetes.core.k8s:
+          state: absent
+          definition: "{{ lookup('ansible.builtin.file', 'pvc/experiments-pvc.yaml') | from_yaml }}"

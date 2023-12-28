@@ -7,7 +7,7 @@ from .utils.Defaults import DefaultValues as Value
 
 class Playbooks:
     def run_playbook(self, playbook, **kwargs):
-        playbook_filename = f"{Value.System.PLAYBOOKS_PATH}/{playbook}.yaml"
+        playbook_filename = f"{Value.Scalehub.playbooks}/{playbook}.yaml"
         if not os.path.exists(playbook_filename):
             # Raise an error with the file path
             raise FileNotFoundError(f"The file doesn't exist: {playbook_filename}")
@@ -22,7 +22,7 @@ class Playbooks:
             playbooks=[playbook_filename],
             tags=arg_tags,
             extra_vars=extra_vars,
-            inventory_path=Value.System.INVENTORY_PATH
+            inventory_path=Value.Scalehub.inventory,
         )
 
     def deploy(self, playbook, **kwargs):

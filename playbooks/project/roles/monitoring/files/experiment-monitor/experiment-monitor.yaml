@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: experiment-monitor
+  namespace: experiment-monitor
+  labels:
+    app: experiment-monitor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: experiment-monitor
+  template:
+    metadata:
+      name: experiment-monitor
+      labels:
+        app: experiment-monitor
+    spec:
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: 'true'
+      containers:
+        - name: experiment-monitor
+          image: registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/experiment-monitor:latest
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - mountPath: /experiment-volume
+              name: experiment-volume
+      restartPolicy: Always
+      tolerations:
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
+      volumes:
+        - name: experiment-volume
+          persistentVolumeClaim:
+            claimName: experiments-pvc

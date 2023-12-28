@@ -1,89 +1,112 @@
-class ConfigKeys:
-    DEBUG_LEVEL = "debug.level"
+class DefaultKeys:
+    class Scalehub:
+        inventory = "scalehub.inventory"
+        playbook = "scalehub.playbook"
+        experiments = "scalehub.experiments"
+        debug_level = "scalehub.debug_level"
 
-    TYPE = "platform.type"
-    SITE = "platform.site"
-    CLUSTER = "platform.cluster"
-    NUM_CONTROL = "platform.controllers"
-    NUM_WORKERS = "platform.workers"
-    QUEUE_TYPE = "platform.queue"
-    WALLTIME = "platform.walltime"
-    WALLTIME_EXTENSION = "platform.walltime_extension"
-    KUBERNETES_TYPE = "platform.kubernetes_type"
+    class Platform:
+        type = "platform.type"
+        reservation_name = "platform.reservation_name"
+        site = "platform.site"
+        cluster = "platform.cluster"
+        producers = "platform.producers"
+        consumers = "platform.consumers"
+        queue = "platform.queue"
+        walltime = "platform.walltime"
+        kubernetes_type = "platform.kubernetes_type"
 
-    NAME = "experiment.name"
-    JOB = "experiment.job_file"
-    TASK = "experiment.task_name"
-    DB_URL = "experiment.db_url"
+    class Experiment:
+        name = "experiment.name"
+        job_file = "experiment.job_file"
+        task_name = "experiment.task_name"
+        output_skip_s = "experiment.output_skip_s"
+        output_stats = "experiment.output_stats"
+        output_plot = "experiment.output_plot"
 
-    DELAY_ENABLE = "experiment.delay.enable"
-    DELAY_LATENCY = "experiment.delay.latency"
-    DELAY_JITTER = "experiment.delay.jitter"
-    DELAY_CORRELATION = "experiment.delay.correlation"
+        class Generators:
+            generators = "experiment.generators"
 
-    LOAD_GENERATORS = "experiment.load_generators"
-    DATA_SKIP_DURATION = "experiment.output.skip_s"
-    DATA_OUTPUT_PLOT = "experiment.output.plot"
-    DATA_OUTPUT_STATS = "experiment.output.stats"
+            class Generator:
+                topic = "experiment.generators.name.topic"
+                num_sensors = "experiment.generators.name.num_sensors"
+                interval_ms = "experiment.generators.name.interval_ms"
+                replicas = "experiment.generators.name.replicas"
+                value = "experiment.generators.name.value"
 
-    PLAYBOOKS_PATH = "scalehub.playbook"
-    INVENTORY_PATH = "scalehub.inventory"
-    EXPERIMENTS_DATA_PATH = "scalehub.experiments"
+        class Flink:
+            checkpoint_interval_ms = "experiment.flink.checkpoint_interval_ms"
+            window_size_ms = "experiment.flink.window_size_ms"
 
-    TRANSCCALE_PAR = "transscale.max_parallelism"
-    TRANSSCALE_WARMUP = "transscale.monitoring.warmup"
-    TRANSSCALE_INTERVAL = "transscale.monitoring.interval"
+        class Transscale:
+            max_parallelism = "experiment.transscale.max_parallelism"
+            monitoring_warmup_s = "experiment.transscale.monitoring_warmup_s"
+            monitoring_interval_s = "experiment.transscale.monitoring_interval_s"
+
+        class Chaos:
+            enable = "experiment.chaos.enable"
+            delay_latency_ms = "experiment.chaos.delay_latency_ms"
+            delay_jitter_ms = "experiment.chaos.delay_jitter_ms"
+            delay_correlation = "experiment.chaos.delay_correlation"
 
 
 class DefaultValues:
-    class System:
-        CONF_PATH = "/app/conf/scalehub.conf"
-        PLAYBOOKS_PATH = "/app/playbooks/project"
-        EXPERIMENTS_DATA_PATH = "/app/experiments-data"
-        INVENTORY_PATH = "/tmp/hosts"
+    conf_path = "/app/conf/scalehub.ini"
+
+    class Scalehub:
+        # Path to where the playbooks are located
+        playbooks = "/app/playbooks/project"
+        # Base path to where experiments will be stored
+        experiments = "/app/experiments-data"
+        # Path to where the inventory  ansible inventory will be
+        inventory = "/tmp/hosts"
 
         class Debug:
             DISABLED = 0
             LEVEL_1 = 1
-
             level = DISABLED
 
     class Platform:
         type = "Grid5000"
+        reservation_name = "scalehub"
         site = "rennes"
         cluster = "parasilo"
-        controllers = 1
-        workers = 2
+        producers = 1
+        consumers = 1
         queue = "default"
         walltime = "1:00:00"
-        walltime_extension = "0:30:00"
         kubernetes_type = "k3s"
 
     class Experiment:
         name = "scalehub"
         job_file = "myjoin-all.jar"
         task_name = "TumblingEventTimeWindows"
-        db_url = "localhost/vm"
-        class Delay:
+        output_skip_s = 120
+        output_stats = True
+        output_plot = True
+
+        class Generators:
+            generators = ["generator1"]
+
+            class Generator:
+                name = "generator1"
+                topic = "input-topic1"
+                num_sensors = 100000
+                interval_ms = 3000
+                replicas = 1
+                value = 5
+
+        class Transscale:
+            max_parallelism = 10
+            monitoring_warmup_s = 66
+            monitoring_interval_s = 60
+
+        class Flink:
+            checkpoint_interval_ms = 4000
+            window_size_ms = 1000
+
+        class Chaos:
             enable = False
-            latency = "25ms"
-            jitter = "0ms"
+            latency_ms = "25"
+            jitter_ms = "0"
             correlation = "0"
-
-        class LoadGenerator:
-            name = "load_generator"
-            topic = "input-topic1"
-            num_sensors = 100000
-            interval_ms = 3000
-            replicas = 1
-            value = 5
-
-        class ExperimentData:
-            skip_s = 100
-            stats = True
-            plot = True
-
-    class Transscale:
-        max_parallelism = 10
-        monitoring_warmup = 66
-        monitoring_interval = 60

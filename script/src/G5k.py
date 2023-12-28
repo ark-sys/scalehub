@@ -24,19 +24,19 @@ class G5k(Platform):
         # Check that Grid5000 is joinable
         en.check()
 
-        self.name = config.get_str(Key.NAME)
-        self.site = config.get_str(Key.SITE)
-        self.cluster = config.get_str(Key.CLUSTER)
-        self.controllers = config.get_int(Key.NUM_CONTROL)
-        self.workers = config.get_int(Key.NUM_WORKERS)
-        self.queue = config.get_str(Key.QUEUE_TYPE)
-        self.walltime = config.get_str(Key.WALLTIME)
+        self.reservation_name = config.get_str(Key.Platform.reservation_name)
+        self.site = config.get_str(Key.Platform.site)
+        self.cluster = config.get_str(Key.Platform.cluster)
+        self.producers = config.get_int(Key.Platform.producers)
+        self.consumers = config.get_int(Key.Platform.consumers)
+        self.queue = config.get_str(Key.Platform.queue)
+        self.walltime = config.get_str(Key.Platform.walltime)
 
         # Setup request of resources as specified in configuration file
         network = en.G5kNetworkConf(type="prod", roles=["my_network"], site=self.site)
         conf = (
             en.G5kConf.from_settings(
-                job_name=self.name,
+                job_name=self.reservation_name,
                 queue=self.queue,
                 walltime=self.walltime,
             )
@@ -44,17 +44,24 @@ class G5k(Platform):
             .add_machine(
                 roles=["control"],
                 cluster=self.cluster,
-                nodes=self.controllers,
+                nodes=1,
                 primary_network=network,
             )
             .add_machine(
-                roles=["workers"],
+                roles=["producers"],
                 cluster=self.cluster,
-                nodes=self.workers,
+                nodes=self.producers,
+                primary_network=network,
+            )
+            .add_machine(
+                roles=["consumers"],
+                cluster=self.cluster,
+                nodes=self.consumers,
                 primary_network=network,
             )
             .finalize()
         )
+
         self.conf = conf
         self.provider = en.G5k(self.conf)
 
