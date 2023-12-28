@@ -5,6 +5,7 @@ FROM python:slim-bullseye
 ENV TZ="Europe/Paris"
 ENV KUBECONFIG="/app/conf/kubeconfig"
 ENV ANSIBLE_CONFIG="/app/conf/ansible.cfg"
+ENV SHUB_CONFIG="/app/conf/scalehub.conf"
 ENV PATH="$PATH:/app/script"
 
 # Get build arguments, default to 1000:1000 if not set

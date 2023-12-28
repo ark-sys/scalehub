@@ -1,5 +1,0 @@
----
-transscale_image: registry.gitlab.inria.fr/stream-processing-autoscaling/transscale
-transscale_tag: combined-testing
-
-

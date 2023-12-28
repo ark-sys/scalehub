@@ -1,3 +1,4 @@
+import json
 import os
 from inspect import getmembers, isclass
 from os.path import exists
@@ -239,3 +240,9 @@ class Config:
         self.__config[
             Key.Experiment.Generators.generators
         ] = self.parse_load_generators()
+
+    def save_config(self, exp_path):
+        # Create config file
+        config_file_path = os.path.join(exp_path, "config.ini")
+        with open(config_file_path, "w") as file:
+            self.cp.write(file)
