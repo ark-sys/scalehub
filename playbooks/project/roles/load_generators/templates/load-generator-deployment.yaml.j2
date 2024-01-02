@@ -4,6 +4,8 @@ kind: Deployment
 metadata:
   name: "{{ lg_name }}"
   namespace: default
+  labels:
+      app: load-generator
 spec:
   selector:
     matchLabels:
@@ -52,3 +54,9 @@ spec:
             limits:
               memory: 2Gi
               cpu: 500m
+          # Start load_generator in paused state. It will be resumed by the experiment script by creating the /start_generation file
+          command:
+            - /bin/sh
+            - -c
+          args:
+            - while [ ! -f /start_generation ]; do sleep 1; done; JAVA_OPTS='$JAVA_OPTS -Dorg.slf4j.simpleLogger.defaultLogLevel=$LOG_LEVEL' /uc1-load-generator/bin/uc1-load-generator

@@ -1,4 +1,4 @@
-import os
+import json
 from inspect import getmembers, isclass
 from os.path import exists
 import configparser as cp
@@ -49,6 +49,12 @@ class Config:
         self.__config[Key.Experiment.output_skip_s] = Value.Experiment.output_skip_s
         self.__config[Key.Experiment.output_plot] = Value.Experiment.output_plot
         self.__config[Key.Experiment.output_stats] = Value.Experiment.output_stats
+        self.__config[
+            Key.Experiment.broker_mqtt_host
+        ] = Value.Experiment.broker_mqtt_host
+        self.__config[
+            Key.Experiment.broker_mqtt_port
+        ] = Value.Experiment.broker_mqtt_port
 
         self.__config[Key.Experiment.Chaos.enable] = Value.Experiment.Chaos.enable
 
@@ -206,7 +212,7 @@ class Config:
     def validate(self, conf_path: str):
         # Check that the configuration file exists
         if not exists(conf_path):
-            self.__log.error(f"[CONF] Config file [{conf_path}] does not exist.t")
+            self.__log.error(f"[CONF] Config file [{conf_path}] does not exist.")
             exit(1)
         else:
             self.__log.info(f"[CONF] Config file [{conf_path}] found.")
@@ -239,3 +245,7 @@ class Config:
         self.__config[
             Key.Experiment.Generators.generators
         ] = self.parse_load_generators()
+
+    # Serialize the configuration to a JSON string
+    def to_json(self):
+        return json.dumps(self.__config)

@@ -7,31 +7,6 @@
         state: present
         force: yes
         definition: "{{ lookup('ansible.builtin.file', 'gitlab-registry.yaml') | from_yaml }}"
-    - name: Get kubeconfig from cluster
-      shell: kubectl config view --raw --minify
-      register: kubeconfig
-    - name: Create Secret with kubeconfig for transscale
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: v1
-          kind: Secret
-          type: Opaque
-          metadata:
-            name: transscale-secret
-            namespace: default
-          data:
-            kubeconfig: "{{ kubeconfig.stdout | b64encode }}"
-    - name: Read configuration file from SHUB_CONFIG path
-      ansible.builtin.include_vars:
-          file: "{{ lookup('env', 'SHUB_CONFIG') }}"
-      register: shub_config
-    - name: Set variables from configuration file
-      set_fact:
-        job_file: "{{ shub_config[experiment.job_file] }}"
-        task_name: "{{ shub_config[experiment.task_name] }}"
-        max_parallelism: "{{ shub_config[transscale.max_parallelism] }}"
-        warmup: "{{ shub_config[transscale.monitoring.warmup] }}"
-        interval: "{{ shub_config[transscale.monitoring.interval] }}"
+
 
 - import_tasks: transscale.yaml

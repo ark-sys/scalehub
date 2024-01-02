@@ -1,4 +1,3 @@
-from .Logger import Logger
 import os
 import re
 from typing import Any
@@ -10,6 +9,7 @@ from matplotlib import pyplot as plt
 from matplotlib.legend_handler import HandlerTuple
 import configparser as cp
 
+from .Logger import Logger
 from .Config import Config
 from .Defaults import DefaultKeys as Key
 
@@ -17,7 +17,7 @@ from .Defaults import DefaultKeys as Key
 class ExperimentData:
     BASE_TIMESERIES = "flink_operator"
 
-    def __init__(self, log: Logger, exp_path: str):
+    def __init__(self, log: Logger, exp_path: str, config: Config):
         self.__log = log
         # Path to experiment folder
         self.exp_path = exp_path
@@ -25,12 +25,10 @@ class ExperimentData:
         self.log_file = os.path.join(self.exp_path, "exp_log.txt")
         # Path to transscale log file
         self.transscale_log = os.path.join(self.exp_path, "transscale_log.txt")
-        # Path to config file
-        self.config_file = os.path.join(self.exp_path, "config.ini")
 
         # Parse configuration file for experiment
         self.cp = cp.ConfigParser()
-        self.config: Config = Config(self.__log, self.config_file)
+        self.config: Config = config
 
         # Parse log file for timestamps
         self.start_ts, self.end_ts = self.__get_timestamps_from_log(self.log_file)

@@ -3,14 +3,13 @@ import argparse
 
 from time import sleep
 
-from src.Experiment import Experiment
+from script.src.utils.KubernetesManager import KubernetesManager
+from src.Client import Client, Playbooks
 from src.G5k import G5k
 from src.Platform import Platform
-from src.Playbooks import Playbooks
 from src.utils.Config import Config
 from src.utils.Defaults import DefaultKeys as Key, DefaultValues as Value
 from src.utils.Logger import Logger
-from src.utils.KubernetesManager import KubernetesManager
 
 
 # Build cluster and install dependencies
@@ -28,11 +27,11 @@ def provision(config: Config):
                 f.write(inventory)
 
             # Setup cluster with kubernetes
-            play: Playbooks = Playbooks()
+            p: Playbooks = Playbooks()
             kubernetes_type = (
                 f"cluster-setup.{config.get_str(Key.Platform.kubernetes_type)}"
             )
-            return play.deploy(kubernetes_type)
+            return p.run_playbook(kubernetes_type, config=config.to_json())
 
         case _:
             log.error(f"Provision is not implemented for platform {platform_type}")
@@ -54,6 +53,7 @@ def destroy(config: Config):
 def deploy(playbook, config: Config):
     log.info(f"Executing deployment tasks in playbook : {playbook} ...")
     p: Playbooks = Playbooks()
+    tag = "create"
     if playbook == "load_generators":
         for lg_config in config.get(Key.Experiment.Generators.generators):
             load_generator_params = {
@@ -64,15 +64,21 @@ def deploy(playbook, config: Config):
                 "lg_replicas": int(lg_config["replicas"]),
                 "lg_value": int(lg_config["value"]),
             }
-            p.deploy(playbook, extra_vars=load_generator_params)
+            p.run_playbook(
+                playbook,
+                config=config.to_json(),
+                tag=tag,
+                extra_vars=load_generator_params,
+            )
     else:
-        return p.deploy(playbook)
+        return p.run_playbook(playbook, config=config.to_json(), tag=tag)
 
 
 # Execute tasks with "delete" tag for a given playbook
 def delete(playbook, config: Config):
     log.info(f"Executing deletion tasks in playbook : {playbook} ...")
     p: Playbooks = Playbooks()
+    tag = "delete"
     if playbook == "load_generators":
         for lg_config in config.get(Key.Experiment.Generators.generators):
             load_generator_params = {
@@ -83,9 +89,14 @@ def delete(playbook, config: Config):
                 "lg_replicas": int(lg_config["replicas"]),
                 "lg_value": int(lg_config["value"]),
             }
-            p.delete(playbook, extra_vars=load_generator_params)
+            p.run_playbook(
+                playbook,
+                config=config.to_json(),
+                tag=tag,
+                extra_vars=load_generator_params,
+            )
     else:
-        return p.delete(playbook)
+        return p.run_playbook(playbook, config=config.to_json(), tag=tag)
 
 
 # Delete and re-deploy 'playbook' parameter
@@ -96,6 +107,30 @@ def reload(playbook, config: Config):
     sleep(5)
     # Deploy again playbook
     deploy(playbook, config)
+
+
+def experiment(action, config: Config):
+    e: Client = Client(log, config)
+    match action:
+        case "start":
+            e.start()
+        case "stop":
+            e.stop()
+        case _:
+            log.error(f"Action {action} is not implemented.")
+
+
+# Get tokens for minio and kubernetes dashboard
+def tokens():
+    k: KubernetesManager = KubernetesManager(log)
+
+    # Retrieve token for minio console
+    minio_console_token = k.get_token("console-sa-secret", "minio-operator")
+    kubernetes_dashboard_token = k.get_token("admin-user", "kubernetes-dashboard")
+
+    # Print tokens in a readable format and easy to copy-paste
+    log.info(f"Minio Console Token : \n{minio_console_token}\n\n")
+    log.info(f"Kubernetes Dashboard Token : \n{kubernetes_dashboard_token}\n\n")
 
 
 # Quick action commands
@@ -113,9 +148,9 @@ def run(action, action_type, config):
         #     e: Experiment = Experiment(log, config)
         #     e.transscale_only_run()
         case "experiment":
-            e: Experiment = Experiment(log, config)
+            e: Client = Client(log, config)
             e.start()
-            reload("flink", config)
+            # reload("flink", config)
         case "chaos":
             # Check if chaos has to be created or deleted
             match action_type:
@@ -123,12 +158,22 @@ def run(action, action_type, config):
                     experiment = {
                         "run_experiment": "true",
                     }
-                    p.run_playbook("chaos", tags=["experiment"], extra_vars=experiment)
+                    p.run_playbook(
+                        "chaos",
+                        config=config.to_json(),
+                        tag=["experiment"],
+                        extra_vars=experiment,
+                    )
                 case "delete":
                     experiment = {
                         "delete_experiment": "true",
                     }
-                    p.run_playbook("chaos", tags=["experiment"], extra_vars=experiment)
+                    p.run_playbook(
+                        "chaos",
+                        config=config.to_json(),
+                        tag=["experiment"],
+                        extra_vars=experiment,
+                    )
                 case _:
                     log.warning(f"default case, nothing happened")
 
@@ -141,17 +186,6 @@ def run(action, action_type, config):
             # Remove chaos
             run("chaos", "delete", config)
 
-        # Get tokens
-        case "tokens":
-            # Retrieve token for minio console
-            minio_console_token = k.get_token("console-sa-secret", "minio-operator")
-            kubernetes_dashboard_token = k.get_token(
-                "admin-user", "kubernetes-dashboard"
-            )
-
-            # Print tokens in a readable format and easy to copy-paste
-            print(f"Minio Console Token : \n{minio_console_token}\n\n")
-            print(f"Kubernetes Dashboard Token : \n{kubernetes_dashboard_token}\n\n")
         case "test":
             pass
         case _:
@@ -302,6 +336,17 @@ def main(log: Logger):
     )
     reload_parser.add_argument("playbook", help="Name of the playbook.")
 
+    # Experiment command
+    experiment_parser = subparsers.add_parser(
+        "experiment", help="Executes experiment tasks."
+    )
+    experiment_parser.add_argument("action", help="Name of the action.")
+
+    # Tokens command
+    subparsers.add_parser(
+        "tokens", help="Get tokens for minio and kubernetes dashboard"
+    )
+
     # Run command
     run_parser = subparsers.add_parser("run", help="Run action.")
     run_parser.add_argument(
@@ -345,6 +390,11 @@ def main(log: Logger):
         reload(args.playbook, config)
     elif args.command == "destroy":
         destroy(config)
+    elif args.command == "experiment":
+        action = args.action
+        experiment(action, config)
+    elif args.command == "tokens":
+        tokens()
     elif args.command == "run":
         action = args.action
         type = args.type
@@ -352,10 +402,7 @@ def main(log: Logger):
     elif args.command == "export":
         date = args.date
         type = args.type
-        # if type is not None:
-        #     export(config, date, type)
-        # else:
-        #     export(config, date)
+
     else:
         parser.print_help()
 

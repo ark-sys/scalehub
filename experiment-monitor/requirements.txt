@@ -1,5 +1,5 @@
 kubernetes
 paho-mqtt
-yaml
 pandas
 matplotlib
+jinja2

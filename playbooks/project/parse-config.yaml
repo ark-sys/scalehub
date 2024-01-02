@@ -1,0 +1,9 @@
+---
+# Load configuration file, which is in ini format
+# Path to configuration file is located in environment variable SHUB_CONFIG
+- name: Parse configuration file
+  hosts: localhost
+  tasks:
+    - name: Read config
+      debug:
+        msg: "{{ lookup('ansible.builtin.ini', 'name', section='experiment', file='/app/conf/scalehub.ini') }}"
