@@ -22,9 +22,17 @@ spec:
         - name: experiment-monitor
           image: registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/experiment-monitor:latest
           imagePullPolicy: IfNotPresent
+          env:
+            - name: MQTT_BROKER_HOST
+              value: "mqtt-broker.experiment-monitor.svc.cluster.local"
+            - name: MQTT_BROKER_PORT
+              value: "1883"
           volumeMounts:
             - mountPath: /experiment-volume
               name: experiment-volume
+            - mountPath: /app/conf/kubeconfig
+              name: kubeconfig-volume
+              readOnly: true
       restartPolicy: Always
       tolerations:
         - key: node-role.kubernetes.io/master
@@ -34,3 +42,9 @@ spec:
         - name: experiment-volume
           persistentVolumeClaim:
             claimName: experiments-pvc
+        - name: kubeconfig-volume
+          secret:
+            secretName: kube-secret
+            items:
+              - key: kubeconfig
+                path: kubeconfig

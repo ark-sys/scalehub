@@ -163,45 +163,6 @@
         - name: Label a random consumer node with autoscaling
           command:
             cmd: "kubectl label node {{ random_consumer_node }} --overwrite node-role.kubernetes.io/autoscaling='SCHEDULABLE'"
-#    - name: Define total_nodes variable
-#      set_fact:
-#        total_nodes: "{{ worker_hosts | length | int }}"
-#
-#    - name: Calculate number of producer nodes
-#      set_fact:
-#        producer_nodes: "{{ (total_nodes | int * 3 / 10) | round | int }}"
-#
-#    - name: Calculate number of consumer nodes
-#      set_fact:
-#        consumer_nodes: "{{ total_nodes | int - producer_nodes | int }}"
-#
-#    - name: Slice worker_hosts list
-#      set_fact:
-#        producer_hosts: "{{ worker_hosts[:producer_nodes | int] }}"
-#        consumer_hosts: "{{ worker_hosts[producer_nodes | int:] }}"
-#    - name: Label nodes based on node count
-#      block:
-#        - name: Label nodes as worker-producer
-#          command:
-#            cmd: "kubectl label nodes {{ item }} --overwrite node-role.kubernetes.io/worker='producer' node-role.kubernetes.io/producer=''"
-#          with_items:
-#            - "{{ producer_hosts }}"
-#
-#        - name: Label nodes as worker-consumer
-#          command:
-#            cmd: "kubectl label nodes {{ item }} --overwrite node-role.kubernetes.io/worker='consumer' node-role.kubernetes.io/consumer=''"
-#          with_items:
-#            - "{{ consumer_hosts }}"
-#      when: total_nodes | int >= 3
-#
-#    - name: Label all nodes as worker-producer and worker-consumer
-#      command:
-#        cmd: "kubectl label nodes {{ item }} --overwrite node-role.kubernetes.io/worker='producer' node-role.kubernetes.io/producer='' node-role.kubernetes.io/consumer=''"
-#      with_items:
-#        - "{{ worker_hosts }}"
-#      when: total_nodes | int < 3
-
-
 
 # TODO: find another way to do this
 - name: Add kubernetes secret to pull images from private registry
@@ -221,3 +182,19 @@
           type: kubernetes.io/dockerconfigjson
           data:
             .dockerconfigjson: ewoJImF1dGhzIjogewoJCSJyZWdpc3RyeS5naXRsYWIuaW5yaWEuZnIiOiB7CgkJCSJhdXRoIjogImFXMWhaMlZmY0hWc2JHVnlPbWRzY0dGMExUSkJla1ZET1hkd2RtUnJYMFZHTmxWdVlqUnUiCgkJfQoJfQp9
+
+- name: Get kubeconfig from cluster
+  shell: kubectl config view --raw --minify
+  register: kubeconfig
+- name: Create Secret with kubeconfig
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      type: Opaque
+      metadata:
+        name: kube-secret
+        namespace: default
+      data:
+        kubeconfig: "{{ kubeconfig.stdout | b64encode }}"

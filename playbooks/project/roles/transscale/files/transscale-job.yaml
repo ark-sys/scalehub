@@ -20,8 +20,8 @@ spec:
                 limits:
                   memory: 1Gi
                   cpu: 200m
+              # -e option is used to make transscale exit after 3 attempts of rescaling
               command: ['python3', '/run_transscale.py', '-e']
-#              command: ["/bin/sh", "-c", "trap : TERM INT; sleep infinity & wait"]
               volumeMounts:
                 - name: transscale-config-volume
                   mountPath: /etc/transscale/conf
@@ -31,7 +31,7 @@ spec:
           volumes:
             - name: kubeconfig-volume
               secret:
-                secretName: transscale-secret
+                secretName: kube-secret
                 items:
                   - key: kubeconfig
                     path: kubeconfig

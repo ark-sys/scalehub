@@ -72,11 +72,11 @@ function restart_service(){
 
 # Function to create the Docker container
 function create_service() {
-  docker-compose -f $SCALEHUB_BASEDIR/dockerfile/docker-compose.yaml up --build -d
+  docker-compose -p scalehub -f $SCALEHUB_BASEDIR/dockerfile/docker-compose.yaml up --build -d
 }
 
 function remove_service() {
-  docker-compose -f $SCALEHUB_BASEDIR/dockerfile/docker-compose.yaml down --rmi all --remove-orphans
+  docker-compose -p scalehub -f $SCALEHUB_BASEDIR/dockerfile/docker-compose.yaml down --rmi all --remove-orphans
 }
 
 # Function to check if the service is running
@@ -91,7 +91,7 @@ function is_service_running() {
 # Function to get an interactive shell for the service
 function get_shell() {
     if is_service_running; then
-        docker exec -it $(docker ps -f name=$SERVICE_NAME --quiet) fish
+        docker exec -it $SERVICE_NAME fish
     else
         create_service
         get_shell

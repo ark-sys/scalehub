@@ -2,7 +2,6 @@ import os
 import threading
 from time import sleep
 
-import jinja2
 import yaml
 from kubernetes import client as Client, config as Kubeconfig
 from kubernetes.client import Configuration
@@ -19,6 +18,7 @@ class KubernetesManager:
         self.__log = log
         self.kubeconfig = Kubeconfig.load_kube_config(os.environ["KUBECONFIG"])
 
+    # Scale a deployment to a specified number of replicas
     def scale_deployment(self, deployment_name, replicas=1):
         # Create a Kubernetes API client
         api_instance = Client.AppsV1Api()
@@ -47,6 +47,7 @@ class KubernetesManager:
                 f"Exception when calling AppsV1Api->patch_namespaced_deployment: {e}\n"
             )
 
+    # Execute a command on first pod of a deployment
     def execute_command_on_pod(self, deployment_name, command):
 
         try:
@@ -88,6 +89,18 @@ class KubernetesManager:
         except ApiException as e:
             self.__log.error(f"Error executing command on pod {pod_name}: {e}")
 
+    # Execute a command on all pods of a deployment by label
+    def execute_command_on_pods_by_label(self, label_selector, command):
+        core_v1 = core_v1_api.CoreV1Api()
+        # Step 1: Query pods with the label "app=flink"
+        pods = core_v1.list_namespaced_pod(
+            label_selector=label_selector, namespace="default"
+        )
+        for pod in pods.items:
+            # Step 2: Execute command on the pod
+            self.execute_command_on_pod(pod.metadata.name, command)
+
+    # Delete job by name
     def delete_job(self, job_name):
         # Create a Kubernetes API client
         api_instance = Client.BatchV1Api()
@@ -101,18 +114,42 @@ class KubernetesManager:
                 f"Exception when calling BatchV1Api->delete_namespaced_job: {e}"
             )
 
-    def run_job(self, filepath):
-        try:
-            with open(filepath, "r") as resource_file:
-                resource_content = resource_file.read()
-        except FileNotFoundError as e:
-            self.__log.error(f"Resource file not found: {e}")
-            return
+    # Retrieve job status
+    def get_job_status(self, job_name):
+        # Create a Kubernetes API client
+        api_instance = Client.BatchV1Api()
 
+        # Get the job
+        try:
+            job = api_instance.read_namespaced_job(name=job_name, namespace="default")
+            return job.status
+        except Client.ApiException as e:
+            self.__log.error(
+                f"Exception when calling BatchV1Api->read_namespaced_job: {e}"
+            )
+
+    # Retrieve content of a configmap
+    def get_configmap(self, configmap_name, namespace="default"):
+        # Create a Kubernetes API client
+        api_instance = Client.CoreV1Api()
+
+        # Get the configmap
+        try:
+            configmap = api_instance.read_namespaced_config_map(
+                name=configmap_name, namespace=namespace
+            )
+            return configmap.data
+        except Client.ApiException as e:
+            self.__log.error(
+                f"Exception when calling CoreV1Api->read_namespaced_config_map: {e}"
+            )
+
+    # Deploy a job from a yaml resource definition
+    def create_job(self, resource_definition):
         try:
             api_instance = Client.BatchV1Api()
 
-            resource_obj = yaml.safe_load(resource_content)
+            resource_obj = yaml.safe_load(resource_definition)
             resource_type = resource_obj["kind"]
             resource_name = resource_obj["metadata"]["name"]
             namespace = resource_obj["metadata"]["namespace"]
@@ -136,40 +173,6 @@ class KubernetesManager:
                     return job_log
         except ApiException as e:
             self.__log.error(f"Exception when operating on resource: {e}")
-
-    # def run_job(self, filepath, params):
-    #     try:
-    #         with open(filepath, "r") as resource_file:
-    #             job_template = resource_file.read()
-    #     except FileNotFoundError as e:
-    #         self.__log.error(f"Job template file not found: {e}")
-    #         return
-    #
-    #     # Render the Jinja2 template with the provided params
-    #     rendered_job_template = jinja2.Template(job_template).render(params)
-    #
-    #     try:
-    #         api_instance = Client.BatchV1Api()
-    #
-    #         job_obj = yaml.safe_load(rendered_job_template)
-    #         job_name = job_obj["metadata"]["name"]
-    #         namespace = job_obj["metadata"]["namespace"]
-    #
-    #         api_instance.create_namespaced_job(namespace, job_obj)
-    #
-    #         self.__log.info(f"Job {job_name} created in namespace {namespace}.")
-    #
-    #         w = watch.Watch()
-    #         for event in w.stream(
-    #             api_instance.list_namespaced_job, namespace=namespace
-    #         ):
-    #             job = event["object"]
-    #             if job.metadata.name == job_name and job.status.succeeded is not None:
-    #                 job_log = self.get_job_logs(job_name, namespace)
-    #                 self.__log.info(f"Job {job_name} succeeded.")
-    #                 return job_log
-    #     except ApiException as e:
-    #         self.__log.error(f"Exception when running Job: {e}")
 
     def get_job_logs(self, job_name, namespace):
         try:
@@ -198,14 +201,32 @@ class KubernetesManager:
         )
         reset_thread.start()
 
+    # Workaround to reset the latency experiment on rescale as the NetworkChaos resource does not support dynamic updates on target pods
     def __reset_latency(self, deployment_name, experiment_params):
-        latency_test_file = (
-            f"/app/playbooks/project/roles/chaos/templates/flink-latency.yaml.j2"
+        # Definition of the NetworkChaos resource on Flink
+        resource_definition = (
+            "apiVersion: chaos-mesh.org/v1alpha1\n"
+            "kind: NetworkChaos\n"
+            "metadata:\n"
+            "  name: flink-latency\n"
+            "  namespace: default\n"
+            "spec:\n"
+            "  selector:\n"
+            "    labelSelectors:\n"
+            "      - app=flink\n"
+            "      - component=taskmanager\n"
+            "     nodeSelectors:\n"
+            "      - chaos=true\n"
+            "     namespaces:\n"
+            "      - default\n"
+            "  action: delay\n"
+            "  mode: all\n"
+            "  delay:\n"
+            f"    latency: {experiment_params['latency']}\n"
+            f"    correlation: {experiment_params['correlation']}\n"
+            f"    jitter: {experiment_params['jitter']}\n"
+            "  direction: to\n"
         )
-        with open(latency_test_file) as f:
-            render = jinja2.Template(f.read()).render(experiment_params)
-        resource_definition = yaml.safe_load(render)
-
         # Create API instances
         apps_v1 = Client.AppsV1Api()
         custom_api = Client.CustomObjectsApi()
@@ -246,17 +267,7 @@ class KubernetesManager:
                     )
                     old_replica_count = new_replica_count
 
-    # get_token(secret_name, namespace)
-    def get_token(self, secret_name, namespace):
-        import base64
-
-        core_v1 = core_v1_api.CoreV1Api()
-        secret = core_v1.read_namespaced_secret(secret_name, namespace)
-        token = secret.data["token"]
-        # decode token from base64
-
-        return base64.b64decode(token).decode("utf-8")
-
+    # Delete pods by label
     def delete_pods_by_label(self, label_selector, namespace="default"):
         v1 = Client.CoreV1Api()
         # Step 1: Query pods with the label "app=flink"
@@ -300,3 +311,20 @@ class KubernetesManager:
                 v1.patch_node(
                     node.metadata.name, {"metadata": {"labels": schedulable_label}}
                 )
+
+    # Delete all networkchaos resources
+    def delete_networkchaos(self):
+        custom_api = Client.CustomObjectsApi()
+        try:
+            custom_api.delete_collection_namespaced_custom_object(
+                group="chaos-mesh.org",
+                version="v1alpha1",
+                namespace="default",
+                plural="networkchaos",
+            )
+        except ApiException as e:
+            self.__log.error(
+                f"Exception when calling CustomObjectsApi->delete_collection_namespaced_custom_object: {e}\n"
+            )
+            return
+        self.__log.info("NetworkChaos resources deleted.")
