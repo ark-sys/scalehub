@@ -7,11 +7,7 @@ stages:
 before_script:
   # login to the registry
   - echo -n $CI_REGISTRY_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-  # Install git
-  - apk add --update git
-  # Check current path
-  - pwd
-  - ls -la
+
 build-and-push:
   # build and push the image to the registry
   stage: build-and-push
@@ -19,8 +15,8 @@ build-and-push:
     - ci.inria.fr
     - large
   script:
-    # build the image
-    - docker build -t "$CI_REGISTRY/$CI_REGISTRY_PROJECT/experiment-monitor" .
+    # build the image of experiment-monitor context
+    - docker build -t "$CI_REGISTRY/$CI_REGISTRY_PROJECT/experiment-monitor" experiment-monitor
     # push the image to the registry
     - docker push "$CI_REGISTRY/$CI_REGISTRY_PROJECT/experiment-monitor"
 
