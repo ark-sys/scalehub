@@ -213,9 +213,9 @@ class ExperimentsManager:
 
         self.end_ts = int(datetime.now().timestamp())
 
-        # Create experiment folder for results
+        # Create experiment folder for results, ordered by date (YYYY-MM-DD)
         self.exp_path = self.create_exp_folder(
-            datetime.fromtimestamp(self.start_ts).strftime("%m-%d-%Y")
+            datetime.fromtimestamp(self.start_ts).strftime("%Y-%m-%d")
         )
 
         # Create log file with start timestamp
