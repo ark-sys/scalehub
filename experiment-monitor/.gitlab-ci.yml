@@ -7,9 +7,8 @@ stages:
 before_script:
   # login to the registry
   - echo -n $CI_REGISTRY_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-  # Check if git is installed
-  - git --version
-
+  # Install git
+  - apk add --update git
 build-and-push:
   # build and push the image to the registry
   stage: build-and-push
