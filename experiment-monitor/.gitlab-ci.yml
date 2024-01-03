@@ -9,6 +9,7 @@ before_script:
   - echo -n $CI_REGISTRY_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
 
 build-and-push:
+  # build and push the image to the registry
   stage: build-and-push
   tags:
     - ci.inria.fr
