@@ -34,7 +34,7 @@ class ExperimentData:
         self.start_ts, self.end_ts = self.__get_timestamps_from_log(self.log_file)
 
         # VictoriaMetrics database url
-        self.db_url = "victoriametrics.svc.cluster.local:8428"
+        self.db_url = "victoria-metrics-single-server.default.svc.cluster.local:8428"
 
         # Placeholders for throughput_in, throughput_out and parallelism timeseries
         self.tpo_timeseries = ""

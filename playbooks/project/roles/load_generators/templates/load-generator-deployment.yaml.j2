@@ -6,15 +6,18 @@ metadata:
   namespace: default
   labels:
       app: load-generator
+      type: load-generator
 spec:
   selector:
     matchLabels:
       app: "{{ lg_name }}"
+      type: load-generator
   replicas: {{ lg_replicas }}
   template:
     metadata:
       labels:
         app: "{{ lg_name }}"
+        type: load-generator
     spec:
       nodeSelector:
         node-role.kubernetes.io/worker: producer

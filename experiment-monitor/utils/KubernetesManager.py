@@ -97,6 +97,7 @@ class KubernetesManager:
             label_selector=label_selector, namespace="default"
         )
         for pod in pods.items:
+            self.__log.info(f"Running command {command} on pod {pod.metadata.name}")
             # Step 2: Execute command on the pod
             self.execute_command_on_pod(pod.metadata.name, command)
 
