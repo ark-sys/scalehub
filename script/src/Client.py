@@ -1,4 +1,5 @@
 import os
+import threading
 import time
 import paho.mqtt.client as mqtt
 import enoslib as en
@@ -59,17 +60,17 @@ class Client:
         self.broker_port = config.get_int(Key.Experiment.broker_mqtt_port)
         self.setup_mqtt()
 
-        self.acked = False
+        self.not_acked = threading.Event()
 
     def on_message(self, client, userdata, message):
 
         match message.topic:
             case "ack/experiment/start":
                 if message.payload == "RUNNING":
-                    self.acked = True
+                    self.not_acked.clear()
             case "ack/experiment/stop":
                 if message.payload == "STOPPING":
-                    self.acked = True
+                    self.not_acked.clear()
 
     def on_connect(self, client, userdata, flags, rc):
         self.__log.info(f"Connected with result code {rc}")
@@ -81,6 +82,7 @@ class Client:
         self.client.on_message = self.on_message
         self.client.on_connect = self.on_connect
         self.client.connect(self.broker_host, self.broker_port, 60)
+        self.not_acked.set()
         self.client.loop_start()
 
     def start(self):
@@ -129,7 +131,7 @@ class Client:
         )
 
         # Wait message on ack/experiment/start
-        while not self.acked:
+        while self.not_acked.is_set():
             self.__log.info("Waiting for ack...")
             time.sleep(1)  # wait for 1 second before checking again
         self.__log.info("Experiment is running.")
@@ -140,7 +142,7 @@ class Client:
         self.client.publish("experiment/stop", "STOP", qos=2, retain=True)
 
         # Wait message on ack/experiment/stop
-        while not self.acked:
+        while self.not_acked.is_set():
             self.__log.info("Waiting for ack...")
             time.sleep(1)
         self.__log.info("Experiment stopped.")
