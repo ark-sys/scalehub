@@ -222,9 +222,9 @@ class KubernetesManager:
             "  action: delay\n"
             "  mode: all\n"
             "  delay:\n"
-            f"    latency: {experiment_params['latency']}\n"
+            f"    latency: {experiment_params['latency']}ms\n"
             f"    correlation: {experiment_params['correlation']}\n"
-            f"    jitter: {experiment_params['jitter']}\n"
+            f"    jitter: {experiment_params['jitter']}ms\n"
             "  direction: to\n"
         )
         # Create API instances
