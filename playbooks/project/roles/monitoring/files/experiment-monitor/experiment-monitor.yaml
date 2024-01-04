@@ -24,7 +24,7 @@ spec:
       containers:
         - name: experiment-monitor
           image: registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/experiment-monitor:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           env:
             - name: MQTT_BROKER_HOST
               value: "mqtt-broker-mosquitto.experiment-monitor.svc.cluster.local"
