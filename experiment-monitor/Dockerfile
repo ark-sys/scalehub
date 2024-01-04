@@ -20,6 +20,8 @@ EXPOSE 1883
 ENV MQTT_BROKER_HOST="localhost"
 ENV MQTT_BROKER_PORT="1883"
 ENV KUBECONFIG="/app/conf/kubeconfig"
+# Redirect python script output to container logs
+ENV PYTHONUNBUFFERED=1
 
 ## Run the application
 ENTRYPOINT ["python3", "/app/experiment-monitor.py"]
