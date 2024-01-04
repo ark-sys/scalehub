@@ -83,40 +83,6 @@ class G5k(Platform):
         # Return inventory dictionary
         return inventory
 
-    def post_setup(self):
-        # Retrieve running job info
-        jobs = self.provider.driver.get_jobs()
-        self.job_id = jobs[0].uid
-        self.job_site = jobs[0].site
-
-        # Return home server and nfs share
-        return self.retrieve_home_nfs()
-
-    def retrieve_home_nfs(self):
-        import requests
-
-        try:
-            uri = f"https://api.grid5000.fr/3.0/sites/{self.job_site}/storage/home/{self.username}/access"
-
-            resp = requests.get(uri, auth=(self.username, self.password))
-
-            # Load the JSON content
-            data = json.loads(resp.content)
-
-            # Iterate through the dictionary keys to find 'nfs_address'
-            for key, value in data.items():
-                nfs_address = value.get("nfs_address")
-                if nfs_address:
-                    nfs_server, server_share = nfs_address.split(":", 1)
-                    return nfs_server, server_share
-
-            return None, None
-        except (json.JSONDecodeError, AttributeError, ValueError) as e:
-            self.__log.error(f"Error extracting NFS info: {e}")
-            return None, None
-        except requests.exceptions.RequestException as e:
-            self.__log.error(f"Error requesting NFS info: {e}")
-
     def check_credentials_file(self):
         # Get the home directory
         home_directory = os.path.expanduser("~")

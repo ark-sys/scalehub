@@ -39,8 +39,6 @@ spec:
           ports:
             - containerPort: 1883
               name: mqtt
-            - containerPort: 9001
-              name: websocket
       restartPolicy: Always
       tolerations:
         - key: node-role.kubernetes.io/master
