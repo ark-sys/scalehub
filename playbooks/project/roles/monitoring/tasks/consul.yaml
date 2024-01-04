@@ -6,10 +6,6 @@
         name: consul
         kind: Namespace
         state: present
-    - name: Deploy pvc for Consul
-      kubernetes.core.k8s:
-        state: present
-        definition: "{{ lookup('ansible.builtin.template', 'consul-pvc.yaml.j2') | from_yaml }}"
     - name: Add Consul chart repository
       kubernetes.core.helm_repository:
         name: hashicorp
@@ -62,7 +58,7 @@
           # Configure server params
           server:
             enabled: true
-            storageClass: "{{ storage_class_name }}"
+            storageClass: "nfs-csi"
             nodeSelector: 'node-role.kubernetes.io/control-plane: "true"'
           # Configure client params
           client:
@@ -78,10 +74,6 @@
         release_namespace: consul
         release_name: consul
         release_state: absent
-    - name: Delete pvc for Consul
-      kubernetes.core.k8s:
-        state: absent
-        definition: "{{ lookup('ansible.builtin.template', 'consul-pvc.yaml.j2') | from_yaml }}"
     - name: Delete Consul namespace
       kubernetes.core.k8s:
         name: consul

@@ -316,8 +316,6 @@ class ExperimentData:
                 ha="center",
             )
 
-        # Set title and axis labels
-        _, date, n = self.exp_path.split("/")[-3:]
         # Job name is in the format: my<operator_name>-transscale-<type>-all.jar
         # We want to extract only the operator name and the type (which can be null).
         # Example: mymap-transscale-all.jar -> Map

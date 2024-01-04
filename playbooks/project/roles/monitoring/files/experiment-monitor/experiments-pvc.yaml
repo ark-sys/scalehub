@@ -4,7 +4,7 @@ kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: experiments-pvc
-  namespace: default
+  namespace: experiment-monitor
 spec:
   storageClassName: nfs-csi
   accessModes:
