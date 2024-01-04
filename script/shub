@@ -116,8 +116,6 @@ def experiment(action, config: Config):
             e.start()
         case "stop":
             e.stop()
-        case "test":
-            e.test()
         case _:
             log.error(f"Action {action} is not implemented.")
 

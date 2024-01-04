@@ -71,9 +71,17 @@ class Client:
                 if message.payload == "STOPPING":
                     self.acked = True
 
+    def on_connect(self, client, userdata, flags, rc):
+        self.__log.info(f"Connected with result code {rc}")
+
+        # Subscribe to experiment topics
+        self.client.subscribe("ack/experiment/#", qos=2)
+
     def setup_mqtt(self):
-        ret = self.client.connect(self.broker_host, self.broker_port, 60)
-        self.__log.info(f"Connected with result code {ret}")
+        self.client.on_message = self.on_message
+        self.client.on_connect = self.on_connect
+        self.client.connect(self.broker_host, self.broker_port, 60)
+        self.client.loop_start()
 
     def start(self):
         self.__log.info("Starting experiment")
@@ -112,9 +120,6 @@ class Client:
                 extra_vars=load_generator_params,
             )
 
-        # # Deploy transscale
-        # self.p.run_playbook("transscale", config=self.config, tag="create")
-
         # Send message to remote experiment-monitor to start experiment
         self.client.publish(
             "experiment/start",
@@ -124,9 +129,8 @@ class Client:
         )
 
         # Wait message on ack/experiment/start
-        self.client.subscribe("ack/experiment/start", 2)
-        self.client.loop_start()
         while not self.acked:
+            self.__log.info("Waiting for ack...")
             time.sleep(1)  # wait for 1 second before checking again
         self.__log.info("Experiment is running.")
 
@@ -136,9 +140,7 @@ class Client:
         self.client.publish("experiment/stop", "STOP", qos=2, retain=True)
 
         # Wait message on ack/experiment/stop
-        self.client.subscribe("ack/experiment/stop", 2)
-
-        self.client.loop_start()
         while not self.acked:
+            self.__log.info("Waiting for ack...")
             time.sleep(1)
         self.__log.info("Experiment stopped.")

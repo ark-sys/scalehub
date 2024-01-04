@@ -92,14 +92,19 @@ class KubernetesManager:
     # Execute a command on all pods of a deployment by label
     def execute_command_on_pods_by_label(self, label_selector, command):
         core_v1 = core_v1_api.CoreV1Api()
-        # Step 1: Query pods with the label "app=flink"
-        pods = core_v1.list_namespaced_pod(
-            label_selector=label_selector, namespace="default"
-        )
-        for pod in pods.items:
-            self.__log.info(f"Running command {command} on pod {pod.metadata.name}")
-            # Step 2: Execute command on the pod
-            self.execute_command_on_pod(pod.metadata.name, command)
+        try:
+            # Step 1: Query pods with the label "app=flink"
+            pods = core_v1.list_namespaced_pod(
+                label_selector=label_selector, namespace="default"
+            )
+            for pod in pods.items:
+                self.__log.info(f"Running command {command} on pod {pod.metadata.name}")
+                # Step 2: Execute command on the pod
+                self.execute_command_on_pod(pod.metadata.name, command)
+        except ApiException as e:
+            self.__log.error(
+                f"Exception when calling CoreV1Api->list_namespaced_pod: {e}"
+            )
 
     # Delete job by name
     def delete_job(self, job_name):
@@ -271,47 +276,58 @@ class KubernetesManager:
     # Delete pods by label
     def delete_pods_by_label(self, label_selector, namespace="default"):
         v1 = Client.CoreV1Api()
-        # Step 1: Query pods with the label "app=flink"
-        pods = v1.list_namespaced_pod(
-            label_selector=label_selector, namespace=namespace
-        )
-        for pod in pods.items:
-            # Step 2: Delete the pod
-            v1.delete_namespaced_pod(pod.metadata.name, pod.metadata.namespace)
-            self.__log.info(f"Pod {pod.metadata.name} deleted")
+        try:
+            # Step 1: Query pods with the label "app=flink"
+            pods = v1.list_namespaced_pod(
+                label_selector=label_selector, namespace=namespace
+            )
+            for pod in pods.items:
+                # Step 2: Delete the pod
+                v1.delete_namespaced_pod(pod.metadata.name, pod.metadata.namespace)
+                self.__log.info(f"Pod {pod.metadata.name} deleted")
+        except ApiException as e:
+            self.__log.error(
+                f"Exception when calling CoreV1Api->list_namespaced_pod: {e}"
+            )
 
     # Reset the autoscaling labels so that flink runs first on worker nodes not impacted by chaos
     def reset_autoscaling_labels(self):
         v1 = Client.CoreV1Api()
-        # Query nodes with the label "node-role.kubernetes.io/worker=consumer"
-        worker_label_selector = f"node-role.kubernetes.io/worker=consumer"
-        worker_nodes = v1.list_node(label_selector=worker_label_selector)
-        self.__log.info(f"Found {len(worker_nodes.items)} worker nodes.")
+        try:
+            # Query nodes with the label "node-role.kubernetes.io/worker=consumer"
+            worker_label_selector = f"node-role.kubernetes.io/worker=consumer"
+            worker_nodes = v1.list_node(label_selector=worker_label_selector)
+            self.__log.info(f"Found {len(worker_nodes.items)} worker nodes.")
 
-        # Query nodes with the label chaos=true
-        chaos_label_selector = f"chaos=true"
-        chaos_nodes = v1.list_node(label_selector=chaos_label_selector)
-        self.__log.info(f"Found {len(chaos_nodes.items)} chaos nodes.")
+            # Query nodes with the label chaos=true
+            chaos_label_selector = f"chaos=true"
+            chaos_nodes = v1.list_node(label_selector=chaos_label_selector)
+            self.__log.info(f"Found {len(chaos_nodes.items)} chaos nodes.")
 
-        # Setup schedulability tag
-        unschedulable_label = {"node-role.kubernetes.io/autoscaling": "UNSCHEDULABLE"}
-        schedulable_label = {"node-role.kubernetes.io/autoscaling": "SCHEDULABLE"}
+            # Setup schedulability tag
+            unschedulable_label = {
+                "node-role.kubernetes.io/autoscaling": "UNSCHEDULABLE"
+            }
+            schedulable_label = {"node-role.kubernetes.io/autoscaling": "SCHEDULABLE"}
 
-        self.__log.info(f"Marking some worker nodes as schedulable")
-        # Choas nodes are a subset of worker nodes;
-        # Mark chaos nodes as unschedulable
-        # Mark other worker nodes as schedulable
-        for node in worker_nodes.items:
-            if node.metadata.name in [
-                node2.metadata.name for node2 in chaos_nodes.items
-            ]:
-                v1.patch_node(
-                    node.metadata.name, {"metadata": {"labels": unschedulable_label}}
-                )
-            else:
-                v1.patch_node(
-                    node.metadata.name, {"metadata": {"labels": schedulable_label}}
-                )
+            self.__log.info(f"Marking some worker nodes as schedulable")
+            # Choas nodes are a subset of worker nodes;
+            # Mark chaos nodes as unschedulable
+            # Mark other worker nodes as schedulable
+            for node in worker_nodes.items:
+                if node.metadata.name in [
+                    node2.metadata.name for node2 in chaos_nodes.items
+                ]:
+                    v1.patch_node(
+                        node.metadata.name,
+                        {"metadata": {"labels": unschedulable_label}},
+                    )
+                else:
+                    v1.patch_node(
+                        node.metadata.name, {"metadata": {"labels": schedulable_label}}
+                    )
+        except ApiException as e:
+            self.__log.error("Error when resetting autoscaling labels.")
 
     # Delete all networkchaos resources
     def delete_networkchaos(self):
