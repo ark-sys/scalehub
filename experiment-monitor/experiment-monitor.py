@@ -208,6 +208,7 @@ class ExperimentsManager:
             if job_status == "Succeeded":
                 self.__log.info("Experiment finished.")
                 self.running_experiment.clear()
+                break
 
         self.__log.info("Experiment finished or stopped.")
         # Send ack message to stop topic
