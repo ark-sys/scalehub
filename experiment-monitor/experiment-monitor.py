@@ -257,7 +257,7 @@ class ExperimentsManager:
         # Clean transscale remaining pods
         self.k.delete_pods_by_label("job-name=transscale-job")
         # Delete load generators
-        self.k.delete_pods_by_label("app=load-generator")
+        self.k.delete_pods_by_label("type=load-generator")
         if self.config.get_bool(Key.Experiment.Chaos.enable):
             # Clean all network chaos resources
             self.k.delete_networkchaos()
