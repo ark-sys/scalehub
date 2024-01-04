@@ -187,7 +187,7 @@ class ExperimentsManager:
 
         # Resume execution of load generators
         self.k.execute_command_on_pods_by_label(
-            "app=load-generator", command="touch /start_generation"
+            "type=load-generator", command="touch /start_generation"
         )
 
         # Retrieve resource definition for transscale-job

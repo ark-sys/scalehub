@@ -6,11 +6,13 @@ metadata:
   namespace: default
   labels:
     app: "{{ lg_name }}"
+    type: load-generator
 spec:
   type: ClusterIP
   clusterIP: None
   selector:
     app: "{{ lg_name }}"
+    type: load-generator
   ports:
     - name: coordination
       port: 5701

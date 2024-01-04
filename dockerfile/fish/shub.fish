@@ -24,9 +24,9 @@ complete -c shub -n "__fish_use_subcommand" -a "destroy" -d "Destroy the platfor
 complete -c shub -n "__fish_use_subcommand" -a "deploy" -d "Execute deploy tasks of the provided playbook"
 complete -c shub -n "__fish_use_subcommand" -a "delete" -d "Execute delete tasks of the provided playbook"
 complete -c shub -n "__fish_use_subcommand" -a "reload" -d "Execute reload tasks of the provided playbook"
+complete -c shub -n "__fish_use_subcommand" -a "experiment" -d "Start or stop an experiment"
 complete -c shub -n "__fish_use_subcommand" -a "run" -d "Run action"
 complete -c shub -n "__fish_use_subcommand" -a "export" -d "Export data"
-complete -c shub -n "__fish_use_subcommand" -a "plot" -d "Starts interactive plotter"
 
 # Autocompletion for 'deploy' and 'delete' commands
 # This function returns the names of the playbook files
