@@ -2,17 +2,14 @@
 - name: Retrieve values from scalehub configuration file
   tags: [ always ]
   block:
-    - name: Set path to configuration file
+    - name: Get content of shub_config and read it as json
       set_fact:
-        config_path: "{{ lookup('env','SHUB_CONFIG') }}"
-    - name: Read configuration file from SHUB_CONFIG path
-      set_fact:
-        config_content: "{{ lookup('file', config_path) }}"
+        shub_config_content: "{{ shub_config | from_json }}"
     - name: Extract chaos vars
       set_fact:
-        latency: "{{ config_content | regex_findall('chaos.delay.latency = (\\d+)') | first }}"
-        jitter: "{{ config_content | regex_findall('chaos.delay.jitter = (\\d+)') | first }}"
-        correlation: "{{ config_content | regex_findall('chaos.delay.correlation = (\\d+)') | first }}"
+        latency : "{{shub_config_content['experiment.chaos.latency']}}"
+        jitter : "{{shub_config_content['experiment.chaos.jitter']}}"
+        correlation : "{{shub_config_content['experiment.chaos.correlation']}}"
 - import_tasks: install.yaml
 
 - import_tasks: run.yaml

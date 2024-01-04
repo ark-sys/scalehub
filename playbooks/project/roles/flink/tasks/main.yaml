@@ -2,16 +2,13 @@
 - name: Retrieve values from scalehub configuration file
   tags: [ always ]
   block:
-    - name: Set path to configuration file
+    - name: Get content of shub_config and read it as json
       set_fact:
-        config_path: "{{ lookup('env','SHUB_CONFIG') }}"
-    - name: Read configuration file from SHUB_CONFIG path
+        shub_config_content: "{{ shub_config | from_json }}"
+    - name: Extract checkpoint_interval and window_size from shub_config
       set_fact:
-        config_content: "{{ lookup('file', config_path) }}"
-    - name: Extract flink vars
-      set_fact:
-        checkpoint_interval: "{{ config_content | regex_findall('flink.checkpoint_interval_ms = (\\d+)') | first }}"
-        window_size: "{{ config_content | regex_findall('flink.window_size_ms = (\\d+)') | first }}"
+        checkpoint_interval: "{{shub_config_content['experiment.flink.checkpoint_interval_ms']}}"
+        window_size: "{{shub_config_content['experiment.flink.window_size_ms']}}"
 
 - name: Deploy Flink
   tags: [ create ]

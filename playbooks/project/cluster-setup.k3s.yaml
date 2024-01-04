@@ -165,12 +165,12 @@
             cmd: "kubectl label node {{ random_consumer_node }} --overwrite node-role.kubernetes.io/autoscaling='SCHEDULABLE'"
 
 # TODO: find another way to do this
-- name: Add kubernetes secret to pull images from private registry
+- name: Add secrets to access resources
   hosts: localhost
   gather_facts: false
   tags: [ always ]
   tasks:
-    - name: Create Secret resource
+    - name: Create Secret to pull images from private registry
       kubernetes.core.k8s:
         state: present
         definition:
@@ -182,19 +182,18 @@
           type: kubernetes.io/dockerconfigjson
           data:
             .dockerconfigjson: ewoJImF1dGhzIjogewoJCSJyZWdpc3RyeS5naXRsYWIuaW5yaWEuZnIiOiB7CgkJCSJhdXRoIjogImFXMWhaMlZmY0hWc2JHVnlPbWRzY0dGMExUSkJla1ZET1hkd2RtUnJYMFZHTmxWdVlqUnUiCgkJfQoJfQp9
-
-- name: Get kubeconfig from cluster
-  shell: kubectl config view --raw --minify
-  register: kubeconfig
-- name: Create Secret with kubeconfig
-  kubernetes.core.k8s:
-    state: present
-    definition:
-      apiVersion: v1
-      kind: Secret
-      type: Opaque
-      metadata:
-        name: kube-secret
-        namespace: default
-      data:
-        kubeconfig: "{{ kubeconfig.stdout | b64encode }}"
+    - name: Get kubeconfig from cluster
+      shell: kubectl config view --raw --minify
+      register: kubeconfig
+    - name: Create Secret with kubeconfig in default namespace
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          type: Opaque
+          metadata:
+            name: kube-secret
+            namespace: default
+          data:
+            kubeconfig: "{{ kubeconfig.stdout | b64encode }}"

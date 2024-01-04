@@ -3,13 +3,13 @@ import argparse
 
 from time import sleep
 
-from script.src.utils.KubernetesManager import KubernetesManager
 from src.Client import Client, Playbooks
 from src.G5k import G5k
 from src.Platform import Platform
 from src.utils.Config import Config
 from src.utils.Defaults import DefaultKeys as Key, DefaultValues as Value
 from src.utils.Logger import Logger
+from src.utils.KubernetesManager import KubernetesManager
 
 
 # Build cluster and install dependencies
@@ -31,7 +31,7 @@ def provision(config: Config):
             kubernetes_type = (
                 f"cluster-setup.{config.get_str(Key.Platform.kubernetes_type)}"
             )
-            return p.run_playbook(kubernetes_type, config=config.to_json())
+            return p.run_playbook(kubernetes_type, config=config)
 
         case _:
             log.error(f"Provision is not implemented for platform {platform_type}")
@@ -66,12 +66,12 @@ def deploy(playbook, config: Config):
             }
             p.run_playbook(
                 playbook,
-                config=config.to_json(),
+                config=config,
                 tag=tag,
                 extra_vars=load_generator_params,
             )
     else:
-        return p.run_playbook(playbook, config=config.to_json(), tag=tag)
+        return p.run_playbook(playbook, config=config, tag=tag)
 
 
 # Execute tasks with "delete" tag for a given playbook
@@ -91,12 +91,12 @@ def delete(playbook, config: Config):
             }
             p.run_playbook(
                 playbook,
-                config=config.to_json(),
+                config=config,
                 tag=tag,
                 extra_vars=load_generator_params,
             )
     else:
-        return p.run_playbook(playbook, config=config.to_json(), tag=tag)
+        return p.run_playbook(playbook, config=config, tag=tag)
 
 
 # Delete and re-deploy 'playbook' parameter
@@ -116,6 +116,8 @@ def experiment(action, config: Config):
             e.start()
         case "stop":
             e.stop()
+        case "test":
+            e.test()
         case _:
             log.error(f"Action {action} is not implemented.")
 
@@ -134,7 +136,7 @@ def tokens():
 
 
 # Quick action commands
-def run(action, action_type, config):
+def run(action, action_type, config: Config):
     log.info(f"Running action {action} ...")
     k: KubernetesManager = KubernetesManager(log)
     p: Playbooks = Playbooks()
@@ -160,7 +162,7 @@ def run(action, action_type, config):
                     }
                     p.run_playbook(
                         "chaos",
-                        config=config.to_json(),
+                        config=config,
                         tag=["experiment"],
                         extra_vars=experiment,
                     )
@@ -170,7 +172,7 @@ def run(action, action_type, config):
                     }
                     p.run_playbook(
                         "chaos",
-                        config=config.to_json(),
+                        config=config,
                         tag=["experiment"],
                         extra_vars=experiment,
                     )

@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -17,22 +18,29 @@ spec:
         app: experiment-monitor
     spec:
       nodeSelector:
-        node-role.kubernetes.io/control-plane: 'true'
+        node-role.kubernetes.io/control-plane: "true"
+      imagePullSecrets:
+        - name: gitlab-scalehub
       containers:
         - name: experiment-monitor
           image: registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/experiment-monitor:latest
           imagePullPolicy: IfNotPresent
           env:
             - name: MQTT_BROKER_HOST
-              value: "mqtt-broker.experiment-monitor.svc.cluster.local"
+              value: "mqtt-broker-mosquitto.experiment-monitor.svc.cluster.local"
             - name: MQTT_BROKER_PORT
               value: "1883"
           volumeMounts:
             - mountPath: /experiment-volume
               name: experiment-volume
-            - mountPath: /app/conf/kubeconfig
+            - mountPath: /app/conf/
               name: kubeconfig-volume
               readOnly: true
+          ports:
+            - containerPort: 1883
+              name: mqtt
+            - containerPort: 9001
+              name: websocket
       restartPolicy: Always
       tolerations:
         - key: node-role.kubernetes.io/master

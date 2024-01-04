@@ -1,15 +1,10 @@
 import os
-import threading
-from time import sleep
 
-import jinja2
-import yaml
-from kubernetes import client as Client, config as Kubeconfig
+from kubernetes import config as Kubeconfig
 from kubernetes.client import Configuration
 from kubernetes.client.api import core_v1_api
 from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
-from kubernetes.watch import watch
 
 from .Logger import Logger
 
