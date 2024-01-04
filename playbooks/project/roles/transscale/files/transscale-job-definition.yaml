@@ -2,52 +2,54 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: transscale-job-definition
+  namespace: default
+  labels:
+      app: transscale
 data:
-  transscale-job.yaml: |
-    apiVersion: batch/v1
-    kind: Job
-    metadata:
-      name: transscale-job
-      namespace: default
-    spec:
-        template:
-            spec:
-              imagePullSecrets:
-                - name: gitlab-registry-s
-              nodeSelector:
-                node-role.kubernetes.io/control-plane: "true"
-              restartPolicy: Never
-              containers:
-                - name: transscale
-                  image: registry.gitlab.inria.fr/stream-processing-autoscaling/transscale:combined-testing
-                  imagePullPolicy: Always
-                  resources:
-                    limits:
-                      memory: 1Gi
-                      cpu: 200m
-                  # -e option is used to make transscale exit after 3 attempts of rescaling
-                  command: ['python3', '/run_transscale.py', '-e']
-                  volumeMounts:
-                    - name: transscale-config-volume
-                      mountPath: /etc/transscale/conf
-                    - name: kubeconfig-volume
-                      mountPath: /kubeconfig
-                      readOnly: true
-              volumes:
-                - name: kubeconfig-volume
-                  secret:
-                    secretName: kube-secret
-                    items:
-                      - key: kubeconfig
-                        path: kubeconfig
-                - name: transscale-config-volume
-                  configMap:
-                    name: transscale-config
-                    items:
-                      - key: transscale.conf
-                        path: transscale.conf
-              tolerations:
-                - key: node-role.kubernetes.io/master
-                  operator: Exists
-                  effect: NoSchedule
-        
+  transscale-job.yaml: |+
+      apiVersion: batch/v1
+      kind: Job
+      metadata:
+        name: transscale-job
+        namespace: default
+      spec:
+          template:
+              spec:
+                imagePullSecrets:
+                  - name: gitlab-registry-s
+                nodeSelector:
+                  node-role.kubernetes.io/control-plane: "true"
+                restartPolicy: Never
+                containers:
+                  - name: transscale
+                    image: registry.gitlab.inria.fr/stream-processing-autoscaling/transscale:combined-testing
+                    imagePullPolicy: Always
+                    resources:
+                      limits:
+                        memory: 1Gi
+                        cpu: 200m
+                    # -e option is used to make transscale exit after 3 attempts of rescaling
+                    command: ['python3', '/run_transscale.py', '-e']
+                    volumeMounts:
+                      - name: transscale-config-volume
+                        mountPath: /etc/transscale/conf
+                      - name: kubeconfig-volume
+                        mountPath: /kubeconfig
+                        readOnly: true
+                volumes:
+                  - name: kubeconfig-volume
+                    secret:
+                      secretName: kube-secret
+                      items:
+                        - key: kubeconfig
+                          path: kubeconfig
+                  - name: transscale-config-volume
+                    configMap:
+                      name: transscale-config
+                      items:
+                        - key: transscale.conf
+                          path: transscale.conf
+                tolerations:
+                  - key: node-role.kubernetes.io/master
+                    operator: Exists
+                    effect: NoSchedule

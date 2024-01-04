@@ -191,10 +191,12 @@ class ExperimentsManager:
         )
 
         # Retrieve resource definition for transscale-job
-        transscale_resource_definition = self.k.get_configmap("transscale-job")
+        transscale_resource_definition = self.k.get_configmap(
+            "transscale-job-definition"
+        )
 
         # Run transscale-job
-        self.k.create_job(transscale_resource_definition)
+        self.k.create_job(transscale_resource_definition["transscale-job.yaml"])
 
         # Send ack message to start topic
         self.client.publish("ack/experiment/start", "RUNNING", retain=True, qos=2)

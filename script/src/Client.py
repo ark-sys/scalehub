@@ -77,24 +77,22 @@ class Client:
 
     def start(self):
         self.__log.info("Starting experiment")
-        # Get config
-        config = self.config.to_json()
 
         # Check if chaos is enabled
         if self.config.get_bool(Key.Experiment.Chaos.enable):
             chaos_params = {
-                "chaos_delay_latency_ms": self.config.get_int(
+                "delay_latency_ms": self.config.get_int(
                     Key.Experiment.Chaos.delay_latency_ms
                 ),
-                "chaos_delay_jitter_ms": self.config.get_int(
+                "delay_jitter_ms": self.config.get_int(
                     Key.Experiment.Chaos.delay_jitter_ms
                 ),
-                "chaos_delay_correlation": self.config.get_float(
+                "delay_correlation": self.config.get_float(
                     Key.Experiment.Chaos.delay_correlation
                 ),
             }
             self.p.run_playbook(
-                "chaos", config=config, tag="experiment", extra_vars=chaos_params
+                "chaos", config=self.config, tag="experiment", extra_vars=chaos_params
             )
 
         # Deploy load generators
@@ -109,18 +107,18 @@ class Client:
             }
             self.p.run_playbook(
                 "load_generators",
-                config=config,
+                config=self.config,
                 tag="create",
                 extra_vars=load_generator_params,
             )
 
-        # Deploy transscale
-        self.p.run_playbook("transscale", config=config, tag="create")
+        # # Deploy transscale
+        # self.p.run_playbook("transscale", config=self.config, tag="create")
 
         # Send message to remote experiment-monitor to start experiment
         self.client.publish(
             "experiment/start",
-            payload=config,
+            payload=self.config.to_json(),
             qos=2,
             retain=True,
         )
