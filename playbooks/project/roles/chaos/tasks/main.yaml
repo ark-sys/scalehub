@@ -7,9 +7,9 @@
         shub_config_content: "{{ shub_config | from_json }}"
     - name: Extract chaos vars
       set_fact:
-        latency : "{{shub_config_content['experiment.chaos.latency']}}"
-        jitter : "{{shub_config_content['experiment.chaos.jitter']}}"
-        correlation : "{{shub_config_content['experiment.chaos.correlation']}}"
+        latency : "{{shub_config_content['experiment.chaos.delay_latency_ms']}}"
+        jitter : "{{shub_config_content['experiment.chaos.delay_jitter_ms']}}"
+        correlation : "{{shub_config_content['experiment.chaos.delay_correlation']}}"
 - import_tasks: install.yaml
 
 - import_tasks: run.yaml
