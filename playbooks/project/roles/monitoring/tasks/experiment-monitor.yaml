@@ -7,42 +7,19 @@
         name: experiment-monitor
         kind: Namespace
         state: present
+        wait: true
     - name: Create PVC for experiment-monitor
       kubernetes.core.k8s:
         state: present
         definition: "{{ lookup('ansible.builtin.file', 'experiment-monitor/experiments-pvc.yaml') | from_yaml }}"
-    - name: Add t3n chart repository
-      kubernetes.core.helm_repository:
-        name: t3n
-        repo_url: https://storage.googleapis.com/t3n-helm-charts
-    - name: Install mosquitto broker
-      kubernetes.core.helm:
-        release_name: mqtt-broker
-        release_namespace: experiment-monitor
-        release_state: present
-        chart_ref: t3n/mosquitto
-        wait: true
-        values:
-          persistence:
-            enabled: true
-          nodeSelector:
-            node-role.kubernetes.io/control-plane: "true"
-          service:
-            type: NodePort
-          ports:
-            mqtt:
-              port: 1883
-              nodePort: 30001
-            websocket:
-              port: 9001
-              nodePort: 30002
-          config: |
-            persistence true
-            persistence_location /mosquitto/data/
-            log_dest stdout
-            listener 1883
-            listener 9001
-            allow_anonymous true
+    - name: Deploy configmaps for mqtt-broker
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('ansible.builtin.file', 'experiment-monitor/mqtt-configmaps.yaml') | from_yaml }}"
+    - name: Deploy mqtt-broker
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('ansible.builtin.file', 'experiment-monitor/mqtt-broker.yaml') | from_yaml_all }}"
     - name: Copy gitlab-scalehub secret from default namespace to experiment-monitor namespace
       block:
         - name : Get gitlab-scalehub secret from default namespace
@@ -96,11 +73,14 @@
       kubernetes.core.k8s:
         state: absent
         definition: "{{ lookup('ansible.builtin.file', 'experiment-monitor/experiment-monitor.yaml') | from_yaml }}"
-    - name: Delete broker helm release
-      kubernetes.core.helm:
-        release_name: mqtt-broker
-        release_namespace: experiment-monitor
-        state: absent
+    - name: Delete mqtt-broker
+      kubernetes.core.k8s:
+          state: absent
+          definition: "{{ lookup('ansible.builtin.file', 'experiment-monitor/mqtt-broker.yaml') | from_yaml_all }}"
+    - name: Delete configmaps for mqtt-broker
+      kubernetes.core.k8s:
+          state: absent
+          definition: "{{ lookup('ansible.builtin.file', 'experiment-monitor/mqtt-configmaps.yaml') | from_yaml }}"
     - name: Delete secrets
       block:
         - name: Delete kube-secret
@@ -115,12 +95,15 @@
             kind: Secret
             namespace: experiment-monitor
             state: absent
-    - name: Delete PVC
+    - name: Delete PVC and wait for it to be deleted
       kubernetes.core.k8s:
           name: experiments-pvc
           kind: PersistentVolumeClaim
           namespace: experiment-monitor
           state: absent
+          wait: true
+
+
     - name: Delete experiment-monitor namespace
       kubernetes.core.k8s:
         name: experiment-monitor

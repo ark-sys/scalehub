@@ -1,0 +1,72 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mqtt-broker-mosquitto
+  namespace: experiment-monitor
+  labels:
+    app: mqtt-broker
+spec:
+  type: NodePort
+  ports:
+      - port: 1883
+        targetPort: 30001
+        name: mqtt
+  selector:
+      app: mqtt-broker
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mqtt-broker
+  namespace: experiment-monitor
+  labels:
+      app: mqtt-broker
+spec:
+  selector:
+    matchLabels:
+      app: mqtt-broker
+  template:
+    metadata:
+      name: mqtt-broker
+      labels:
+          app: mqtt-broker
+    spec:
+      nodeSelector:
+          node-role.kubernetes.io/control-plane: "true"
+      tolerations:
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: mqtt-broker
+          image: eclipse-mosquitto:2.0.11
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 1883
+              name: mqtt
+          volumeMounts:
+            - mountPath: /mosquitto/config/mosquitto.conf
+              name: mosquitto-configmaps
+              subPath: mosquitto.conf
+            - mountPath: /mosquitto/config/acl
+              name: mosquitto-configmaps
+              subPath: acl
+            - mountPath: /mosquitto/config/passwd
+              name: mosquitto-configmaps
+              subPath: passwd
+          command:
+            -  /usr/sbin/mosquitto
+            - -c
+            - /mosquitto/config/mosquitto.conf
+      volumes:
+        - name: mosquitto-configmaps
+          configMap:
+            name: mosquitto-configmaps
+            items:
+              - key: mosquitto.conf
+                path: mosquitto.conf
+              - key: acl
+                path: acl
+              - key: passwd
+                path: passwd
