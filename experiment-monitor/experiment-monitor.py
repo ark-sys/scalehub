@@ -201,9 +201,13 @@ class ExperimentsManager:
         while self.state == "RUNNING":
             self.__log.info("Waiting for experiment to finish or stop message.")
             sleep(1)
-            job_status = self.k.get_job_status("transscale-job")
-            if job_status == "Complete" or None:
-                self.__log.info("Experiment finished.")
+            try:
+                job_status = self.k.get_job_status("transscale-job")
+                if job_status == "Complete":
+                    self.__log.info("Experiment finished.")
+                    self.update_state("FINISHING")
+            except Exception as e:
+                self.__log.warning(f"Error while getting job status: {e}")
                 self.update_state("FINISHING")
 
         self.__log.info("Experiment finished or stopped.")
