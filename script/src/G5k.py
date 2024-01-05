@@ -13,6 +13,13 @@ from .utils.Config import Config, Key
 class G5k(Platform):
     def __init__(self, config: Config, log: Logger):
         super().__init__()
+        self.queue = None
+        self.consumers = None
+        self.producers = None
+        self.cluster = None
+        self.site = None
+        self.reservation_name = None
+        self.walltime = None
         self.password = None
         self.username = None
         _ = en.init_logging()
@@ -24,6 +31,12 @@ class G5k(Platform):
         # Check that Grid5000 is joinable
         en.check()
 
+        # Set up the reservation
+        self.create(config)
+
+
+    # Create a reservation
+    def create(self, config: Config):
         self.reservation_name = config.get_str(Key.Platform.reservation_name)
         self.site = config.get_str(Key.Platform.site)
         self.cluster = config.get_str(Key.Platform.cluster)
@@ -64,7 +77,6 @@ class G5k(Platform):
 
         self.conf = conf
         self.provider = en.G5k(self.conf)
-
     def setup(self):
         # Request resources from Grid5000
         roles, networks = self.provider.init()
