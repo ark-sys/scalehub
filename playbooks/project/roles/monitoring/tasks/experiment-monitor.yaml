@@ -102,8 +102,6 @@
           namespace: experiment-monitor
           state: absent
           wait: true
-
-
     - name: Delete experiment-monitor namespace
       kubernetes.core.k8s:
         name: experiment-monitor

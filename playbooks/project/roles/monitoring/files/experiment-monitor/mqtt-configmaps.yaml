@@ -28,5 +28,5 @@ data:
     topic read experiment/state
     topic read experiment/ack
   passwd: |+
-    monitor:m_password
-    scalehub:s_password
+    monitor:$7$101$3PPLPdVz0ZnJ3WAD$pV+diD/yR7HpPy/cRaCWCefFg216JzT4HpUwNgre6gS87Bn7qpnjr1WDWa6NoAjoEiKs61kbWJmVGNPRJY8dNQ==
+    scalehub:$7$101$+a31V5NImh9bJ8ko$pGJrnLZlNz8lFS1T5VPKJat+1Jh89hH90r20D25OIivuZG8xMq+NA33qWsWUdBb39fyg6obbDMO2l+u3vmg46Q==
