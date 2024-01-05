@@ -122,6 +122,8 @@ class ExperimentsManager:
         self.__log.info("Received start message")
         # Send ack message to start topic
         self.client.publish("experiment/ack", "ACK_START", retain=True, qos=2)
+        # Set running experiment flag
+        self.running_experiment.set()
         # Start the experiment in a new thread
         threading.Thread(target=self.start_experiment).start()
 
@@ -133,13 +135,11 @@ class ExperimentsManager:
         self.running_experiment.clear()
     def update_state(self, state):
         self.state = state
+        self.__log.info(f"Updating state to {self.state}")
         self.client.publish("experiment/status", self.state, retain=True, qos=2)
     def start_experiment(self):
         self.__log.info("Starting experiment")
 
-
-        # Set running experiment flag
-        self.running_experiment.set()
         # Get start timestamp
         self.start_ts = int(datetime.now().timestamp())
 
@@ -197,12 +197,11 @@ class ExperimentsManager:
         # Run transscale-job
         self.k.create_job(transscale_resource_definition["transscale-job.yaml"])
 
-
         self.update_state("RUNNING")
+        # Wait for experiment to finish or stop message
         while self.running_experiment.is_set():
-            sleep(1)
             self.__log.info("Waiting for experiment to finish or stop message.")
-
+            sleep(1)
             job_status = self.k.get_job_status("transscale-job")
             if job_status == "Succeeded":
                 self.__log.info("Experiment finished.")
