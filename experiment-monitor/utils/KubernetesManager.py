@@ -128,7 +128,7 @@ class KubernetesManager:
         # Get the job
         try:
             state = api_instance.read_namespaced_job_status(name=job_name, namespace="default")
-            return state.status.conditions[0].type
+            return state.status.conditions
         except Client.ApiException as e:
             return e
 
