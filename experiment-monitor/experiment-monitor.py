@@ -43,20 +43,9 @@ class ExperimentsManager:
 
         self.config: Config
 
-        self.experiment_count = 0
         self.running_experiment = threading.Event()
 
-    def extract_config(self, msg):
-        try:
-            # Extract config from message
-            config = msg.payload.decode("utf-8")
-
-            self.__log.info(f"Received config: {config}")
-
-            # Format config as json
-            self.config = Config(self.__log, json.loads(config))
-        except Exception as e:
-            self.__log.error(f"Failed to extract config from message: {e}")
+        self.state = "IDLE"
 
     def create_exp_folder(self, date):
         # Create the base folder path
@@ -91,18 +80,28 @@ class ExperimentsManager:
     def on_connect(self, client, userdata, flags, rc):
         self.__log.info(f"Connected with result code {rc}")
 
-        # Subscribe to experiment topics
-        self.client.subscribe("experiment/#", qos=2)
+        # Subscribe to experiment command topic
+        self.client.subscribe("experiment/command", qos=2)
 
     def on_message(self, client, userdata, msg):
         self.__log.info(f"Received message on topic {msg.topic}")
-        # Handle start and stop based on topic
-        if msg.topic == "experiment/start":
-            self.extract_config(msg)
-            self.on_message_start()
-        elif msg.topic == "experiment/stop" and msg.payload.decode("utf-8") == "STOP":
-            self.on_message_stop()
+        if msg.topic == "experiment/command":
+            payload = json.loads(msg.payload.decode("utf-8"))
+            command = payload.get("command")
+            if command == "START" and self.state == "IDLE":
+                config = payload.get("config")
+                self.__log.info(f"Received config: {config}")
 
+                # Format config as json
+                self.config = Config(self.__log, json.loads(config))
+                self.on_message_start()
+
+            elif command == "STOP" and self.state == "RUNNING":
+                self.on_message_stop()
+            else:
+                self.__log.warning(f"Received invalid command {command} for state {self.state}.")
+        else:
+            self.__log.warning(f"Received invalid topic {msg.topic}.")
     def start_mqtt_server(self):
         # Get broker host from environment variable
         broker = os.environ.get("MQTT_BROKER_HOST")
@@ -116,28 +115,23 @@ class ExperimentsManager:
 
     def on_message_start(self):
         self.__log.info("Received start message")
-        # Check that another experiment is not running
-        if self.experiment_count != 0:
-            self.__log.warning("Another experiment is already running.")
-            return
-        else:
-            # Start the experiment in a new thread
-            threading.Thread(target=self.start_experiment).start()
+        # Send ack message to start topic
+        self.client.publish("experiment/ack", "ACK_START", retain=True, qos=2)
+        # Start the experiment in a new thread
+        threading.Thread(target=self.start_experiment).start()
 
     def on_message_stop(self):
         self.__log.info("Received stop message")
-        # Check that an experiment is running
-        if self.experiment_count == 0:
-            self.__log.warning("No experiment is running.")
-            return
-        else:
-            # Stop the experiment
-            self.running_experiment.clear()
-
+        # Send ack message to stop topic
+        self.client.publish("experiment/ack", "ACK_STOP", retain=True, qos=2)
+        # Stop the experiment by clearing the running_experiment flag
+        self.running_experiment.clear()
+    def update_state(self, state):
+        self.state = state
+        self.client.publish("experiment/status", self.state, retain=True, qos=2)
     def start_experiment(self):
         self.__log.info("Starting experiment")
-        # Increment experiment counter
-        self.experiment_count += 1
+
 
         # Set running experiment flag
         self.running_experiment.set()
@@ -198,8 +192,8 @@ class ExperimentsManager:
         # Run transscale-job
         self.k.create_job(transscale_resource_definition["transscale-job.yaml"])
 
-        # Send ack message to start topic
-        self.client.publish("ack/experiment/start", "RUNNING", retain=True, qos=2)
+
+        self.update_state("RUNNING")
         while self.running_experiment.is_set():
             sleep(1)
             self.__log.info("Waiting for experiment to finish or stop message.")
@@ -211,9 +205,8 @@ class ExperimentsManager:
                 break
 
         self.__log.info("Experiment finished or stopped.")
-        # Send ack message to stop topic
-        self.client.publish("ack/experiment/stop", "STOPPING", retain=True, qos=2)
-
+        # Send ack message
+        self.update_state("STOPPED")
         self.end_ts = int(datetime.now().timestamp())
 
         # Create experiment folder for results, ordered by date (YYYY-MM-DD)
@@ -264,7 +257,7 @@ class ExperimentsManager:
             self.k.delete_networkchaos()
 
         # Reset counter
-        self.experiment_count -= 1
+        self.update_state("IDLE")
 
     def run(self):
         # Start mqtt server
