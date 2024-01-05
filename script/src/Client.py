@@ -58,9 +58,9 @@ class Client:
         self.config = config
         self.broker_host = config.get_str(Key.Experiment.broker_mqtt_host)
         self.broker_port = config.get_int(Key.Experiment.broker_mqtt_port)
-        self.setup_mqtt()
-
         self.not_acked = threading.Event()
+
+        self.setup_mqtt()
 
     def on_message(self, client, userdata, message):
 
@@ -129,6 +129,7 @@ class Client:
             qos=2,
             retain=True,
         )
+        self.not_acked.wait()
 
         # Wait message on ack/experiment/start
         while self.not_acked.is_set():
