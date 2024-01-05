@@ -134,7 +134,7 @@ class ExperimentsManager:
     def update_state(self, state):
         self.state = state
         self.__log.info(f"Updating state to {self.state}")
-        self.client.publish("experiment/status", self.state, retain=True, qos=2)
+        self.client.publish("experiment/state", self.state, retain=True, qos=2)
     def start_experiment(self):
         self.__log.info("Starting experiment")
 
@@ -203,9 +203,13 @@ class ExperimentsManager:
             sleep(1)
             try:
                 job_status = self.k.get_job_status("transscale-job")
-                if job_status == "Complete":
-                    self.__log.info("Experiment finished.")
-                    self.update_state("FINISHING")
+                # Check if job_status has any element
+                if not job_status:
+                    continue
+                else:
+                    if job_status[0].type == "Complete":
+                        self.__log.info("Experiment finished.")
+                        self.update_state("FINISHING")
             except Exception as e:
                 self.__log.warning(f"Error while getting job status: {e}")
                 self.update_state("FINISHING")
