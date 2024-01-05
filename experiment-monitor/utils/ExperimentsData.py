@@ -295,8 +295,9 @@ class ExperimentData:
             label="Throughput In",
         )
 
-        # Check if 'Predictions' column exists, if so, add dashed line with its values to plot
-        if predictions is not None:
+        # Check if 'Predictions' column exists and that it contains more than one value.
+        # If so, add dashed line with its values to plot
+        if predictions is not None and len(predictions) > 1:
             ax.plot(
                 parallelism_values,
                 predictions,
@@ -305,16 +306,16 @@ class ExperimentData:
                 color="r",
                 label="Predictions",
             )
-        # Calculate percentage error and add it to the plot
-        percentage_error = ((predictions - throughput_mean) / throughput_mean) * 100
-        for x, y, error in zip(parallelism_values, predictions, percentage_error):
-            ax.annotate(
-                f"{error:.2f}%",
-                (x, y),
-                textcoords="offset points",
-                xytext=(0, 10),
-                ha="center",
-            )
+            # Calculate percentage error and add it to the plot
+            percentage_error = ((predictions - throughput_mean) / throughput_mean) * 100
+            for x, y, error in zip(parallelism_values, predictions, percentage_error):
+                ax.annotate(
+                    f"{error:.2f}%",
+                    (x, y),
+                    textcoords="offset points",
+                    xytext=(0, 10),
+                    ha="center",
+                )
 
         # Job name is in the format: my<operator_name>-transscale-<type>-all.jar
         # We want to extract only the operator name and the type (which can be null).
