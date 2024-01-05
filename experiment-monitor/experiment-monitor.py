@@ -228,7 +228,7 @@ class ExperimentsManager:
 
         # End experiment
         self.end_experiment()
-
+        return
     def end_experiment(self):
         self.__log.info("Ending experiment")
 
@@ -267,6 +267,7 @@ class ExperimentsManager:
 
         # Reset counter
         self.update_state("IDLE")
+        return
 
     def run(self):
         # Start mqtt server
