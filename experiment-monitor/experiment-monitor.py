@@ -228,10 +228,11 @@ class ExperimentsManager:
 
         # End experiment
         self.end_experiment()
+
+        self.__log.info("Ending experiment")
         return
     def end_experiment(self):
-        self.__log.info("Ending experiment")
-
+        # Export experiment data
         data: ExperimentData = ExperimentData(
             log=self.__log, exp_path=self.exp_path, config=self.config
         )
