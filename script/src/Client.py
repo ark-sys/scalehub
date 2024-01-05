@@ -1,3 +1,4 @@
+import json
 import os
 import threading
 import time
@@ -85,7 +86,11 @@ class Client:
         self.client.on_message = self.on_message
         self.client.on_connect = self.on_connect
         self.client.username_pw_set(self.mqtt_user, self.mqtt_pass)
-        self.client.connect(self.broker_host, self.broker_port, 60)
+        try:
+            self.client.connect(self.broker_host, self.broker_port, 60,)
+        except ConnectionRefusedError as e:
+            self.__log.error(f"MQTT connection failed: {e}")
+            exit(1)
         self.client.loop_start()
 
     def start(self):
@@ -108,6 +113,11 @@ class Client:
                 "chaos", config=self.config, tag="experiment", extra_vars=chaos_params
             )
 
+        # Create START payload with experiment config
+        payload = {"command": "START", "config": self.config.to_json()}
+        # Get string representation of payload
+        payload = json.dumps(payload)
+
         # Deploy load generators
         for generator in self.config.get(Key.Experiment.Generators.generators):
             load_generator_params = {
@@ -124,9 +134,6 @@ class Client:
                 tag="create",
                 extra_vars=load_generator_params,
             )
-
-        # Create START payload with experiment config
-        payload = {"command": "START", "config": self.config.to_json()}
 
         # Send message to remote experiment-monitor to start experiment
         self.client.publish(
