@@ -130,10 +130,7 @@ class KubernetesManager:
             state = api_instance.read_namespaced_job_status(name=job_name, namespace="default")
             return state.status.conditions[0].type
         except Client.ApiException as e:
-            self.__log.error(
-                f"Exception when calling BatchV1Api->read_namespaced_job: {e}"
-            )
-            return None
+            return e
 
     # Retrieve content of a configmap
     def get_configmap(self, configmap_name, namespace="default"):
