@@ -164,19 +164,6 @@ class KubernetesManager:
             self.__log.info(
                 f"{resource_type} {resource_name} created in namespace {namespace}."
             )
-
-            w = watch.Watch()
-            for event in w.stream(
-                api_instance.list_namespaced_job, namespace=namespace
-            ):
-                job = event["object"]
-                if (
-                    job.metadata.name == resource_name
-                    and job.status.succeeded is not None
-                ):
-                    job_log = self.get_job_logs(resource_name, namespace)
-                    self.__log.info(f"{resource_type} {resource_name} succeeded.")
-                    return job_log
         except ApiException as e:
             self.__log.error(f"Exception when operating on resource: {e}")
 
