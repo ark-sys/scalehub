@@ -43,8 +43,6 @@ class ExperimentsManager:
 
         self.config: Config
 
-        self.running_experiment = threading.Event()
-
         self.state = "IDLE"
 
     def create_exp_folder(self, date):
@@ -120,10 +118,10 @@ class ExperimentsManager:
 
     def on_message_start(self):
         self.__log.info("Received start message")
-        # Send ack message to start topic
+        # Send ack message
         self.client.publish("experiment/ack", "ACK_START", retain=True, qos=2)
-        # Set running experiment flag
-        self.running_experiment.set()
+        # Update state
+        self.update_state("STARTING")
         # Start the experiment in a new thread
         threading.Thread(target=self.start_experiment).start()
 
@@ -131,8 +129,8 @@ class ExperimentsManager:
         self.__log.info("Received stop message")
         # Send ack message to stop topic
         self.client.publish("experiment/ack", "ACK_STOP", retain=True, qos=2)
-        # Stop the experiment by clearing the running_experiment flag
-        self.running_experiment.clear()
+        # Stop the experiment
+        self.update_state("FINISHING")
     def update_state(self, state):
         self.state = state
         self.__log.info(f"Updating state to {self.state}")
@@ -198,19 +196,18 @@ class ExperimentsManager:
         self.k.create_job(transscale_resource_definition["transscale-job.yaml"])
 
         self.update_state("RUNNING")
+
         # Wait for experiment to finish or stop message
-        while self.running_experiment.is_set():
+        while self.state == "RUNNING":
             self.__log.info("Waiting for experiment to finish or stop message.")
             sleep(1)
             job_status = self.k.get_job_status("transscale-job")
-            if job_status == "Succeeded":
+            if job_status == "Complete" or None:
                 self.__log.info("Experiment finished.")
-                self.running_experiment.clear()
-                break
+                self.update_state("FINISHING")
 
         self.__log.info("Experiment finished or stopped.")
         # Send ack message
-        self.update_state("STOPPED")
         self.end_ts = int(datetime.now().timestamp())
 
         # Create experiment folder for results, ordered by date (YYYY-MM-DD)
