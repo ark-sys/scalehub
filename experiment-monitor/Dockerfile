@@ -19,6 +19,8 @@ EXPOSE 1883
 
 ENV MQTT_BROKER_HOST="localhost"
 ENV MQTT_BROKER_PORT="1883"
+ENV MQTT_BROKER_USERNAME="monitor"
+ENV MQTT_BROKER_PASSWORD="m_password"
 ENV KUBECONFIG="/app/conf/kubeconfig"
 # Redirect python script output to container logs
 ENV PYTHONUNBUFFERED=1
