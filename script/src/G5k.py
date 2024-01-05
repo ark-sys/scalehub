@@ -1,4 +1,5 @@
 import json
+import subprocess
 
 import enoslib as en
 import os
@@ -13,37 +14,29 @@ from .utils.Config import Config, Key
 class G5k(Platform):
     def __init__(self, config: Config, log: Logger):
         super().__init__()
-        self.queue = None
-        self.consumers = None
-        self.producers = None
-        self.cluster = None
-        self.site = None
-        self.reservation_name = None
-        self.walltime = None
-        self.password = None
-        self.username = None
         _ = en.init_logging()
         self.__log = log
-
+        self.config = config
+        
         # Create .python-grid5000.yaml required by enoslib
         self.check_credentials_file()
 
         # Check that Grid5000 is joinable
         en.check()
-
+        
         # Set up the reservation
-        self.create(config)
+        self.create()
 
 
     # Create a reservation
-    def create(self, config: Config):
-        self.reservation_name = config.get_str(Key.Platform.reservation_name)
-        self.site = config.get_str(Key.Platform.site)
-        self.cluster = config.get_str(Key.Platform.cluster)
-        self.producers = config.get_int(Key.Platform.producers)
-        self.consumers = config.get_int(Key.Platform.consumers)
-        self.queue = config.get_str(Key.Platform.queue)
-        self.walltime = config.get_str(Key.Platform.walltime)
+    def create(self):
+        self.reservation_name = self.config.get_str(Key.Platform.reservation_name)
+        self.site = self.config.get_str(Key.Platform.site)
+        self.cluster = self.config.get_str(Key.Platform.cluster)
+        self.producers = self.config.get_int(Key.Platform.producers)
+        self.consumers = self.config.get_int(Key.Platform.consumers)
+        self.queue = self.config.get_str(Key.Platform.queue)
+        self.walltime = self.config.get_str(Key.Platform.walltime)
 
         # Setup request of resources as specified in configuration file
         network = en.G5kNetworkConf(type="prod", roles=["my_network"], site=self.site)
@@ -129,3 +122,12 @@ class G5k(Platform):
     def destroy(self):
         # Destroy all resources from Grid5000
         self.provider.destroy()
+
+    def sync_data(self):
+        experiments_path = self.config.get_str(Key.Scalehub.experiments)
+        # rsync command from rennes.g5k:~/scalehub-pvc/experiment-monitor-experiments-pvc to config.get_str(Key.Scalehub.experiments)
+        cmd = f"rsync -avz rennes.g5k:~/scalehub-pvc/experiment-monitor-experiments-pvc/ {experiments_path}"
+
+        self.__log.info(f"Syncing data from Grid5000 to {experiments_path}")
+        # Execute the command
+        subprocess.run(cmd, shell=True)

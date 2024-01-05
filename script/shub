@@ -20,6 +20,7 @@ def provision(config: Config):
             # Initiate oarsub request
             log.info("Reserving...")
             p: Platform = G5k(config, log)
+
             inventory = p.setup()
 
             # Dump list of requested nodes to file
@@ -191,6 +192,10 @@ def run(action, action_type, config: Config):
         case _:
             log.error(f"Action {action} is not implemented.")
 
+def sync_experiment_data(config: Config):
+    log.info("Syncing experiment data...")
+    p: Platform = G5k(config, log)
+    p.sync_data()
 
 # Export data for a given date
 @DeprecationWarning
@@ -347,6 +352,11 @@ def main(log: Logger):
         "tokens", help="Get tokens for minio and kubernetes dashboard"
     )
 
+    # Sync command
+    subparsers.add_parser(
+        "sync", help="Sync experiment data from remote to local"
+    )
+
     # Run command
     run_parser = subparsers.add_parser("run", help="Run action.")
     run_parser.add_argument(
@@ -395,6 +405,8 @@ def main(log: Logger):
         experiment(action, config)
     elif args.command == "tokens":
         tokens()
+    elif args.command == "sync":
+        sync_experiment_data(config)
     elif args.command == "run":
         action = args.action
         type = args.type
