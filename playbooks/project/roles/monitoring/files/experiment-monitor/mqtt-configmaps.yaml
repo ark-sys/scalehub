@@ -1,0 +1,32 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mosquitto-configmaps
+  namespace: experiment-monitor
+  labels:
+    app: mqtt-broker
+data:
+  mosquitto.conf: |+
+      persistence true
+      persistence_location /mosquitto/data/
+      log_dest file /mosquitto/log/mosquitto.log
+      log_dest stdout
+      log_type all
+      log_timestamp_format %Y-%m-%dT%H:%M:%S
+      listener 1883
+      allow_anonymous false
+      password_file /mosquitto/config/passwd
+      acl_file /mosquitto/config/acl
+  acl: |+
+    user monitor
+    topic read experiment/command
+    topic write experiment/state
+    topic write experiment/ack
+    user scalehub
+    topic write experiment/command
+    topic read experiment/state
+    topic read experiment/ack
+  passwd: |+
+    monitor:m_password
+    scalehub:s_password

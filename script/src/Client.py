@@ -58,31 +58,34 @@ class Client:
         self.config = config
         self.broker_host = config.get_str(Key.Experiment.broker_mqtt_host)
         self.broker_port = config.get_int(Key.Experiment.broker_mqtt_port)
+        self.mqtt_user = "scalehub"
+        self.mqtt_pass = "s_password"
         self.not_acked = threading.Event()
+        self.ack = None
+        self.state = None
 
         self.setup_mqtt()
 
     def on_message(self, client, userdata, message):
 
         match message.topic:
-            case "ack/experiment/start":
-                if message.payload == "RUNNING":
-                    self.not_acked.clear()
-            case "ack/experiment/stop":
-                if message.payload == "STOPPING":
-                    self.not_acked.clear()
-
+            case "experiment/ack":
+                self.__log.info("Received ack")
+                self.ack = message.payload.decode("utf-8")
+            case "experiment/state":
+                self.__log.info("Received state")
+                self.state = message.payload.decode("utf-8")
     def on_connect(self, client, userdata, flags, rc):
         self.__log.info(f"Connected with result code {rc}")
 
         # Subscribe to experiment topics
-        self.client.subscribe("ack/experiment/#", qos=2)
-
+        self.client.subscribe("experiment/ack", qos=2)
+        self.client.subscribe("experiment/state", qos=2)
     def setup_mqtt(self):
         self.client.on_message = self.on_message
         self.client.on_connect = self.on_connect
+        self.client.username_pw_set(self.mqtt_user, self.mqtt_pass)
         self.client.connect(self.broker_host, self.broker_port, 60)
-        self.not_acked.set()
         self.client.loop_start()
 
     def start(self):
@@ -122,20 +125,21 @@ class Client:
                 extra_vars=load_generator_params,
             )
 
+        # Create START payload with experiment config
+        payload = {"command": "START", "config": self.config.to_json()}
+
         # Send message to remote experiment-monitor to start experiment
         self.client.publish(
-            "experiment/start",
-            payload=self.config.to_json(),
+            "experiment/command",
+            payload=payload,
             qos=2,
             retain=True,
         )
-        self.not_acked.wait()
-
         # Wait message on ack/experiment/start
-        while self.not_acked.is_set():
+        while self.ack != "ACK_START":
             self.__log.info("Waiting for ack...")
             time.sleep(1)  # wait for 1 second before checking again
-        self.__log.info("Experiment is running.")
+        self.__log.info(f"Experiment state is {self.state}.")
 
     def stop(self):
         self.__log.info("Stopping experiment")
@@ -143,7 +147,7 @@ class Client:
         self.client.publish("experiment/stop", "STOP", qos=2, retain=True)
 
         # Wait message on ack/experiment/stop
-        while self.not_acked.is_set():
+        while self.ack != "ACK_STOP":
             self.__log.info("Waiting for ack...")
             time.sleep(1)
-        self.__log.info("Experiment stopped.")
+        self.__log.info(f"Experiment state is {self.state}.")

@@ -103,9 +103,14 @@ class ExperimentsManager:
         else:
             self.__log.warning(f"Received invalid topic {msg.topic}.")
     def start_mqtt_server(self):
-        # Get broker host from environment variable
+        # Get broker info from environment variable
         broker = os.environ.get("MQTT_BROKER_HOST")
         port = os.environ.get("MQTT_BROKER_PORT")
+        username = os.environ.get("MQTT_BROKER_USERNAME")
+        password = os.environ.get("MQTT_BROKER_PASSWORD")
+
+        # Set username and password
+        self.client.username_pw_set(username, password=password)
 
         # Connect to broker
         self.client.connect(broker, int(port), 60)

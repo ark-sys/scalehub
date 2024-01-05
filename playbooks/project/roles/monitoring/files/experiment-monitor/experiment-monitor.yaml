@@ -27,9 +27,13 @@ spec:
           imagePullPolicy: Always
           env:
             - name: MQTT_BROKER_HOST
-              value: "mqtt-broker-mosquitto.experiment-monitor.svc.cluster.local"
+              value: "mqtt-broker.experiment-monitor.svc.cluster.local"
             - name: MQTT_BROKER_PORT
               value: "1883"
+            - name: MQTT_BROKER_USERNAME
+              value: "monitor"
+            - name: MQTT_BROKER_PASSWORD
+              value: "m_password"
           volumeMounts:
             - mountPath: /experiment-volume
               name: experiment-volume
