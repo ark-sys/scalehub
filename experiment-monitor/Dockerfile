@@ -1,4 +1,4 @@
-FROM python:3.9.5-slim
+FROM python:3.12-slim
 
 # Install dependencies
 COPY requirements.txt .
