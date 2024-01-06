@@ -92,10 +92,14 @@ class ExperimentsManager:
 
                 # Format config as json
                 self.config = Config(self.__log, json.loads(config))
-                self.on_message_start()
+                self.update_state("STARTING")
+                # Send ack message
+                self.client.publish("experiment/ack", "ACK_START", retain=True, qos=2)
 
             elif command == "STOP" and self.state == "RUNNING":
-                self.on_message_stop()
+                self.update_state("FINISHING")
+                # Send ack message
+                self.client.publish("experiment/ack", "ACK_STOP", retain=True, qos=2)
             else:
                 self.__log.warning(f"Received invalid command {command} for state {self.state}.")
         else:
@@ -116,25 +120,34 @@ class ExperimentsManager:
         # Start mqtt in a blocking loop to keep process alive
         self.client.loop_forever()
 
-    def on_message_start(self):
-        self.__log.info("Received start message")
-        # Send ack message
-        self.client.publish("experiment/ack", "ACK_START", retain=True, qos=2)
-        # Update state
-        self.update_state("STARTING")
-        # Start the experiment in a new thread
-        threading.Thread(target=self.start_experiment).start()
-
-    def on_message_stop(self):
-        self.__log.info("Received stop message")
-        # Send ack message to stop topic
-        self.client.publish("experiment/ack", "ACK_STOP", retain=True, qos=2)
-        # Stop the experiment
-        self.update_state("FINISHING")
     def update_state(self, state):
         self.state = state
         self.__log.info(f"Updating state to {self.state}")
         self.client.publish("experiment/state", self.state, retain=True, qos=2)
+
+    def handle_experiment(self):
+
+        while True:
+            # Wait for experiment to start
+            while self.state == "IDLE":
+                self.__log.info("Waiting for experiment to start.")
+                sleep(1)
+
+            # Start experiment
+            self.start_experiment()
+
+            # Wait for experiment to finish or stop message
+            while self.state == "RUNNING":
+                self.__log.info("Waiting for experiment to finish or stop message.")
+                sleep(1)
+
+            # End experiment
+            self.end_experiment()
+
+            # Wait for experiment to start
+            while self.state == "FINISHING":
+                self.__log.info("Waiting for experiment to finish.")
+                sleep(1)
     def start_experiment(self):
         self.__log.info("Starting experiment")
 
@@ -214,8 +227,13 @@ class ExperimentsManager:
                 self.__log.warning(f"Error while getting job status: {e}")
                 self.update_state("FINISHING")
 
+        # # End experiment
+        # self.end_experiment()
+        #
+        # self.__log.info("Ending experiment")
+        return
+    def end_experiment(self):
         self.__log.info("Experiment finished or stopped.")
-        # Send ack message
         self.end_ts = int(datetime.now().timestamp())
 
         # Create experiment folder for results, ordered by date (YYYY-MM-DD)
@@ -226,12 +244,6 @@ class ExperimentsManager:
         # Create log file with start timestamp
         self.log_file = self.create_log_file()
 
-        # End experiment
-        self.end_experiment()
-
-        self.__log.info("Ending experiment")
-        return
-    def end_experiment(self):
         # Export experiment data
         data: ExperimentData = ExperimentData(
             log=self.__log, exp_path=self.exp_path, config=self.config
@@ -271,6 +283,8 @@ class ExperimentsManager:
         return
 
     def run(self):
+        # Start experiment handler thread
+        threading.Thread(target=self.handle_experiment).start()
         # Start mqtt server
         self.start_mqtt_server()
 
