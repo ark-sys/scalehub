@@ -13,6 +13,7 @@ from utils.Config import Config
 from utils.KubernetesManager import KubernetesManager
 from utils.Defaults import DefaultKeys as Key
 
+
 # Objective
 # 1. Start a mqtt server to receive experiment requests
 # 2. When "START" request is received, with correct config file, get start timestamp and create a folder with the timestamp as the name
@@ -29,6 +30,12 @@ from utils.Defaults import DefaultKeys as Key
 # 6. Delete transscale-job, chaos, load-generators resources from kubernetes cluster
 # 6. Restart Flink
 
+class ExperimentState:
+    IDLE = "IDLE"
+    STARTING = "STARTING"
+    RUNNING = "RUNNING"
+    FINISHING = "FINISHING"
+
 
 class ExperimentsManager:
     EXPERIMENTS_BASE_PATH = "/experiment-volume"
@@ -43,7 +50,7 @@ class ExperimentsManager:
 
         self.config: Config
 
-        self.state = "IDLE"
+        self.state = ExperimentState.IDLE
 
     def create_exp_folder(self, date):
         # Create the base folder path
@@ -86,24 +93,25 @@ class ExperimentsManager:
         if msg.topic == "experiment/command":
             payload = json.loads(msg.payload.decode("utf-8"))
             command = payload.get("command")
-            if command == "START" and self.state == "IDLE":
+            if command == "START" and self.state == ExperimentState.IDLE:
                 config = payload.get("config")
                 self.__log.info(f"Received config: {config}")
 
                 # Format config as json
                 self.config = Config(self.__log, json.loads(config))
-                self.update_state("STARTING")
+                self.update_state(ExperimentState.STARTING)
                 # Send ack message
                 self.client.publish("experiment/ack", "ACK_START", retain=True, qos=2)
 
-            elif command == "STOP" and self.state == "RUNNING":
-                self.update_state("FINISHING")
+            elif command == "STOP" and self.state == ExperimentState.RUNNING:
+                self.update_state(ExperimentState.FINISHING)
                 # Send ack message
                 self.client.publish("experiment/ack", "ACK_STOP", retain=True, qos=2)
             else:
                 self.__log.warning(f"Received invalid command {command} for state {self.state}.")
         else:
             self.__log.warning(f"Received invalid topic {msg.topic}.")
+
     def start_mqtt_server(self):
         # Get broker info from environment variable
         broker = os.environ.get("MQTT_BROKER_HOST")
@@ -121,33 +129,27 @@ class ExperimentsManager:
         self.client.loop_forever()
 
     def update_state(self, state):
+        self.__log.info(f"Updating state from {self.state} to {state}")
         self.state = state
-        self.__log.info(f"Updating state to {self.state}")
-        self.client.publish("experiment/state", self.state, retain=True, qos=2)
+
+        # Send state message
+        self.client.publish("experiment/state", state, retain=True, qos=2)
 
     def handle_experiment(self):
 
         while True:
-            # Wait for experiment to start
-            while self.state == "IDLE":
-                self.__log.info("Waiting for experiment to start.")
-                sleep(1)
+            match self.state:
+                case ExperimentState.IDLE:
+                    sleep(1)
+                case ExperimentState.STARTING:
+                    self.start_experiment()
+                case ExperimentState.RUNNING:
+                    self.running_experiment()
+                case ExperimentState.FINISHING:
+                    self.end_experiment()
+                case _:
+                    sleep(1)
 
-            # Start experiment
-            self.start_experiment()
-
-            # Wait for experiment to finish or stop message
-            while self.state == "RUNNING":
-                self.__log.info("Waiting for experiment to finish or stop message.")
-                sleep(1)
-
-            # End experiment
-            self.end_experiment()
-
-            # Wait for experiment to start
-            while self.state == "FINISHING":
-                self.__log.info("Waiting for experiment to finish.")
-                sleep(1)
     def start_experiment(self):
         self.__log.info("Starting experiment")
 
@@ -208,10 +210,13 @@ class ExperimentsManager:
         # Run transscale-job
         self.k.create_job(transscale_resource_definition["transscale-job.yaml"])
 
-        self.update_state("RUNNING")
+        self.update_state(ExperimentState.RUNNING)
 
+        return
+
+    def running_experiment(self):
         # Wait for experiment to finish or stop message
-        while self.state == "RUNNING":
+        while self.state == ExperimentState.RUNNING:
             self.__log.info("Waiting for experiment to finish or stop message.")
             sleep(1)
             try:
@@ -222,16 +227,12 @@ class ExperimentsManager:
                 else:
                     if job_status[0].type == "Complete":
                         self.__log.info("Experiment finished.")
-                        self.update_state("FINISHING")
+                        self.update_state(ExperimentState.FINISHING)
             except Exception as e:
                 self.__log.warning(f"Error while getting job status: {e}")
-                self.update_state("FINISHING")
-
-        # # End experiment
-        # self.end_experiment()
-        #
-        # self.__log.info("Ending experiment")
+                self.update_state(ExperimentState.FINISHING)
         return
+
     def end_experiment(self):
         self.__log.info("Experiment finished or stopped.")
         self.end_ts = int(datetime.now().timestamp())
@@ -290,7 +291,6 @@ class ExperimentsManager:
 
 
 def main():
-
     # Create logger
     log = Logger()
 
