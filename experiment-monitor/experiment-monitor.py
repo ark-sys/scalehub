@@ -36,7 +36,6 @@ class ExperimentState:
     RUNNING = "RUNNING"
     FINISHING = "FINISHING"
 
-
 class ExperimentsManager:
     EXPERIMENTS_BASE_PATH = "/experiment-volume"
 
@@ -50,7 +49,7 @@ class ExperimentsManager:
 
         self.config: Config
 
-        self.state = ExperimentState.IDLE
+        self.state: str = ExperimentState.IDLE
 
     def create_exp_folder(self, date):
         # Create the base folder path
@@ -136,11 +135,9 @@ class ExperimentsManager:
         self.client.publish("experiment/state", state, retain=True, qos=2)
 
     def handle_experiment(self):
-
+    # Handle experiment state
         while True:
             match self.state:
-                case ExperimentState.IDLE:
-                    sleep(1)
                 case ExperimentState.STARTING:
                     self.start_experiment()
                 case ExperimentState.RUNNING:
