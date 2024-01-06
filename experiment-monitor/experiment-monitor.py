@@ -90,24 +90,26 @@ class ExperimentsManager:
     def on_message(self, client, userdata, msg):
         self.__log.info(f"Received message on topic {msg.topic}")
         if msg.topic == "experiment/command":
-            payload = json.loads(msg.payload.decode("utf-8"))
-            command = payload.get("command")
-            if command == "START" and self.state == ExperimentState.IDLE:
-                config = payload.get("config")
-                self.__log.info(f"Received config: {config}")
-
-                # Format config as json
-                self.config = Config(self.__log, json.loads(config))
-                self.update_state(ExperimentState.STARTING)
-                # Send ack message
-                self.client.publish("experiment/ack", "ACK_START", retain=True, qos=2)
-
-            elif command == "STOP" and self.state == ExperimentState.RUNNING:
+            command = msg.payload.decode("utf-8")
+            if command == "STOP" and self.state == ExperimentState.RUNNING:
                 self.update_state(ExperimentState.FINISHING)
                 # Send ack message
                 self.client.publish("experiment/ack", "ACK_STOP", retain=True, qos=2)
             else:
-                self.__log.warning(f"Received invalid command {command} for state {self.state}.")
+                payload = json.loads(msg.payload.decode("utf-8"))
+                command = payload.get("command")
+                if command == "START" and self.state == ExperimentState.IDLE:
+                    config = payload.get("config")
+                    self.__log.info(f"Received config: {config}")
+
+                    # Format config as json
+                    self.config = Config(self.__log, json.loads(config))
+                    self.update_state(ExperimentState.STARTING)
+                    # Send ack message
+                    self.client.publish("experiment/ack", "ACK_START", retain=True, qos=2)
+
+                else:
+                    self.__log.warning(f"Received invalid command {command} for state {self.state}.")
         else:
             self.__log.warning(f"Received invalid topic {msg.topic}.")
 
