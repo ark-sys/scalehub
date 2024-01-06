@@ -137,6 +137,7 @@ class ExperimentsManager:
     def handle_experiment(self):
     # Handle experiment state
         while True:
+            #TODO fix collision if state is changed during execution of start_experiment
             match self.state:
                 case ExperimentState.STARTING:
                     self.start_experiment()
@@ -145,8 +146,10 @@ class ExperimentsManager:
                 case ExperimentState.FINISHING:
                     self.end_experiment()
                 case _:
+                    self.__log.debug(
+                        f"Current state is {self.state}. Waiting for START or STOP message."
+                    )
                     sleep(1)
-
     def start_experiment(self):
         self.__log.info("Starting experiment")
 
@@ -209,8 +212,6 @@ class ExperimentsManager:
 
         self.update_state(ExperimentState.RUNNING)
 
-        return
-
     def running_experiment(self):
         # Wait for experiment to finish or stop message
         while self.state == ExperimentState.RUNNING:
@@ -228,8 +229,6 @@ class ExperimentsManager:
             except Exception as e:
                 self.__log.warning(f"Error while getting job status: {e}")
                 self.update_state(ExperimentState.FINISHING)
-        return
-
     def end_experiment(self):
         self.__log.info("Experiment finished or stopped.")
         self.end_ts = int(datetime.now().timestamp())
@@ -278,8 +277,6 @@ class ExperimentsManager:
 
         # Reset counter
         self.update_state("IDLE")
-        return
-
     def run(self):
         # Start experiment handler thread
         threading.Thread(target=self.handle_experiment).start()
