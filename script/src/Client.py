@@ -151,7 +151,7 @@ class Client:
     def stop(self):
         self.__log.info("Stopping experiment")
         # Send stop message to remote experiment-monitor
-        self.client.publish("experiment/stop", "STOP", qos=2, retain=True)
+        self.client.publish("experiment/command", "STOP", qos=2, retain=True)
 
         # Wait message on ack/experiment/stop
         while self.ack != "ACK_STOP":
