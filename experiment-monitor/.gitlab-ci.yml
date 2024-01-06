@@ -13,7 +13,7 @@ build-and-push:
   stage: build-and-push
   tags:
     - ci.inria.fr
-    - large
+    - medium
   script:
     # build the image of experiment-monitor context
     - docker build -t "$CI_REGISTRY/$CI_REGISTRY_PROJECT/scalehub/experiment-monitor" experiment-monitor
