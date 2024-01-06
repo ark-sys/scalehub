@@ -243,6 +243,14 @@ class ExperimentsManager:
         # Create log file with start timestamp
         self.log_file = self.create_log_file()
 
+        # Get logs from transscale-job
+        transscale_logs = self.k.get_job_logs("transscale-job", "default")
+
+
+        # Save transscale-job logs
+        with open(os.path.join(self.exp_path, "transscale_log.txt"), "w") as file:
+            file.write(transscale_logs)
+
         # Export experiment data
         data: ExperimentData = ExperimentData(
             log=self.__log, exp_path=self.exp_path, config=self.config

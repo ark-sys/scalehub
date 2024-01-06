@@ -3,7 +3,6 @@ import re
 from typing import Any
 
 import pandas as pd
-import pandas.errors
 import pytz
 from matplotlib import pyplot as plt
 from matplotlib.legend_handler import HandlerTuple
