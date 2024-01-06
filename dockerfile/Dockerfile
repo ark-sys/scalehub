@@ -28,7 +28,8 @@ RUN apt-get update && apt-get install -y \
     iputils-ping \
     tk \
     nginx \
-    sudo
+    sudo \
+    rsync
 
 # Install python requirements
 COPY requirements.txt requirements.txt
