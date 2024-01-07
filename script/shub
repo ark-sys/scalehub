@@ -145,13 +145,6 @@ def run(action, action_type, config: Config):
                 deployment_name="flink-jobmanager",
                 command=f"flink run -d -j /tmp/jobs/{config.get_str(Key.Experiment.job_file)}",
             )
-        # case "transscale":
-        #     e: Experiment = Experiment(log, config)
-        #     e.transscale_only_run()
-        case "experiment":
-            e: Client = Client(log, config)
-            e.start()
-            # reload("flink", config)
         case "chaos":
             # Check if chaos has to be created or deleted
             match action_type:

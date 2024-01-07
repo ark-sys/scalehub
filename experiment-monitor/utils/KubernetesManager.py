@@ -195,28 +195,8 @@ class KubernetesManager:
     # Workaround to reset the latency experiment on rescale as the NetworkChaos resource does not support dynamic updates on target pods
     def __reset_latency(self, deployment_name, experiment_params):
         # Definition of the NetworkChaos resource on Flink
-        resource_definition = (
-            "apiVersion: chaos-mesh.org/v1alpha1\n"
-            "kind: NetworkChaos\n"
-            "metadata:\n"
-            "  name: flink-latency\n"
-            "  namespace: default\n"
-            "spec:\n"
-            "  selector:\n"
-            "    labelSelectors:\n"
-            "      - app=flink\n"
-            "      - component=taskmanager\n"
-            "     nodeSelectors:\n"
-            "      - chaos=true\n"
-            "     namespaces:\n"
-            "      - default\n"
-            "  action: delay\n"
-            "  mode: all\n"
-            "  delay:\n"
-            f"    latency: {experiment_params['latency']}ms\n"
-            f"    correlation: {experiment_params['correlation']}\n"
-            f"    jitter: {experiment_params['jitter']}ms\n"
-            "  direction: to\n"
+        resource_definition = self.load_resource_definition(
+            "/app/templates/flink-latency.yaml.j2", experiment_params
         )
         # Create API instances
         apps_v1 = Client.AppsV1Api()
@@ -257,7 +237,23 @@ class KubernetesManager:
                         body=resource_definition,
                     )
                     old_replica_count = new_replica_count
-
+    # Get node by pod name
+    def get_node_by_pod_name(self, pod_name, namespace="default"):
+        v1 = Client.CoreV1Api()
+        try:
+            pod = v1.read_namespaced_pod(pod_name, namespace)
+            return pod.spec.node_name
+        except ApiException as e:
+            self.__log.error(f"Exception when calling CoreV1Api->read_namespaced_pod: {e}\n")
+            return None
+    def get_nodes_by_label(self, label_selector, namespace="default"):
+        v1 = Client.CoreV1Api()
+        try:
+            nodes = v1.list_node(label_selector=label_selector)
+            return nodes.items
+        except ApiException as e:
+            self.__log.error(f"Exception when calling CoreV1Api->list_node: {e}\n")
+            return None
     # Delete pods by label
     def delete_pods_by_label(self, label_selector, namespace="default"):
         v1 = Client.CoreV1Api()
@@ -314,6 +310,34 @@ class KubernetesManager:
         except ApiException as e:
             self.__log.error("Error when resetting autoscaling labels.")
 
+    def add_label_to_nodes(self, nodes: list, label: dict):
+        # Create a Kubernetes API client
+        api_instance = Client.CoreV1Api()
+
+        try:
+            for node in nodes:
+                self.__log.info(f"Adding label {label} to node {node}")
+                node.metadata.labels.update(label)
+                api_instance.patch_node(node.metadata.name, {"metadata": {"labels": node.metadata.labels}})
+        except ApiException as e:
+            self.__log.error(f"Exception when calling CoreV1Api->list_node: {e}\n")
+
+
+    def remove_label_from_nodes(self, nodes: list, label: dict):
+        # Create a Kubernetes API client
+        api_instance = Client.CoreV1Api()
+
+        if not nodes:
+            nodes = api_instance.list_node(label_selector=label)
+        try:
+            for node in nodes:
+                self.__log.info(f"Removing label {label} from node {node}")
+                node.metadata.labels.pop(label)
+                api_instance.patch_node(node.metadata.name, {"metadata": {"labels": node.metadata.labels}})
+        except ApiException as e:
+            self.__log.error(f"Exception when calling CoreV1Api->list_node: {e}\n")
+
+
     # Delete all networkchaos resources
     def delete_networkchaos(self):
         custom_api = Client.CustomObjectsApi()
@@ -330,3 +354,65 @@ class KubernetesManager:
             )
             return
         self.__log.info("NetworkChaos resources deleted.")
+
+    # Load resource definition template from file and fill in the parameters
+    def load_resource_definition(self, resource_filename, experiment_params):
+
+        try:
+            with open(resource_filename, "r") as f:
+                resource_definition = yaml.load(f, Loader=yaml.FullLoader)
+                resource_definition["experiment-params"] = experiment_params
+                return resource_definition
+        except FileNotFoundError as e:
+            self.__log.error(f"File not found: {resource_filename}")
+            return
+    # Deploy a networkchaos resource
+    def create_networkchaos(self, template_filename, experiment_params):
+        # Load resource definition from file
+        resource_definition = self.load_resource_definition(template_filename, experiment_params)
+        custom_api = Client.CustomObjectsApi()
+        try:
+            custom_api.create_namespaced_custom_object(
+                group="chaos-mesh.org",
+                version="v1alpha1",
+                namespace="default",
+                plural="networkchaos",
+                body=resource_definition,
+            )
+        except ApiException as e:
+            self.__log.error(
+                f"Exception when calling CustomObjectsApi->create_namespaced_custom_object: {e}\n"
+            )
+            return
+        self.__log.info("NetworkChaos resource created.")
+
+
+
+    # Get pods impacted by networkchaos
+    def get_networkchaos_instances(self):
+        custom_api = Client.CustomObjectsApi()
+        try:
+            network_chaos_objects = custom_api.list_namespaced_custom_object(
+                group="chaos-mesh.org",
+                version="v1alpha1",
+                namespace="default",
+                plural="networkchaos",
+            )
+
+            result = [instance.split("/")[1] for instance in network_chaos_objects["items"][0]['status']['instances']]
+            return result
+        except ApiException as e:
+            self.__log.error(
+                f"Exception when calling CustomObjectsApi->list_namespaced_custom_object: {e}\n"
+            )
+            return
+    # Get node names of impacted consul pods
+    def get_impacted_nodes(self):
+
+        instances = self.get_networkchaos_instances()
+        node_names = []
+
+        for instance in instances:
+            node_names.append(self.get_node_by_pod_name(instance,"consul"))
+
+        return node_names
