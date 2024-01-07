@@ -38,12 +38,16 @@ class ExperimentState:
 
 class ExperimentsManager:
     EXPERIMENTS_BASE_PATH = "/experiment-volume"
-
+    TEMPLATES_BASE_PATH = "/app/templates"
     def __init__(self, log: Logger):
         self.__log = log
         self.client = mqtt.Client()
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
+
+        self.consul_chaos_template = f"{self.TEMPLATES_BASE_PATH}/consul-latency.yaml.j2"
+        self.flink_chaos_template = f"{self.TEMPLATES_BASE_PATH}/flink-latency.yaml.j2"
+        self.storage_chaos_template = f"{self.TEMPLATES_BASE_PATH}/storage-latency.yaml.j2"
 
         self.k: KubernetesManager = KubernetesManager(log)
 
@@ -170,23 +174,44 @@ class ExperimentsManager:
             )
 
             # Setup experiment_params
-            experiment_params = {
+            chaos_params = {
                 "latency": self.config.get_int(Key.Experiment.Chaos.delay_latency_ms),
                 "jitter": self.config.get_int(Key.Experiment.Chaos.delay_jitter_ms),
                 "correlation": self.config.get_float(
                     Key.Experiment.Chaos.delay_correlation
                 ),
             }
+            # Remove label 'chaos=true' from all nodes
+            self.k.remove_label_from_nodes([],{"chaos": "true"})
 
-            self.k.monitor_injection_thread(experiment_params=experiment_params)
+            # Deploy chaos resources
+            self.k.create_networkchaos(self.consul_chaos_template, chaos_params)
+
+            # Label nodes hosting an impacted consul pod with 'chaos=true'
+            impacted_nodes = self.k.get_impacted_nodes()
+            self.k.add_label_to_nodes(impacted_nodes,{"chaos": "true"})
+
+            # Deploy chaos resources on Flink and Storage running on chaos nodes
+            self.k.create_networkchaos(self.flink_chaos_template, chaos_params)
+            self.k.create_networkchaos(self.storage_chaos_template, chaos_params)
+
+            # Start thread to monitor and reset chaos injection on rescale
+            self.k.monitor_injection_thread(experiment_params=chaos_params)
 
             # Reset nodes labels
             self.__log.info("Resetting nodes labels.")
-            self.k.reset_autoscaling_labels()
+            worker_nodes = self.k.get_nodes_by_label("node-role.kubernetes.io/worker=consumer")
+
+            # remove label "node-role.kubernetes.io/autoscaling" from all nodes
+            self.k.remove_label_from_nodes(worker_nodes,{"node-role.kubernetes.io/autoscaling": "UNSCHEDULABLE"})
+            # Get clean nodes (worker_nodes - impacted_nodes)
+            clean_nodes = list(set(worker_nodes) - set(impacted_nodes))
+            # Add label "node-role.kubernetes.io/autoscaling" to clean nodes
+            self.k.add_label_to_nodes(clean_nodes,{"node-role.kubernetes.io/autoscaling": "SCHEDULABLE"})
 
             # Reset taskmanager replicas
             self.__log.info("Resetting taskmanager replicas.")
-            # Reset to 0 and back to 1 to trigger placement of taskmanager on different relabelled nodes
+            # Reset to 0 and back to 1 to trigger placement of taskmanager on schedulable nodes
             self.k.scale_deployment("flink-taskmanager", replicas=0)
             self.k.scale_deployment("flink-taskmanager", replicas=1)
 
@@ -217,7 +242,7 @@ class ExperimentsManager:
     def running_experiment(self):
         # Wait for experiment to finish or stop message
         while self.state == ExperimentState.RUNNING:
-            self.__log.info("Waiting for experiment to finish or stop message.")
+            # self.__log.info("Waiting for experiment to finish or stop message.")
             sleep(1)
             try:
                 job_status = self.k.get_job_status("transscale-job")
