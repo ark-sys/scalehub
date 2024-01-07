@@ -310,7 +310,7 @@ class KubernetesManager:
         except ApiException as e:
             self.__log.error("Error when resetting autoscaling labels.")
 
-    def add_label_to_nodes(self, nodes: list, label: dict):
+    def add_label_to_nodes(self, nodes: list, label: str):
         # Create a Kubernetes API client
         api_instance = Client.CoreV1Api()
 
@@ -323,7 +323,7 @@ class KubernetesManager:
             self.__log.error(f"Exception when calling CoreV1Api->list_node: {e}\n")
 
 
-    def remove_label_from_nodes(self, nodes: list, label: dict):
+    def remove_label_from_nodes(self, nodes: list, label: str):
         # Create a Kubernetes API client
         api_instance = Client.CoreV1Api()
 
@@ -336,8 +336,6 @@ class KubernetesManager:
                 api_instance.patch_node(node.metadata.name, {"metadata": {"labels": node.metadata.labels}})
         except ApiException as e:
             self.__log.error(f"Exception when calling CoreV1Api->list_node: {e}\n")
-
-
     # Delete all networkchaos resources
     def delete_networkchaos(self):
         custom_api = Client.CustomObjectsApi()

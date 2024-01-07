@@ -182,14 +182,15 @@ class ExperimentsManager:
                 ),
             }
             # Remove label 'chaos=true' from all nodes
-            self.k.remove_label_from_nodes([],{"chaos": "true"})
+            chaos_label= "chaos=true"
+            self.k.remove_label_from_nodes(list(),chaos_label)
 
             # Deploy chaos resources
             self.k.create_networkchaos(self.consul_chaos_template, chaos_params)
 
             # Label nodes hosting an impacted consul pod with 'chaos=true'
             impacted_nodes = self.k.get_impacted_nodes()
-            self.k.add_label_to_nodes(impacted_nodes,{"chaos": "true"})
+            self.k.add_label_to_nodes(impacted_nodes,chaos_label)
 
             # Deploy chaos resources on Flink and Storage running on chaos nodes
             self.k.create_networkchaos(self.flink_chaos_template, chaos_params)
@@ -203,11 +204,13 @@ class ExperimentsManager:
             worker_nodes = self.k.get_nodes_by_label("node-role.kubernetes.io/worker=consumer")
 
             # remove label "node-role.kubernetes.io/autoscaling" from all nodes
-            self.k.remove_label_from_nodes(worker_nodes,{"node-role.kubernetes.io/autoscaling": "UNSCHEDULABLE"})
+            autoscaling_label = "node-role.kubernetes.io/autoscaling"
+            self.k.remove_label_from_nodes(worker_nodes,f"{autoscaling_label}=SCHEDULABLE")
+            self.k.remove_label_from_nodes(worker_nodes,f"{autoscaling_label}=UNSCHEDULABLE")
             # Get clean nodes (worker_nodes - impacted_nodes)
             clean_nodes = list(set(worker_nodes) - set(impacted_nodes))
             # Add label "node-role.kubernetes.io/autoscaling" to clean nodes
-            self.k.add_label_to_nodes(clean_nodes,{"node-role.kubernetes.io/autoscaling": "SCHEDULABLE"})
+            self.k.add_label_to_nodes(clean_nodes,f"{autoscaling_label}=SCHEDULABLE")
 
             # Reset taskmanager replicas
             self.__log.info("Resetting taskmanager replicas.")
