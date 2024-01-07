@@ -10,6 +10,7 @@ RUN mkdir -p /app/conf
 # Copy source code
 COPY experiment-monitor.py /app/experiment-monitor.py
 COPY utils /app/utils
+COPY templates /app/templates
 
 # Set working directory
 WORKDIR /app
