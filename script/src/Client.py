@@ -61,7 +61,6 @@ class Client:
         self.broker_port = config.get_int(Key.Experiment.broker_mqtt_port)
         self.mqtt_user = "scalehub"
         self.mqtt_pass = "s_password"
-        self.not_acked = threading.Event()
         self.ack = None
         self.state = None
 

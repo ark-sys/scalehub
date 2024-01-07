@@ -326,9 +326,13 @@ class KubernetesManager:
     def remove_label_from_nodes(self, nodes: list, label: str):
         # Create a Kubernetes API client
         api_instance = Client.CoreV1Api()
-
+        # If no nodes are specified, query all nodes with the label
         if not nodes:
             nodes = api_instance.list_node(label_selector=label)
+            # If no nodes are found, return
+            if not nodes.items:
+                return
+
         try:
             for node in nodes:
                 self.__log.info(f"Removing label {label} from node {node}")
