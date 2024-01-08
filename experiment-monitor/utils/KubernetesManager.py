@@ -2,6 +2,7 @@ import os
 import threading
 from time import sleep
 
+import jinja2
 import yaml
 from kubernetes import client as Client, config as Kubeconfig
 from kubernetes.client import Configuration
@@ -127,7 +128,9 @@ class KubernetesManager:
 
         # Get the job
         try:
-            state = api_instance.read_namespaced_job_status(name=job_name, namespace="default")
+            state = api_instance.read_namespaced_job_status(
+                name=job_name, namespace="default"
+            )
             return state.status.conditions
         except Client.ApiException as e:
             return e
@@ -237,6 +240,7 @@ class KubernetesManager:
                         body=resource_definition,
                     )
                     old_replica_count = new_replica_count
+
     # Get node by pod name
     def get_node_by_pod_name(self, pod_name, namespace="default"):
         v1 = Client.CoreV1Api()
@@ -244,8 +248,11 @@ class KubernetesManager:
             pod = v1.read_namespaced_pod(pod_name, namespace)
             return pod.spec.node_name
         except ApiException as e:
-            self.__log.error(f"Exception when calling CoreV1Api->read_namespaced_pod: {e}\n")
+            self.__log.error(
+                f"Exception when calling CoreV1Api->read_namespaced_pod: {e}\n"
+            )
             return None
+
     def get_nodes_by_label(self, label_selector, namespace="default"):
         v1 = Client.CoreV1Api()
         try:
@@ -254,6 +261,7 @@ class KubernetesManager:
         except ApiException as e:
             self.__log.error(f"Exception when calling CoreV1Api->list_node: {e}\n")
             return None
+
     # Delete pods by label
     def delete_pods_by_label(self, label_selector, namespace="default"):
         v1 = Client.CoreV1Api()
@@ -318,10 +326,11 @@ class KubernetesManager:
             for node in nodes:
                 self.__log.info(f"Adding label {label} to node {node}")
                 node.metadata.labels.update(label)
-                api_instance.patch_node(node.metadata.name, {"metadata": {"labels": node.metadata.labels}})
+                api_instance.patch_node(
+                    node.metadata.name, {"metadata": {"labels": node.metadata.labels}}
+                )
         except ApiException as e:
             self.__log.error(f"Exception when calling CoreV1Api->list_node: {e}\n")
-
 
     def remove_label_from_nodes(self, nodes: list, label: str):
         # Create a Kubernetes API client
@@ -337,9 +346,12 @@ class KubernetesManager:
             for node in nodes:
                 self.__log.info(f"Removing label {label} from node {node}")
                 node.metadata.labels.pop(label)
-                api_instance.patch_node(node.metadata.name, {"metadata": {"labels": node.metadata.labels}})
+                api_instance.patch_node(
+                    node.metadata.name, {"metadata": {"labels": node.metadata.labels}}
+                )
         except ApiException as e:
             self.__log.error(f"Exception when calling CoreV1Api->list_node: {e}\n")
+
     # Delete all networkchaos resources
     def delete_networkchaos(self):
         custom_api = Client.CustomObjectsApi()
@@ -362,16 +374,21 @@ class KubernetesManager:
 
         try:
             with open(resource_filename, "r") as f:
-                resource_definition = yaml.load(f, Loader=yaml.FullLoader)
-                resource_definition["experiment-params"] = experiment_params
+                resource_template = f.read()
+                resource_definition = jinja2.Template(resource_template).render(
+                    experiment_params
+                )
                 return resource_definition
         except FileNotFoundError as e:
             self.__log.error(f"File not found: {resource_filename}")
             return
+
     # Deploy a networkchaos resource
     def create_networkchaos(self, template_filename, experiment_params):
         # Load resource definition from file
-        resource_definition = self.load_resource_definition(template_filename, experiment_params)
+        resource_definition = self.load_resource_definition(
+            template_filename, experiment_params
+        )
         custom_api = Client.CustomObjectsApi()
         try:
             custom_api.create_namespaced_custom_object(
@@ -388,8 +405,6 @@ class KubernetesManager:
             return
         self.__log.info("NetworkChaos resource created.")
 
-
-
     # Get pods impacted by networkchaos
     def get_networkchaos_instances(self):
         custom_api = Client.CustomObjectsApi()
@@ -401,13 +416,17 @@ class KubernetesManager:
                 plural="networkchaos",
             )
 
-            result = [instance.split("/")[1] for instance in network_chaos_objects["items"][0]['status']['instances']]
+            result = [
+                instance.split("/")[1]
+                for instance in network_chaos_objects["items"][0]["status"]["instances"]
+            ]
             return result
         except ApiException as e:
             self.__log.error(
                 f"Exception when calling CustomObjectsApi->list_namespaced_custom_object: {e}\n"
             )
             return
+
     # Get node names of impacted consul pods
     def get_impacted_nodes(self):
 
@@ -415,6 +434,6 @@ class KubernetesManager:
         node_names = []
 
         for instance in instances:
-            node_names.append(self.get_node_by_pod_name(instance,"consul"))
+            node_names.append(self.get_node_by_pod_name(instance, "consul"))
 
         return node_names
