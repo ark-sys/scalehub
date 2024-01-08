@@ -253,11 +253,16 @@ class KubernetesManager:
             )
             return None
 
-    def get_nodes_by_label(self, label_selector, namespace="default"):
+    # Get names of nodes. If label_selector is specified, only return nodes with label
+    def get_nodes(self, label_selector):
         v1 = Client.CoreV1Api()
         try:
             nodes = v1.list_node(label_selector=label_selector)
-            return nodes.items
+
+            nodes_list = []
+            for node in nodes.items:
+                nodes_list.append(node.metadata.name)
+            return nodes_list
         except ApiException as e:
             self.__log.error(f"Exception when calling CoreV1Api->list_node: {e}\n")
             return None
@@ -319,36 +324,56 @@ class KubernetesManager:
             self.__log.error("Error when resetting autoscaling labels.")
 
     def add_label_to_nodes(self, nodes: list, label: str):
+        if not nodes or not label:
+            self.__log.error("Nodes or label is empty")
         # Create a Kubernetes API client
         api_instance = Client.CoreV1Api()
 
         try:
             for node in nodes:
-                self.__log.info(f"Adding label {label} to node {node}")
-                node.metadata.labels.update(label)
-                api_instance.patch_node(
-                    node.metadata.name, {"metadata": {"labels": node.metadata.labels}}
-                )
+                # Retrieve node object
+                node_object = api_instance.read_node(node)
+
+                node_labels = node_object.metadata.labels.copy()
+                # Get label from str format to dict format and add label to node
+                # Check if label is key=value format or just key format
+                if "=" in label:
+                    key, value = label.split("=")
+                    node_labels[key] = value
+                else:
+                    node_labels[label] = ""
+                body = {"metadata": {"labels": node_labels}}
+                # Patch node with new label
+                api_instance.patch_node(node_object.metadata.name, body=body)
         except ApiException as e:
             self.__log.error(f"Exception when calling CoreV1Api->list_node: {e}\n")
 
     def remove_label_from_nodes(self, nodes: list, label: str):
+        if not nodes or not label:
+            self.__log.error("Nodes or label is empty")
         # Create a Kubernetes API client
         api_instance = Client.CoreV1Api()
-        # If no nodes are specified, query all nodes with the label
-        if not nodes:
-            nodes = api_instance.list_node(label_selector=label)
-            # If no nodes are found, return
-            if not nodes.items:
-                return
-
         try:
             for node in nodes:
-                self.__log.info(f"Removing label {label} from node {node}")
-                node.metadata.labels.pop(label)
-                api_instance.patch_node(
-                    node.metadata.name, {"metadata": {"labels": node.metadata.labels}}
-                )
+                # Retrieve node object
+                node_object = api_instance.read_node(node)
+
+                node_labels = node_object.metadata.labels.copy()
+                # Check if label is key=value format or just key format, and remove label from node by setting value to None
+                if "=" in label:
+                    key, value = label.split("=")
+                    # Check if label exists
+                    if key in node_object.metadata.labels:
+                        # Update value of key to None
+                        node_labels[key] = None
+                else:
+                    # Check if label exists
+                    if label in node_object.metadata.labels:
+                        # Update value of key to None
+                        node_labels[label] = None
+                body = {"metadata": {"labels": node_labels}}
+                # Patch node with new label
+                api_instance.patch_node(node_object.metadata.name, body=body)
         except ApiException as e:
             self.__log.error(f"Exception when calling CoreV1Api->list_node: {e}\n")
 
@@ -371,7 +396,6 @@ class KubernetesManager:
 
     # Load resource definition template from file and fill in the parameters
     def load_resource_definition(self, resource_filename, experiment_params):
-
         try:
             with open(resource_filename, "r") as f:
                 resource_template = f.read()
