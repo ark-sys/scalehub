@@ -237,6 +237,7 @@ class ExperimentsManager:
             self.__log.info("Resetting taskmanager replicas.")
             # Reset to 0 and back to 1 to trigger placement of taskmanager on schedulable nodes
             self.k.scale_deployment("flink-taskmanager", replicas=0)
+            sleep(1)
             self.k.scale_deployment("flink-taskmanager", replicas=1)
 
         # Get name of job file to run

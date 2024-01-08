@@ -26,7 +26,7 @@ class KubernetesManager:
         # Fetch the deployment
         try:
             deployment = api_instance.read_namespaced_deployment(
-                name=deployment_name, namespace="default"
+                name=deployment_name, namespace="default", async_req=False
             )
         except ApiException as e:
             self.__log.error(
