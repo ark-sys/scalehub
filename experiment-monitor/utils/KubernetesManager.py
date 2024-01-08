@@ -198,7 +198,7 @@ class KubernetesManager:
     # Workaround to reset the latency experiment on rescale as the NetworkChaos resource does not support dynamic updates on target pods
     def __reset_latency(self, deployment_name, experiment_params):
         # Definition of the NetworkChaos resource on Flink
-        resource_definition = self.load_resource_definition(
+        resource_object = self.load_resource_definition(
             "/app/templates/flink-latency.yaml.j2", experiment_params
         )
         # Create API instances
@@ -237,7 +237,7 @@ class KubernetesManager:
                         version="v1alpha1",
                         namespace="default",
                         plural="networkchaos",
-                        body=resource_definition,
+                        body=resource_object,
                     )
                     old_replica_count = new_replica_count
 
@@ -378,7 +378,8 @@ class KubernetesManager:
                 resource_definition = jinja2.Template(resource_template).render(
                     experiment_params
                 )
-                return resource_definition
+            resource_object = yaml.safe_load(resource_definition)
+            return resource_object
         except FileNotFoundError as e:
             self.__log.error(f"File not found: {resource_filename}")
             return
@@ -386,7 +387,7 @@ class KubernetesManager:
     # Deploy a networkchaos resource
     def create_networkchaos(self, template_filename, experiment_params):
         # Load resource definition from file
-        resource_definition = self.load_resource_definition(
+        resource_object = self.load_resource_definition(
             template_filename, experiment_params
         )
         custom_api = Client.CustomObjectsApi()
@@ -396,7 +397,7 @@ class KubernetesManager:
                 version="v1alpha1",
                 namespace="default",
                 plural="networkchaos",
-                body=resource_definition,
+                body=resource_object,
             )
         except ApiException as e:
             self.__log.error(
