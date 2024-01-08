@@ -6,6 +6,11 @@
         state: present
         definition: "{{ lookup('ansible.builtin.template', 'transscale-config.yaml.j2') | from_yaml }}"
 
+    - name: Deploy transscale-job definition
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('ansible.builtin.file', 'transscale-job-definition.yaml') | from_yaml }}"
+
 - name: Delete transscale
   tags: [ delete ]
   block:
@@ -18,3 +23,8 @@
       kubernetes.core.k8s:
         state: absent
         definition: "{{ lookup('ansible.builtin.template', 'transscale-config.yaml.j2') | from_yaml }}"
+
+    - name: Delete transscale-job definition
+      kubernetes.core.k8s:
+        state: absent
+        definition: "{{ lookup('ansible.builtin.file', 'transscale-job-definition.yaml') | from_yaml }}"

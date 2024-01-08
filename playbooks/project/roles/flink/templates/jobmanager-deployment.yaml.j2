@@ -17,7 +17,7 @@ spec:
         component: jobmanager
     spec:
       nodeSelector:
-        node-role.kubernetes.io/consumer: ''
+        node-role.kubernetes.io/worker: 'consumer'
       terminationGracePeriodSeconds: 0
       imagePullSecrets:
         - name: gitlab-scalehub
@@ -40,9 +40,9 @@ spec:
             - name: FLINK_STATE_BACKEND
               value: "rocksdb"
             - name: CHECKPOINTING_INTERVAL_MS
-              value: "4000"
+              value: "{{ checkpoint_interval }}"
             - name: JOB_WINDOW_SIZE
-              value: "1000"
+              value: "{{ window_size }}"
           resources:
             limits:
               memory: 4Gi
@@ -67,8 +67,6 @@ spec:
               mountPath: /opt/flink/conf
             - name: data-volume
               mountPath: /mnt/data
-#            - name: checkpoint-volume
-#              mountPath: /mnt/checkpoints
             - name: artifacts-volume
               mountPath: /tmp/jobs
           securityContext:
@@ -82,9 +80,6 @@ spec:
                 path: flink-conf.yaml
               - key: log4j-console.properties
                 path: log4j-console.properties
-#        - name: checkpoint-volume
-#          persistentVolumeClaim:
-#            claimName: checkpoint-pvc
         - name: data-volume
           hostPath:
             path: /tmp/experiment-data

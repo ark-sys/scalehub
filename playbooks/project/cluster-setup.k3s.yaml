@@ -1,6 +1,6 @@
 ---
 - name: Common setup for both workers and controller
-  hosts: control, workers
+  hosts: control, consumers, producers
   become: true
   gather_facts: true
   tags: [ always ]
@@ -98,7 +98,7 @@
         mode: '644'
 
 - name: Install K3S on worker nodes
-  hosts: workers
+  hosts: consumers, producers
   become: true
   gather_facts: false
   tags: [ always ]
@@ -115,7 +115,7 @@
       shell:
         cmd: "curl -sfL https://get.k3s.io | sh -s -"
 
-- name: Post-install configuration - Label worker nodes
+- name: Post-install configuration
   hosts: localhost
   gather_facts: false
   tags: [ always ]
@@ -128,75 +128,49 @@
         api_version: v1
         kind: Namespace
         state: present
-    - name: Retrieve worker nodes from inventory
-      set_fact:
-        worker_hosts: "{{ groups['workers'] }}"
-    - name: Retrieve control node from inventory
-      set_fact:
-        control_host: "{{ groups['control'][0] }}"
-
-    - name: Define total_nodes variable
-      set_fact:
-        total_nodes: "{{ worker_hosts | length | int }}"
-
-    - name: Calculate number of producer nodes
-      set_fact:
-        producer_nodes: "{{ (total_nodes | int * 3 / 10) | round | int }}"
-
-    - name: Calculate number of consumer nodes
-      set_fact:
-        consumer_nodes: "{{ total_nodes | int - producer_nodes | int }}"
-
-    - name: Slice worker_hosts list
-      set_fact:
-        producer_hosts: "{{ worker_hosts[:producer_nodes | int] }}"
-        consumer_hosts: "{{ worker_hosts[producer_nodes | int:] }}"
-
-    - name: Clean all labels from nodes all nodes
-      command:
-        cmd: "kubectl label nodes --all --overwrite node-role.kubernetes.io/worker- node-role.kubernetes.io/producer- node-role.kubernetes.io/consumer- node-role.kubernetes.io/autoscaling-"
-
-    - name: Label nodes based on node count
+    - name: Label nodes
       block:
-        - name: Label nodes as worker-producer
+        - name: Clean all labels from nodes all nodes
           command:
-            cmd: "kubectl label nodes {{ item }} --overwrite node-role.kubernetes.io/worker='producer' node-role.kubernetes.io/producer=''"
-          with_items:
-            - "{{ producer_hosts }}"
-
-        - name: Label nodes as worker-consumer
+            cmd: "kubectl label nodes --all --overwrite node-role.kubernetes.io/worker- node-role.kubernetes.io/producer- node-role.kubernetes.io/consumer- node-role.kubernetes.io/autoscaling-"
+        - name: Retrieve control node from inventory
+          set_fact:
+            control_host: "{{ groups['control'][0] }}"
+        - name: Retrieve consumer nodes from inventory
+          set_fact:
+            consumer_hosts: "{{ groups['consumers'] }}"
+        - name: Retrieve producer nodes from inventory
+          set_fact:
+            producers_hosts: "{{ groups['producers'] }}"
+        - name: Label consumer nodes
           command:
-            cmd: "kubectl label nodes {{ item }} --overwrite node-role.kubernetes.io/worker='consumer' node-role.kubernetes.io/consumer=''"
+              cmd: "kubectl label nodes {{ item }} --overwrite node-role.kubernetes.io/worker='consumer' node-role.kubernetes.io/consumer=''"
           with_items:
-            - "{{ consumer_hosts }}"
-      when: total_nodes | int >= 3
+              - "{{ consumer_hosts }}"
+        - name: Label producer nodes
+          command:
+              cmd: "kubectl label nodes {{ item }} --overwrite node-role.kubernetes.io/worker='producer' node-role.kubernetes.io/producer=''"
+          with_items:
+              - "{{ producers_hosts }}"
+        - name: Label control node
+          command:
+            cmd: "kubectl label nodes {{ control_host }} --overwrite node-role.kubernetes.io/control-plane=true"
 
-    - name: Label all nodes as worker-producer and worker-consumer
-      command:
-        cmd: "kubectl label nodes {{ item }} --overwrite node-role.kubernetes.io/worker='producer' node-role.kubernetes.io/producer='' node-role.kubernetes.io/consumer=''"
-      with_items:
-        - "{{ worker_hosts }}"
-      when: total_nodes | int < 3
+        - name: Randomly select a consumer node
+          set_fact:
+            random_consumer_node: "{{ consumer_hosts | random(seed=42) }}"
 
-    - name: Label control node
-      command:
-        cmd: "kubectl label nodes {{ control_host }} --overwrite node-role.kubernetes.io/control-plane=true"
-
-    - name: Randomly select a consumer node
-      set_fact:
-        random_consumer_node: "{{ consumer_hosts | random(seed=42) }}"
-
-    - name: Label a random consumer node with autoscaling
-      command:
-        cmd: "kubectl label node {{ random_consumer_node }} --overwrite node-role.kubernetes.io/autoscaling='SCHEDULABLE'"
+        - name: Label a random consumer node with autoscaling
+          command:
+            cmd: "kubectl label node {{ random_consumer_node }} --overwrite node-role.kubernetes.io/autoscaling='SCHEDULABLE'"
 
 # TODO: find another way to do this
-- name: Add kubernetes secret to pull images from private registry
+- name: Add secrets to access resources
   hosts: localhost
   gather_facts: false
   tags: [ always ]
   tasks:
-    - name: Create Secret resource
+    - name: Create Secret to pull images from private registry
       kubernetes.core.k8s:
         state: present
         definition:
@@ -208,3 +182,18 @@
           type: kubernetes.io/dockerconfigjson
           data:
             .dockerconfigjson: ewoJImF1dGhzIjogewoJCSJyZWdpc3RyeS5naXRsYWIuaW5yaWEuZnIiOiB7CgkJCSJhdXRoIjogImFXMWhaMlZmY0hWc2JHVnlPbWRzY0dGMExUSkJla1ZET1hkd2RtUnJYMFZHTmxWdVlqUnUiCgkJfQoJfQp9
+    - name: Get kubeconfig from cluster
+      shell: kubectl config view --raw --minify
+      register: kubeconfig
+    - name: Create Secret with kubeconfig in default namespace
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          type: Opaque
+          metadata:
+            name: kube-secret
+            namespace: default
+          data:
+            kubeconfig: "{{ kubeconfig.stdout | b64encode }}"

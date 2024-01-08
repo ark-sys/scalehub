@@ -1,9 +1,5 @@
 ansible
 enoslib
 kubernetes
-argcomplete
-pandas
-matplotlib
-seaborn
-networkx
 jmespath
+paho-mqtt

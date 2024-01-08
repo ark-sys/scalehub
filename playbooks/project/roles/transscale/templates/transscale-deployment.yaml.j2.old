@@ -41,7 +41,7 @@ spec:
       volumes:
         - name: kubeconfig-volume
           secret:
-            secretName: transscale-secret
+            secretName: kube-secret
             items:
               - key: kubeconfig
                 path: kubeconfig

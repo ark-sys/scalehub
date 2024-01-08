@@ -26,7 +26,7 @@ spec:
                   app: flink
                   component: taskmanager
       nodeSelector:
-        node-role.kubernetes.io/consumer: ''
+        node-role.kubernetes.io/worker: 'consumer'
         node-role.kubernetes.io/autoscaling: SCHEDULABLE
       terminationGracePeriodSeconds: 0
       imagePullSecrets:
@@ -56,10 +56,6 @@ spec:
               mountPath: /opt/flink/conf/
             - name: data-volume
               mountPath: /mnt/data
-#            - name: checkpoint-volume
-#              mountPath: /mnt/checkpoints
-#          securityContext:
-#            runAsUser: 9999  # refers to user _flink_ from official flink image, change if necessary
       volumes:
         - name: flink-config-volume
           configMap:
@@ -69,9 +65,6 @@ spec:
                 path: flink-conf.yaml
               - key: log4j-console.properties
                 path: log4j-console.properties
-#        - name: checkpoint-volume
-#          persistentVolumeClaim:
-#            claimName: checkpoint-pvc
         - name: data-volume
           hostPath:
             path: /tmp/experiment-data

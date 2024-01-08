@@ -1,0 +1,14 @@
+---
+# This volume will hold experiments data, such as transscale logs, time series data, etc.
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: experiments-pvc
+  namespace: experiment-monitor
+spec:
+  storageClassName: nfs-csi
+  accessModes:
+      - ReadWriteMany
+  resources:
+      requests:
+        storage: 20Gi

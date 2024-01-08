@@ -1,7 +1,11 @@
-from os import getcwd
-from os.path import exists, join
-
-from .Defaults import DefaultValues as Value, ConfigKeys as Key
+import json
+from inspect import getmembers, isclass
+from os.path import exists
+import configparser as cp
+from .Defaults import (
+    DefaultValues as Value,
+    DefaultKeys as Key,
+)
 from .Logger import Logger
 
 
@@ -10,51 +14,80 @@ class Config:
 
     def __init__(self, log: Logger, conf_path: str = None):
         self.__log = log
+
+        # Initialize default values
         self.__init_defaults()
 
-        if conf_path is None or not exists(conf_path):
-            self.__log.warning(
-                f"[CONFIG] Config file [{conf_path}] not specified or not existing.\n"
-                f"\tUsing [{Value.System.CONF_PATH}] instead."
-            )
-            conf_path = join(getcwd(), Value.System.CONF_PATH)
+        # Initialize the configuration parser
+        self.cp = cp.ConfigParser()
+
+        # Check that the configuration file exists and is valid
+        self.validate(conf_path)
+
+        # Read the configuration file
         self.__read_config_file(conf_path)
 
     def __init_defaults(self):
-        self.__config[Key.PLAYBOOKS_PATH] = Value.System.PLAYBOOKS_PATH
-        self.__config[Key.INVENTORY_PATH] = Value.System.INVENTORY_PATH
-        self.__config[Key.EXPERIMENTS_DATA_PATH] = Value.System.EXPERIMENTS_DATA_PATH
-        self.__config[Key.DEBUG_LEVEL] = Value.System.Debug.level
+        self.__config[Key.Scalehub.playbook] = Value.Scalehub.playbooks
+        self.__config[Key.Scalehub.inventory] = Value.Scalehub.inventory
+        self.__config[Key.Scalehub.experiments] = Value.Scalehub.experiments
+        self.__config[Key.Scalehub.debug_level] = Value.Scalehub.Debug.level
 
-        self.__config[Key.TYPE] = Value.Platform.type
-        self.__config[Key.SITE] = Value.Platform.site
-        self.__config[Key.CLUSTER] = Value.Platform.cluster
-        self.__config[Key.NUM_CONTROL] = Value.Platform.controllers
-        self.__config[Key.NUM_WORKERS] = Value.Platform.workers
-        self.__config[Key.QUEUE_TYPE] = Value.Platform.queue
-        self.__config[Key.WALLTIME] = Value.Platform.walltime
-        self.__config[Key.WALLTIME_EXTENSION] = Value.Platform.walltime_extension
-        self.__config[Key.KUBERNETES_TYPE] = Value.Platform.kubernetes_type
+        self.__config[Key.Platform.type] = Value.Platform.type
+        self.__config[Key.Platform.reservation_name] = Value.Platform.reservation_name
+        self.__config[Key.Platform.site] = Value.Platform.site
+        self.__config[Key.Platform.cluster] = Value.Platform.cluster
+        self.__config[Key.Platform.producers] = Value.Platform.producers
+        self.__config[Key.Platform.consumers] = Value.Platform.consumers
+        self.__config[Key.Platform.queue] = Value.Platform.queue
+        self.__config[Key.Platform.walltime] = Value.Platform.walltime
+        self.__config[Key.Platform.kubernetes_type] = Value.Platform.kubernetes_type
 
-        self.__config[Key.NAME] = Value.Experiment.name
-        self.__config[Key.JOB] = Value.Experiment.job_file
-        self.__config[Key.TASK] = Value.Experiment.task_name
-        self.__config[Key.DB_URL] = Value.Experiment.db_url
-        self.__config[Key.DELAY_ENABLE] = Value.Experiment.Delay.enable
-        self.__config[Key.DELAY_LATENCY] = Value.Experiment.Delay.latency
-        self.__config[Key.DELAY_JITTER] = Value.Experiment.Delay.jitter
-        self.__config[Key.DELAY_CORRELATION] = Value.Experiment.Delay.correlation
-        self.__config[Key.LOAD_GENERATORS] = Value.Experiment.LoadGenerator
-        self.__config[Key.DATA_SKIP_DURATION] = Value.Experiment.ExperimentData.skip_s
-        self.__config[Key.DATA_OUTPUT_PLOT] = Value.Experiment.ExperimentData.plot
-        self.__config[Key.DATA_OUTPUT_STATS] = Value.Experiment.ExperimentData.stats
+        self.__config[Key.Experiment.name] = Value.Experiment.name
+        self.__config[Key.Experiment.job_file] = Value.Experiment.job_file
+        self.__config[Key.Experiment.task_name] = Value.Experiment.task_name
+        self.__config[Key.Experiment.output_skip_s] = Value.Experiment.output_skip_s
+        self.__config[Key.Experiment.output_plot] = Value.Experiment.output_plot
+        self.__config[Key.Experiment.output_stats] = Value.Experiment.output_stats
+        self.__config[
+            Key.Experiment.broker_mqtt_host
+        ] = Value.Experiment.broker_mqtt_host
+        self.__config[
+            Key.Experiment.broker_mqtt_port
+        ] = Value.Experiment.broker_mqtt_port
 
-        self.__config[Key.TRANSCCALE_PAR] = Value.Transscale.max_parallelism
-        self.__config[Key.TRANSSCALE_WARMUP] = Value.Transscale.monitoring_warmup
-        self.__config[Key.TRANSSCALE_INTERVAL] = Value.Transscale.monitoring_interval
+        self.__config[Key.Experiment.Chaos.enable] = Value.Experiment.Chaos.enable
 
-    def set(self, key, value):
-        self.__config[key] = value
+        self.__config[
+            Key.Experiment.Chaos.delay_latency_ms
+        ] = Value.Experiment.Chaos.latency_ms
+        self.__config[
+            Key.Experiment.Chaos.delay_jitter_ms
+        ] = Value.Experiment.Chaos.jitter_ms
+        self.__config[
+            Key.Experiment.Chaos.delay_correlation
+        ] = Value.Experiment.Chaos.correlation
+
+        self.__config[
+            Key.Experiment.Generators.generators
+        ] = Value.Experiment.Generators
+
+        self.__config[
+            Key.Experiment.Transscale.max_parallelism
+        ] = Value.Experiment.Transscale.max_parallelism
+        self.__config[
+            Key.Experiment.Transscale.monitoring_warmup_s
+        ] = Value.Experiment.Transscale.monitoring_warmup_s
+        self.__config[
+            Key.Experiment.Transscale.monitoring_interval_s
+        ] = Value.Experiment.Transscale.monitoring_interval_s
+
+        self.__config[
+            Key.Experiment.Flink.checkpoint_interval_ms
+        ] = Value.Experiment.Flink.checkpoint_interval_ms
+        self.__config[
+            Key.Experiment.Flink.window_size_ms
+        ] = Value.Experiment.Flink.window_size_ms
 
     def get(self, key) -> any:
         if key in self.__config:
@@ -82,53 +115,137 @@ class Config:
         return [int(value) for value in self.get_str(key).split(",")]
 
     def parse_load_generators(self):
-        load_generators_section = self.get("experiment.load_generators")
-
+        # Get load_generators names
+        load_generators_str = []
+        for value in self.cp[Key.Experiment.Generators.generators].values():
+            load_generators_str = value.split(",")
         load_generators = []
-        current_generator = None
+        for generator_name in load_generators_str:
+            name = generator_name.strip()
+            # Get section name for generator
+            generator_section = f"experiment.generators.{name}"
 
-        for line in load_generators_section.split("\n"):
-            line = line.strip()
-            if not line:
-                continue
+            # Get values for generator
+            topic = self.cp[generator_section]["topic"]
+            num_sensors = self.cp[generator_section]["num_sensors"]
+            interval_ms = self.cp[generator_section]["interval_ms"]
+            replicas = self.cp[generator_section]["replicas"]
+            value = self.cp[generator_section]["value"]
 
-            if line.startswith("- name"):
-                if current_generator:
-                    load_generators.append(current_generator)
-                current_generator = {"name": line.split("=")[1].strip()}
-            else:
-                key, value = map(str.strip, line.split("="))
-                current_generator[key] = value
-
-        if current_generator:
-            load_generators.append(current_generator)
-
+            # Create generator dictionary
+            generator = {
+                "name": name,
+                "topic": topic,
+                "num_sensors": num_sensors,
+                "interval_ms": interval_ms,
+                "replicas": replicas,
+                "value": value,
+            }
+            # Add generator to list
+            load_generators.append(generator)
         return load_generators
 
-    def __read_config_file(self, conf_path: str):
-        if exists(conf_path):
+    def __validate_experiment(self, conf_path: str):
+        section_base = "experiment"
+        # Validate subclasses of Experiment
+        for name, cls in getmembers(Key.Experiment, isclass):
+            # Skip private attributes and the Generators class in this step
+            if name.startswith("__") and name.endswith("__") or name == "Generators":
+                continue
+            section = f"{section_base}.{name.lower()}"
+            if not self.cp.has_section(section):
+                self.__log.error(
+                    f"[CONF] Section [{section}] is missing in configuration file {conf_path}"
+                )
+                exit(1)
+            else:
+                # For each subclass of cls get keys and filter out the private ones.
+                keys = [
+                    key
+                    for key, value in getmembers(cls)
+                    if not key.startswith("__") and not key.endswith("__")
+                ]
 
-            import configparser as cp
-
-            dummy_header = "config"
-
-            parser = cp.ConfigParser()
-            with open(conf_path) as cf:
-                content = f"[{dummy_header}]\n" + cf.read()
-
-            parser.read_string(content)
-            conf = parser[dummy_header]
-
-            for key in conf:
-                if key in self.__config:
-                    self.__config[key] = conf[key]
-                else:
-                    self.__log.error(f'[CONF] Specified key "{key}" does not exist')
+                # Check that all keys are defined in the configuration file for this section
+                for key in keys:
+                    if not self.cp.has_option(section, key):
+                        self.__log.error(
+                            f"[CONF] Key [{key}] is missing in section [{section}] in configuration file {conf_path}"
+                        )
+                        exit(1)
+        # Validate the Generators class
+        section = f"{section_base}.generators"
+        if not self.cp.has_section(section):
+            self.__log.error(
+                f"[CONF] Section [{section}] is missing in configuration file {conf_path}"
+            )
+            exit(1)
         else:
-            self.__log.warning(f"[CONF] No configuration file found")
+            # Get the list of generators defined in the configuration file; this is a comma separated list
+            generators = self.cp[section]["generators"].split(",")
+            # For each generator, check that the section exists
+            for generator in generators:
+                section = f"{section_base}.generators.{generator.strip()}"
+                if not self.cp.has_section(section):
+                    self.__log.error(
+                        f"[CONF] Section [{section}] is missing in configuration file {conf_path}"
+                    )
+                    exit(1)
+                else:
+                    # For each subclass of cls get keys and filter out the private ones.
+                    keys = [
+                        key
+                        for key, value in getmembers(
+                            Key.Experiment.Generators.Generator
+                        )
+                        if not key.startswith("__") and not key.endswith("__")
+                    ]
 
-    # def dump_experiment_config(self):
-    #     for key in conf
-    def validate(self):
-        # TODO validate config file format (stuff like minimum info)
-        pass
+                    # Check that all keys are defined in the configuration file for this section
+                    for key in keys:
+                        if not self.cp.has_option(section, key):
+                            self.__log.error(
+                                f"[CONF] Key [{key}] is missing in section [{section}] in configuration file {conf_path}"
+                            )
+                            exit(1)
+
+    def validate(self, conf_path: str):
+        # Check that the configuration file exists
+        if not exists(conf_path):
+            self.__log.error(f"[CONF] Config file [{conf_path}] does not exist.")
+            exit(1)
+        else:
+            self.__log.info(f"[CONF] Config file [{conf_path}] found.")
+
+            # Read the configuration file
+            self.cp.read(conf_path)
+
+            # Check that the main sections are defined
+            for name, cls in getmembers(Key, isclass):
+                if name.startswith("__") and name.endswith("__"):
+                    continue
+                section = name.lower()
+                if not self.cp.has_section(section):
+                    self.__log.error(
+                        f"[CONF] Section [{section}] is missing in configuration file {conf_path}"
+                    )
+                    exit(1)
+            # Validate subclasses of Experiment
+            self.__validate_experiment(conf_path)
+
+    def __read_config_file(self, conf_path: str):
+        # Read the configuration file
+        self.cp.read(conf_path)
+
+        for section in self.cp.sections():
+            for key in self.cp[section]:
+                dict_key = f"{section}.{key}"
+                self.__config[dict_key] = self.cp[section][key]
+
+        self.__config[
+            Key.Experiment.Generators.generators
+        ] = self.parse_load_generators()
+
+    # Serialize the configuration to a JSON string
+    def to_json(self):
+        return json.dumps(self.__config)

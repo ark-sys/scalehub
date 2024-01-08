@@ -1,5 +1,5 @@
 ---
-- name: Deploy storage resources
+- name: Install resources on cluster
   hosts: localhost
   gather_facts: false
   roles:
@@ -9,6 +9,4 @@
     - kafka
     - flink
     - chaos
-# Deploy these playbooks individually to control transscale startup
-#    - load_generators
-#    - transscale
+    - transscale

@@ -23,14 +23,11 @@ class DefaultKeys:
         output_skip_s = "experiment.output_skip_s"
         output_stats = "experiment.output_stats"
         output_plot = "experiment.output_plot"
-        broker_mqtt_host = "experiment.broker_mqtt_host"
-        broker_mqtt_port = "experiment.broker_mqtt_port"
 
         class Generators:
             generators = "experiment.generators"
 
             class Generator:
-                name = "experiment.generators.name"
                 topic = "experiment.generators.name.topic"
                 num_sensors = "experiment.generators.name.num_sensors"
                 interval_ms = "experiment.generators.name.interval_ms"
@@ -87,8 +84,6 @@ class DefaultValues:
         output_skip_s = 120
         output_stats = True
         output_plot = True
-        broker_mqtt_host = "broker-mqtt.scalehub.local"
-        broker_mqtt_port = 1883
 
         class Generators:
             generators = ["generator1"]
