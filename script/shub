@@ -117,6 +117,8 @@ def experiment(action, config: Config):
             e.start()
         case "stop":
             e.stop()
+        case "clean":
+            e.clean()
         case _:
             log.error(f"Action {action} is not implemented.")
 
@@ -185,10 +187,12 @@ def run(action, action_type, config: Config):
         case _:
             log.error(f"Action {action} is not implemented.")
 
+
 def sync_experiment_data(config: Config):
     log.info("Syncing experiment data...")
     p: Platform = G5k(config, log)
     p.sync_data()
+
 
 # Export data for a given date
 @DeprecationWarning
@@ -346,9 +350,7 @@ def main(log: Logger):
     )
 
     # Sync command
-    subparsers.add_parser(
-        "sync", help="Sync experiment data from remote to local"
-    )
+    subparsers.add_parser("sync", help="Sync experiment data from remote to local")
 
     # Run command
     run_parser = subparsers.add_parser("run", help="Run action.")

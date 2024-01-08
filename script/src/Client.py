@@ -75,18 +75,24 @@ class Client:
             case "experiment/state":
                 self.__log.info("Received state")
                 self.state = message.payload.decode("utf-8")
+
     def on_connect(self, client, userdata, flags, rc):
         self.__log.info(f"Connected with result code {rc}")
 
         # Subscribe to experiment topics
         self.client.subscribe("experiment/ack", qos=2)
         self.client.subscribe("experiment/state", qos=2)
+
     def setup_mqtt(self):
         self.client.on_message = self.on_message
         self.client.on_connect = self.on_connect
         self.client.username_pw_set(self.mqtt_user, self.mqtt_pass)
         try:
-            self.client.connect(self.broker_host, self.broker_port, 60,)
+            self.client.connect(
+                self.broker_host,
+                self.broker_port,
+                60,
+            )
         except ConnectionRefusedError as e:
             self.__log.error(f"MQTT connection failed: {e}")
             exit(1)
@@ -157,3 +163,8 @@ class Client:
             self.__log.info("Waiting for ack...")
             time.sleep(1)
         self.__log.info(f"Experiment state is {self.state}.")
+
+    def clean(self):
+        self.__log.info("Cleaning experiment")
+        # Clean messages on experiment/command
+        self.client.publish("experiment/command", "", qos=2, retain=True)

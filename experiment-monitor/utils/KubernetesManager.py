@@ -230,8 +230,8 @@ class KubernetesManager:
                         name="flink-latency",
                     )
                     sleep(3)
-                    # Recreate the NetworkChaos resource
 
+                    # Recreate the NetworkChaos resource
                     custom_api.create_namespaced_custom_object(
                         group="chaos-mesh.org",
                         version="v1alpha1",
@@ -410,16 +410,17 @@ class KubernetesManager:
     def get_networkchaos_instances(self):
         custom_api = Client.CustomObjectsApi()
         try:
-            network_chaos_objects = custom_api.list_namespaced_custom_object(
+            network_chaos_object = custom_api.get_namespaced_custom_object(
                 group="chaos-mesh.org",
                 version="v1alpha1",
                 namespace="default",
                 plural="networkchaos",
+                name="consul-latency",
             )
 
             result = [
                 instance.split("/")[1]
-                for instance in network_chaos_objects["items"][0]["status"]["instances"]
+                for instance in network_chaos_object["status"]["instances"]
             ]
             return result
         except ApiException as e:
