@@ -1,0 +1,5 @@
+kubernetes
+paho-mqtt
+pandas
+matplotlib
+jinja2

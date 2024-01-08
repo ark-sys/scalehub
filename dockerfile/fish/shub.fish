@@ -16,7 +16,7 @@ set -l shub_commands provision destroy deploy delete run export plot
 complete -c shub -f
 
 # Enable autocompletion for the 'shub' command with the defined list of commands
-complete -c shub -n "not __fish_seen_subcommand_from $shub_commands" -a "provision destroy deploy delete reload run export plot"
+complete -c shub -n "not __fish_seen_subcommand_from $shub_commands" -a "provision destroy deploy delete reload experiment tokens run export"
 
 # Define the descriptions for each command
 complete -c shub -n "__fish_use_subcommand" -a "provision" -d "Provision the platform specified in conf/scalehub.conf"
@@ -24,9 +24,10 @@ complete -c shub -n "__fish_use_subcommand" -a "destroy" -d "Destroy the platfor
 complete -c shub -n "__fish_use_subcommand" -a "deploy" -d "Execute deploy tasks of the provided playbook"
 complete -c shub -n "__fish_use_subcommand" -a "delete" -d "Execute delete tasks of the provided playbook"
 complete -c shub -n "__fish_use_subcommand" -a "reload" -d "Execute reload tasks of the provided playbook"
-complete -c shub -n "__fish_use_subcommand" -a "run" -d "Run action"
+complete -c shub -n "__fish_use_subcommand" -a "experiment" -d "Start or stop an experiment"
+complete -c shub -n "__fish_use_subcommand" -a "tokens" -d "Print tokens for kubernetes and MinIO dashboards"
 complete -c shub -n "__fish_use_subcommand" -a "export" -d "Export data"
-complete -c shub -n "__fish_use_subcommand" -a "plot" -d "Starts interactive plotter"
+complete -c shub -n "__fish_use_subcommand" -a "run" -d "Run action"
 
 # Autocompletion for 'deploy' and 'delete' commands
 # This function returns the names of the playbook files

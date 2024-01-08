@@ -5,6 +5,7 @@ FROM python:slim-bullseye
 ENV TZ="Europe/Paris"
 ENV KUBECONFIG="/app/conf/kubeconfig"
 ENV ANSIBLE_CONFIG="/app/conf/ansible.cfg"
+ENV SHUB_CONFIG="/app/conf/scalehub.ini"
 ENV PATH="$PATH:/app/script"
 
 # Get build arguments, default to 1000:1000 if not set
@@ -18,7 +19,6 @@ RUN apt-get update && apt-get install -y \
     iproute2 \
     procps \
     openssh-client \
-    python3-pip \
     gcc \
     libffi-dev \
     curl \
@@ -28,7 +28,8 @@ RUN apt-get update && apt-get install -y \
     iputils-ping \
     tk \
     nginx \
-    sudo
+    sudo \
+    rsync
 
 # Install python requirements
 COPY requirements.txt requirements.txt

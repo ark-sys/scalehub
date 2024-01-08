@@ -1,14 +1,11 @@
-import json
 import os
 import re
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import Any
 
-import numpy as np
 import pandas as pd
 import pandas.errors
 import pytz
-import yaml
 from matplotlib import pyplot as plt
 from matplotlib.legend_handler import HandlerTuple
 
@@ -29,14 +26,12 @@ from .utils.KubernetesManager import KubernetesManager
 class ExperimentData:
     BASE_TIMESERIES = "flink_operator"
 
-    def __init__(
-        self, log: Logger, exp_path: str, start_ts: int, end_ts: int, db_url: str
-    ):
+    def __init__(self, log: Logger, exp_path: str, start_ts: int, end_ts: int):
         self.__log = log
         self.exp_path = exp_path
         self.start_ts = start_ts
         self.end_ts = end_ts
-        self.db_url = db_url
+        self.db_url = "localhost/vm"
         # Placeholders for throughput_in, throughput_out and parallelism timeseries
         self.tpo_timeseries = ""
         self.tpi_timeseries = ""
@@ -392,32 +387,26 @@ class Experiment:
 
         self.config = config
         self.__log = log
-        self.m: Misc = Misc(log)
         self.k: KubernetesManager = KubernetesManager(log)
 
-        self.cluster = config.get_str(Key.CLUSTER)
-        self.site = config.get_str(Key.SITE)
-
+        self.experiment_base_path = config.get_str(Key.Scalehub.experiments)
         # Get settings from configuration file
-        self.job_name = config.get_str(Key.JOB)
-        self.experiment = config.get_str(Key.NAME)
-        self.task_name = config.get_str(Key.TASK)
+        self.experiment = config.get_str(Key.Experiment.name)
+        self.job_name = config.get_str(Key.Experiment.job_file)
+        self.task_name = config.get_str(Key.Experiment.task_name)
 
-        self.db_url = config.get_str(Key.DB_URL)
-        self.experiment_base_path = config.get_str(Key.EXPERIMENTS_DATA_PATH)
+        self.experiment_delay = config.get_bool(Key.Experiment.Chaos.enable)
+        self.delay_latency = config.get_str(Key.Experiment.Chaos.delay_latency_ms)
+        self.delay_jitter = config.get_str(Key.Experiment.Chaos.delay_jitter_ms)
+        self.delay_correlation = config.get_str(Key.Experiment.Chaos.delay_correlation)
 
-        self.experiment_delay = config.get_bool(Key.DELAY_ENABLE)
-        self.delay_latency = config.get_str(Key.DELAY_LATENCY)
-        self.delay_jitter = config.get_str(Key.DELAY_JITTER)
-        self.delay_correlation = config.get_str(Key.DELAY_CORRELATION)
+        self.skip_s = config.get_int(Key.Experiment.output_skip_s)
+        self.plot = config.get_bool(Key.Experiment.output_plot)
+        self.stats = config.get_bool(Key.Experiment.output_stats)
 
-        self.skip_s = config.get_int(Key.DATA_SKIP_DURATION)
-        self.plot = config.get_bool(Key.DATA_OUTPUT_PLOT)
-        self.stats = config.get_bool(Key.DATA_OUTPUT_STATS)
-
-        self.interval = config.get_int(Key.TRANSSCALE_INTERVAL)
-        self.warmup = config.get_int(Key.TRANSSCALE_WARMUP)
-        self.max_par = config.get_int(Key.TRANSCCALE_PAR)
+        self.interval = config.get_int(Key.Experiment.Transscale.monitoring_interval_s)
+        self.warmup = config.get_int(Key.Experiment.Transscale.monitoring_warmup_s)
+        self.max_par = config.get_int(Key.Experiment.Transscale.max_parallelism)
 
         # Initialize experiment variables
         self.start_ts = 0
@@ -447,7 +436,7 @@ class Experiment:
         log_file_path = os.path.join(exp_path, "exp_log.txt")
 
         # Dump experiment information to log file
-        with open(log_file_path, "w") as file, open(Values.System.CONF_PATH) as config:
+        with open(log_file_path, "w") as file, open(Values.conf_path) as config:
             for line in config:
                 file.write(line)
             file.write(f"\nExperiment start at : {self.start_ts}\n")
@@ -476,7 +465,6 @@ class Experiment:
             exp_path=self.exp_path,
             start_ts=self.start_ts,
             end_ts=self.end_ts,
-            db_url=self.db_url,
         )
 
         return data
@@ -492,9 +480,6 @@ class Experiment:
             )
             experiment_delay = {
                 "run_experiment": "true",
-                "latency": self.delay_latency,
-                "jitter": self.delay_jitter,
-                "correlation": self.delay_correlation,
             }
 
             p.run_playbook("chaos", tags=["experiment"], extra_vars=experiment_delay)
@@ -533,36 +518,19 @@ class Experiment:
             p.deploy("load_generators", extra_vars=load_generators_params)
 
         self.start_experiment()
-        # Run transscale
-        transscale_params = {
-            "job_file": self.job_name,
-            "task_name": self.task_name,
-            "max_parallelism": self.max_par,
-            "warmup": self.warmup,
-            "interval": self.interval,
-        }
 
         transscale_playbook = (
-            f"{self.config.get_str(Key.PLAYBOOKS_PATH)}/roles/transscale"
+            f"{self.config.get_str(Key.Scalehub.playbook)}/roles/transscale"
         )
-        vars_file = os.path.join(transscale_playbook, "vars/main.yaml")
-        job_file = os.path.join(transscale_playbook, "templates/transscale-job.yaml.j2")
-
-        # Add image and tag definition from values
-        try:
-            with open(vars_file) as vars:
-                transscale_params.update(yaml.safe_load(vars))
-        except FileNotFoundError as e:
-            print(f"Config file not found: {e}")
+        job_definition_file = os.path.join(
+            transscale_playbook, "files/transscale-job.yaml"
+        )
 
         # Deploy transscale setup
-        p.deploy(
-            "transscale",
-            extra_vars=transscale_params,
-        )
+        p.deploy("transscale")
 
         # Run transscale job and retrieve the logs from the execution of transscale
-        transscale_logs = self.k.run_job(job_file, params=transscale_params)
+        transscale_logs = self.k.run_job(job_definition_file)
 
         # Generate the output path where the logs will be saved
         transscale_log_path = os.path.join(self.exp_path, "transscale_log.txt")
@@ -609,12 +577,7 @@ class Experiment:
                 extra_vars=load_generators_params,
             )
         # Setup parameters chaos playbook deletion
-        experiment = {
-            "delete_experiment": "true",
-            "latency": "0ms",
-            "jitter": "0ms",
-            "correlation": "0",
-        }
+        experiment = {"delete_experiment": "true"}
         # Delete chaos experiments
         p.run_playbook("chaos", tags=["experiment"], extra_vars=experiment)
 
@@ -623,11 +586,6 @@ class Experiment:
         p: Playbooks = Playbooks()
         p.deploy(
             "transscale",
-            job_file=self.job_name,
-            task_name=self.task_name,
-            max_parallelism=self.max_par,
-            warmup=self.warmup,
-            interval=self.interval,
         )
         # result_data = self.end_experiment()
         # result_data.export_experiment_data()

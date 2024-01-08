@@ -14,26 +14,24 @@ spec:
           restartPolicy: Never
           containers:
             - name: transscale
-              image: "{{transscale_image}}:{{transscale_tag}}"
+              image: registry.gitlab.inria.fr/stream-processing-autoscaling/transscale:combined-testing
               imagePullPolicy: Always
               resources:
                 limits:
                   memory: 1Gi
                   cpu: 200m
+              # -e option is used to make transscale exit after 3 attempts of rescaling
               command: ['python3', '/run_transscale.py', '-e']
-#              command: ["/bin/sh", "-c", "trap : TERM INT; sleep infinity & wait"]
               volumeMounts:
                 - name: transscale-config-volume
                   mountPath: /etc/transscale/conf
                 - name: kubeconfig-volume
                   mountPath: /kubeconfig
                   readOnly: true
-#                - name: artifacts-volume
-#                  mountPath: /etc/transscale/jobs
           volumes:
             - name: kubeconfig-volume
               secret:
-                secretName: transscale-secret
+                secretName: kube-secret
                 items:
                   - key: kubeconfig
                     path: kubeconfig
@@ -43,9 +41,6 @@ spec:
                 items:
                   - key: transscale.conf
                     path: transscale.conf
-#            - name: artifacts-volume
-#              persistentVolumeClaim:
-#                claimName: artifacts-pvc
           tolerations:
             - key: node-role.kubernetes.io/master
               operator: Exists

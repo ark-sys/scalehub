@@ -1,0 +1,25 @@
+---
+kind: NetworkChaos
+apiVersion: chaos-mesh.org/v1alpha1
+metadata:
+  namespace: default
+  name: consul-latency
+spec:
+  selector:
+    namespaces:
+      - consul
+    labelSelectors:
+        app: consul
+        component: client
+    nodeSelectors:
+      'node-role.kubernetes.io/worker': 'consumer'
+  # All values are described here
+  # https://chaos-mesh.org/docs/simulate-network-chaos-on-kubernetes/#field-description
+  mode: fixed-percent
+  value: '67'
+  action: delay
+  delay:
+    latency: "{{ latency }}ms"
+    jitter: "{{ jitter }}ms"
+    correlation: "{{ correlation }}"
+  direction: to

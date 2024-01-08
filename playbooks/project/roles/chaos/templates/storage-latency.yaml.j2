@@ -18,7 +18,7 @@ spec:
     mode: all
     action: delay
     delay:
-        latency: "{{ latency }}"
+        latency: "{{ latency }}ms"
+        jitter: "{{ jitter }}ms"
         correlation: "{{ correlation }}"
-        jitter: "{{ jitter }}"
     direction: to

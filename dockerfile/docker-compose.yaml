@@ -1,5 +1,5 @@
-
 version: "3.6"
+
 secrets:
   creds:
     # Fill this file with personal Grid5000 credentials
@@ -9,7 +9,11 @@ secrets:
     file: secrets/grid5000.pk
 
 networks:
+  broker_net:
+    name: broker_net
+    external: true
   scalehub_net:
+
 
 services:
   scalehub:
@@ -56,6 +60,7 @@ services:
       - "ingress.scalehub.local:127.0.0.1"
     networks:
       - scalehub_net
+      - broker_net
     ports:
       - "80:80"
     tmpfs:
