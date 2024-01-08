@@ -195,10 +195,12 @@ class ExperimentsManager:
             }
             # Remove label 'chaos=true' from all nodes
             chaos_label = "chaos=true"
-            self.k.remove_label_from_nodes(list(), chaos_label)
+            worker_nodes = self.k.get_nodes("node-role.kubernetes.io/worker=consumer")
+            self.k.remove_label_from_nodes(worker_nodes, chaos_label)
 
             # Deploy chaos resources
             self.k.create_networkchaos(self.consul_chaos_template, chaos_params)
+
             # Wait for chaos on consul pods to be ready
             sleep(3)
             # Label nodes hosting an impacted consul pod with 'chaos=true'
@@ -217,9 +219,6 @@ class ExperimentsManager:
 
             # Reset nodes labels
             self.__log.info("Resetting nodes labels.")
-            worker_nodes = self.k.get_nodes_by_label(
-                "node-role.kubernetes.io/worker=consumer"
-            )
 
             # remove label "node-role.kubernetes.io/autoscaling" from all nodes
             autoscaling_label = "node-role.kubernetes.io/autoscaling"
