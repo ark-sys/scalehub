@@ -30,24 +30,31 @@ from utils.Defaults import DefaultKeys as Key
 # 6. Delete transscale-job, chaos, load-generators resources from kubernetes cluster
 # 6. Restart Flink
 
+
 class ExperimentState:
     IDLE = "IDLE"
     STARTING = "STARTING"
     RUNNING = "RUNNING"
     FINISHING = "FINISHING"
 
+
 class ExperimentsManager:
     EXPERIMENTS_BASE_PATH = "/experiment-volume"
     TEMPLATES_BASE_PATH = "/app/templates"
+
     def __init__(self, log: Logger):
         self.__log = log
         self.client = mqtt.Client()
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
 
-        self.consul_chaos_template = f"{self.TEMPLATES_BASE_PATH}/consul-latency.yaml.j2"
+        self.consul_chaos_template = (
+            f"{self.TEMPLATES_BASE_PATH}/consul-latency.yaml.j2"
+        )
         self.flink_chaos_template = f"{self.TEMPLATES_BASE_PATH}/flink-latency.yaml.j2"
-        self.storage_chaos_template = f"{self.TEMPLATES_BASE_PATH}/storage-latency.yaml.j2"
+        self.storage_chaos_template = (
+            f"{self.TEMPLATES_BASE_PATH}/storage-latency.yaml.j2"
+        )
 
         self.k: KubernetesManager = KubernetesManager(log)
 
@@ -110,10 +117,14 @@ class ExperimentsManager:
                     self.config = Config(self.__log, json.loads(config))
                     self.update_state(ExperimentState.STARTING)
                     # Send ack message
-                    self.client.publish("experiment/ack", "ACK_START", retain=True, qos=2)
+                    self.client.publish(
+                        "experiment/ack", "ACK_START", retain=True, qos=2
+                    )
 
                 else:
-                    self.__log.warning(f"Received invalid command {command} for state {self.state}.")
+                    self.__log.warning(
+                        f"Received invalid command {command} for state {self.state}."
+                    )
         else:
             self.__log.warning(f"Received invalid topic {msg.topic}.")
 
@@ -141,9 +152,9 @@ class ExperimentsManager:
         self.client.publish("experiment/state", state, retain=True, qos=2)
 
     def handle_experiment(self):
-    # Handle experiment state
+        # Handle experiment state
         while True:
-            #TODO fix collision if state is changed during execution of start_experiment
+            # TODO fix collision if state is changed during execution of start_experiment
             match self.state:
                 case ExperimentState.STARTING:
                     self.start_experiment()
@@ -156,6 +167,7 @@ class ExperimentsManager:
                         f"Current state is {self.state}. Waiting for START or STOP message."
                     )
                     sleep(1)
+
     def start_experiment(self):
         self.__log.info("Starting experiment")
 
@@ -182,35 +194,45 @@ class ExperimentsManager:
                 ),
             }
             # Remove label 'chaos=true' from all nodes
-            chaos_label= "chaos=true"
-            self.k.remove_label_from_nodes(list(),chaos_label)
+            chaos_label = "chaos=true"
+            self.k.remove_label_from_nodes(list(), chaos_label)
 
             # Deploy chaos resources
             self.k.create_networkchaos(self.consul_chaos_template, chaos_params)
-
+            # Wait for chaos on consul pods to be ready
+            sleep(3)
             # Label nodes hosting an impacted consul pod with 'chaos=true'
             impacted_nodes = self.k.get_impacted_nodes()
-            self.k.add_label_to_nodes(impacted_nodes,chaos_label)
+            self.k.add_label_to_nodes(impacted_nodes, chaos_label)
 
             # Deploy chaos resources on Flink and Storage running on chaos nodes
             self.k.create_networkchaos(self.flink_chaos_template, chaos_params)
             self.k.create_networkchaos(self.storage_chaos_template, chaos_params)
+
+            # Wait for chaos resources to be ready
+            sleep(3)
 
             # Start thread to monitor and reset chaos injection on rescale
             self.k.monitor_injection_thread(experiment_params=chaos_params)
 
             # Reset nodes labels
             self.__log.info("Resetting nodes labels.")
-            worker_nodes = self.k.get_nodes_by_label("node-role.kubernetes.io/worker=consumer")
+            worker_nodes = self.k.get_nodes_by_label(
+                "node-role.kubernetes.io/worker=consumer"
+            )
 
             # remove label "node-role.kubernetes.io/autoscaling" from all nodes
             autoscaling_label = "node-role.kubernetes.io/autoscaling"
-            self.k.remove_label_from_nodes(worker_nodes,f"{autoscaling_label}=SCHEDULABLE")
-            self.k.remove_label_from_nodes(worker_nodes,f"{autoscaling_label}=UNSCHEDULABLE")
+            self.k.remove_label_from_nodes(
+                worker_nodes, f"{autoscaling_label}=SCHEDULABLE"
+            )
+            self.k.remove_label_from_nodes(
+                worker_nodes, f"{autoscaling_label}=UNSCHEDULABLE"
+            )
             # Get clean nodes (worker_nodes - impacted_nodes)
             clean_nodes = list(set(worker_nodes) - set(impacted_nodes))
             # Add label "node-role.kubernetes.io/autoscaling" to clean nodes
-            self.k.add_label_to_nodes(clean_nodes,f"{autoscaling_label}=SCHEDULABLE")
+            self.k.add_label_to_nodes(clean_nodes, f"{autoscaling_label}=SCHEDULABLE")
 
             # Reset taskmanager replicas
             self.__log.info("Resetting taskmanager replicas.")
@@ -259,6 +281,7 @@ class ExperimentsManager:
             except Exception as e:
                 self.__log.warning(f"Error while getting job status: {e}")
                 self.update_state(ExperimentState.FINISHING)
+
     def end_experiment(self):
         self.__log.info("Experiment finished or stopped.")
         self.end_ts = int(datetime.now().timestamp())
@@ -273,7 +296,6 @@ class ExperimentsManager:
 
         # Get logs from transscale-job
         transscale_logs = self.k.get_job_logs("transscale-job", "default")
-
 
         # Save transscale-job logs
         with open(os.path.join(self.exp_path, "transscale_log.txt"), "w") as file:
@@ -315,6 +337,7 @@ class ExperimentsManager:
 
         # Reset counter
         self.update_state("IDLE")
+
     def run(self):
         # Start experiment handler thread
         threading.Thread(target=self.handle_experiment).start()
