@@ -20,7 +20,7 @@ data:
       acl_file /mosquitto/config/acl
   acl: |+
     user monitor
-    topic read experiment/command
+    topic readwrite experiment/command
     topic write experiment/state
     topic write experiment/ack
     user scalehub

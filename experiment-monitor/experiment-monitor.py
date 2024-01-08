@@ -98,18 +98,31 @@ class ExperimentsManager:
         # Subscribe to experiment command topic
         self.client.subscribe("experiment/command", qos=2)
 
+    def is_json(self, myjson):
+        try:
+            json_object = json.loads(myjson)
+        except ValueError as e:
+            return False
+        return True
+
     def on_message(self, client, userdata, msg):
         self.__log.info(f"Received message on topic {msg.topic}")
         if msg.topic == "experiment/command":
-            command = msg.payload.decode("utf-8")
-            if command == "STOP" and self.state == ExperimentState.RUNNING:
-                self.update_state(ExperimentState.FINISHING)
-                # Send ack message
-                self.client.publish("experiment/ack", "ACK_STOP", retain=True, qos=2)
-            else:
+
+            # Check if payload is in json format
+            if self.is_json(msg.payload.decode("utf-8")):
                 payload = json.loads(msg.payload.decode("utf-8"))
                 command = payload.get("command")
-                if command == "START" and self.state == ExperimentState.IDLE:
+
+                if command == "STOP" and self.state == ExperimentState.RUNNING:
+                    self.update_state(ExperimentState.FINISHING)
+                    # Send ack message
+                    self.client.publish(
+                        "experiment/ack", "ACK_STOP", retain=True, qos=2
+                    )
+                    # Clean retained messages
+                    self.client.publish("experiment/command", "", retain=True, qos=2)
+                elif command == "START" and self.state == ExperimentState.IDLE:
                     config = payload.get("config")
                     self.__log.info(f"Received config: {config}")
 
@@ -120,11 +133,14 @@ class ExperimentsManager:
                     self.client.publish(
                         "experiment/ack", "ACK_START", retain=True, qos=2
                     )
-
+                    # Clean retained messages
+                    self.client.publish("experiment/command", "", retain=True, qos=2)
                 else:
                     self.__log.warning(
                         f"Received invalid command {command} for state {self.state}."
                     )
+            else:
+                self.__log.warning(f"Received non-command payload: {msg.payload}.")
         else:
             self.__log.warning(f"Received invalid topic {msg.topic}.")
 

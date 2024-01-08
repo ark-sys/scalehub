@@ -101,23 +101,6 @@ class Client:
     def start(self):
         self.__log.info("Starting experiment")
 
-        # # Check if chaos is enabled
-        # if self.config.get_bool(Key.Experiment.Chaos.enable):
-        #     chaos_params = {
-        #         "delay_latency_ms": self.config.get_int(
-        #             Key.Experiment.Chaos.delay_latency_ms
-        #         ),
-        #         "delay_jitter_ms": self.config.get_int(
-        #             Key.Experiment.Chaos.delay_jitter_ms
-        #         ),
-        #         "delay_correlation": self.config.get_float(
-        #             Key.Experiment.Chaos.delay_correlation
-        #         ),
-        #     }
-        #     self.p.run_playbook(
-        #         "chaos", config=self.config, tag="experiment", extra_vars=chaos_params
-        #     )
-
         # Create START payload with experiment config
         payload = {"command": "START", "config": self.config.to_json()}
         # Get string representation of payload
@@ -155,8 +138,15 @@ class Client:
 
     def stop(self):
         self.__log.info("Stopping experiment")
+
+        # Create STOP payload
+        payload = {"command": "STOP"}
+
+        # Get string representation of payload
+        payload = json.dumps(payload)
+
         # Send stop message to remote experiment-monitor
-        self.client.publish("experiment/command", "STOP", qos=2, retain=True)
+        self.client.publish("experiment/command", payload, qos=2, retain=True)
 
         # Wait message on ack/experiment/stop
         while self.ack != "ACK_STOP":

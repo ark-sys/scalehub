@@ -35,12 +35,12 @@
   tags: [ delete ]
   delegate_to: localhost
   block:
-    - name: Delete Ingress
-      kubernetes.core.k8s:
-        state: absent
-        definition: "{{ lookup('ansible.builtin.file', 'scalehub-ingress.yaml') | from_yaml }}"
     - name: Delete Ingress repo
       kubernetes.core.helm_repository:
           name: ingress-nginx
           repo_url: https://kubernetes.github.io/ingress-nginx
           state: absent
+    - name: Delete Ingress for Flink
+      kubernetes.core.k8s:
+        state: absent
+        definition: "{{ lookup('ansible.builtin.file', 'flink-ingress.yaml') | from_yaml }}"
