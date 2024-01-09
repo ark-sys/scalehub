@@ -107,23 +107,6 @@ class Client:
         # Get string representation of payload
         payload = json.dumps(payload)
 
-        # # Deploy load generators
-        # for generator in self.config.get(Key.Experiment.Generators.generators):
-        #     load_generator_params = {
-        #         "lg_name": generator["name"],
-        #         "lg_topic": generator["topic"],
-        #         "lg_numsensors": int(generator["num_sensors"]),
-        #         "lg_intervalms": int(generator["interval_ms"]),
-        #         "lg_replicas": int(generator["replicas"]),
-        #         "lg_value": int(generator["value"]),
-        #     }
-        #     self.p.run_playbook(
-        #         "load_generators",
-        #         config=self.config,
-        #         tag="create",
-        #         extra_vars=load_generator_params,
-        #     )
-
         # Send message to remote experiment-monitor to start experiment
         self.client.publish(
             "experiment/command",
