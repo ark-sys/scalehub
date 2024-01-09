@@ -48,6 +48,76 @@ class KubernetesManager:
                 f"Exception when calling AppsV1Api->patch_namespaced_deployment: {e}\n"
             )
 
+    def create_deployment(self, template_filename, params, namespace="default"):
+        # Load resource definition from file
+        resource_object = self.load_resource_definition(
+            template_filename, params
+        )
+        api_instance = Client.AppsV1Api()
+        try:
+            api_instance.create_namespaced_deployment(
+                namespace=namespace,
+                body=resource_object,
+            )
+        except ApiException as e:
+            self.__log.error(
+                f"Exception when calling AppsV1Api->create_namespaced_deployment: {e}\n"
+            )
+            return
+        self.__log.info("Deployment created.")
+
+
+    def delete_deployment(self, template_filename, params):
+        # Load resource definition from file
+        resource_object = self.load_resource_definition(
+            template_filename, params
+        )
+        api_instance = Client.AppsV1Api()
+        try:
+            api_instance.delete_namespaced_deployment(
+                name=resource_object["metadata"]["name"], namespace=resource_object["metadata"]["namespace"], async_req=False
+            )
+            self.__log.info(f"Deployment {resource_object['metadata']['name']} deleted.")
+        except ApiException as e:
+            self.__log.error(
+                f"Exception when calling AppsV1Api->delete_namespaced_deployment: {e}\n"
+            )
+            return
+
+    def create_service(self, template_filename, params, namespace="default"):
+        # Load resource definition from file
+        resource_object = self.load_resource_definition(
+            template_filename, params
+        )
+        api_instance = Client.CoreV1Api()
+        try:
+            api_instance.create_namespaced_service(
+                namespace=namespace,
+                body=resource_object,
+            )
+        except ApiException as e:
+            self.__log.error(
+                f"Exception when calling CoreV1Api->create_namespaced_service: {e}\n"
+            )
+            return
+        self.__log.info("Service created.")
+
+    def delete_service(self, template_filename, params):
+        # Load resource definition from file
+        resource_object = self.load_resource_definition(
+            template_filename, params
+        )
+        api_instance = Client.CoreV1Api()
+        try:
+            api_instance.delete_namespaced_service(
+                name=resource_object["metadata"]["name"], namespace=resource_object["metadata"]["namespace"], async_req=False
+            )
+            self.__log.info(f"Service {resource_object['metadata']['name']} deleted.")
+        except ApiException as e:
+            self.__log.error(
+                f"Exception when calling CoreV1Api->delete_namespaced_service: {e}\n"
+            )
+            return
     # Execute a command on first pod of a deployment
     def execute_command_on_pod(self, deployment_name, command):
 

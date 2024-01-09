@@ -65,6 +65,12 @@ class ExperimentFSM:
         self.storage_chaos_template = (
             f"{self.TEMPLATES_BASE_PATH}/storage-latency.yaml.j2"
         )
+        self.load_generator_deployment_template = (
+            f"{self.TEMPLATES_BASE_PATH}/load-generator-deployment.yaml.j2"
+        )
+        self.load_generator_service_template = (
+            f"{self.TEMPLATES_BASE_PATH}/load-generator-service.yaml.j2"
+        )
     def set_config(self, config):
         self.config = config
 
@@ -174,6 +180,19 @@ class ExperimentFSM:
                 self.k.scale_deployment("flink-taskmanager", replicas=0)
                 sleep(1)
                 self.k.scale_deployment("flink-taskmanager", replicas=1)
+
+            # Start load generators
+            for generator in self.config.get(Key.Experiment.Generators.generators):
+                load_generator_params = {
+                    "lg_name": generator["name"],
+                    "lg_topic": generator["topic"],
+                    "lg_numsensors": int(generator["num_sensors"]),
+                    "lg_intervalms": int(generator["interval_ms"]),
+                    "lg_replicas": int(generator["replicas"]),
+                    "lg_value": int(generator["value"]),
+                }
+                self.k.create_service(self.load_generator_service_template, load_generator_params)
+                self.k.create_deployment(self.load_generator_deployment_template, load_generator_params)
 
             # Get name of job file to run
             job_file = self.config.get_str(Key.Experiment.job_file)
@@ -289,7 +308,18 @@ class ExperimentFSM:
         # Clean transscale remaining pods
         self.k.delete_pods_by_label("job-name=transscale-job")
         # Delete load generators
-        self.k.delete_pods_by_label("type=load-generator")
+        for generator in self.config.get(Key.Experiment.Generators.generators):
+            load_generator_params = {
+                "lg_name": generator["name"],
+                "lg_topic": generator["topic"],
+                "lg_numsensors": int(generator["num_sensors"]),
+                "lg_intervalms": int(generator["interval_ms"]),
+                "lg_replicas": int(generator["replicas"]),
+                "lg_value": int(generator["value"]),
+            }
+            self.k.delete_service(self.load_generator_service_template, load_generator_params)
+            self.k.delete_deployment(self.load_generator_deployment_template, load_generator_params)
+
         if self.config.get_bool(Key.Experiment.Chaos.enable):
             # Clean all network chaos resources
             self.k.delete_networkchaos()
