@@ -148,14 +148,14 @@ class ExperimentFSM:
                 impacted_nodes = self.k.get_impacted_nodes()
                 self.k.add_label_to_nodes(impacted_nodes, chaos_label)
 
-                # Deploy chaos resources on Flink and Storage running on chaos nodes
+                # Deploy chaos resources on Flink and Storage instances running on chaos nodes
                 self.k.create_networkchaos(self.flink_chaos_template, chaos_params)
                 self.k.create_networkchaos(self.storage_chaos_template, chaos_params)
 
                 # Wait for chaos resources to be ready
                 sleep(3)
 
-                # Start thread to monitor and reset chaos injection on rescale
+                # Start thread to monitor and reset chaos injection on rescaled flink
                 self.k.monitor_injection_thread(experiment_params=chaos_params)
 
                 # Reset nodes labels
@@ -237,7 +237,6 @@ class ExperimentFSM:
         # Wait for experiment to finish or stop message
         while self.is_RUNNING():
             # self.__log.info("Waiting for experiment to finish or stop message.")
-            self.__log.info("Experiment running.")
             sleep(1)
             try:
                 job_status = self.k.get_job_status("transscale-job")
@@ -247,9 +246,11 @@ class ExperimentFSM:
                 else:
                     if job_status[0].type == "Complete":
                         self.__log.info("Experiment finished.")
+                        break
             except Exception as e:
                 self.__log.warning(f"Error while getting job status: {e}")
-
+        # Trigger finish transition
+        self.finish()
     def end_experiment(self):
         self.__log.info("Experiment finished or stopped.")
         self.end_ts = int(datetime.now().timestamp())
@@ -443,7 +444,7 @@ class MQTTClient:
         # Send state message
         self.client.publish("experiment/state", state, retain=True, qos=2)
 
-    def start_mqtt_server(self):
+    def start_mqtt_client(self):
         # Get broker info from environment variable
         broker = os.environ.get("MQTT_BROKER_HOST")
         port = os.environ.get("MQTT_BROKER_PORT")
@@ -460,7 +461,7 @@ class MQTTClient:
         self.client.loop_forever()
     def run(self):
         # Start mqtt server
-        self.start_mqtt_server()
+        self.start_mqtt_client()
 
 
 def main():

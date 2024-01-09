@@ -71,11 +71,11 @@ class Client:
 
         match message.topic:
             case "experiment/ack":
-                self.__log.info("Received ack")
                 self.ack = message.payload.decode("utf-8")
+                self.__log.info(f"Received ack {self.ack}")
             case "experiment/state":
-                self.__log.info("Received state")
                 self.state = message.payload.decode("utf-8")
+                self.__log.info(f"Received state {self.state}")
 
     def on_connect(self, client, userdata, flags, rc):
         self.__log.info(f"Connected with result code {rc}")
@@ -115,15 +115,15 @@ class Client:
             retain=True,
         )
         # Wait message on experiment/start
+        self.__log.info("Waiting for ack...")
         while self.ack != "ACK_START":
             if self.ack == "INVALID_COMMAND":
                 self.__log.error(f"Command START failed. State is {self.state}")
                 exit(1)
-            self.__log.info("Waiting for ack...")
-            time.sleep(1)  # wait for 1 second before checking again
+            time.sleep(1)
         # Wait for state change
+        self.__log.info("Waiting for state change...")
         while self.state != "RUNNING":
-            self.__log.info("Waiting for state change...")
             time.sleep(1)
         self.__log.info(f"Experiment state changed to {self.state}.")
 
@@ -139,14 +139,14 @@ class Client:
         self.client.publish("experiment/command", payload, qos=2, retain=True)
 
         # Wait message on experiment/stop
+        self.__log.info("Waiting for ack...")
         while self.ack != "ACK_STOP":
             if self.ack == "INVALID_COMMAND":
                 self.__log.error(f"Command STOP failed. State is {self.state}")
                 exit(1)
-            self.__log.info("Waiting for ack...")
             time.sleep(1)
+        self.__log.info("Waiting for state change...")
         while self.state != "IDLE":
-            self.__log.info("Waiting for state change...")
             time.sleep(1)
         self.__log.info(f"Experiment state changed to {self.state}.")
 
@@ -163,10 +163,10 @@ class Client:
         self.client.publish("experiment/command", payload, qos=2, retain=True)
 
         # Wait message on experiment/stop
+        self.__log.info("Waiting for ack...")
         while self.ack != "ACK_CLEAN":
-            self.__log.info("Waiting for ack...")
             time.sleep(1)
+        self.__log.info("Waiting for state change...")
         while self.state != "IDLE":
-            self.__log.info("Waiting for state change...")
             time.sleep(1)
         self.__log.info(f"Experiment state changed to {self.state}.")
