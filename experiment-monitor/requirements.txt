@@ -3,3 +3,4 @@ paho-mqtt
 pandas
 matplotlib
 jinja2
+transitions

@@ -63,6 +63,7 @@ class Client:
         self.mqtt_pass = "s_password"
         self.ack = None
         self.state = None
+        self.init_state = None
 
         self.setup_mqtt()
 
@@ -106,22 +107,22 @@ class Client:
         # Get string representation of payload
         payload = json.dumps(payload)
 
-        # Deploy load generators
-        for generator in self.config.get(Key.Experiment.Generators.generators):
-            load_generator_params = {
-                "lg_name": generator["name"],
-                "lg_topic": generator["topic"],
-                "lg_numsensors": int(generator["num_sensors"]),
-                "lg_intervalms": int(generator["interval_ms"]),
-                "lg_replicas": int(generator["replicas"]),
-                "lg_value": int(generator["value"]),
-            }
-            self.p.run_playbook(
-                "load_generators",
-                config=self.config,
-                tag="create",
-                extra_vars=load_generator_params,
-            )
+        # # Deploy load generators
+        # for generator in self.config.get(Key.Experiment.Generators.generators):
+        #     load_generator_params = {
+        #         "lg_name": generator["name"],
+        #         "lg_topic": generator["topic"],
+        #         "lg_numsensors": int(generator["num_sensors"]),
+        #         "lg_intervalms": int(generator["interval_ms"]),
+        #         "lg_replicas": int(generator["replicas"]),
+        #         "lg_value": int(generator["value"]),
+        #     }
+        #     self.p.run_playbook(
+        #         "load_generators",
+        #         config=self.config,
+        #         tag="create",
+        #         extra_vars=load_generator_params,
+        #     )
 
         # Send message to remote experiment-monitor to start experiment
         self.client.publish(
@@ -130,14 +131,20 @@ class Client:
             qos=2,
             retain=True,
         )
-        # Wait message on ack/experiment/start
+        # Wait message on experiment/start
         while self.ack != "ACK_START":
+            if self.ack == "INVALID_COMMAND":
+                self.__log.error(f"Command START failed. State is {self.state}")
+                exit(1)
             self.__log.info("Waiting for ack...")
             time.sleep(1)  # wait for 1 second before checking again
-        self.__log.info(f"Experiment state is {self.state}.")
+        # Wait for state change
+        while self.state != "RUNNING":
+            self.__log.info("Waiting for state change...")
+            time.sleep(1)
+        self.__log.info(f"Experiment state changed to {self.state}.")
 
     def stop(self):
-        self.__log.info("Stopping experiment")
 
         # Create STOP payload
         payload = {"command": "STOP"}
@@ -148,13 +155,35 @@ class Client:
         # Send stop message to remote experiment-monitor
         self.client.publish("experiment/command", payload, qos=2, retain=True)
 
-        # Wait message on ack/experiment/stop
+        # Wait message on experiment/stop
         while self.ack != "ACK_STOP":
+            if self.ack == "INVALID_COMMAND":
+                self.__log.error(f"Command STOP failed. State is {self.state}")
+                exit(1)
             self.__log.info("Waiting for ack...")
             time.sleep(1)
-        self.__log.info(f"Experiment state is {self.state}.")
+        while self.state != "IDLE":
+            self.__log.info("Waiting for state change...")
+            time.sleep(1)
+        self.__log.info(f"Experiment state changed to {self.state}.")
 
     def clean(self):
         self.__log.info("Cleaning experiment")
+
+        # Create CLEAN payload
+        payload = {"command": "CLEAN"}
+
+        # Get string representation of payload
+        payload = json.dumps(payload)
+
         # Clean messages on experiment/command
-        self.client.publish("experiment/command", "", qos=2, retain=True)
+        self.client.publish("experiment/command", payload, qos=2, retain=True)
+
+        # Wait message on experiment/stop
+        while self.ack != "ACK_CLEAN":
+            self.__log.info("Waiting for ack...")
+            time.sleep(1)
+        while self.state != "IDLE":
+            self.__log.info("Waiting for state change...")
+            time.sleep(1)
+        self.__log.info(f"Experiment state changed to {self.state}.")
