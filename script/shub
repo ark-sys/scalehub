@@ -119,8 +119,10 @@ def experiment(action, config: Config):
             e.stop()
         case "clean":
             e.clean()
+        case "check":
+            e.check()
         case _:
-            log.error(f"Action {action} is not implemented.")
+            log.error(f"Action {action} is not implemented for command 'experiment'.")
 
 
 # Get tokens for minio and kubernetes dashboard
