@@ -33,9 +33,10 @@ from utils.Defaults import DefaultKeys as Key
 # 6. Restart Flink
 class ExperimentFSM:
     # Define states of the state machine
-    states = ['IDLE', 'STARTING', 'RUNNING', 'FINISHING']
+    states = ["IDLE", "STARTING", "RUNNING", "FINISHING"]
     EXPERIMENTS_BASE_PATH = "/experiment-volume"
     TEMPLATES_BASE_PATH = "/app/templates"
+
     def __init__(self, log: Logger):
         self.__log = log
         self.k: KubernetesManager = KubernetesManager(log)
@@ -45,23 +46,28 @@ class ExperimentFSM:
         self.end_ts = None
         self.exp_path = None
 
-
         # Initialize state machine
-        self.machine = Machine(model=self, states=ExperimentFSM.states, initial='IDLE')
+        self.machine = Machine(model=self, states=ExperimentFSM.states, initial="IDLE")
 
         # Add transitions
-        self.machine.add_transition(trigger='start', source='IDLE', dest='STARTING', after='start_experiment')
-        self.machine.add_transition(trigger='run', source='STARTING', dest='RUNNING', after='run_experiment' )
-        self.machine.add_transition(trigger='finish', source='RUNNING', dest='FINISHING', after='end_experiment')
-        self.machine.add_transition(trigger='clean', source='*', dest='IDLE',after='clean_experiment')
+        self.machine.add_transition(
+            trigger="start", source="IDLE", dest="STARTING", after="start_experiment"
+        )
+        self.machine.add_transition(
+            trigger="run", source="STARTING", dest="RUNNING", after="run_experiment"
+        )
+        self.machine.add_transition(
+            trigger="finish", source="RUNNING", dest="FINISHING", after="end_experiment"
+        )
+        self.machine.add_transition(
+            trigger="clean", source="*", dest="IDLE", after="clean_experiment"
+        )
 
         # Chaos resources templates
         self.consul_chaos_template = (
             f"{self.TEMPLATES_BASE_PATH}/consul-latency.yaml.j2"
         )
-        self.flink_chaos_template = (
-            f"{self.TEMPLATES_BASE_PATH}/flink-latency.yaml.j2"
-        )
+        self.flink_chaos_template = f"{self.TEMPLATES_BASE_PATH}/flink-latency.yaml.j2"
         self.storage_chaos_template = (
             f"{self.TEMPLATES_BASE_PATH}/storage-latency.yaml.j2"
         )
@@ -71,6 +77,7 @@ class ExperimentFSM:
         self.load_generator_service_template = (
             f"{self.TEMPLATES_BASE_PATH}/load-generator-service.yaml.j2"
         )
+
     def set_config(self, config):
         self.config = config
 
@@ -107,6 +114,7 @@ class ExperimentFSM:
             file.write(f"Experiment start at : {self.start_ts}\n")
             file.write(f"Experiment end at : {self.end_ts}\n")
         return log_file_path
+
     def start_experiment(self):
         self.__log.info("Starting experiment")
 
@@ -114,7 +122,7 @@ class ExperimentFSM:
         # Get start timestamp
         self.start_ts = int(datetime.now().timestamp())
 
-        try :
+        try:
             # Check if chaos is enabled
             if self.config.get_bool(Key.Experiment.Chaos.enable):
                 self.__log.info(
@@ -128,7 +136,9 @@ class ExperimentFSM:
 
                 # Setup experiment_params
                 chaos_params = {
-                    "latency": self.config.get_int(Key.Experiment.Chaos.delay_latency_ms),
+                    "latency": self.config.get_int(
+                        Key.Experiment.Chaos.delay_latency_ms
+                    ),
                     "jitter": self.config.get_int(Key.Experiment.Chaos.delay_jitter_ms),
                     "correlation": self.config.get_float(
                         Key.Experiment.Chaos.delay_correlation
@@ -136,7 +146,9 @@ class ExperimentFSM:
                 }
                 # Remove label 'chaos=true' from all nodes
                 chaos_label = "chaos=true"
-                worker_nodes = self.k.get_nodes("node-role.kubernetes.io/worker=consumer")
+                worker_nodes = self.k.get_nodes(
+                    "node-role.kubernetes.io/worker=consumer"
+                )
                 self.k.remove_label_from_nodes(worker_nodes, chaos_label)
 
                 # Deploy chaos resources
@@ -172,7 +184,9 @@ class ExperimentFSM:
                 # Get clean nodes (worker_nodes - impacted_nodes)
                 clean_nodes = list(set(worker_nodes) - set(impacted_nodes))
                 # Add label "node-role.kubernetes.io/autoscaling" to clean nodes
-                self.k.add_label_to_nodes(clean_nodes, f"{autoscaling_label}=SCHEDULABLE")
+                self.k.add_label_to_nodes(
+                    clean_nodes, f"{autoscaling_label}=SCHEDULABLE"
+                )
 
                 # Reset taskmanager replicas
                 self.__log.info("Resetting taskmanager replicas.")
@@ -191,8 +205,12 @@ class ExperimentFSM:
                     "lg_replicas": int(generator["replicas"]),
                     "lg_value": int(generator["value"]),
                 }
-                self.k.create_service(self.load_generator_service_template, load_generator_params)
-                self.k.create_deployment(self.load_generator_deployment_template, load_generator_params)
+                self.k.create_service(
+                    self.load_generator_service_template, load_generator_params
+                )
+                self.k.create_deployment(
+                    self.load_generator_deployment_template, load_generator_params
+                )
 
             # Get name of job file to run
             job_file = self.config.get_str(Key.Experiment.job_file)
@@ -232,7 +250,6 @@ class ExperimentFSM:
 
         experiment_thread.start()
 
-
     def running_experiment(self):
         # Wait for experiment to finish or stop message
         while self.is_RUNNING():
@@ -251,6 +268,7 @@ class ExperimentFSM:
                 self.__log.warning(f"Error while getting job status: {e}")
         # Trigger finish transition
         self.finish()
+
     def end_experiment(self):
         self.__log.info("Experiment finished or stopped.")
         self.end_ts = int(datetime.now().timestamp())
@@ -294,6 +312,7 @@ class ExperimentFSM:
         finally:
             # Trigger clean transition
             self.clean()
+
     def clean_experiment(self):
         # Clean flink jobs
         self.__log.info("Cleaning experiment.")
@@ -318,8 +337,12 @@ class ExperimentFSM:
                 "lg_replicas": int(generator["replicas"]),
                 "lg_value": int(generator["value"]),
             }
-            self.k.delete_service(self.load_generator_service_template, load_generator_params)
-            self.k.delete_deployment(self.load_generator_deployment_template, load_generator_params)
+            self.k.delete_service(
+                self.load_generator_service_template, load_generator_params
+            )
+            self.k.delete_deployment(
+                self.load_generator_deployment_template, load_generator_params
+            )
 
         if self.config.get_bool(Key.Experiment.Chaos.enable):
             # Clean all network chaos resources
@@ -330,8 +353,12 @@ class ExperimentFSM:
         self.end_ts = None
         self.exp_path = None
         self.config = None
-class MQTTClient:
 
+        self.__log.info("Cleaning complete.")
+        self.__log.info(f"Returning to state IDLE")
+
+
+class MQTTClient:
     def __init__(self, log: Logger):
         self.__log = log
 
@@ -341,6 +368,7 @@ class MQTTClient:
         self.client = mqtt.Client()
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
+
     def on_connect(self, client, userdata, flags, rc):
         self.__log.info(f"Connected with result code {rc}")
 
@@ -349,7 +377,6 @@ class MQTTClient:
 
         # Publish current fsm state
         self.update_state(self.fsm.state)
-
 
     def is_json(self, myjson):
         try:
@@ -440,6 +467,7 @@ class MQTTClient:
                 self.__log.warning(f"Received non-command payload: {msg.payload}.")
         else:
             self.__log.warning(f"Received invalid topic {msg.topic}.")
+
     def update_state(self, state):
         # Send state message
         self.client.publish("experiment/state", state, retain=True, qos=2)
@@ -459,6 +487,7 @@ class MQTTClient:
 
         # Start mqtt in a blocking loop to keep process alive
         self.client.loop_forever()
+
     def run(self):
         # Start mqtt server
         self.start_mqtt_client()

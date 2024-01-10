@@ -170,3 +170,7 @@ class Client:
         while self.state != "IDLE":
             time.sleep(1)
         self.__log.info(f"Experiment state changed to {self.state}.")
+
+    # Check last experiment state
+    def check(self):
+        self.__log.info(f"Current experiment state is {self.state}.")
