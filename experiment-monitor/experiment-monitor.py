@@ -386,10 +386,9 @@ class MQTTClient:
         return True
 
     def on_message(self, client, userdata, msg):
-        self.__log.info(f"Received message on topic {msg.topic}")
         if msg.topic == "experiment/command":
-
             # Check if payload is in json format
+            self.__log.info(f"Received payload {msg.payload}.")
             if self.is_json(msg.payload.decode("utf-8")):
                 payload = json.loads(msg.payload.decode("utf-8"))
                 command = payload.get("command")
