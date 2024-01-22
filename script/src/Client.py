@@ -117,10 +117,10 @@ class Client:
         # Wait message on experiment/start
         self.__log.info("Waiting for ack...")
         while self.ack != "ACK_START":
-            if self.ack == "INVALID_COMMAND":
-                self.__log.error(f"Command START failed. State is {self.state}")
-                exit(1)
             time.sleep(1)
+        if self.ack == "INVALID_COMMAND":
+            self.__log.error(f"Command START failed. State is {self.state}")
+            exit(1)
         # Wait for state change
         self.__log.info("Waiting for state change...")
         while self.state != "RUNNING":
@@ -141,10 +141,10 @@ class Client:
         # Wait message on experiment/stop
         self.__log.info("Waiting for ack...")
         while self.ack != "ACK_STOP":
-            if self.ack == "INVALID_COMMAND":
-                self.__log.error(f"Command STOP failed. State is {self.state}")
-                exit(1)
             time.sleep(1)
+        if self.ack == "INVALID_COMMAND":
+            self.__log.error(f"Command STOP failed. State is {self.state}")
+            exit(1)
         self.__log.info("Waiting for state change...")
         while self.state != "IDLE":
             time.sleep(1)
