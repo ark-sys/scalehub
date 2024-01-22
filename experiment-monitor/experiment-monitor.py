@@ -274,9 +274,10 @@ class ExperimentFSM:
                         break
             except Exception as e:
                 self.__log.warning(f"Error while getting job status: {e}")
-        # Trigger finish transition
-        self.finish()
 
+        # Check if we are not in FINISHING state otherwise trigger the transition
+        if not self.is_FINISHING():
+            self.finish()
     def end_experiment(self):
         self.__log.info("Experiment finished or stopped.")
         self.end_ts = int(datetime.now().timestamp())
