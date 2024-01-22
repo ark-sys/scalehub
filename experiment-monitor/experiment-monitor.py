@@ -19,18 +19,26 @@ from utils.Defaults import DefaultKeys as Key
 # 2. When "START" request is received, with correct config file, load config file
 # 2.1. Save the config file in the exp folder and get start timestamp
 # 2.2. If chaos is enabled, reset flink taskmanager distribution
-# 2.3. Start latency_reset_thread
-# 2.4. Deploy Flink
-# 2.5. Deploy chaos resources
-# 2.6. Deploy transscale-job
+# 2.3. Start chaos
+# 2.4. Start latency_reset_thread (networkchaos resources aren't applied on new flink instances when they are rescaled)
+# 2.5. Deploy load generators
+# 2.6. Start Flink job
+# 2.7. Start load generation
+# 2.8. Deploy transscale-job
 # 3. When an experiment finishes or "STOP" request is received, get end timestamp
 # 4. Export metrics from victoriametrics with start and end timestamp
 # 4.1. Evaluate mean throughput for specified time series
 # 5. Save transscale-job logs
 # 5.1. Export predictions from transscale-job logs
 # 5.2. Join predictions to mean throughput
-# 6. Delete transscale-job, chaos, load-generators resources from kubernetes cluster
-# 6. Restart Flink
+# 6. If CLEAN request is received or experiment finishes, clean experiment
+# 6.1. Clean flink jobs
+# 6.2. Scale down taskmanagers
+# 6.3. Clean transscale job
+# 6.4. Clean transscale remaining pods
+# 6.5. Delete load generators
+# 6.6. Clean chaos resources
+
 class ExperimentFSM:
     # Define states of the state machine
     states = ["IDLE", "STARTING", "RUNNING", "FINISHING"]
@@ -195,7 +203,7 @@ class ExperimentFSM:
                 sleep(1)
                 self.k.scale_deployment("flink-taskmanager", replicas=1)
 
-            # Start load generators
+            # Create load generators
             for generator in self.config.get(Key.Experiment.Generators.generators):
                 load_generator_params = {
                     "lg_name": generator["name"],
@@ -221,10 +229,10 @@ class ExperimentFSM:
                 command=f"flink run -d -j /tmp/jobs/{job_file}",
             )
 
-            # Resume execution of load generators
-            self.k.execute_command_on_pods_by_label(
-                "type=load-generator", command="touch /start_generation"
-            )
+            # # Resume execution of load generators
+            # self.k.execute_command_on_pods_by_label(
+            #     "type=load-generator", command="touch /start_generation"
+            # )
 
             # Retrieve resource definition for transscale-job
             transscale_resource_definition = self.k.get_configmap(
