@@ -170,7 +170,7 @@ class ExperimentFSM:
 
                 # Deploy chaos resources on Flink and Storage instances running on chaos nodes
                 self.k.create_networkchaos(self.flink_chaos_template, chaos_params)
-                self.k.create_networkchaos(self.storage_chaos_template, chaos_params)
+                # self.k.create_networkchaos(self.storage_chaos_template, chaos_params)
 
                 # Wait for chaos resources to be ready
                 sleep(3)

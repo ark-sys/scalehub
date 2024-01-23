@@ -59,12 +59,13 @@ class KubernetesManager:
                 namespace=namespace,
                 body=resource_object,
             )
+            self.__log.info(f"Deployment {resource_object['metadata']['name']} created.")
+
         except ApiException as e:
             self.__log.error(
                 f"Exception when calling AppsV1Api->create_namespaced_deployment: {e}\n"
             )
             return
-        self.__log.info("Deployment created.")
 
 
     def delete_deployment(self, template_filename, params):
@@ -91,16 +92,19 @@ class KubernetesManager:
         )
         api_instance = Client.CoreV1Api()
         try:
+
+            # Create service
             api_instance.create_namespaced_service(
                 namespace=namespace,
                 body=resource_object,
+                async_req=False
             )
+            self.__log.info(f"Service {resource_object['metadata']['name']} created.")
         except ApiException as e:
             self.__log.error(
                 f"Exception when calling CoreV1Api->create_namespaced_service: {e}\n"
             )
             return
-        self.__log.info("Service created.")
 
     def delete_service(self, template_filename, params):
         # Load resource definition from file
