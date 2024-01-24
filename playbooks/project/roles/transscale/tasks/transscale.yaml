@@ -14,11 +14,6 @@
 - name: Delete transscale
   tags: [ delete ]
   block:
-    - name: Delete transscale
-      kubernetes.core.k8s:
-        state: absent
-        definition: "{{ lookup('ansible.builtin.template', 'transscale-job.yaml.j2') | from_yaml }}"
-
     - name: Delete transscale configmap
       kubernetes.core.k8s:
         state: absent

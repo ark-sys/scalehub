@@ -23,8 +23,7 @@ from utils.Defaults import DefaultKeys as Key
 # 2.4. Start latency_reset_thread (networkchaos resources aren't applied on new flink instances when they are rescaled)
 # 2.5. Deploy load generators
 # 2.6. Start Flink job
-# 2.7. Start load generation
-# 2.8. Deploy transscale-job
+# 2.7. Deploy transscale-job
 # 3. When an experiment finishes or "STOP" request is received, get end timestamp
 # 4. Export metrics from victoriametrics with start and end timestamp
 # 4.1. Evaluate mean throughput for specified time series
