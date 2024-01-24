@@ -11,7 +11,7 @@ set -gx SHUB_PLAYBOOKS_PATH $SHUB_PATH/playbooks/project
 set -gx SHUB_EXPERIMENTS_DATA_PATH $SHUB_PATH/experiments-data
 
 # Define the list of commands that can be used with the 'shub' script
-set -l shub_commands provision destroy deploy delete run export plot
+set -l shub_commands provision destroy deploy delete reload experiment tokens sync run export
 # Enable file completion for the 'shub' command
 complete -c shub -f
 
@@ -26,6 +26,7 @@ complete -c shub -n "__fish_use_subcommand" -a "delete" -d "Execute delete tasks
 complete -c shub -n "__fish_use_subcommand" -a "reload" -d "Execute reload tasks of the provided playbook"
 complete -c shub -n "__fish_use_subcommand" -a "experiment" -d "Start or stop an experiment"
 complete -c shub -n "__fish_use_subcommand" -a "tokens" -d "Print tokens for kubernetes and MinIO dashboards"
+complete -c shub -n "__fish_use_subcommand" -a "sync" -d "Sync data from G5k home folder to the local machine"
 complete -c shub -n "__fish_use_subcommand" -a "export" -d "Export data"
 complete -c shub -n "__fish_use_subcommand" -a "run" -d "Run action"
 
