@@ -26,6 +26,11 @@
           operator:
             nodeSelector:
               node-role.kubernetes.io/control-plane: "true"
+            env:
+              - name: MINIO_PROMETHEUS_URL
+                value: "http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local"
+              - name: PROMETHEUS_NAMESPACE
+                value: "monitoring"
           console:
             enabled: true
             env:
@@ -37,6 +42,8 @@
                 value: "http://minio-console.scalehub.local"
               - name: MINIO_PROMETHEUS_URL
                 value : "http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local"
+              - name: PROMETHEUS_NAMESPACE
+                value: "monitoring"
             nodeSelector:
               node-role.kubernetes.io/control-plane: "true"
             affinity:
@@ -71,6 +78,11 @@
             # Disable TLS
             certificate:
               requestAutoCert: false
+            metrics:
+              enabled: true
+              port: 9000
+              protocol: http
+            prometheusOperator: true
             name: scalehub-tenant
             replicas: 1
             pools:
@@ -96,6 +108,11 @@
               - name: flink-bucket
                 policy: public
                 objectLocking: false
+            env:
+              - name: MINIO_PROMETHEUS_URL
+                value: "http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local"
+              - name: PROMETHEUS_NAMESPACE
+                value: "monitoring"
           ingress:
             console:
               enabled: true
