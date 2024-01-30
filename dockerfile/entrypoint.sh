@@ -76,5 +76,8 @@ generate_config
 # Start nginx service in background
 sudo service nginx start
 
+# Start cron
+sudo cron
+
 # Keep the container running
 tail -f /dev/null

@@ -1,7 +1,8 @@
+import configparser as cp
 import json
 from inspect import getmembers, isclass
 from os.path import exists
-import configparser as cp
+
 from .Defaults import (
     DefaultValues as Value,
     DefaultKeys as Key,
@@ -215,7 +216,7 @@ class Config:
             self.__log.error(f"[CONF] Config file [{conf_path}] does not exist.")
             exit(1)
         else:
-            self.__log.info(f"[CONF] Config file [{conf_path}] found.")
+            self.__log.debugg(f"[CONF] Config file [{conf_path}] found.")
 
             # Read the configuration file
             self.cp.read(conf_path)
