@@ -1,13 +1,14 @@
 import json
 import os
-import threading
 import time
-import paho.mqtt.client as mqtt
+
 import enoslib as en
+import paho.mqtt.client as mqtt
 
 from .utils.Config import Config
-from .utils.Logger import Logger
 from .utils.Defaults import DefaultKeys as Key
+from .utils.Logger import Logger
+
 
 # 1. Create MQTT client
 # 2. Connect to MQTT broker

@@ -29,7 +29,8 @@ RUN apt-get update && apt-get install -y \
     tk \
     nginx \
     sudo \
-    rsync
+    rsync \
+    cron
 
 # Install python requirements
 COPY requirements.txt requirements.txt
@@ -50,6 +51,19 @@ COPY fish/kubectl.fish /usr/share/fish/vendor_completions.d/
 # Install auto-completion for shub
 COPY fish/shub.fish /usr/share/fish/vendor_completions.d/shub.fish
 
+# Install some custom functions to enhance prompt
+COPY fish/functions/* /usr/share/fish/functions/
+
+# Setup cron
+
+ADD fish/crontab /etc/cron.d/update-remaining-time-cron
+
+RUN chmod 0644 /etc/cron.d/update-remaining-time-cron
+
+RUN crontab /etc/cron.d/update-remaining-time-cron
+
+RUN touch /var/log/cron.log
+
 # Set host user id and group id without password
 RUN groupadd -g $GID $USER && \
     useradd -m -u $UID -g $GID -o -s /usr/bin/fish $USER && \
@@ -60,7 +74,7 @@ USER $USER
 # Copy the lines to modify .bashrc and jump directly to fish at container spawn
 RUN echo 'if [[ $(ps --no-header --pid=$PPID --format=comm) != "fish" && -z ${BASH_EXECUTION_STRING} ]]; then\n\
     shopt -q login_shell && LOGIN_OPTION="--login" || LOGIN_OPTION=""\n\
-    exec fish $LOGIN_OPTION\n\
+    exec fish $LOGIN_OPTION -d3\n\
 fi' >> ~/.bashrc
 
 COPY entrypoint.sh /entrypoint.sh

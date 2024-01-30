@@ -1,17 +1,17 @@
 import json
 import os
 import threading
-
 from datetime import datetime
 from time import sleep
-from transitions import Machine
-import paho.mqtt.client as mqtt
 
-from utils.Logger import Logger
-from utils.ExperimentsData import ExperimentData
+import paho.mqtt.client as mqtt
+from transitions import Machine
+
 from utils.Config import Config
-from utils.KubernetesManager import KubernetesManager
 from utils.Defaults import DefaultKeys as Key
+from utils.ExperimentsData import ExperimentData
+from utils.KubernetesManager import KubernetesManager
+from utils.Logger import Logger
 
 
 # Objective
@@ -274,9 +274,10 @@ class ExperimentFSM:
             except Exception as e:
                 self.__log.warning(f"Error while getting job status: {e}")
 
-        # Check if we are not in FINISHING state otherwise trigger the transition
-        if not self.is_FINISHING():
+        # if arrived here after the loop break, then trigger finish transition
+        if self.is_RUNNING():
             self.finish()
+
     def end_experiment(self):
         self.__log.info("Experiment finished or stopped.")
         self.end_ts = int(datetime.now().timestamp())

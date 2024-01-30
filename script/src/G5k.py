@@ -1,8 +1,7 @@
+import os
 import subprocess
 
 import enoslib as en
-import os
-
 import yaml
 
 from .Platform import Platform
@@ -11,24 +10,24 @@ from .utils.Config import Config, Key
 
 
 class G5k(Platform):
-    def __init__(self, config: Config, log: Logger):
+    def __init__(self, config: Config, log: Logger, verbose: bool = True):
         super().__init__()
         _ = en.init_logging()
         self.__log = log
         self.config = config
-        
+
         # Create .python-grid5000.yaml required by enoslib
         self.check_credentials_file()
 
-        # Check that Grid5000 is joinable
-        en.check()
-        
-        # Set up the reservation
-        self.create()
+        if verbose:
+            # Check that Grid5000 is joinable
+            en.check()
 
+        # Set up the reservation
+        self.create(verbose)
 
     # Create a reservation
-    def create(self):
+    def create(self, verbose: bool = True):
         self.reservation_name = self.config.get_str(Key.Platform.reservation_name)
         self.site = self.config.get_str(Key.Platform.site)
         self.cluster = self.config.get_str(Key.Platform.cluster)
@@ -69,6 +68,7 @@ class G5k(Platform):
 
         self.conf = conf
         self.provider = en.G5k(self.conf)
+
     def setup(self):
         # Request resources from Grid5000
         roles, networks = self.provider.init()
@@ -113,6 +113,40 @@ class G5k(Platform):
                     return False  # Either 'username' or 'password' is missing
         else:
             return False  # File does not exist
+
+    # Check if there is an active reservation
+    def check_reservation(self):
+        # Get the list of active reservations
+        jobs = self.provider.driver.get_jobs()
+
+        if not jobs:
+            # No active reservation
+            return False
+        else:
+            # There should be only one job, so get the first one
+            job_id = jobs[0].uid
+            # Query job information with Grid5000 REST API
+            import requests
+
+            query = requests.get(f"https://api.grid5000.fr/3.0/sites/{self.site}/jobs/{job_id}",
+                                 auth=(self.username, self.password))
+
+            walltime: int = query.json()["walltime"]
+            start_time: int = query.json()["started_at"]
+
+            # Eval expected end time
+            end_time = start_time + walltime
+
+            # Eval current time
+            import datetime
+            now = datetime.datetime.now()
+
+            # Eval remaining time
+            remaining_time = end_time - now.timestamp()
+
+            formatted_remaining_time = datetime.timedelta(seconds=remaining_time)
+
+            return formatted_remaining_time
 
     # def extend_reservation(self, walltime):
     #     # Extend the reservation
