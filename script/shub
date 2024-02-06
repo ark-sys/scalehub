@@ -299,19 +299,6 @@ def export(config: Config, exp_path: str, action_type=None):
     #     log.error("Error during export.")
 
 
-def reservation_time(config):
-    p: Platform = G5k(config, log, verbose=False)
-    # Return the result of check_reservation
-    remaining_time = p.check_reservation()
-
-    if not remaining_time:
-        log.error("No reservation found.")
-        exit(1)
-    else:
-        print(remaining_time)
-        exit(0)
-
-
 def main(log: Logger):
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="command")
@@ -426,8 +413,6 @@ def main(log: Logger):
     elif args.command == "export":
         date = args.date
         type = args.type
-    elif args.command == "reservation_time":
-        reservation_time(config)
     else:
         parser.print_help()
 

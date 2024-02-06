@@ -54,20 +54,14 @@ COPY fish/shub.fish /usr/share/fish/vendor_completions.d/shub.fish
 # Install some custom functions to enhance prompt
 COPY fish/functions/* /usr/share/fish/functions/
 
-# Setup cron
-
-ADD fish/crontab /etc/cron.d/update-remaining-time-cron
-
-RUN chmod 0644 /etc/cron.d/update-remaining-time-cron
-
-RUN crontab /etc/cron.d/update-remaining-time-cron
-
-RUN touch /var/log/cron.log
+# Remove fish greeting message
+RUN echo "set -U fish_greeting" >> ~/.config/fish/config.fish
 
 # Set host user id and group id without password
 RUN groupadd -g $GID $USER && \
     useradd -m -u $UID -g $GID -o -s /usr/bin/fish $USER && \
     echo "$USER ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
 # Set username
 USER $USER
 

@@ -15,7 +15,7 @@ metadata:
 spec:
   groups:
     - name: flink.rules
-      interval: 10s
+      interval: 5s
       rules:
         - record: flink_operator_TumblingEventTimeWindows_throughput_out
           expr: sum by(task_name) (flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~".*TumblingEventTimeWindows.*"})

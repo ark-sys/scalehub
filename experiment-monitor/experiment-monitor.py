@@ -150,6 +150,8 @@ class ExperimentFSM:
                     "correlation": self.config.get_float(
                         Key.Experiment.Chaos.delay_correlation
                     ),
+                    "rate": self.config.get_int(Key.Experiment.Chaos.bandwidth_rate_mbps),
+                    "limit": self.config.get_int(Key.Experiment.Chaos.bandwidth_limit),
                 }
                 # Remove label 'chaos=true' from all nodes
                 chaos_label = "chaos=true"
@@ -313,6 +315,7 @@ class ExperimentFSM:
                 # If output_plot is enabled, evaluate plot from stats.csv file
                 if self.config.get_bool(Key.Experiment.output_plot):
                     data.eval_plot(stats)
+                    data.eval_everything()
 
             self.__log.info("Experiment ended.")
         except Exception as e:
