@@ -1,8 +1,35 @@
 ---
 - name: Setting up MinIO - Creation block
-  tags: [create]
+  tags: [ create ]
   delegate_to: localhost
   block:
+    - name: Add chart for local-path-provisioner from containeroo
+      kubernetes.core.helm_repository:
+        name: containeroo
+        repo_url: https://charts.containeroo.ch
+        # Install local-path-provisioner with nodePathMap pointing to /tmp/data
+    - name: Install local-path-provisioner
+      kubernetes.core.helm:
+        name: local-path-provisioner
+        chart_ref: "containeroo/local-path-provisioner"
+        chart_version: 0.0.25
+        release_namespace: minio-operator
+        create_namespace: true
+        release_state: present
+        wait: true
+        values:
+          storageClass:
+            create: true
+            name: local-path
+            defaultClass: true
+            allowVolumeExpansion: true
+            reclaimPolicy: Delete
+            volumeBindingMode: WaitForFirstConsumer
+            defaultVolumeType: hostPath
+          nodePathMap:
+            - node: DEFAULT_PATH_FOR_NON_LISTED_NODES
+              paths:
+                - /tmp/data
     - name: Add MinIo chart
       kubernetes.core.helm_repository:
         name: minio-operator
@@ -41,7 +68,7 @@
               - name: MINIO_REDIRECT_URL
                 value: "http://minio-console.scalehub.local"
               - name: MINIO_PROMETHEUS_URL
-                value : "http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local"
+                value: "http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local"
               - name: PROMETHEUS_NAMESPACE
                 value: "monitoring"
             nodeSelector:
@@ -82,7 +109,7 @@
               enabled: true
               port: 9000
               protocol: http
-            prometheusOperator: true
+            #            prometheusOperator: true
             name: scalehub-tenant
             replicas: 1
             pools:
@@ -104,15 +131,18 @@
                                 - consumer
             nodeSelector:
               node-role.kubernetes.io/worker: "consumer"
+            # Create a bucket for Flink
             buckets:
               - name: flink-bucket
                 policy: public
                 objectLocking: false
+            # Configure Prometheus endpoint
             env:
               - name: MINIO_PROMETHEUS_URL
                 value: "http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local"
               - name: PROMETHEUS_NAMESPACE
                 value: "monitoring"
+          # Expose tenant console via ingress
           ingress:
             console:
               enabled: true
@@ -124,7 +154,7 @@
                 nginx.ingress.kubernetes.io/rewrite-target: /
 
 - name: MinIO - Deletion block
-  tags: [delete]
+  tags: [ delete ]
   delegate_to: localhost
   block:
     - name: Delete MinIO tenant

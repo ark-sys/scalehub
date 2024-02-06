@@ -9,8 +9,8 @@ spec:
     namespaces:
       - consul
     labelSelectors:
-        app: consul
-        component: client
+      app: consul
+      component: client
     nodeSelectors:
       'node-role.kubernetes.io/worker': 'consumer'
   # All values are described here
@@ -22,4 +22,7 @@ spec:
     latency: "{{ latency }}ms"
     jitter: "{{ jitter }}ms"
     correlation: "{{ correlation }}"
+  bandwidth:
+    rate: "{{ rate }}mbps"
+    limit: "{{ limit }}"
   direction: to

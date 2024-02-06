@@ -1,16 +1,17 @@
+import configparser as cp
 import os
 import re
+from datetime import datetime
 from typing import Any
 
 import pandas as pd
 import pytz
 from matplotlib import pyplot as plt
 from matplotlib.legend_handler import HandlerTuple
-import configparser as cp
 
-from .Logger import Logger
 from .Config import Config
 from .Defaults import DefaultKeys as Key
+from .Logger import Logger
 
 
 class ExperimentData:
@@ -57,9 +58,9 @@ class ExperimentData:
         return start_ts, end_ts
 
     def export_data_to_csv(
-        self,
-        time_series_name: str,
-        format_labels="__name__,__timestamp__:unix_s,__value__",
+            self,
+            time_series_name: str,
+            format_labels="__name__,__timestamp__:unix_s,__value__",
     ):
         # VictoriaMetrics export CSV api
         api_url = f"http://{self.db_url}/api/v1/export/csv"
@@ -103,9 +104,9 @@ class ExperimentData:
         )
 
         if (
-            tpo_timeseries_path is None
-            or par_timeseries_path is None
-            or tpi_timeseries_path is None
+                tpo_timeseries_path is None
+                or par_timeseries_path is None
+                or tpi_timeseries_path is None
         ):
             self.__log.error(
                 "Failed to process path for timeseries: could not join data. Something went wrong during export."
@@ -204,7 +205,7 @@ class ExperimentData:
             filtered_df = grouped.apply(
                 lambda x: x[
                     x["Time"] >= x["Time"].min() + pd.Timedelta(seconds=skip_duration)
-                ]
+                    ]
             ).reset_index(drop=True)
 
             # Make sure that Parallelism values are integers and not floats
@@ -373,3 +374,94 @@ class ExperimentData:
         output_filename = os.path.join(self.exp_path, filename)
         fig.savefig(output_filename)
         self.__log.info(f"Plot saved to: {output_filename}")
+
+    def eval_everything(self):
+        def extract_predictions() -> list[tuple[int, int, int, float]]:
+
+            with open(self.transscale_log, 'r') as file:
+                log_content = file.read()
+
+            # Define the regular expression pattern
+            pattern = r'\[(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})\] \[COMBO_CTRL\] Reconf: Scale (Up|Down) (.*) from par (\d+)([\s\S]*?)\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\] \[RES_MNGR\] Re-configuring PARALLELISM[\s\S].*\n.*Target Parallelism: (\d+)'
+            # Extract the matches
+            predictions = []
+            for match in re.finditer(pattern, log_content):
+                # Extract the match
+                current_parallelism = int(match.group(4))
+                target_parallelism = int(match.group(6))
+                prediction_block = match.group(5)
+                operator = match.group(3)
+                time = match.group(1)
+
+                operator_name = self.config.get(Key.Experiment.task_name)
+
+                if operator_name in operator:
+                    throughput_pattern = rf'.*par, transp: {target_parallelism}, 1 target tput: (\d+) new_tput %: (\d+\.\d+)'
+                    # Extract the throughput from prediction block
+                    throughput_match = re.search(throughput_pattern, prediction_block)
+                    if throughput_match:
+                        throughput = float(throughput_match.group(2))
+                        # time is in format "2024-02-04T12:00:00", transform it to milliseconds
+                        time = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S").timestamp()
+                        predictions.append((int(time + 3600), current_parallelism, target_parallelism, throughput))
+
+            return predictions
+
+        joined_data_file = f"{self.exp_path}/joined_output.csv"
+
+        # Read joined_output.csv file
+        dataset = pd.read_csv(joined_data_file)
+
+        # Calculate the rolling mean and standard deviation
+        rolling_mean = dataset['Parallelism'].rolling(window=5).mean()
+        rolling_std = dataset['Parallelism'].rolling(window=5).std()
+
+        # Identify outliers
+        outliers = (dataset['Parallelism'] < (rolling_mean - 2 * rolling_std)) | (
+                dataset['Parallelism'] > (rolling_mean + 2 * rolling_std))
+
+        # Replace outliers with NaN
+        dataset.loc[outliers, 'Parallelism'] = None
+
+        # Extract triplet of (time, target_parallelism, predicted_throughput) from transscale_log.txt
+        predictions = extract_predictions()
+
+        # Create a dataframe from the predictions
+        predictions_df = pd.DataFrame(predictions,
+                                      columns=['Time', 'Current_Parallelism', 'Parallelism', 'Predicted_Throughput'])
+
+        predictions_df['Time'] = predictions_df['Time'] - predictions_df['Time'].min()
+        # Sort the dataframe by 'Time'
+        dataset.sort_values('Time', inplace=True)
+
+        # Subtract minimum time from all time values to start from 0
+        dataset['Time'] = dataset['Time'] - dataset['Time'].min()
+
+        dataset['Parallelism'] = dataset['Parallelism'].astype('int64')
+        dataset = pd.merge_asof(dataset, predictions_df, by='Parallelism', on='Time', direction='nearest')
+        dataset['Predicted_Throughput'] = dataset['Predicted_Throughput'].ffill()
+        # Remove isolated values of predicted throughput
+
+        # Plot timeseries
+        fig, ax1 = plt.subplots()
+
+        color = 'tab:blue'
+        ax1.set_xlabel('time (s)')
+        ax1.set_ylabel('Throughput', color=color)
+        ax1.plot(dataset['Time'], dataset['Throughput_IN'], color=color, linestyle='-')
+        ax1.tick_params(axis='y', labelcolor=color)
+        ax1.grid(axis='y', linestyle='--', linewidth=0.5)
+
+        ax2 = ax1.twinx()
+        color = 'tab:gray'
+        ax2.set_ylabel('parallelism', color=color)
+        ax2.plot(dataset['Time'], dataset['Parallelism'], color=color)
+        ax2.tick_params(axis='y', labelcolor=color)
+        ax2.set_ylim(0, 25)
+
+        color = 'tab:red'
+        # ax1.set_ylabel('predicted throughput', color=color)
+        ax1.plot(dataset['Time'], dataset['Predicted_Throughput'], color=color, linestyle='--')
+
+        # Save the plot to a file
+        plot_file = f"{self.exp_path}/big_plot.png"
