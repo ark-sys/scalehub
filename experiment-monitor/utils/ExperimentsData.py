@@ -465,3 +465,5 @@ class ExperimentData:
 
         # Save the plot to a file
         plot_file = f"{self.exp_path}/big_plot.png"
+        plt.savefig(plot_file)
+        self.__log.info(f"Plot saved to: {plot_file}")
