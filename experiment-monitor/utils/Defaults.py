@@ -50,6 +50,7 @@ class DefaultKeys:
             delay_correlation = "experiment.chaos.delay_correlation"
             bandwidth_rate_mbps = "experiment.chaos.bandwidth_rate_mbps"
             bandwidth_limit = "experiment.chaos.bandwidth_limit"
+            bandwidth_buffer = "experiment.chaos.bandwidth_buffer"
 
 
 class DefaultValues:
@@ -109,8 +110,9 @@ class DefaultValues:
 
         class Chaos:
             enable = False
-            latency_ms = "25"
-            jitter_ms = "0"
-            correlation = "0"
-            bandwidth_rate_mbps = "100"
-            bandwidth_limit = "1000"
+            latency_ms = 25
+            jitter_ms = 0
+            correlation = 0
+            bandwidth_rate_mbps = 100
+            bandwidth_limit = 1000
+            bandwidth_buffer = 100
