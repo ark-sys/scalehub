@@ -141,6 +141,13 @@ class ExperimentFSM:
                     "Starting monitoring thread on scaling events. Reset chaos injection on rescale."
                 )
 
+                # Remove label 'chaos=true' from all nodes
+                chaos_label = "chaos=true"
+                worker_nodes = self.k.get_nodes(
+                    "node-role.kubernetes.io/worker=consumer"
+                )
+                self.k.remove_label_from_nodes(worker_nodes, chaos_label)
+
                 # Setup experiment_params
                 chaos_params = {
                     "latency": self.config.get_int(
@@ -152,13 +159,8 @@ class ExperimentFSM:
                     ),
                     "rate": self.config.get_int(Key.Experiment.Chaos.bandwidth_rate_mbps),
                     "limit": self.config.get_int(Key.Experiment.Chaos.bandwidth_limit),
+                    "buffer": self.config.get_int(Key.Experiment.Chaos.bandwidth_buffer),
                 }
-                # Remove label 'chaos=true' from all nodes
-                chaos_label = "chaos=true"
-                worker_nodes = self.k.get_nodes(
-                    "node-role.kubernetes.io/worker=consumer"
-                )
-                self.k.remove_label_from_nodes(worker_nodes, chaos_label)
 
                 # Deploy chaos resources
                 self.k.create_networkchaos(self.consul_chaos_template, chaos_params)
