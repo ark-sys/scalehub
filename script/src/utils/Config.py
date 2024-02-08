@@ -70,12 +70,25 @@ class Config:
         ] = Value.Experiment.Chaos.correlation
 
         self.__config[
+            Key.Experiment.Chaos.bandwidth_rate_mbps
+        ] = Value.Experiment.Chaos.bandwidth_rate_mbps
+
+        self.__config[
+            Key.Experiment.Chaos.bandwidth_limit
+        ] = Value.Experiment.Chaos.bandwidth_limit
+
+        self.__config[
+            Key.Experiment.Chaos.bandwidth_buffer
+        ] = Value.Experiment.Chaos.bandwidth_buffer
+
+        self.__config[
             Key.Experiment.Generators.generators
         ] = Value.Experiment.Generators
 
         self.__config[
             Key.Experiment.Transscale.max_parallelism
         ] = Value.Experiment.Transscale.max_parallelism
+
         self.__config[
             Key.Experiment.Transscale.monitoring_warmup_s
         ] = Value.Experiment.Transscale.monitoring_warmup_s
@@ -89,6 +102,7 @@ class Config:
         self.__config[
             Key.Experiment.Flink.window_size_ms
         ] = Value.Experiment.Flink.window_size_ms
+        self.__config[Key.Experiment.Flink.fibonacci_value] = Value.Experiment.Flink.fibonacci_value
 
     def get(self, key) -> any:
         if key in self.__config:

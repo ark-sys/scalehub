@@ -211,7 +211,7 @@ class ExperimentData:
             # Make sure that Parallelism values are integers and not floats
             filtered_df["Parallelism"] = filtered_df["Parallelism"].astype(int)
 
-            # Calculate mean throughput and standard deviation for each parallelism
+            # Calculate mean throughput and standard error
             stats_tpo = filtered_df.groupby(["Parallelism", "region"])[
                 "Throughput_OUT"
             ].agg(["mean", "std"])

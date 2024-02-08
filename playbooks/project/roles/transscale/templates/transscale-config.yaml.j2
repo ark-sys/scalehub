@@ -13,7 +13,7 @@ data:
     sys.monitoring.warmup = {{ warmup }}
     sys.monitoring.interval = {{ interval }}
     scaling.strategy.module = transscale.strategies.ParallelismOnly
-    scaling.combined.threshold = 20
+    scaling.combined.threshold = 1
 
     flink.host = flink-jobmanager
     flink.port = 8081    

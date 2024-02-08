@@ -37,6 +37,7 @@ class DefaultKeys:
         class Flink:
             checkpoint_interval_ms = "experiment.flink.checkpoint_interval_ms"
             window_size_ms = "experiment.flink.window_size_ms"
+            fibonacci_value = "experiment.flink.fibonacci_value"
 
         class Transscale:
             max_parallelism = "experiment.transscale.max_parallelism"
@@ -107,6 +108,7 @@ class DefaultValues:
         class Flink:
             checkpoint_interval_ms = 4000
             window_size_ms = 1000
+            fibonacci_value = 10
 
         class Chaos:
             enable = False
