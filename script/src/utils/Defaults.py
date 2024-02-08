@@ -40,6 +40,7 @@ class DefaultKeys:
         class Flink:
             checkpoint_interval_ms = "experiment.flink.checkpoint_interval_ms"
             window_size_ms = "experiment.flink.window_size_ms"
+            fibonacci_value = "experiment.flink.fibonacci_value"
 
         class Transscale:
             max_parallelism = "experiment.transscale.max_parallelism"
@@ -51,6 +52,9 @@ class DefaultKeys:
             delay_latency_ms = "experiment.chaos.delay_latency_ms"
             delay_jitter_ms = "experiment.chaos.delay_jitter_ms"
             delay_correlation = "experiment.chaos.delay_correlation"
+            bandwidth_rate_mbps = "experiment.chaos.bandwidth_rate_mbps"
+            bandwidth_limit = "experiment.chaos.bandwidth_limit"
+            bandwidth_buffer = "experiment.chaos.bandwidth_buffer"
 
 
 class DefaultValues:
@@ -109,9 +113,13 @@ class DefaultValues:
         class Flink:
             checkpoint_interval_ms = 4000
             window_size_ms = 1000
+            fibonacci_value = 20
 
         class Chaos:
             enable = False
             latency_ms = "25"
             jitter_ms = "0"
             correlation = "0"
+            bandwidth_rate_mbps = 100
+            bandwidth_limit = 1000
+            bandwidth_buffer = 100

@@ -57,7 +57,7 @@ class ExperimentData:
         # Return timestamps
         return start_ts, end_ts
 
-    def export_data_to_csv(
+    def export_timeseries(
             self,
             time_series_name: str,
             format_labels="__name__,__timestamp__:unix_s,__value__",
@@ -92,14 +92,14 @@ class ExperimentData:
         self.par_timeseries = f"{self.BASE_TIMESERIES}_{operator_name}_parallelism"
 
         # Export timeseries from database to csv file
-        tpo_timeseries_path = self.export_data_to_csv(
+        tpo_timeseries_path = self.export_timeseries(
             time_series_name=self.tpo_timeseries,
         )
-        par_timeseries_path = self.export_data_to_csv(
+        par_timeseries_path = self.export_timeseries(
             time_series_name=self.par_timeseries,
         )
 
-        tpi_timeseries_path = self.export_data_to_csv(
+        tpi_timeseries_path = self.export_timeseries(
             time_series_name=self.tpi_timeseries,
         )
 
@@ -138,8 +138,60 @@ class ExperimentData:
                     "Throughput_IN",
                 ]
 
+                # Check if transscale log exists
+                if os.path.exists(self.transscale_log):
+                    # Transscale log found, try to extract predictions
+                    predictions = self.__export_predictions()
+                    if predictions:
+                        # Create a dataframe from the predictions
+                        predictions_df = pd.DataFrame(predictions,
+                                                      columns=['Time', 'Current_Parallelism', 'Parallelism',
+                                                               'Predicted_Throughput'])
+
+                        predictions_df['Time'] = predictions_df['Time'] - predictions_df['Time'].min()
+                        # Sort the dataframe by 'Time'
+                        df_merged.sort_values('Time', inplace=True)
+
+                        # Subtract minimum time from all time values to start from 0
+                        df_merged['Time'] = df_merged['Time'] - df_merged['Time'].min()
+
+                        df_merged['Parallelism'] = df_merged['Parallelism'].astype('int64')
+                        dataset = pd.merge_asof(df_merged, predictions_df, by='Parallelism', on='Time',
+                                                direction='nearest')
+                        dataset['Predicted_Throughput'] = dataset['Predicted_Throughput'].ffill()
+
                 output_file = os.path.join(self.exp_path, "joined_output.csv")
                 df_merged.dropna().to_csv(output_file, index=False)
+
+    def __export_predictions(self) -> list[tuple[int, int, int, float]]:
+        with open(self.transscale_log, 'r') as file:
+            log_content = file.read()
+
+        # Define the regular expression pattern
+        pattern = r'\[(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})\] \[COMBO_CTRL\] Reconf: Scale (Up|Down) (.*) from par (\d+)([\s\S]*?)\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\] \[RES_MNGR\] Re-configuring PARALLELISM[\s\S].*\n.*Target Parallelism: (\d+)'
+        # Extract the matches
+        predictions = []
+        for match in re.finditer(pattern, log_content):
+            # Extract the match
+            current_parallelism = int(match.group(4))
+            target_parallelism = int(match.group(6))
+            prediction_block = match.group(5)
+            operator = match.group(3)
+            time = match.group(1)
+
+            operator_name = self.config.get(Key.Experiment.task_name)
+
+            if operator_name in operator:
+                throughput_pattern = rf'.*par, transp: {target_parallelism}, 1 target tput: (\d+) new_tput %: (\d+\.\d+)'
+                # Extract the throughput from prediction block
+                throughput_match = re.search(throughput_pattern, prediction_block)
+                if throughput_match:
+                    throughput = float(throughput_match.group(2))
+                    # time is in format "2024-02-04T12:00:00", transform it to milliseconds
+                    time = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S").timestamp()
+                    predictions.append((int(time + 3600), current_parallelism, target_parallelism, throughput))
+
+        return predictions
 
     # This function takes a join.csv file, which contains throughput and parallelism metric from an experiment And
     # evaluates mean and stdev throughput for each parallelism. If predictions are found for experiment,
@@ -375,72 +427,23 @@ class ExperimentData:
         fig.savefig(output_filename)
         self.__log.info(f"Plot saved to: {output_filename}")
 
-    def eval_everything(self):
-        def extract_predictions() -> list[tuple[int, int, int, float]]:
-
-            with open(self.transscale_log, 'r') as file:
-                log_content = file.read()
-
-            # Define the regular expression pattern
-            pattern = r'\[(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})\] \[COMBO_CTRL\] Reconf: Scale (Up|Down) (.*) from par (\d+)([\s\S]*?)\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\] \[RES_MNGR\] Re-configuring PARALLELISM[\s\S].*\n.*Target Parallelism: (\d+)'
-            # Extract the matches
-            predictions = []
-            for match in re.finditer(pattern, log_content):
-                # Extract the match
-                current_parallelism = int(match.group(4))
-                target_parallelism = int(match.group(6))
-                prediction_block = match.group(5)
-                operator = match.group(3)
-                time = match.group(1)
-
-                operator_name = self.config.get(Key.Experiment.task_name)
-
-                if operator_name in operator:
-                    throughput_pattern = rf'.*par, transp: {target_parallelism}, 1 target tput: (\d+) new_tput %: (\d+\.\d+)'
-                    # Extract the throughput from prediction block
-                    throughput_match = re.search(throughput_pattern, prediction_block)
-                    if throughput_match:
-                        throughput = float(throughput_match.group(2))
-                        # time is in format "2024-02-04T12:00:00", transform it to milliseconds
-                        time = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S").timestamp()
-                        predictions.append((int(time + 3600), current_parallelism, target_parallelism, throughput))
-
-            return predictions
+    def eval_summary_plot(self):
 
         joined_data_file = f"{self.exp_path}/joined_output.csv"
 
         # Read joined_output.csv file
         dataset = pd.read_csv(joined_data_file)
 
-        # Calculate the rolling mean and standard deviation
-        rolling_mean = dataset['Parallelism'].rolling(window=5).mean()
-        rolling_std = dataset['Parallelism'].rolling(window=5).std()
-
-        # Identify outliers
-        outliers = (dataset['Parallelism'] < (rolling_mean - 2 * rolling_std)) | (
-                dataset['Parallelism'] > (rolling_mean + 2 * rolling_std))
-
-        # Replace outliers with NaN
-        dataset.loc[outliers, 'Parallelism'] = None
-
-        # Extract triplet of (time, target_parallelism, predicted_throughput) from transscale_log.txt
-        predictions = extract_predictions()
-
-        # Create a dataframe from the predictions
-        predictions_df = pd.DataFrame(predictions,
-                                      columns=['Time', 'Current_Parallelism', 'Parallelism', 'Predicted_Throughput'])
-
-        predictions_df['Time'] = predictions_df['Time'] - predictions_df['Time'].min()
-        # Sort the dataframe by 'Time'
-        dataset.sort_values('Time', inplace=True)
-
-        # Subtract minimum time from all time values to start from 0
-        dataset['Time'] = dataset['Time'] - dataset['Time'].min()
-
-        dataset['Parallelism'] = dataset['Parallelism'].astype('int64')
-        dataset = pd.merge_asof(dataset, predictions_df, by='Parallelism', on='Time', direction='nearest')
-        dataset['Predicted_Throughput'] = dataset['Predicted_Throughput'].ffill()
-        # Remove isolated values of predicted throughput
+        # # Calculate the rolling mean and standard deviation
+        # rolling_mean = dataset['Parallelism'].rolling(window=5).mean()
+        # rolling_std = dataset['Parallelism'].rolling(window=5).std()
+        #
+        # # Identify outliers
+        # outliers = (dataset['Parallelism'] < (rolling_mean - 2 * rolling_std)) | (
+        #         dataset['Parallelism'] > (rolling_mean + 2 * rolling_std))
+        #
+        # # Replace outliers with NaN
+        # dataset.loc[outliers, 'Parallelism'] = None
 
         # Plot timeseries
         fig, ax1 = plt.subplots()

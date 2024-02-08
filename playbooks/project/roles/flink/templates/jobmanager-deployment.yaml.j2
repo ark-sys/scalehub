@@ -43,11 +43,13 @@ spec:
               value: "{{ checkpoint_interval }}"
             - name: JOB_WINDOW_SIZE
               value: "{{ window_size }}"
+            - name: FIB_INPUT
+              value: "{{ fibonacci_value }}"
           resources:
             limits:
               memory: 4Gi
               cpu: 1000m
-          args: ["jobmanager"]
+          args: [ "jobmanager" ]
           ports:
             - containerPort: 6123
               name: rpc
