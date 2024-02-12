@@ -38,6 +38,7 @@ from utils.Logger import Logger
 # 6.5. Delete load generators
 # 6.6. Clean chaos resources
 
+
 class ExperimentFSM:
     # Define states of the state machine
     states = ["IDLE", "STARTING", "RUNNING", "FINISHING"]
@@ -157,9 +158,13 @@ class ExperimentFSM:
                     "correlation": self.config.get_float(
                         Key.Experiment.Chaos.delay_correlation
                     ),
-                    "rate": self.config.get_int(Key.Experiment.Chaos.bandwidth_rate_mbps),
+                    "rate": self.config.get_int(
+                        Key.Experiment.Chaos.bandwidth_rate_mbps
+                    ),
                     "limit": self.config.get_int(Key.Experiment.Chaos.bandwidth_limit),
-                    "buffer": self.config.get_int(Key.Experiment.Chaos.bandwidth_buffer),
+                    "buffer": self.config.get_int(
+                        Key.Experiment.Chaos.bandwidth_buffer
+                    ),
                 }
 
                 # Deploy chaos resources
@@ -379,7 +384,7 @@ class MQTTClient:
         # Create state machine
         self.fsm = ExperimentFSM(log)
 
-        self.client = mqtt.Client()
+        self.client = mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION2)
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
 
