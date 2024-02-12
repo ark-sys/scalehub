@@ -38,33 +38,52 @@ class G5k(Platform):
 
         # Setup request of resources as specified in configuration file
         network = en.G5kNetworkConf(type="prod", roles=["my_network"], site=self.site)
-        conf = (
-            en.G5kConf.from_settings(
-                job_name=self.reservation_name,
-                queue=self.queue,
-                walltime=self.walltime,
+
+        # If producers or consumers are set to 0, crate a single node with 3 roles
+        if self.producers == 0 or self.consumers == 0:
+            conf = (
+                en.G5kConf.from_settings(
+                    job_name=self.reservation_name,
+                    queue=self.queue,
+                    walltime=self.walltime,
+                )
+                .add_network_conf(network)
+                .add_machine(
+                    roles=["control", "producers", "consumers"],
+                    cluster=self.cluster,
+                    nodes=1,
+                    primary_network=network,
+                )
+                .finalize()
             )
-            .add_network_conf(network)
-            .add_machine(
-                roles=["control"],
-                cluster=self.cluster,
-                nodes=1,
-                primary_network=network,
+        else:
+            conf = (
+                en.G5kConf.from_settings(
+                    job_name=self.reservation_name,
+                    queue=self.queue,
+                    walltime=self.walltime,
+                )
+                .add_network_conf(network)
+                .add_machine(
+                    roles=["control"],
+                    cluster=self.cluster,
+                    nodes=1,
+                    primary_network=network,
+                )
+                .add_machine(
+                    roles=["producers"],
+                    cluster=self.cluster,
+                    nodes=self.producers,
+                    primary_network=network,
+                )
+                .add_machine(
+                    roles=["consumers"],
+                    cluster=self.cluster,
+                    nodes=self.consumers,
+                    primary_network=network,
+                )
+                .finalize()
             )
-            .add_machine(
-                roles=["producers"],
-                cluster=self.cluster,
-                nodes=self.producers,
-                primary_network=network,
-            )
-            .add_machine(
-                roles=["consumers"],
-                cluster=self.cluster,
-                nodes=self.consumers,
-                primary_network=network,
-            )
-            .finalize()
-        )
 
         self.conf = conf
         self.provider = en.G5k(self.conf)
