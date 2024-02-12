@@ -111,6 +111,8 @@
         INSTALL_K3S_VERSION: v1.28.3+k3s2
       shell:
         cmd: "curl -sfL https://get.k3s.io | sh -s -"
+      # Skip this task if the consumers nodes or the producers nodes are the same as the control node. This is a single node cluster.
+      when: "inventory_hostname not in groups['control']"
 
 - name: Post-install configuration
   hosts: localhost

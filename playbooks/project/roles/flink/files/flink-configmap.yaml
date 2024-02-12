@@ -20,8 +20,8 @@ data:
     jobmanager.rpc.port: 6123
     queryable-state.proxy.ports: 6125
     
-    taskmanager.numberOfTaskSlots: 1
     taskmanager.rpc.port: 6122
+    taskmanager.numberOfTaskSlots: 1
     taskmanager.memory.process.size: 4Gb
     taskmanager.memory.managed.fraction: 0.2
     taskmanager.memory.task.off-heap.size: 2048mb
@@ -53,32 +53,28 @@ data:
     execution.checkpointing.checkpoints-after-tasks-finish.enabled: true
   log4j-console.properties: |+
     # This affects logging for both user code and Flink
-    rootLogger.level = INFO
-    rootLogger.appenderRef.console.ref = ConsoleAppender
+    rootLogger.level=INFO
+    rootLogger.appenderRef.console.ref=ConsoleAppender
     #rootLogger.appenderRef.rolling.ref = RollingFileAppender
-
     # Uncomment this if you want to _only_ change Flink's logging
     #logger.flink.name = org.apache.flink
     #logger.flink.level = INFO
-
     # The following lines keep the log level of common libraries/connectors on
     # log level INFO. The root logger does not override this. You have to manually
     # change the log levels here.
-    logger.akka.name = akka
-    logger.akka.level = INFO
-    logger.kafka.name= org.apache.kafka
-    logger.kafka.level = INFO
-    logger.hadoop.name = org.apache.hadoop
-    logger.hadoop.level = INFO
-    logger.zookeeper.name = org.apache.zookeeper
-    logger.zookeeper.level = INFO
-
+    logger.akka.name=akka
+    logger.akka.level=INFO
+    logger.kafka.name=org.apache.kafka
+    logger.kafka.level=INFO
+    logger.hadoop.name=org.apache.hadoop
+    logger.hadoop.level=INFO
+    logger.zookeeper.name=org.apache.zookeeper
+    logger.zookeeper.level=INFO
     # Log all infos to the console
-    appender.console.name = ConsoleAppender
-    appender.console.type = CONSOLE
-    appender.console.layout.type = PatternLayout
-    appender.console.layout.pattern = %d{yyyy-MM-dd HH:mm:ss,SSS} %-5p %-60c %x - %m%n
-
+    appender.console.name=ConsoleAppender
+    appender.console.type=CONSOLE
+    appender.console.layout.type=PatternLayout
+    appender.console.layout.pattern=%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p %-60c %x - %m%n
     # Log all infos in the given rolling file
     #appender.rolling.name = RollingFileAppender
     #appender.rolling.type = RollingFile
@@ -92,7 +88,6 @@ data:
     #appender.rolling.policies.size.size=100MB
     #appender.rolling.strategy.type = DefaultRolloverStrategy
     #appender.rolling.strategy.max = 10
-
     # Suppress the irrelevant (wrong) warnings from the Netty channel handler
-    logger.netty.name = org.apache.flink.shaded.akka.org.jboss.netty.channel.DefaultChannelPipeline
-    logger.netty.level = OFF
+    logger.netty.name=org.apache.flink.shaded.akka.org.jboss.netty.channel.DefaultChannelPipeline
+    logger.netty.level=OFF
