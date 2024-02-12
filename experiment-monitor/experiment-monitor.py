@@ -5,6 +5,7 @@ from datetime import datetime
 from time import sleep
 
 import paho.mqtt.client as mqtt
+from paho.mqtt.enums import CallbackAPIVersion
 from transitions import Machine
 
 from utils.Config import Config
