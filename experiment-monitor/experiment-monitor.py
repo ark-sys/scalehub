@@ -389,8 +389,8 @@ class MQTTClient:
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
 
-    def on_connect(self, client, userdata, flags, rc):
-        self.__log.info(f"Connected with result code {rc}")
+    def on_connect(self, client, userdata, connect_flags, reason_code, properties):
+        self.__log.info(f"Connected with result code {connect_flags}")
 
         # Subscribe to experiment command topic
         self.client.subscribe("experiment/command", qos=2)
