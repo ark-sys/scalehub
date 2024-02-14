@@ -36,7 +36,7 @@ spec:
             - name: KAFKA_ZOOKEEPER_CONNECT
               value: zookeeper-service:2181
             - name: KAFKA_CREATE_TOPICS
-              value: "input-topic1:1:3,input-topic2:1:3"
+              value: "input-topic1:1000:3,input-topic2:1000:3"
             - name: KAFKA_LOG_RETENTION_BYTES
               value: "1073741824"
             - name: KAFKA_LOG_CLEANER_ENABLE
