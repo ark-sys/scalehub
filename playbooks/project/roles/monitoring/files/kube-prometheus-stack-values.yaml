@@ -16,6 +16,7 @@ prometheus:
     scrapeInterval: 5s
     serviceMonitorSelectorNilUsesHelmValues: false
     podMonitorSelectorNilUsesHelmValues: false
+    probeSelectorNilUsesHelmValues: false
     remoteWrite:
       - url: http://victoria-metrics-single-server.default.svc.cluster.local:8428/api/v1/write
     nodeSelector:

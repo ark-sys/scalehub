@@ -2,6 +2,13 @@
 - name: Deploy Kafka stack
   tags: [ create ]
   block:
+    - name: Clean /tmp/experiment-data/kafka on producer nodes
+      command: "rm -rf /tmp/experiment-data/kafka"
+      delegate_to: "{{ item }}"
+      become: true
+      with_items: "{{ groups['producers'] }}"
+      when: groups['producers'] | length > 0
+
     - name: Deploy Schema-registry service
       kubernetes.core.k8s:
         state: present

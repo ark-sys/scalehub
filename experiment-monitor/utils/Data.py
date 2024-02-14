@@ -17,7 +17,7 @@ from .Logger import Logger
 class ExperimentData:
     BASE_TIMESERIES = "flink_operator"
 
-    def __init__(self, log: Logger, exp_path: str, config: Config):
+    def __init__(self, log: Logger, exp_path: str, config: Config, force: bool = False):
         self.__log = log
         # Path to experiment folder
         self.exp_path = exp_path
@@ -29,6 +29,7 @@ class ExperimentData:
         # Parse configuration file for experiment
         self.cp = cp.ConfigParser()
         self.config: Config = config
+        self.force = force
 
         # Parse log file for timestamps
         self.start_ts, self.end_ts = self.__get_timestamps_from_log(self.log_file)
@@ -36,10 +37,12 @@ class ExperimentData:
         # VictoriaMetrics database url
         self.db_url = "victoria-metrics-single-server.default.svc.cluster.local:8428"
 
-        # Placeholders for throughput_in, throughput_out and parallelism timeseries
+        # Placeholders for throughput_in, throughput_out, parallelism, backpressure and busyness timeseries
         self.tpo_timeseries = ""
         self.tpi_timeseries = ""
         self.par_timeseries = ""
+        self.bpr_timeseries = ""
+        self.bus_timeseries = ""
 
     def __get_timestamps_from_log(self, log_path: str) -> tuple[int, int]:
         # Parse log file for experiment info
@@ -62,25 +65,31 @@ class ExperimentData:
             time_series_name: str,
             format_labels="__name__,__timestamp__:unix_s,__value__",
     ):
-        # VictoriaMetrics export CSV api
-        api_url = f"http://{self.db_url}/api/v1/export/csv"
-        params = {
-            "format": format_labels,
-            "match": time_series_name,
-            "start": self.start_ts,
-            "end": self.end_ts,
-        }
-        import requests
+        output_file = os.path.join(self.exp_path, f"{time_series_name}_export.csv")
 
-        response = requests.get(api_url, params=params)
-        if response.status_code == 200:
-            output_file = os.path.join(self.exp_path, f"{time_series_name}_export.csv")
-            with open(output_file, "wb") as file:
-                file.write(response.content)
-            self.__log.info(f"Data exported to {output_file}")
+        # If file exists and force is not set, skip export, otherwise export data
+        if os.path.exists(output_file) and not self.force:
+            self.__log.info(f"Skipping export of {time_series_name} timeseries: file exists.")
             return output_file
         else:
-            self.__log.error(f"Error exporting data: {response.text}")
+            # VictoriaMetrics export CSV api
+            api_url = f"http://{self.db_url}/api/v1/export/csv"
+            params = {
+                "format": format_labels,
+                "match": time_series_name,
+                "start": self.start_ts,
+                "end": self.end_ts,
+            }
+            import requests
+
+            response = requests.get(api_url, params=params)
+            if response.status_code == 200:
+                with open(output_file, "wb") as file:
+                    file.write(response.content)
+                self.__log.info(f"Data exported to {output_file}")
+                return output_file
+            else:
+                self.__log.error(f"Error exporting data: {response.text}")
 
     def export_experiment_data(self):
         # Retrieve operator name from config file
@@ -90,6 +99,8 @@ class ExperimentData:
         self.tpo_timeseries = f"{self.BASE_TIMESERIES}_{operator_name}_throughput_out"
         self.tpi_timeseries = f"{self.BASE_TIMESERIES}_{operator_name}_throughput_in"
         self.par_timeseries = f"{self.BASE_TIMESERIES}_{operator_name}_parallelism"
+        self.bpr_timeseries = f"{self.BASE_TIMESERIES}_{operator_name}_backpressure"
+        self.bus_timeseries = f"{self.BASE_TIMESERIES}_{operator_name}_busyness"
 
         # Export timeseries from database to csv file
         tpo_timeseries_path = self.export_timeseries(
@@ -102,11 +113,19 @@ class ExperimentData:
         tpi_timeseries_path = self.export_timeseries(
             time_series_name=self.tpi_timeseries,
         )
+        bpr_timeseries_path = self.export_timeseries(
+            time_series_name=self.bpr_timeseries,
+        )
+        bus_timeseries_path = self.export_timeseries(
+            time_series_name=self.bus_timeseries,
+        )
 
         if (
                 tpo_timeseries_path is None
                 or par_timeseries_path is None
                 or tpi_timeseries_path is None
+                or bpr_timeseries_path is None
+                or bus_timeseries_path is None
         ):
             self.__log.error(
                 "Failed to process path for timeseries: could not join data. Something went wrong during export."
@@ -115,6 +134,10 @@ class ExperimentData:
         else:
             df1 = pd.read_csv(tpo_timeseries_path).dropna()
             df2 = pd.read_csv(par_timeseries_path).dropna()
+            df3 = pd.read_csv(tpi_timeseries_path).dropna()
+            df4 = pd.read_csv(bpr_timeseries_path).dropna()
+            df5 = pd.read_csv(bus_timeseries_path).dropna()
+
             if df1.empty or df2.empty:
                 self.__log.error(
                     "One or both exported CSVs appear to be empty. Failed to join."

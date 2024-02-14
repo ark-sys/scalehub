@@ -4,6 +4,7 @@ import time
 
 import enoslib as en
 import paho.mqtt.client as mqtt
+from paho.mqtt.enums import CallbackAPIVersion
 
 from .utils.Config import Config
 from .utils.Defaults import DefaultKeys as Key
@@ -56,7 +57,7 @@ class Client:
         self.__log = log
         self.p: Playbooks = Playbooks()
 
-        self.client = mqtt.Client()
+        self.client = mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION1)
         self.config = config
         self.broker_host = config.get_str(Key.Experiment.broker_mqtt_host)
         self.broker_port = config.get_int(Key.Experiment.broker_mqtt_port)
