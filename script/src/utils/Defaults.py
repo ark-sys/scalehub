@@ -14,6 +14,7 @@ class DefaultKeys:
         consumers = "platform.consumers"
         queue = "platform.queue"
         walltime = "platform.walltime"
+        start_time = "platform.start_time"
         kubernetes_type = "platform.kubernetes_type"
 
     class Experiment:
@@ -82,6 +83,7 @@ class DefaultValues:
         consumers = 1
         queue = "default"
         walltime = "1:00:00"
+        start_time = "now"
         kubernetes_type = "k3s"
 
     class Experiment:

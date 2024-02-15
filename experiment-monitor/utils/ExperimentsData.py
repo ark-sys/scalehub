@@ -9,7 +9,7 @@ import pytz
 from matplotlib import pyplot as plt
 from matplotlib.legend_handler import HandlerTuple
 
-from .Config import Config
+from .Conf import Conf
 from .Defaults import DefaultKeys as Key
 from .Logger import Logger
 
@@ -17,7 +17,7 @@ from .Logger import Logger
 class ExperimentData:
     BASE_TIMESERIES = "flink_operator"
 
-    def __init__(self, log: Logger, exp_path: str, config: Config):
+    def __init__(self, log: Logger, exp_path: str, config: Conf):
         self.__log = log
         # Path to experiment folder
         self.exp_path = exp_path
@@ -28,7 +28,7 @@ class ExperimentData:
 
         # Parse configuration file for experiment
         self.cp = cp.ConfigParser()
-        self.config: Config = config
+        self.config: Conf = config
 
         # Parse log file for timestamps
         self.start_ts, self.end_ts = self.__get_timestamps_from_log(self.log_file)

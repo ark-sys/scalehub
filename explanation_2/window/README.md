@@ -1,0 +1,1 @@
+# Here we see the impact that a different size of window has on state and throughput

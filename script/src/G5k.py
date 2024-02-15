@@ -35,6 +35,7 @@ class G5k(Platform):
         self.consumers = self.config.get_int(Key.Platform.consumers)
         self.queue = self.config.get_str(Key.Platform.queue)
         self.walltime = self.config.get_str(Key.Platform.walltime)
+        self.start_time = self.config.get_str(Key.Platform.start_time)
 
         # Setup request of resources as specified in configuration file
         network = en.G5kNetworkConf(type="prod", roles=["my_network"], site=self.site)
@@ -89,8 +90,17 @@ class G5k(Platform):
         self.provider = en.G5k(self.conf)
 
     def setup(self):
+        # If start_time is set, convert it to an int timestamp. Format is "HH:MM:SS" of the day
+        if self.start_time != "now":
+            import datetime
+
+            now = datetime.datetime.now()
+            start_time = datetime.datetime.strptime(self.start_time, "%H:%M:%S")
+            start_time = now.replace(hour=start_time.hour, minute=start_time.minute, second=start_time.second)
+            self.start_time = start_time.timestamp()
+
         # Request resources from Grid5000
-        roles, networks = self.provider.init()
+        roles, networks = self.provider.init(start_time=self.start_time)
         inventory = ""
 
         for role, hosts in roles.items():

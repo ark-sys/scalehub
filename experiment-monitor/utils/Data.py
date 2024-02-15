@@ -1,15 +1,10 @@
-import configparser as cp
 import os
 import re
 from datetime import datetime
-from typing import Any
 
 import pandas as pd
-import pytz
-from matplotlib import pyplot as plt
-from matplotlib.legend_handler import HandlerTuple
 
-from .Config import Config
+from .Conf import Conf
 from .Defaults import DefaultKeys as Key
 from .Logger import Logger
 
@@ -17,7 +12,7 @@ from .Logger import Logger
 class ExperimentData:
     BASE_TIMESERIES = "flink_operator"
 
-    def __init__(self, log: Logger, exp_path: str, config: Config, force: bool = False):
+    def __init__(self, log: Logger, exp_path: str, force: bool = False):
         self.__log = log
         # Path to experiment folder
         self.exp_path = exp_path
@@ -27,8 +22,8 @@ class ExperimentData:
         self.transscale_log = os.path.join(self.exp_path, "transscale_log.txt")
 
         # Parse configuration file for experiment
-        self.cp = cp.ConfigParser()
-        self.config: Config = config
+        self.conf: Conf = Conf(log, log_path=self.log_file)
+
         self.force = force
 
         # Parse log file for timestamps
@@ -38,8 +33,8 @@ class ExperimentData:
         self.start_skip = 30
         self.end_skip = 30
         # VictoriaMetrics database url
-        self.db_url = "victoria-metrics-single-server.default.svc.cluster.local:8428"
-
+        # self.db_url = "victoria-metrics-single-server.default.svc.cluster.local:8428"
+        self.db_url = "localhost/vm"
         # Placeholders for throughput_in, throughput_out, parallelism, backpressure and busyness timeseries
         self.tpo_timeseries = ""
         self.tpi_timeseries = ""
@@ -64,11 +59,11 @@ class ExperimentData:
         return start_ts, end_ts
 
     def export_timeseries(
-        self,
-        time_series_name: str,
-        format_labels="__name__,__timestamp__:unix_s,__value__",
+            self,
+            time_series_name: str,
+            format_labels="__name__,__timestamp__:unix_s,__value__",
     ):
-        output_file = os.path.join(self.exp_path, f"{time_series_name}_export.csv")
+        output_file = os.path.join(self.exp_path, f"{time_series_name}_export_test.csv")
 
         # If file exists and force is not set, skip export, otherwise export data
         if os.path.exists(output_file) and not self.force:
@@ -96,9 +91,40 @@ class ExperimentData:
             else:
                 self.__log.error(f"Error exporting data: {response.text}")
 
+    def perf_query(self, query: str):
+        # VictoriaMetrics query api
+        api_url = f"http://{self.db_url}/api/v1/query_range"
+        params = {"query": query, "start": self.start_ts, "end": self.end_ts, "step": "5s"}
+        import requests
+
+        response = requests.get(api_url, params=params)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            self.__log.error(f"Error querying data: {response.text}")
+
+    def export_timeseries_json(self):
+        # Export all timeseries in native format
+        output_file = os.path.join(self.exp_path, "dataset.json")
+        api_url = f"http://{self.db_url}/api/v1/export"
+        params = {
+            "match[]": '{__name__=~"flink.*"}',
+            "start": self.start_ts,
+            "end": self.end_ts,
+        }
+        import requests
+        response = requests.get(api_url, params=params)
+        if response.status_code == 200:
+            with open(output_file, "wb") as file:
+                file.write(response.content)
+            self.__log.info(f"Data exported to {output_file}")
+            return output_file
+        else:
+            self.__log.error(f"Error exporting data: {response.text}")
+
     def export_experiment_data(self):
         # Retrieve operator name from config file
-        operator_name = self.config.get(Key.Experiment.task_name)
+        operator_name = self.conf.get(Key.Experiment.task_name)
 
         # Build timeseries names with operator name
         self.tpo_timeseries = f"{self.BASE_TIMESERIES}_{operator_name}_throughput_out"
@@ -126,11 +152,11 @@ class ExperimentData:
         )
 
         if (
-            tpo_timeseries_path is None
-            or par_timeseries_path is None
-            or tpi_timeseries_path is None
-            or bpr_timeseries_path is None
-            or bus_timeseries_path is None
+                tpo_timeseries_path is None
+                or par_timeseries_path is None
+                or tpi_timeseries_path is None
+                or bpr_timeseries_path is None
+                or bus_timeseries_path is None
         ):
             self.__log.error(
                 "Failed to process path for timeseries: could not join data. Something went wrong during export."
@@ -189,7 +215,7 @@ class ExperimentData:
                         )
 
                         predictions_df["Time"] = (
-                            predictions_df["Time"] - predictions_df["Time"].min()
+                                predictions_df["Time"] - predictions_df["Time"].min()
                         )
                         # Sort the dataframe by 'Time'
                         df_merged.sort_values("Time", inplace=True)
@@ -230,7 +256,7 @@ class ExperimentData:
             operator = match.group(3)
             time = match.group(1)
 
-            operator_name = self.config.get(Key.Experiment.task_name)
+            operator_name = self.conf.get(Key.Experiment.task_name)
 
             if operator_name in operator:
                 throughput_pattern = rf".*par, transp: {target_parallelism}, 1 target tput: (\d+) new_tput %: (\d+\.\d+)"
