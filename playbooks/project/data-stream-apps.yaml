@@ -1,0 +1,7 @@
+---
+- name: Flink and Kafka deployment
+  hosts: localhost
+  gather_facts: false
+  roles:
+    - flink
+    - kafka
