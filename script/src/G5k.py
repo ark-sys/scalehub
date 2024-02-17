@@ -35,7 +35,7 @@ class G5k(Platform):
         self.consumers = self.config.get_int(Key.Platform.consumers)
         self.queue = self.config.get_str(Key.Platform.queue)
         self.walltime = self.config.get_str(Key.Platform.walltime)
-        self.start_time = self.config.get_str(Key.Platform.start_time)
+        self.start_time = self.config.get(Key.Platform.start_time)
 
         # Setup request of resources as specified in configuration file
         network = en.G5kNetworkConf(type="prod", roles=["my_network"], site=self.site)
@@ -91,16 +91,20 @@ class G5k(Platform):
 
     def setup(self):
         # If start_time is set, convert it to an int timestamp. Format is "HH:MM:SS" of the day
-        if self.start_time != "now":
+        if self.start_time is not None:
             import datetime
 
             now = datetime.datetime.now()
             start_time = datetime.datetime.strptime(self.start_time, "%H:%M:%S")
-            start_time = now.replace(hour=start_time.hour, minute=start_time.minute, second=start_time.second)
-            self.start_time = start_time.timestamp()
-
-        # Request resources from Grid5000
-        roles, networks = self.provider.init(start_time=self.start_time)
+            start_time = now.replace(
+                hour=start_time.hour, minute=start_time.minute, second=start_time.second
+            )
+            self.start_time = int(start_time.timestamp())
+            # Request resources from Grid5000
+            roles, networks = self.provider.init(start_time=self.start_time)
+        else:
+            # Request resources from Grid5000
+            roles, networks = self.provider.init()
         inventory = ""
 
         for role, hosts in roles.items():
@@ -157,8 +161,10 @@ class G5k(Platform):
             # Query job information with Grid5000 REST API
             import requests
 
-            query = requests.get(f"https://api.grid5000.fr/3.0/sites/{self.site}/jobs/{job_id}",
-                                 auth=(self.username, self.password))
+            query = requests.get(
+                f"https://api.grid5000.fr/3.0/sites/{self.site}/jobs/{job_id}",
+                auth=(self.username, self.password),
+            )
 
             walltime: int = query.json()["walltime"]
             start_time: int = query.json()["started_at"]
@@ -168,6 +174,7 @@ class G5k(Platform):
 
             # Eval current time
             import datetime
+
             now = datetime.datetime.now()
 
             # Eval remaining time
