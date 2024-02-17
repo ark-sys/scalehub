@@ -58,10 +58,37 @@ class ExperimentData:
         # Return timestamps
         return start_ts, end_ts
 
-    def export_timeseries(
-            self,
-            time_series_name: str,
-            format_labels="__name__,__timestamp__:unix_s,__value__",
+    def export_timeseries_json(
+        self,
+        time_series_name: str,
+        format_labels="__name__,__timestamp__:unix_s,__value__",
+    ):
+        # Export all timeseries in native format
+        output_file = os.path.join(
+            self.exp_path, f"{time_series_name}_export_test.json"
+        )
+        api_url = f"http://{self.db_url}/api/v1/export"
+        params = {
+            "format": format_labels,
+            "match[]": time_series_name,
+            "start": self.start_ts,
+            "end": self.end_ts,
+        }
+        import requests
+
+        response = requests.get(api_url, params=params)
+        if response.status_code == 200:
+            with open(output_file, "wb") as file:
+                file.write(response.content)
+            self.__log.info(f"Data exported to {output_file}")
+            return output_file
+        else:
+            self.__log.error(f"Error exporting data: {response.text}")
+
+    def export_timeseries_csv(
+        self,
+        time_series_name: str,
+        format_labels="__name__,__timestamp__:unix_s,__value__",
     ):
         output_file = os.path.join(self.exp_path, f"{time_series_name}_export_test.csv")
 
@@ -94,7 +121,15 @@ class ExperimentData:
     def perf_query(self, query: str):
         # VictoriaMetrics query api
         api_url = f"http://{self.db_url}/api/v1/query_range"
-        params = {"query": query, "start": self.start_ts, "end": self.end_ts, "step": "5s"}
+        params = {
+            "query": query,
+            "start": self.start_ts,
+            "end": self.end_ts,
+            "step": "10s",
+        }
+
+        self.__log.info(f"Performing query with parameters: {params}")
+
         import requests
 
         response = requests.get(api_url, params=params)
@@ -102,25 +137,6 @@ class ExperimentData:
             return response.json()
         else:
             self.__log.error(f"Error querying data: {response.text}")
-
-    def export_timeseries_json(self):
-        # Export all timeseries in native format
-        output_file = os.path.join(self.exp_path, "dataset.json")
-        api_url = f"http://{self.db_url}/api/v1/export"
-        params = {
-            "match[]": '{__name__=~"flink.*"}',
-            "start": self.start_ts,
-            "end": self.end_ts,
-        }
-        import requests
-        response = requests.get(api_url, params=params)
-        if response.status_code == 200:
-            with open(output_file, "wb") as file:
-                file.write(response.content)
-            self.__log.info(f"Data exported to {output_file}")
-            return output_file
-        else:
-            self.__log.error(f"Error exporting data: {response.text}")
 
     def export_experiment_data(self):
         # Retrieve operator name from config file
@@ -134,29 +150,29 @@ class ExperimentData:
         self.bus_timeseries = f"{self.BASE_TIMESERIES}_{operator_name}_busyness"
 
         # Export timeseries from database to csv file
-        tpo_timeseries_path = self.export_timeseries(
-            time_series_name=self.tpo_timeseries,
+        tpo_timeseries_path = self.export_timeseries_csv(
+            time_series_name=self.tpo_timeseries
         )
-        par_timeseries_path = self.export_timeseries(
-            time_series_name=self.par_timeseries,
+        par_timeseries_path = self.export_timeseries_csv(
+            time_series_name=self.par_timeseries
         )
 
-        tpi_timeseries_path = self.export_timeseries(
-            time_series_name=self.tpi_timeseries,
+        tpi_timeseries_path = self.export_timeseries_csv(
+            time_series_name=self.tpi_timeseries
         )
-        bpr_timeseries_path = self.export_timeseries(
-            time_series_name=self.bpr_timeseries,
+        bpr_timeseries_path = self.export_timeseries_csv(
+            time_series_name=self.bpr_timeseries
         )
-        bus_timeseries_path = self.export_timeseries(
-            time_series_name=self.bus_timeseries,
+        bus_timeseries_path = self.export_timeseries_csv(
+            time_series_name=self.bus_timeseries
         )
 
         if (
-                tpo_timeseries_path is None
-                or par_timeseries_path is None
-                or tpi_timeseries_path is None
-                or bpr_timeseries_path is None
-                or bus_timeseries_path is None
+            tpo_timeseries_path is None
+            or par_timeseries_path is None
+            or tpi_timeseries_path is None
+            or bpr_timeseries_path is None
+            or bus_timeseries_path is None
         ):
             self.__log.error(
                 "Failed to process path for timeseries: could not join data. Something went wrong during export."
@@ -215,7 +231,7 @@ class ExperimentData:
                         )
 
                         predictions_df["Time"] = (
-                                predictions_df["Time"] - predictions_df["Time"].min()
+                            predictions_df["Time"] - predictions_df["Time"].min()
                         )
                         # Sort the dataframe by 'Time'
                         df_merged.sort_values("Time", inplace=True)

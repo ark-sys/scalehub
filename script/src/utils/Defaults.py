@@ -83,7 +83,7 @@ class DefaultValues:
         consumers = 1
         queue = "default"
         walltime = "1:00:00"
-        start_time = "now"
+        start_time = None
         kubernetes_type = "k3s"
 
     class Experiment:
