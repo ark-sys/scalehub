@@ -1,8 +1,0 @@
-NumTaskmanagers: sum by(namespace) (flink_jobmanager_numRegisteredTaskManagers)
-Operator Parallelism: sum by(task_name) (count_values by() ("subtask_index", flink_taskmanager_job_task_numRecordsOutPerSecond{task_name=~"$Task"}))
-numRecordsInPerSecond: sum by(task_name) (flink_taskmanager_job_task_numRecordsInPerSecond{job_name="$Job", task_name="$Task"})
-numRecordsInPerSecondPerSubtask: sum by(task_name, subtask_index) (flink_taskmanager_job_task_numRecordsInPerSecond{job_name="$Job", task_name="$Task"})
-BackpressureTimePerSecond: sum by(task_name, subtask_index) (flink_taskmanager_job_task_hardBackPressuredTimeMsPerSecond{job_name="$Job"})
-busyTimePerSecond: sum by(task_name, subtask_index) (flink_taskmanager_job_task_busyTimeMsPerSecond{job_name="$Job", task_name="$Task"})
-lastCheckpointSize: sum by(job_name) (flink_jobmanager_job_lastCheckpointSize)
-lastcheckpointDuration: sum by(job_name) (flink_jobmanager_job_lastCheckpointDuration)
