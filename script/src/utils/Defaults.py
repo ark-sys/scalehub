@@ -26,6 +26,7 @@ class DefaultKeys:
         output_plot = "experiment.output_plot"
         broker_mqtt_host = "experiment.broker_mqtt_host"
         broker_mqtt_port = "experiment.broker_mqtt_port"
+        kafka_partitions = "experiment.kafka_partitions"
 
         class Generators:
             generators = "experiment.generators"
@@ -95,6 +96,7 @@ class DefaultValues:
         output_plot = True
         broker_mqtt_host = "broker-mqtt.scalehub.local"
         broker_mqtt_port = 1883
+        kafka_partitions = 1000
 
         class Generators:
             generators = ["generator1"]

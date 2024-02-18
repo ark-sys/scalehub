@@ -43,6 +43,7 @@ class Config:
         self.__config[Key.Platform.queue] = Value.Platform.queue
         self.__config[Key.Platform.walltime] = Value.Platform.walltime
         self.__config[Key.Platform.kubernetes_type] = Value.Platform.kubernetes_type
+        self.__config[Key.Platform.start_time] = Value.Platform.start_time
 
         self.__config[Key.Experiment.name] = Value.Experiment.name
         self.__config[Key.Experiment.job_file] = Value.Experiment.job_file
@@ -56,6 +57,9 @@ class Config:
         self.__config[
             Key.Experiment.broker_mqtt_port
         ] = Value.Experiment.broker_mqtt_port
+        self.__config[
+            Key.Experiment.kafka_partitions
+        ] = Value.Experiment.kafka_partitions
 
         self.__config[Key.Experiment.Chaos.enable] = Value.Experiment.Chaos.enable
 

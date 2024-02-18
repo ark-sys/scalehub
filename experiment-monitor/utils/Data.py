@@ -1,6 +1,8 @@
+import json
 import os
 import re
 from datetime import datetime
+from io import StringIO
 
 import pandas as pd
 
@@ -11,6 +13,15 @@ from .Logger import Logger
 
 class ExperimentData:
     BASE_TIMESERIES = "flink_operator"
+    metrics_dict = {
+        "operator_metrics": ["flink_taskmanager_job_task_numRecordsInPerSecond",
+                             "flink_taskmanager_job_task_busyTimeMsPerSecond"],
+        "sources_metrics": ["flink_taskmanager_job_task_hardBackPressuredTimeMsPerSecond"],
+        "job_metrics": ["flink_jobmanager_job_lastCheckpointSize",
+                        "flink_jobmanager_job_lastCheckpointDuration"]
+    }
+
+    join_alias = {"Join": "TumblingEventTimeWindows____Timestamps_Watermarks"}
 
     def __init__(self, log: Logger, exp_path: str, force: bool = False):
         self.__log = log
@@ -58,52 +69,32 @@ class ExperimentData:
         # Return timestamps
         return start_ts, end_ts
 
+    def load_json(self, file_path) -> [dict]:
+        res = []
+        with open(file_path, "r") as file:
+            for line in file:
+                res.append(json.loads(line))
+        return res
+
     def export_timeseries_json(
-        self,
-        time_series_name: str,
-        format_labels="__name__,__timestamp__:unix_s,__value__",
+            self,
+            time_series_name: str,
+            format_labels="__name__,__timestamp__:unix_s,__value__",
     ):
         # Export all timeseries in native format
         output_file = os.path.join(
-            self.exp_path, f"{time_series_name}_export_test.json"
+            self.exp_path, f"{time_series_name}_export.json"
         )
-        api_url = f"http://{self.db_url}/api/v1/export"
-        params = {
-            "format": format_labels,
-            "match[]": time_series_name,
-            "start": self.start_ts,
-            "end": self.end_ts,
-        }
-        import requests
-
-        response = requests.get(api_url, params=params)
-        if response.status_code == 200:
-            with open(output_file, "wb") as file:
-                file.write(response.content)
-            self.__log.info(f"Data exported to {output_file}")
-            return output_file
-        else:
-            self.__log.error(f"Error exporting data: {response.text}")
-
-    def export_timeseries_csv(
-        self,
-        time_series_name: str,
-        format_labels="__name__,__timestamp__:unix_s,__value__",
-    ):
-        output_file = os.path.join(self.exp_path, f"{time_series_name}_export_test.csv")
-
-        # If file exists and force is not set, skip export, otherwise export data
         if os.path.exists(output_file) and not self.force:
             self.__log.info(
                 f"Skipping export of {time_series_name} timeseries: file exists."
             )
             return output_file
         else:
-            # VictoriaMetrics export CSV api
-            api_url = f"http://{self.db_url}/api/v1/export/csv"
+            api_url = f"http://{self.db_url}/api/v1/export"
             params = {
                 "format": format_labels,
-                "match": time_series_name,
+                "match[]": time_series_name,
                 "start": self.start_ts,
                 "end": self.end_ts,
             }
@@ -117,6 +108,143 @@ class ExperimentData:
                 return output_file
             else:
                 self.__log.error(f"Error exporting data: {response.text}")
+
+    def export_timeseries_csv(
+            self,
+            time_series_name: str,
+            format_labels="__name__,__timestamp__:unix_s,__value__",
+    ):
+        output_file = os.path.join(self.exp_path, f"{time_series_name}_export.csv")
+
+        # If file exists and force is not set, skip export, otherwise export data
+        if os.path.exists(output_file) and not self.force:
+            self.__log.info(
+                f"Skipping export of {time_series_name} timeseries: file exists."
+            )
+            return output_file, pd.read_csv(output_file)
+        else:
+            # VictoriaMetrics export CSV api
+            api_url = f"http://{self.db_url}/api/v1/export/csv"
+            params = {
+                "format": format_labels,
+                "match": time_series_name,
+                "start": self.start_ts,
+                "end": self.end_ts,
+            }
+            import requests
+
+            response = requests.get(api_url, params=params)
+            if response.status_code == 200:
+
+                data = response.text
+
+                # Save content to dataframe
+                df = pd.read_csv(StringIO(data))
+
+                # Do some cleaning: remove first column, rename second column to 'Timestamp' and set it as index, third column to 'Value' and put it under multindex named time_series_name
+                df = df.drop(df.columns[0], axis=1)
+                df.columns = ["Timestamp", "Value"]
+                df.set_index("Timestamp", inplace=True)
+                df.columns = pd.MultiIndex.from_product([[time_series_name], df.columns])
+
+                # Save dataframe to csv
+                df.to_csv(output_file)
+                self.__log.info(f"Data exported to {output_file}")
+                return output_file, df
+            else:
+                self.__log.error(f"Error exporting data: {response.text}")
+
+    # Extract metrics per subtask from a json exported metrics file from victoriametrics
+    def get_metrics_per_subtask(self, metrics_content, metric_name, task_name) -> pd.DataFrame:
+        data = {}
+        for metric in metrics_content:
+            if (
+                    metric["metric"]["task_name"] == task_name
+
+            ):
+                subtask_index = metric["metric"]["subtask_index"]
+                if subtask_index not in data:
+                    data[subtask_index] = []
+                for value, timestamp in zip(metric["values"], metric["timestamps"]):
+                    # Divide by 5000 to facilitate the join of multiple columns
+                    data[subtask_index].append((round(timestamp / 5000), value))
+
+        # Convert the data to a pandas DataFrame
+        df = pd.DataFrame(
+            {
+                f"{metric_name}_{k}": pd.Series(
+                    dict(v), name=f"{metric_name}_{k}"
+                )
+                for k, v in data.items()
+            }
+        )
+
+        # Sort the DataFrame by the timestamps
+        df.sort_index(inplace=True)
+
+        # Extract subtask indices from column names and sort columns by these indices
+        df.columns = df.columns.str.extract("(\d+)", expand=False).astype(int)
+        df = df.sort_index(axis=1)
+
+        # Multindex subtask columns under the metric name
+        df.columns = pd.MultiIndex.from_product([[metric_name], df.columns])
+
+        # Reset timestamps
+        df.index = df.index * 5000
+        # Add "Timestamp" to the index
+        df.index.name = "Timestamp"
+
+        return df
+
+    def get_sources_metrics(self, metrics_content, metric_name) -> [pd.DataFrame]:
+        # For a given job name, extract metrics for sources in a panda dataframe
+        # If there are multiple sources, return a list of panda dataframes
+
+        sources = set()
+        for metric in metrics_content:
+            if "Source" in metric["metric"]["task_name"]:
+                sources.add(metric["metric"]["task_name"])
+        res = []
+        for source in sources:
+            data = {}
+            for metric in metrics_content:
+                if (
+                        metric["metric"]["task_name"] == source
+
+                ):
+                    subtask_index = metric["metric"]["subtask_index"]
+                    if subtask_index not in data:
+                        data[subtask_index] = []
+                    for value, timestamp in zip(metric["values"], metric["timestamps"]):
+                        # Divide by 5000 to facilitate the join of multiple columns
+                        data[subtask_index].append((round(timestamp / 5000), value))
+
+            # Convert the data to a pandas DataFrame
+            df = pd.DataFrame(
+                {
+                    f"{metric_name}_{source}_{k}": pd.Series(
+                        dict(v), name=f"{metric_name}_{k}"
+                    )
+                    for k, v in data.items()
+                }
+            )
+
+            # Sort the DataFrame by the timestamps
+            df.sort_index(inplace=True)
+
+            # Extract subtask indices from column names and sort columns by these indices
+            df.columns = df.columns.str.extract("(\d+)", expand=False).astype(int)
+            df = df.sort_index(axis=1)
+
+            # Multindex subtask columns under the metric name
+            df.columns = pd.MultiIndex.from_product([[metric_name], df.columns])
+
+            # Reset timestamps
+            df.index = df.index * 5000
+            # Add "Timestamp" to the index
+            df.index.name = "Timestamp"
+            res.append(df)
+        return res
 
     def perf_query(self, query: str):
         # VictoriaMetrics query api
@@ -141,120 +269,157 @@ class ExperimentData:
     def export_experiment_data(self):
         # Retrieve operator name from config file
         operator_name = self.conf.get(Key.Experiment.task_name)
-
-        # Build timeseries names with operator name
-        self.tpo_timeseries = f"{self.BASE_TIMESERIES}_{operator_name}_throughput_out"
-        self.tpi_timeseries = f"{self.BASE_TIMESERIES}_{operator_name}_throughput_in"
-        self.par_timeseries = f"{self.BASE_TIMESERIES}_{operator_name}_parallelism"
-        self.bpr_timeseries = f"{self.BASE_TIMESERIES}_{operator_name}_backpressure"
-        self.bus_timeseries = f"{self.BASE_TIMESERIES}_{operator_name}_busyness"
-
-        # Export timeseries from database to csv file
-        tpo_timeseries_path = self.export_timeseries_csv(
-            time_series_name=self.tpo_timeseries
-        )
-        par_timeseries_path = self.export_timeseries_csv(
-            time_series_name=self.par_timeseries
-        )
-
-        tpi_timeseries_path = self.export_timeseries_csv(
-            time_series_name=self.tpi_timeseries
-        )
-        bpr_timeseries_path = self.export_timeseries_csv(
-            time_series_name=self.bpr_timeseries
-        )
-        bus_timeseries_path = self.export_timeseries_csv(
-            time_series_name=self.bus_timeseries
-        )
-
-        if (
-            tpo_timeseries_path is None
-            or par_timeseries_path is None
-            or tpi_timeseries_path is None
-            or bpr_timeseries_path is None
-            or bus_timeseries_path is None
-        ):
-            self.__log.error(
-                "Failed to process path for timeseries: could not join data. Something went wrong during export."
-            )
-            exit(1)
-        else:
-            df1 = pd.read_csv(tpo_timeseries_path).dropna()
-            df2 = pd.read_csv(par_timeseries_path).dropna()
-            df3 = pd.read_csv(tpi_timeseries_path).dropna()
-            df4 = pd.read_csv(bpr_timeseries_path).dropna()
-            df5 = pd.read_csv(bus_timeseries_path).dropna()
-
-            # Check if any of the exported CSVs are empty
-            if df1.empty or df2.empty or df3.empty or df4.empty or df5.empty:
-                self.__log.error(
-                    "One or more exported CSVs appear to be empty. Failed to join."
+        if operator_name in self.join_alias:
+            operator_name = self.join_alias[operator_name]
+        operator_metrics_list = []
+        # Export operator metrics
+        for metric in self.metrics_dict["operator_metrics"]:
+            path_to_export = self.export_timeseries_json(metric)
+            if path_to_export:
+                self.__log.info(f"Data exported to {path_to_export}")
+                json_content = self.load_json(path_to_export)
+                df = self.get_metrics_per_subtask(
+                    json_content, metric, operator_name
                 )
-                exit(1)
-            else:
-                # Join columns in one table and drop labels
+                operator_metrics_list.append(df)
+        # Export sources metrics
+        sources_metrics_list = []
+        for metric in self.metrics_dict["sources_metrics"]:
+            path_to_export = self.export_timeseries_json(metric)
+            if path_to_export:
+                self.__log.info(f"Data exported to {path_to_export}")
+                json_content = self.load_json(path_to_export)
+                df = self.get_sources_metrics(json_content, metric)
+                sources_metrics_list.extend(df)
+        # Export job metrics
+        job_metrics_list = []
+        for metric in self.metrics_dict["job_metrics"]:
+            path_to_export, df = self.export_timeseries_csv(metric)
+            if path_to_export:
+                self.__log.info(f"Data exported to {path_to_export}")
+                job_metrics_list.append(df)
 
-                # Give the code below
-                # df2['Parallelism'] = df2['Parallelism'].fillna(method='ffill')
+        # Join the dataframes in metrics_with_subtasks_list and sources_metrics_list on Timestamp index
+        operator_metrics_df = pd.concat(operator_metrics_list, axis=1)
+        sources_metrics_df = pd.concat(sources_metrics_list, axis=1)
 
-                # Join columns in one table and drop labels
-                df_merged = df2.merge(df1).drop(
-                    [self.par_timeseries, self.tpo_timeseries],
-                    axis=1,
-                )
+        final_df = pd.concat([operator_metrics_df, sources_metrics_df], axis=1)
+        final_df = final_df.sort_index(axis=1)
+        final_df.to_csv(os.path.join(self.exp_path, "final_df.csv"))
 
-                df3 = pd.read_csv(tpi_timeseries_path).dropna()
-                # Add input metrics to output csv
-                df_merged["Throughput_IN"] = df3.iloc[:, 2]
-                # Provide column naming
-                df_merged.columns = [
-                    "Time",
-                    "Parallelism",
-                    "Throughput_OUT",
-                    "Throughput_IN",
-                ]
-
-                # Check if transscale log exists
-                if os.path.exists(self.transscale_log):
-                    # Transscale log found, try to extract predictions
-                    predictions = self.__export_predictions()
-                    if predictions:
-                        # Create a dataframe from the predictions
-                        predictions_df = pd.DataFrame(
-                            predictions,
-                            columns=[
-                                "Time",
-                                "Current_Parallelism",
-                                "Parallelism",
-                                "Predicted_Throughput",
-                            ],
-                        )
-
-                        predictions_df["Time"] = (
-                            predictions_df["Time"] - predictions_df["Time"].min()
-                        )
-                        # Sort the dataframe by 'Time'
-                        df_merged.sort_values("Time", inplace=True)
-
-                        # Subtract minimum time from all time values to start from 0
-                        df_merged["Time"] = df_merged["Time"] - df_merged["Time"].min()
-
-                        df_merged["Parallelism"] = df_merged["Parallelism"].astype(
-                            "int64"
-                        )
-                        dataset = pd.merge_asof(
-                            df_merged,
-                            predictions_df,
-                            by="Parallelism",
-                            on="Time",
-                            direction="nearest",
-                        )
-                        dataset["Predicted_Throughput"] = dataset[
-                            "Predicted_Throughput"
-                        ].ffill()
-
-                output_file = os.path.join(self.exp_path, "joined_output.csv")
-                df_merged.dropna().to_csv(output_file, index=False)
+        # # Build timeseries names with operator name
+        # self.tpo_timeseries = f"{self.BASE_TIMESERIES}_{operator_name}_throughput_out"
+        # self.tpi_timeseries = f"{self.BASE_TIMESERIES}_{operator_name}_throughput_in"
+        # self.par_timeseries = f"{self.BASE_TIMESERIES}_{operator_name}_parallelism"
+        # self.bpr_timeseries = f"{self.BASE_TIMESERIES}_{operator_name}_backpressure"
+        # self.bus_timeseries = f"{self.BASE_TIMESERIES}_{operator_name}_busyness"
+        #
+        # # Export timeseries from database to csv file
+        # tpo_timeseries_path = self.export_timeseries_csv(
+        #     time_series_name=self.tpo_timeseries
+        # )
+        # par_timeseries_path = self.export_timeseries_csv(
+        #     time_series_name=self.par_timeseries
+        # )
+        #
+        # tpi_timeseries_path = self.export_timeseries_csv(
+        #     time_series_name=self.tpi_timeseries
+        # )
+        # bpr_timeseries_path = self.export_timeseries_csv(
+        #     time_series_name=self.bpr_timeseries
+        # )
+        # bus_timeseries_path = self.export_timeseries_csv(
+        #     time_series_name=self.bus_timeseries
+        # )
+        #
+        # if (
+        #         tpo_timeseries_path is None
+        #         or par_timeseries_path is None
+        #         or tpi_timeseries_path is None
+        #         or bpr_timeseries_path is None
+        #         or bus_timeseries_path is None
+        # ):
+        #     self.__log.error(
+        #         "Failed to process path for timeseries: could not join data. Something went wrong during export."
+        #     )
+        #     exit(1)
+        # else:
+        #     df1 = pd.read_csv(tpo_timeseries_path).dropna()
+        #     df2 = pd.read_csv(par_timeseries_path).dropna()
+        #     df3 = pd.read_csv(tpi_timeseries_path).dropna()
+        #     df4 = pd.read_csv(bpr_timeseries_path).dropna()
+        #     df5 = pd.read_csv(bus_timeseries_path).dropna()
+        #
+        #     # Check if any of the exported CSVs are empty
+        #     if df1.empty or df2.empty or df3.empty or df4.empty or df5.empty:
+        #         self.__log.error(
+        #             "One or more exported CSVs appear to be empty. Failed to join."
+        #         )
+        #         exit(1)
+        #     else:
+        #         # Join columns in one table and drop labels
+        #
+        #         # Give the code below
+        #         # df2['Parallelism'] = df2['Parallelism'].fillna(method='ffill')
+        #
+        #         # Join columns in one table and drop labels
+        #         df_merged = df2.merge(df1).drop(
+        #             [self.par_timeseries, self.tpo_timeseries],
+        #             axis=1,
+        #         )
+        #
+        #         df3 = pd.read_csv(tpi_timeseries_path).dropna()
+        #         # Add input metrics to output csv
+        #         df_merged["Throughput_IN"] = df3.iloc[:, 2]
+        #         # Provide column naming
+        #         df_merged.columns = [
+        #             "Time",
+        #             "Parallelism",
+        #             "Throughput_OUT",
+        #             "Throughput_IN",
+        #         ]
+        #
+        #         # Check if transscale log exists
+        #         if os.path.exists(self.transscale_log):
+        #             # Transscale log found, try to extract predictions
+        #             predictions = self.__export_predictions()
+        #             if predictions:
+        #                 # Create a dataframe from the predictions
+        #                 predictions_df = pd.DataFrame(
+        #                     predictions,
+        #                     columns=[
+        #                         "Time",
+        #                         "Current_Parallelism",
+        #                         "Parallelism",
+        #                         "Predicted_Throughput",
+        #                     ],
+        #                 )
+        #
+        #                 predictions_df["Time"] = (
+        #                         predictions_df["Time"] - predictions_df["Time"].min()
+        #                 )
+        #                 # Sort the dataframe by 'Time'
+        #                 df_merged.sort_values("Time", inplace=True)
+        #
+        #                 # Subtract minimum time from all time values to start from 0
+        #                 df_merged["Time"] = df_merged["Time"] - df_merged["Time"].min()
+        #
+        #                 df_merged["Parallelism"] = df_merged["Parallelism"].astype(
+        #                     "int64"
+        #                 )
+        #                 dataset = pd.merge_asof(
+        #                     df_merged,
+        #                     predictions_df,
+        #                     by="Parallelism",
+        #                     on="Time",
+        #                     direction="nearest",
+        #                 )
+        #                 dataset["Predicted_Throughput"] = dataset[
+        #                     "Predicted_Throughput"
+        #                 ].ffill()
+        #
+        #         output_file = os.path.join(self.exp_path, "joined_output.csv")
+        #         df_merged.dropna().to_csv(output_file, index=False)
 
     def __export_predictions(self) -> list[tuple[int, int, int, float]]:
         with open(self.transscale_log, "r") as file:
