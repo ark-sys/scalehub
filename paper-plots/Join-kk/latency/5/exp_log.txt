@@ -1,0 +1,68 @@
+[CONFIG]
+{
+    "scalehub.playbook": "/app/playbooks/project",
+    "scalehub.inventory": "/tmp/hosts",
+    "scalehub.experiments": "/app/experiments-data",
+    "scalehub.debug_level": "0",
+    "platform.type": "Grid5000",
+    "platform.reservation_name": "scalehub",
+    "platform.site": "rennes",
+    "platform.cluster": "parasilo",
+    "platform.producers": "4",
+    "platform.consumers": "10",
+    "platform.queue": "default",
+    "platform.walltime": "2:00:00",
+    "platform.kubernetes_type": "k3s",
+    "experiment.name": "Join",
+    "experiment.job_file": "myjoin-transscale-all.jar",
+    "experiment.task_name": "TumblingEventTimeWindows",
+    "experiment.output_skip_s": "120",
+    "experiment.output_plot": "true",
+    "experiment.output_stats": "true",
+    "experiment.broker_mqtt_host": "ingress.scalehub.local",
+    "experiment.broker_mqtt_port": "30001",
+    "experiment.chaos.enable": "true",
+    "experiment.chaos.delay_latency_ms": "25",
+    "experiment.chaos.delay_jitter_ms": "0",
+    "experiment.chaos.delay_correlation": "0",
+    "experiment.generators": [
+        {
+            "name": "generator1",
+            "topic": "input-topic1",
+            "num_sensors": "50000",
+            "interval_ms": "1000",
+            "replicas": "7",
+            "value": "5"
+        },
+        {
+            "name": "generator2",
+            "topic": "input-topic2",
+            "num_sensors": "50000",
+            "interval_ms": "1000",
+            "replicas": "7",
+            "value": "5"
+        }
+    ],
+    "experiment.transscale.max_parallelism": "10",
+    "experiment.transscale.monitoring_warmup_s": "60",
+    "experiment.transscale.monitoring_interval_s": "60",
+    "experiment.flink.checkpoint_interval_ms": "4000",
+    "experiment.flink.window_size_ms": "1000",
+    "experiment.generators.generators": "generator1, generator2",
+    "experiment.generators.generator1.name": "generator1",
+    "experiment.generators.generator1.topic": "input-topic1",
+    "experiment.generators.generator1.num_sensors": "50000",
+    "experiment.generators.generator1.interval_ms": "1000",
+    "experiment.generators.generator1.replicas": "7",
+    "experiment.generators.generator1.value": "5",
+    "experiment.generators.generator2.name": "generator2",
+    "experiment.generators.generator2.topic": "input-topic2",
+    "experiment.generators.generator2.num_sensors": "50000",
+    "experiment.generators.generator2.interval_ms": "1000",
+    "experiment.generators.generator2.replicas": "7",
+    "experiment.generators.generator2.value": "5"
+}
+
+[TIMESTAMPS]
+Experiment start at : 1706531994
+Experiment end at : 1706533786
