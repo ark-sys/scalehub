@@ -1,0 +1,789 @@
+[0m[2024-02-17T14:38:29] TRANSSCALE:: Starting auto-scaler...
+
+[0m[2024-02-17T14:38:29] [LOGGER] New debug level: 1
+[0m[2024-02-17T14:38:29] Starting RTT matrix update thread
+[0;96m[2024-02-17T14:38:29] [DEBUG] + [RECONF_MNGR] Selected strategy is transscale.strategies.ParallelismOnly [0m
+[0;96m[2024-02-17T14:38:29] [DEBUG] + [RECONF_MNGR] Strategy imported [0m
+[0;96m[2024-02-17T14:38:29] [DEBUG] +  [0m[0m[2024-02-17T14:38:29] [RECONF_STRAT] Using PARALLELISM ONLY strategy
+[0m[2024-02-17T14:38:29] [MONITOR]: Retrieving job details from flink-jobmanager:8081 ...
+[0m[2024-02-17T14:38:29] [MONITOR]:: Details about the job:
+[0m[2024-02-17T14:38:29] 	 Job ID: e0f777289aa7391e89b53028cd4a3155
+[0m[2024-02-17T14:38:29] 	 Operators: 6
+[0m[2024-02-17T14:38:29] 
+*******************************************************
+[0m[2024-02-17T14:38:29] Warming up for 240 seconds
+[0m[2024-02-17T14:42:29] [MONITOR]: Retrieving job details from flink-jobmanager:8081 ...
+[0m[2024-02-17T14:42:29] [MONITOR]:: Details about the job:
+[0m[2024-02-17T14:42:29] 	 Job ID: e0f777289aa7391e89b53028cd4a3155
+[0m[2024-02-17T14:42:29] 	 Operators: 6
+[0m[2024-02-17T14:42:29] TRANSSCALE:: Monitoring the throughput and back pressure every 60 seconds...
+[0m[2024-02-17T14:43:29] 
+TRANSSCALE:: Periodic Monitoring...
+[0;96m[2024-02-17T14:43:29] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:43:29] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:43:29] [DEBUG] + 	Getting operator (41a95396e613c9f62f1da16142d5ddd2) backpressure from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:43:29] [DEBUG] + 	Getting operator (41a95396e613c9f62f1da16142d5ddd2) busyness from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:43:29] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:43:29] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:43:29] [DEBUG] + 	Getting operator (32f0ffe0b6f0b990239bb81cec28b9d8) backpressure from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:43:29] [DEBUG] + 	Getting operator (32f0ffe0b6f0b990239bb81cec28b9d8) busyness from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:43:29] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:43:29] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:43:29] [DEBUG] + 	Getting operator (31ec045e3401e87fc7879b43d8e8625d) backpressure from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:43:29] [DEBUG] + 	Getting operator (31ec045e3401e87fc7879b43d8e8625d) busyness from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:43:29] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:43:29] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:43:29] [DEBUG] + 	Getting operator (dca33db40b2f8f122636cd5297c0c511) backpressure from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:43:29] [DEBUG] + 	Getting operator (dca33db40b2f8f122636cd5297c0c511) busyness from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:43:29] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:43:29] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:43:29] [DEBUG] + 	Getting operator (e926317ddf99720773e3c7f4f412c3d7) backpressure from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:43:29] [DEBUG] + 	Getting operator (e926317ddf99720773e3c7f4f412c3d7) busyness from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:43:29] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:43:29] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:43:29] [DEBUG] + 	Getting operator (9c7327831b3b5b4ae2c580979f474a9c) backpressure from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:43:29] [DEBUG] + 	Getting operator (9c7327831b3b5b4ae2c580979f474a9c) busyness from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0m[2024-02-17T14:43:29] [MONITOR]:: Runtime performance metrics:
+[0m[2024-02-17T14:43:29] 	 Job Run Time: 314741 ms
+
+[0;93m[2024-02-17T14:43:29] [WARNING]Back Pressure Level of some operator is HIGH[0m
+[0;93m[2024-02-17T14:43:29] [WARNING]Bottleneck detected: 32f0ffe0b6f0b990239bb81cec28b9d8[0m
+[0m[2024-02-17T14:43:29] Waiting to check again the backpressure after 60 seconds...
+[0;96m[2024-02-17T14:44:29] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:44:29] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:44:29] [DEBUG] + 	Getting operator (41a95396e613c9f62f1da16142d5ddd2) backpressure from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:44:29] [DEBUG] + 	Getting operator (41a95396e613c9f62f1da16142d5ddd2) busyness from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:44:29] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:44:29] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:44:29] [DEBUG] + 	Getting operator (32f0ffe0b6f0b990239bb81cec28b9d8) backpressure from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:44:29] [DEBUG] + 	Getting operator (32f0ffe0b6f0b990239bb81cec28b9d8) busyness from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:44:29] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:44:29] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:44:29] [DEBUG] + 	Getting operator (31ec045e3401e87fc7879b43d8e8625d) backpressure from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:44:29] [DEBUG] + 	Getting operator (31ec045e3401e87fc7879b43d8e8625d) busyness from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator (dca33db40b2f8f122636cd5297c0c511) backpressure from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator (dca33db40b2f8f122636cd5297c0c511) busyness from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator (e926317ddf99720773e3c7f4f412c3d7) backpressure from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator (e926317ddf99720773e3c7f4f412c3d7) busyness from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator (9c7327831b3b5b4ae2c580979f474a9c) backpressure from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator (9c7327831b3b5b4ae2c580979f474a9c) busyness from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0m[2024-02-17T14:44:30] Checking if bottleneck changed...
+[0;93m[2024-02-17T14:44:30] [WARNING]Bottleneck is still 32f0ffe0b6f0b990239bb81cec28b9d8[0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator (41a95396e613c9f62f1da16142d5ddd2) backpressure from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator (41a95396e613c9f62f1da16142d5ddd2) busyness from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator (32f0ffe0b6f0b990239bb81cec28b9d8) backpressure from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator (32f0ffe0b6f0b990239bb81cec28b9d8) busyness from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator (31ec045e3401e87fc7879b43d8e8625d) backpressure from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator (31ec045e3401e87fc7879b43d8e8625d) busyness from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator (dca33db40b2f8f122636cd5297c0c511) backpressure from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator (dca33db40b2f8f122636cd5297c0c511) busyness from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator (e926317ddf99720773e3c7f4f412c3d7) backpressure from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator (e926317ddf99720773e3c7f4f412c3d7) busyness from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator (9c7327831b3b5b4ae2c580979f474a9c) backpressure from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting operator (9c7327831b3b5b4ae2c580979f474a9c) busyness from url http://flink-jobmanager:8081/jobs/e0f777289aa7391e89b53028cd4a3155/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0m[2024-02-17T14:44:30] [MONITOR]:: Runtime performance metrics:
+[0m[2024-02-17T14:44:30] 	 Job Run Time: 375095 ms
+[0m[2024-02-17T14:44:30] Backpressure is still high and the system needs a reconfiguration...
+[0m[2024-02-17T14:44:30] [RES_MNGR] Average network latencies
+[0m[2024-02-17T14:44:30] 
+               parasilo-2     parasilo-20    parasilo-21    parasilo-22    parasilo-24    parasilo-25    parasilo-26    parasilo-27    parasilo-28    parasilo-3     parasilo-4     parasilo-5     parasilo-6     parasilo-7     parasilo-8     parasilo-9     
+parasilo-2     32.583         52.678         49.919         32.935         50.507         25.915         50.942         53.046         27.754         50.468         50.96          51.145         53.046         24.832         25.991         53.238         
+parasilo-20    52.678         42.469         52.061         35.987         51.373         26.862         54.158         53.127         29.142         52.012         52.66          53.506         53.523         27.155         27.466         54.345         
+parasilo-21    49.919         52.061         27.422         33.363         50.315         25.911         50.781         53.394         27.715         50.948         52.13          51.033         52.223         24.802         25.552         51.45          
+parasilo-22    32.935         35.987         33.363         14.221         31.741         8.834          31.247         34.923         10.434         34.12          34.908         35.08          34.145         7.786          8.993          34.378         
+parasilo-24    50.507         51.373         50.315         31.741         44.611         23.299         49.225         52.895         25.962         50.733         50.361         51.89          50.502         22.532         23.872         50.597         
+parasilo-25    25.915         26.862         25.911         8.834          23.299         2.18           24.409         26.853         2.942          25.663         27.462         28.075         25.965         3.963          4.673          26.082         
+parasilo-26    50.942         54.158         50.781         31.247         49.225         24.409         46.054         52.885         26.56          50.632         51.566         52.771         50.697         21.425         24.822         50.696         
+parasilo-27    53.046         53.127         53.394         34.923         52.895         26.853         52.885         50.173         28.11          53.764         55.297         54.534         53.467         26.181         26.914         54.852         
+parasilo-28    27.754         29.142         27.715         10.434         25.962         2.942          26.56          28.11          3.148          28.585         29.801         29.496         28.146         2.257          2.011          28.812         
+parasilo-3     50.468         52.012         50.948         34.12          50.733         25.663         50.632         53.764         28.585         39.093         52.992         53.07          50.98          24.639         26.682         51.907         
+parasilo-4     50.96          52.66          52.13          34.908         50.361         27.462         51.566         55.297         29.801         52.992         33.999         53.962         52.352         25.565         28.216         51.253         
+parasilo-5     51.145         53.506         51.033         35.08          51.89          28.075         52.771         54.534         29.496         53.07          53.962         37.605         51.39          25.78          27.562         56.584         
+parasilo-6     53.046         53.523         52.223         34.145         50.502         25.965         50.697         53.467         28.146         50.98          52.352         51.39          46.13          23.84          26.422         52.837         
+parasilo-7     24.832         27.155         24.802         7.786          22.532         3.963          21.425         26.181         2.257          24.639         25.565         25.78          23.84          0.045          4.107          24.891         
+parasilo-8     25.991         27.466         25.552         8.993          23.872         4.673          24.822         26.914         2.011          26.682         28.216         27.562         26.422         4.107          2.771          27.079         
+parasilo-9     53.238         54.345         51.45          34.378         50.597         26.082         50.696         54.852         28.812         51.907         51.253         56.584         52.837         24.891         27.079         48.074         
+
+[0m[2024-02-17T14:44:30] [RES_MNGR] Shortest path nodes: ['parasilo-7', 'parasilo-28', 'parasilo-25', 'parasilo-8', 'parasilo-22', 'parasilo-26', 'parasilo-24', 'parasilo-6', 'parasilo-3', 'parasilo-21', 'parasilo-2', 'parasilo-9', 'parasilo-4', 'parasilo-5', 'parasilo-27', 'parasilo-20']
+[0m[2024-02-17T14:44:30] [RES_MNGR] Observed delays: [0, 2.2572, 3.963400000000001, 4.1067, 7.7856, 21.424500000000002, 22.5315, 23.839999999999996, 24.639000000000003, 24.801599999999997, 24.832300000000004, 24.8909, 25.5648, 25.779899999999998, 26.18070000000001, 27.154900000000005, 2.9415000000000004]
+[0m[2024-02-17T14:44:30] [RES_MNGR] NDmax: 56.58390000000001
+/transscale/utils/prediction/models/ParallelismModel.py:39: OptimizeWarning: Covariance of the parameters could not be estimated
+  popt, _ = curve_fit(lambda x, alpha, gamma: alpha * x[0] - gamma * x[1],
+[0m[2024-02-17T14:44:30] [COMBO_CTRL] Reconf: Scale Up Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)<br/>+-_Timestamps/Watermarks from par 1
+[0;96m[2024-02-17T14:44:30] [DEBUG] + [PRED_MATRIX] Current prediction matrix is:
+ [[      0.       0.       0.]
+ [      0.   43819.   87638.]
+ [      0.   87638.  175276.]
+ [      0.  131457.  262914.]
+ [      0.  175276.  350552.]
+ [      0.  219095.  438190.]
+ [      0.  262914.  525828.]
+ [      0.  306733.  613466.]
+ [      0.  350552.  701104.]
+ [      0.  394371.  788742.]
+ [      0.  438190.  876380.]
+ [      0.  482009.  964018.]
+ [      0.  525828. 1051656.]
+ [      0.  569647. 1139294.]
+ [      0.  613466. 1226932.]
+ [      0.  657285. 1314570.]
+ [      0.  701104. 1402208.]] [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + [PRED_MATRIX] 	par, transp: 1, 1 target tput: 43819 new_tput %: 43819.0 tput diff %: 0  [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + [PRED_MATRIX] 	par, transp: 1, 2 target tput: 43819 new_tput %: 87638.0 tput diff %: 50.0 ADDED [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + [PRED_MATRIX] 	par, transp: 2, 1 target tput: 43819 new_tput %: 87638.0 tput diff %: 50.0 ADDED [0m
+[0;96m[2024-02-17T14:44:30] [DEBUG] + [PRED_MATRIX] Scaling Possibilities: [(1, 2), (2, 1)] [0m
+
+[0;96m[2024-02-17T14:44:30] [DEBUG] + 	Getting overview info from url http://flink-jobmanager:8081/overview [0m
+[0m[2024-02-17T14:44:30] 
+*******************************************************
+[0m[2024-02-17T14:44:30] [RES_MNGR] Re-configuring PARALLELISM
+[0m[2024-02-17T14:44:30] 	Current Parallelism: 1
+[0m[2024-02-17T14:44:30] 	Target Parallelism: 2
+[0m[2024-02-17T14:44:30] [RES_MNGR] Stopping Flink for re-configuration...
+[0m[2024-02-17T14:44:34] Running command ['/bin/sh', '-c', 'flink stop e0f777289aa7391e89b53028cd4a3155'] on pod flink-jobmanager-5bc8b4d75c-bj4tm
+[0m[2024-02-17T14:45:01] [RES_MNGR] Re-scaling number of task managers...
+[0;96m[2024-02-17T14:45:01] [DEBUG] + 	Getting overview info from url http://flink-jobmanager:8081/overview [0m
+[0m[2024-02-17T14:45:01] [RES_MNGR] Average network latencies
+[0m[2024-02-17T14:45:01] 
+               parasilo-2     parasilo-20    parasilo-21    parasilo-22    parasilo-24    parasilo-25    parasilo-26    parasilo-27    parasilo-28    parasilo-3     parasilo-4     parasilo-5     parasilo-6     parasilo-7     parasilo-8     parasilo-9     
+parasilo-2     32.328         51.771         50.038         24.986         50.939         26.93          51.08          52.739         26.172         50.128         50.394         50.342         53.63          24.766         25.501         52.279         
+parasilo-20    51.771         40.947         50.947         27.714         50.219         28.458         52.437         52.823         27.043         50.508         50.758         51.73          53.112         25.54          25.735         52.482         
+parasilo-21    50.038         50.947         26.508         27.284         50.474         26.512         50.616         53.153         27.108         50.116         50.853         50.071         53.145         24.789         25.755         51.587         
+parasilo-22    24.986         27.714         27.284         5.385          24.914         4.555          24.938         27.76          2.319          26.727         27.029         27.626         27.872         5.911          6.02           26.342         
+parasilo-24    50.939         50.219         50.474         24.914         45.073         25.295         49.042         52.94          25.395         50.436         49.71          51.155         51.611         22.928         23.741         49.947         
+parasilo-25    26.93          28.458         26.512         4.555          25.295         2.033          24.118         28.13          3.6            26.214         27.628         27.685         27.633         1.95           2.908          26.164         
+parasilo-26    51.08          52.437         50.616         24.938         49.042         24.118         45.99          52.047         24.707         49.754         50.727         51.472         51.486         22.393         23.536         49.866         
+parasilo-27    52.739         52.823         53.153         27.76          52.94          28.13          52.047         49.622         26.481         53.45          53.528         52.951         53.512         25.421         26.31          53.591         
+parasilo-28    26.172         27.043         27.108         2.319          25.395         3.6            24.707         26.481         3.104          26.348         27.313         27.401         27.2           3.791          3.885          26.15          
+parasilo-3     50.128         50.508         50.116         26.727         50.436         26.214         49.754         53.45          26.348         38.117         51.618         51.092         51.639         23.707         23.93          50.878         
+parasilo-4     50.394         50.758         50.853         27.029         49.71          27.628         50.727         53.528         27.313         51.618         32.86          52.063         51.554         25.271         26.23          50.426         
+parasilo-5     50.342         51.73          50.071         27.626         51.155         27.685         51.472         52.951         27.401         51.092         52.063         35.8           51.771         23.381         26.316         54.45          
+parasilo-6     53.63          53.112         53.145         27.872         51.611         27.633         51.486         53.512         27.2           51.639         51.554         51.771         47.905         24.294         26.134         52.327         
+parasilo-7     24.766         25.54          24.789         5.911          22.928         1.95           22.393         25.421         3.791          23.707         25.271         23.381         24.294         0.121          3.775          24.56          
+parasilo-8     25.501         25.735         25.755         6.02           23.741         2.908          23.536         26.31          3.885          23.93          26.23          26.316         26.134         3.775          1.918          24.853         
+parasilo-9     52.279         52.482         51.587         26.342         49.947         26.164         49.866         53.591         26.15          50.878         50.426         54.45          52.327         24.56          24.853         47.774         
+
+[0m[2024-02-17T14:45:01] [RES_MNGR] Shortest path nodes: ['parasilo-7', 'parasilo-25']
+[0m[2024-02-17T14:45:01] [RES_MNGR] Observed delays: [0, 1.9498000000000002]
+[0m[2024-02-17T14:45:01] [RES_MNGR] NDmax: 28.457899999999995
+[0;96m[2024-02-17T14:45:01] [DEBUG] + 	 Running taskmanager reset: target_par 0  [0m
+[0m[2024-02-17T14:45:01] Deployment flink-taskmanager scaled to 0 replica.
+[0;96m[2024-02-17T14:45:04] [DEBUG] + 	 Running taskmanager rescale: target_par 2  [0m
+[0m[2024-02-17T14:45:04] Deployment flink-taskmanager scaled to 2 replica.
+[0;96m[2024-02-17T14:45:09] [DEBUG] + 	Getting overview info from url http://flink-jobmanager:8081/overview [0m
+[0;96m[2024-02-17T14:45:09] [DEBUG] + 	Current Taskmanagers: 0 [0m
+[0;96m[2024-02-17T14:45:09] [DEBUG] + 	Target Parallelism: 2 [0m
+[0;96m[2024-02-17T14:45:14] [DEBUG] + 	Getting overview info from url http://flink-jobmanager:8081/overview [0m
+[0;96m[2024-02-17T14:45:14] [DEBUG] + 	Current Taskmanagers: 2 [0m
+[0;96m[2024-02-17T14:45:14] [DEBUG] + 	Target Parallelism: 2 [0m
+[0m[2024-02-17T14:45:14] [RES_MNGR] Resuming Flink with new configuration...
+[0m[2024-02-17T14:45:14] Running job /tmp/jobs/myjoin-transscale-all.jar
+[0m[2024-02-17T14:45:19] Running command ['/bin/sh', '-c', "flink run -s s3://flink-bucket/savepoints/savepoint-e0f777-e0058413ecf5 -d -j /tmp/jobs/myjoin-transscale-all.jar --parmap 'Sink__Sink:1;Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)<br/>+-_Timestamps/Watermarks:2;Timestamps/Watermarks<br/>+-_Map:1;Source__Source1:1;Timestamps/Watermarks<br/>+-_Map:1;Source__Source2:1'"] on pod flink-jobmanager-5bc8b4d75c-bj4tm
+[0;96m[2024-02-17T14:45:42] [DEBUG] + Job is running, waiting to check for errors [0m
+[0m[2024-02-17T14:45:57] 
+*******************************************************
+[0m[2024-02-17T14:45:57] Warming up for 240 seconds
+[0m[2024-02-17T14:49:57] [MONITOR]: Retrieving job details from flink-jobmanager:8081 ...
+[0m[2024-02-17T14:49:57] [MONITOR]:: Details about the job:
+[0m[2024-02-17T14:49:57] 	 Job ID: 779bfaaaaffe5278bf2b20e0e7959f1a
+[0m[2024-02-17T14:49:57] 	 Operators: 6
+[0m[2024-02-17T14:49:57] TRANSSCALE:: Monitoring the throughput and back pressure every 60 seconds...
+[0m[2024-02-17T14:50:57] 
+TRANSSCALE:: Periodic Monitoring...
+[0;96m[2024-02-17T14:50:57] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:50:57] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:50:57] [DEBUG] + 	Getting operator (41a95396e613c9f62f1da16142d5ddd2) backpressure from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:50:57] [DEBUG] + 	Getting operator (41a95396e613c9f62f1da16142d5ddd2) busyness from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:50:57] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:50:57] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:50:57] [DEBUG] + 	Getting operator (32f0ffe0b6f0b990239bb81cec28b9d8) backpressure from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:50:57] [DEBUG] + 	Getting operator (32f0ffe0b6f0b990239bb81cec28b9d8) busyness from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:50:57] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:50:57] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:50:57] [DEBUG] + 	Getting operator (31ec045e3401e87fc7879b43d8e8625d) backpressure from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:50:57] [DEBUG] + 	Getting operator (31ec045e3401e87fc7879b43d8e8625d) busyness from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:50:57] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:50:57] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:50:57] [DEBUG] + 	Getting operator (dca33db40b2f8f122636cd5297c0c511) backpressure from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:50:57] [DEBUG] + 	Getting operator (dca33db40b2f8f122636cd5297c0c511) busyness from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:50:57] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:50:57] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:50:57] [DEBUG] + 	Getting operator (e926317ddf99720773e3c7f4f412c3d7) backpressure from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:50:57] [DEBUG] + 	Getting operator (e926317ddf99720773e3c7f4f412c3d7) busyness from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:50:57] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:50:57] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:50:57] [DEBUG] + 	Getting operator (9c7327831b3b5b4ae2c580979f474a9c) backpressure from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:50:58] [DEBUG] + 	Getting operator (9c7327831b3b5b4ae2c580979f474a9c) busyness from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0m[2024-02-17T14:50:58] [MONITOR]:: Runtime performance metrics:
+[0m[2024-02-17T14:50:58] 	 Job Run Time: 330397 ms
+
+[0;93m[2024-02-17T14:50:58] [WARNING]Back Pressure Level of some operator is HIGH[0m
+[0;93m[2024-02-17T14:50:58] [WARNING]Bottleneck detected: 32f0ffe0b6f0b990239bb81cec28b9d8[0m
+[0m[2024-02-17T14:50:58] Waiting to check again the backpressure after 60 seconds...
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator (41a95396e613c9f62f1da16142d5ddd2) backpressure from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator (41a95396e613c9f62f1da16142d5ddd2) busyness from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator (32f0ffe0b6f0b990239bb81cec28b9d8) backpressure from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator (32f0ffe0b6f0b990239bb81cec28b9d8) busyness from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator (31ec045e3401e87fc7879b43d8e8625d) backpressure from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator (31ec045e3401e87fc7879b43d8e8625d) busyness from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator (dca33db40b2f8f122636cd5297c0c511) backpressure from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator (dca33db40b2f8f122636cd5297c0c511) busyness from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator (e926317ddf99720773e3c7f4f412c3d7) backpressure from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator (e926317ddf99720773e3c7f4f412c3d7) busyness from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator (9c7327831b3b5b4ae2c580979f474a9c) backpressure from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator (9c7327831b3b5b4ae2c580979f474a9c) busyness from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0m[2024-02-17T14:51:58] Checking if bottleneck changed...
+[0;93m[2024-02-17T14:51:58] [WARNING]Bottleneck is still 32f0ffe0b6f0b990239bb81cec28b9d8[0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator (41a95396e613c9f62f1da16142d5ddd2) backpressure from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator (41a95396e613c9f62f1da16142d5ddd2) busyness from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator (32f0ffe0b6f0b990239bb81cec28b9d8) backpressure from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator (32f0ffe0b6f0b990239bb81cec28b9d8) busyness from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator (31ec045e3401e87fc7879b43d8e8625d) backpressure from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator (31ec045e3401e87fc7879b43d8e8625d) busyness from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator (dca33db40b2f8f122636cd5297c0c511) backpressure from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator (dca33db40b2f8f122636cd5297c0c511) busyness from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator (e926317ddf99720773e3c7f4f412c3d7) backpressure from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator (e926317ddf99720773e3c7f4f412c3d7) busyness from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator (9c7327831b3b5b4ae2c580979f474a9c) backpressure from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting operator (9c7327831b3b5b4ae2c580979f474a9c) busyness from url http://flink-jobmanager:8081/jobs/779bfaaaaffe5278bf2b20e0e7959f1a/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0m[2024-02-17T14:51:58] [MONITOR]:: Runtime performance metrics:
+[0m[2024-02-17T14:51:58] 	 Job Run Time: 390786 ms
+[0m[2024-02-17T14:51:58] Backpressure is still high and the system needs a reconfiguration...
+[0m[2024-02-17T14:51:58] [RES_MNGR] Average network latencies
+[0m[2024-02-17T14:51:58] 
+               parasilo-2     parasilo-20    parasilo-21    parasilo-22    parasilo-24    parasilo-25    parasilo-26    parasilo-27    parasilo-28    parasilo-3     parasilo-4     parasilo-5     parasilo-6     parasilo-7     parasilo-8     parasilo-9     
+parasilo-2     29.468         49.871         49.681         26.414         51.908         25.96          51.527         52.269         27.992         50.541         50.601         50.79          49.576         28.086         25.938         49.974         
+parasilo-20    49.871         36.32          49.336         24.31          49.883         23.683         50.752         51.335         25.778         49.652         49.622         49.947         48.577         25.609         24.201         49.149         
+parasilo-21    49.681         49.336         25.889         25.682         49.886         25.479         51.069         52.037         28.034         49.744         49.605         49.839         48.027         27.564         24.322         51.525         
+parasilo-22    26.414         24.31          25.682         0.765          23.272         1.549          24.938         23.832         4.029          24.889         25.949         26.034         23.201         1.918          1.766          25.998         
+parasilo-24    51.908         49.883         49.886         23.272         45.574         23.453         51.333         49.93          25.755         50.578         51.366         51.727         49.685         25.586         23.063         50.813         
+parasilo-25    25.96          23.683         25.479         1.549          23.453         0.934          24.331         23.225         4.116          24.435         25.071         25.589         22.284         1.839          2.542          25.42          
+parasilo-26    51.527         50.752         51.069         24.938         51.333         24.331         47.126         51.803         26.739         50.514         51.744         52.493         49.584         26.689         24.375         54.449         
+parasilo-27    52.269         51.335         52.037         23.832         49.93          23.225         51.803         47.926         25.746         50.345         51.808         51.908         48.925         25.475         23.444         50.852         
+parasilo-28    27.992         25.778         28.034         4.029          25.755         4.116          26.739         25.746         5.007          26.883         27.04          27.7           24.838         4.235          4.387          27.509         
+parasilo-3     50.541         49.652         49.744         24.889         50.578         24.435         50.514         50.345         26.883         40.401         50.53          50.604         49.365         26.817         24.606         49.793         
+parasilo-4     50.601         49.622         49.605         25.949         51.366         25.071         51.744         51.808         27.04          50.53          27.477         50.406         49.677         27.037         25.332         48.801         
+parasilo-5     50.79          49.947         49.839         26.034         51.727         25.589         52.493         51.908         27.7           50.604         50.406         31.434         49.992         27.845         25.885         50.374         
+parasilo-6     49.576         48.577         48.027         23.201         49.685         22.284         49.584         48.925         24.838         49.365         49.677         49.992         42.659         24.25          22.014         49.61          
+parasilo-7     28.086         25.609         27.564         1.918          25.586         1.839          26.689         25.475         4.235          26.817         27.037         27.845         24.25          3.054          2.684          27.344         
+parasilo-8     25.938         24.201         24.322         1.766          23.063         2.542          24.375         23.444         4.387          24.606         25.332         25.885         22.014         2.684          1.097          25.691         
+parasilo-9     49.974         49.149         51.525         25.998         50.813         25.42          54.449         50.852         27.509         49.793         48.801         50.374         49.61          27.344         25.691         37.558         
+
+[0m[2024-02-17T14:51:58] [RES_MNGR] Shortest path nodes: ['parasilo-7', 'parasilo-25', 'parasilo-22', 'parasilo-8', 'parasilo-28', 'parasilo-6', 'parasilo-27', 'parasilo-24', 'parasilo-20', 'parasilo-26', 'parasilo-3', 'parasilo-4', 'parasilo-21', 'parasilo-9', 'parasilo-5', 'parasilo-2']
+[0m[2024-02-17T14:51:58] [RES_MNGR] Observed delays: [0, 1.839, 1.9176000000000002, 2.6836, 4.2354, 24.249599999999997, 25.474899999999998, 25.586199999999998, 25.6087, 26.689, 26.8168, 27.037, 27.5639, 27.343899999999998, 27.845299999999998, 28.0856, 1.5488999999999997]
+[0m[2024-02-17T14:51:58] [RES_MNGR] NDmax: 54.4486
+[0m[2024-02-17T14:51:58] [COMBO_CTRL] Reconf: Scale Up Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)<br/>+-_Timestamps/Watermarks from par 2
+[0;96m[2024-02-17T14:51:58] [DEBUG] + [PRED_MATRIX] Current prediction matrix is:
+ [[      0.       0.       0.]
+ [      0.   43819.   87638.]
+ [      0.   87438.  174876.]
+ [      0.  131217.  262434.]
+ [      0.  174956.  349912.]
+ [      0.  218695.  437390.]
+ [      0.  262434.  524868.]
+ [      0.  306173.  612346.]
+ [      0.  349912.  699824.]
+ [      0.  393651.  787302.]
+ [      0.  437390.  874780.]
+ [      0.  481129.  962258.]
+ [      0.  524868. 1049736.]
+ [      0.  568607. 1137214.]
+ [      0.  612346. 1224692.]
+ [      0.  656085. 1312170.]
+ [      0.  699824. 1399648.]] [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + [PRED_MATRIX] 	par, transp: 1, 1 target tput: 87438 new_tput %: 43819.0 tput diff %: -99.5435769871517  [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + [PRED_MATRIX] 	par, transp: 1, 2 target tput: 87438 new_tput %: 87638.0 tput diff %: 0.22821150642415391  [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + [PRED_MATRIX] 	par, transp: 2, 1 target tput: 87438 new_tput %: 87438.0 tput diff %: 0  [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + [PRED_MATRIX] 	par, transp: 2, 2 target tput: 87438 new_tput %: 174876.0 tput diff %: 50.0 ADDED [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + [PRED_MATRIX] 	par, transp: 3, 1 target tput: 87438 new_tput %: 131217.0 tput diff %: 33.36381718832163 ADDED [0m
+[0;96m[2024-02-17T14:51:58] [DEBUG] + [PRED_MATRIX] Scaling Possibilities: [(2, 2), (3, 1)] [0m
+
+[0;96m[2024-02-17T14:51:58] [DEBUG] + 	Getting overview info from url http://flink-jobmanager:8081/overview [0m
+[0m[2024-02-17T14:51:58] 
+*******************************************************
+[0m[2024-02-17T14:51:58] [RES_MNGR] Re-configuring PARALLELISM
+[0m[2024-02-17T14:51:58] 	Current Parallelism: 2
+[0m[2024-02-17T14:51:58] 	Target Parallelism: 3
+[0m[2024-02-17T14:51:58] [RES_MNGR] Stopping Flink for re-configuration...
+[0m[2024-02-17T14:52:02] Running command ['/bin/sh', '-c', 'flink stop 779bfaaaaffe5278bf2b20e0e7959f1a'] on pod flink-jobmanager-5bc8b4d75c-bj4tm
+[0m[2024-02-17T14:52:35] [RES_MNGR] Re-scaling number of task managers...
+[0;96m[2024-02-17T14:52:35] [DEBUG] + 	Getting overview info from url http://flink-jobmanager:8081/overview [0m
+[0m[2024-02-17T14:52:35] [RES_MNGR] Average network latencies
+[0m[2024-02-17T14:52:35] 
+               parasilo-2     parasilo-20    parasilo-21    parasilo-22    parasilo-24    parasilo-25    parasilo-26    parasilo-27    parasilo-28    parasilo-3     parasilo-4     parasilo-5     parasilo-6     parasilo-7     parasilo-8     parasilo-9     
+parasilo-2     28.986         50.134         50.571         26.39          51.147         25.602         50.262         51.825         25.626         50.541         50.462         50.294         51.049         28.333         26.992         50.45          
+parasilo-20    50.134         36.501         50.402         25.978         49.464         24.361         49.29          50.997         23.541         49.727         49.896         49.724         50.168         26.19          26.461         49.713         
+parasilo-21    50.571         50.402         26.882         27.622         50.087         26.15          50.016         52.594         25.022         50.378         50.378         50.239         50.718         28.284         27.759         51.938         
+parasilo-22    26.39          25.978         27.622         3.9            24.132         3.936          23.188         24.473         4.712          24.665         26.482         26.83          25.061         4.725          2.554          26.809         
+parasilo-24    51.147         49.464         50.087         24.132         43.786         22.34          47.584         48.157         20.986         49.901         50.37          49.108         50.094         25.326         24.086         50.268         
+parasilo-25    25.602         24.361         26.15          3.936          22.34          0.463          22.292         22.532         2.655          23.862         24.921         25.382         23.569         2.938          4.78           24.603         
+parasilo-26    50.262         49.29          50.016         23.188         47.584         22.292         43.903         49.153         21.448         48.809         49.803         50.023         49.003         25.014         24.008         52.177         
+parasilo-27    51.825         50.997         52.594         24.473         48.157         22.532         49.153         46.99          22.304         50.346         51.234         50.976         49.901         25.368         24.351         50.189         
+parasilo-28    25.626         23.541         25.022         4.712          20.986         2.655          21.448         22.304         0.686          23.542         25.028         23.784         23.195         3.269          5.322          24.821         
+parasilo-3     50.541         49.727         50.378         24.665         49.901         23.862         48.809         50.346         23.542         40.008         50.324         49.745         50.283         25.804         26.162         49.82          
+parasilo-4     50.462         49.896         50.378         26.482         50.37          24.921         49.803         51.234         25.028         50.324         27.255         49.854         51.0           27.614         26.942         49.256         
+parasilo-5     50.294         49.724         50.239         26.83          49.108         25.382         50.023         50.976         23.784         49.745         49.854         30.1           50.951         28.12          27.383         50.038         
+parasilo-6     51.049         50.168         50.718         25.061         50.094         23.569         49.003         49.901         23.195         50.283         51.0           50.951         45.409         25.479         25.289         50.669         
+parasilo-7     28.333         26.19          28.284         4.725          25.326         2.938          25.014         25.368         3.269          25.804         27.614         28.12          25.479         4.299          5.697          26.993         
+parasilo-8     26.992         26.461         27.759         2.554          24.086         4.78           24.008         24.351         5.322          26.162         26.942         27.383         25.289         5.697          6.025          26.909         
+parasilo-9     50.45          49.713         51.938         26.809         50.268         24.603         52.177         50.189         24.821         49.82          49.256         50.038         50.669         26.993         26.909         38.313         
+
+[0m[2024-02-17T14:52:35] [RES_MNGR] Shortest path nodes: ['parasilo-7', 'parasilo-25', 'parasilo-28']
+[0m[2024-02-17T14:52:35] [RES_MNGR] Observed delays: [0, 2.9377, 3.2687, 2.6549]
+[0m[2024-02-17T14:52:35] [RES_MNGR] NDmax: 28.333000000000006
+[0;96m[2024-02-17T14:52:35] [DEBUG] + 	 Running taskmanager reset: target_par 0  [0m
+[0m[2024-02-17T14:52:35] Deployment flink-taskmanager scaled to 0 replica.
+[0;96m[2024-02-17T14:52:38] [DEBUG] + 	 Running taskmanager rescale: target_par 3  [0m
+[0m[2024-02-17T14:52:38] Deployment flink-taskmanager scaled to 3 replica.
+[0;96m[2024-02-17T14:52:43] [DEBUG] + 	Getting overview info from url http://flink-jobmanager:8081/overview [0m
+[0;96m[2024-02-17T14:52:43] [DEBUG] + 	Current Taskmanagers: 0 [0m
+[0;96m[2024-02-17T14:52:43] [DEBUG] + 	Target Parallelism: 3 [0m
+[0;96m[2024-02-17T14:52:48] [DEBUG] + 	Getting overview info from url http://flink-jobmanager:8081/overview [0m
+[0;96m[2024-02-17T14:52:48] [DEBUG] + 	Current Taskmanagers: 3 [0m
+[0;96m[2024-02-17T14:52:48] [DEBUG] + 	Target Parallelism: 3 [0m
+[0m[2024-02-17T14:52:48] [RES_MNGR] Resuming Flink with new configuration...
+[0m[2024-02-17T14:52:48] Running job /tmp/jobs/myjoin-transscale-all.jar
+[0m[2024-02-17T14:52:52] Running command ['/bin/sh', '-c', "flink run -s s3://flink-bucket/savepoints/savepoint-779bfa-eb54275b6d39 -d -j /tmp/jobs/myjoin-transscale-all.jar --parmap 'Sink__Sink:1;Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)<br/>+-_Timestamps/Watermarks:3;Timestamps/Watermarks<br/>+-_Map:1;Source__Source1:1;Timestamps/Watermarks<br/>+-_Map:1;Source__Source2:1'"] on pod flink-jobmanager-5bc8b4d75c-bj4tm
+[0;96m[2024-02-17T14:53:16] [DEBUG] + Job is running, waiting to check for errors [0m
+[0m[2024-02-17T14:53:31] 
+*******************************************************
+[0m[2024-02-17T14:53:31] Warming up for 240 seconds
+[0m[2024-02-17T14:57:31] [MONITOR]: Retrieving job details from flink-jobmanager:8081 ...
+[0m[2024-02-17T14:57:31] [MONITOR]:: Details about the job:
+[0m[2024-02-17T14:57:31] 	 Job ID: 132fa44bc74d5c68f6f718d783f0655a
+[0m[2024-02-17T14:57:31] 	 Operators: 6
+[0m[2024-02-17T14:57:31] TRANSSCALE:: Monitoring the throughput and back pressure every 60 seconds...
+[0m[2024-02-17T14:58:31] 
+TRANSSCALE:: Periodic Monitoring...
+[0;96m[2024-02-17T14:58:31] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:58:31] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:58:31] [DEBUG] + 	Getting operator (41a95396e613c9f62f1da16142d5ddd2) backpressure from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:58:31] [DEBUG] + 	Getting operator (41a95396e613c9f62f1da16142d5ddd2) busyness from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:58:31] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:58:31] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:58:31] [DEBUG] + 	Getting operator (32f0ffe0b6f0b990239bb81cec28b9d8) backpressure from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:58:31] [DEBUG] + 	Getting operator (32f0ffe0b6f0b990239bb81cec28b9d8) busyness from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:58:31] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:58:31] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:58:31] [DEBUG] + 	Getting operator (31ec045e3401e87fc7879b43d8e8625d) backpressure from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:58:31] [DEBUG] + 	Getting operator (31ec045e3401e87fc7879b43d8e8625d) busyness from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:58:31] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:58:31] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:58:31] [DEBUG] + 	Getting operator (dca33db40b2f8f122636cd5297c0c511) backpressure from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:58:31] [DEBUG] + 	Getting operator (dca33db40b2f8f122636cd5297c0c511) busyness from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:58:31] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:58:31] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:58:31] [DEBUG] + 	Getting operator (e926317ddf99720773e3c7f4f412c3d7) backpressure from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:58:31] [DEBUG] + 	Getting operator (e926317ddf99720773e3c7f4f412c3d7) busyness from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:58:31] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:58:31] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:58:31] [DEBUG] + 	Getting operator (9c7327831b3b5b4ae2c580979f474a9c) backpressure from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:58:31] [DEBUG] + 	Getting operator (9c7327831b3b5b4ae2c580979f474a9c) busyness from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0m[2024-02-17T14:58:31] [MONITOR]:: Runtime performance metrics:
+[0m[2024-02-17T14:58:31] 	 Job Run Time: 330567 ms
+
+[0;93m[2024-02-17T14:58:31] [WARNING]Back Pressure Level of some operator is HIGH[0m
+[0;93m[2024-02-17T14:58:31] [WARNING]Bottleneck detected: 32f0ffe0b6f0b990239bb81cec28b9d8[0m
+[0m[2024-02-17T14:58:31] Waiting to check again the backpressure after 60 seconds...
+[0;96m[2024-02-17T14:59:31] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:59:31] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:59:31] [DEBUG] + 	Getting operator (41a95396e613c9f62f1da16142d5ddd2) backpressure from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:59:31] [DEBUG] + 	Getting operator (41a95396e613c9f62f1da16142d5ddd2) busyness from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:59:31] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:59:31] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:59:31] [DEBUG] + 	Getting operator (32f0ffe0b6f0b990239bb81cec28b9d8) backpressure from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:59:31] [DEBUG] + 	Getting operator (32f0ffe0b6f0b990239bb81cec28b9d8) busyness from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:59:31] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:59:31] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:59:31] [DEBUG] + 	Getting operator (31ec045e3401e87fc7879b43d8e8625d) backpressure from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:59:31] [DEBUG] + 	Getting operator (31ec045e3401e87fc7879b43d8e8625d) busyness from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:59:31] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:59:31] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:59:31] [DEBUG] + 	Getting operator (dca33db40b2f8f122636cd5297c0c511) backpressure from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting operator (dca33db40b2f8f122636cd5297c0c511) busyness from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting operator (e926317ddf99720773e3c7f4f412c3d7) backpressure from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting operator (e926317ddf99720773e3c7f4f412c3d7) busyness from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting operator (9c7327831b3b5b4ae2c580979f474a9c) backpressure from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting operator (9c7327831b3b5b4ae2c580979f474a9c) busyness from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0m[2024-02-17T14:59:32] Checking if bottleneck changed...
+[0;93m[2024-02-17T14:59:32] [WARNING]Bottleneck is still 32f0ffe0b6f0b990239bb81cec28b9d8[0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting operator (41a95396e613c9f62f1da16142d5ddd2) backpressure from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting operator (41a95396e613c9f62f1da16142d5ddd2) busyness from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting operator (32f0ffe0b6f0b990239bb81cec28b9d8) backpressure from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting operator (32f0ffe0b6f0b990239bb81cec28b9d8) busyness from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting operator (31ec045e3401e87fc7879b43d8e8625d) backpressure from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting operator (31ec045e3401e87fc7879b43d8e8625d) busyness from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting operator (dca33db40b2f8f122636cd5297c0c511) backpressure from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting operator (dca33db40b2f8f122636cd5297c0c511) busyness from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting operator (e926317ddf99720773e3c7f4f412c3d7) backpressure from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting operator (e926317ddf99720773e3c7f4f412c3d7) busyness from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting operator (9c7327831b3b5b4ae2c580979f474a9c) backpressure from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting operator (9c7327831b3b5b4ae2c580979f474a9c) busyness from url http://flink-jobmanager:8081/jobs/132fa44bc74d5c68f6f718d783f0655a/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0m[2024-02-17T14:59:32] [MONITOR]:: Runtime performance metrics:
+[0m[2024-02-17T14:59:32] 	 Job Run Time: 390878 ms
+[0m[2024-02-17T14:59:32] Backpressure is still high and the system needs a reconfiguration...
+[0m[2024-02-17T14:59:32] [RES_MNGR] Average network latencies
+[0m[2024-02-17T14:59:32] 
+               parasilo-2     parasilo-20    parasilo-21    parasilo-22    parasilo-24    parasilo-25    parasilo-26    parasilo-27    parasilo-28    parasilo-3     parasilo-4     parasilo-5     parasilo-6     parasilo-7     parasilo-8     parasilo-9     
+parasilo-2     22.232         48.633         48.432         24.964         55.768         26.311         51.45          52.855         24.843         48.357         48.969         49.305         46.288         25.088         26.653         47.043         
+parasilo-20    48.633         29.189         48.693         24.936         56.073         27.068         52.34          53.745         25.51          49.079         49.818         49.88          49.479         26.163         27.293         47.953         
+parasilo-21    48.432         48.693         17.754         24.439         56.999         27.481         52.406         53.626         25.48          48.981         49.196         49.122         47.936         25.589         26.792         47.31          
+parasilo-22    24.964         24.936         24.439         3.434          29.478         4.136          23.752         24.499         4.325          24.988         25.074         27.128         20.623         3.271          5.463          23.777         
+parasilo-24    55.768         56.073         56.999         29.478         55.857         31.516         54.953         58.448         28.141         55.393         56.566         55.415         52.98          29.588         30.181         53.673         
+parasilo-25    26.311         27.068         27.481         4.136          31.516         4.379          26.085         26.168         4.04           27.63          27.258         29.079         22.552         3.002          5.247          25.813         
+parasilo-26    51.45          52.34          52.406         23.752         54.953         26.085         48.579         52.903         22.989         51.038         52.509         52.842         47.765         23.918         24.882         50.844         
+parasilo-27    52.855         53.745         53.626         24.499         58.448         26.168         52.903         51.562         25.458         54.191         53.643         55.949         48.673         25.745         27.357         51.912         
+parasilo-28    24.843         25.51          25.48          4.325          28.141         4.04           22.989         25.458         0.973          24.07          25.098         26.12          20.138         2.384          3.682          22.703         
+parasilo-3     48.357         49.079         48.981         24.988         55.393         27.63          51.038         54.191         24.07          35.463         49.316         49.724         47.098         25.319         25.544         47.038         
+parasilo-4     48.969         49.818         49.196         25.074         56.566         27.258         52.509         53.643         25.098         49.316         24.185         49.696         48.787         26.282         26.926         47.99          
+parasilo-5     49.305         49.88          49.122         27.128         55.415         29.079         52.842         55.949         26.12          49.724         49.696         28.013         48.903         27.39          27.903         48.608         
+parasilo-6     46.288         49.479         47.936         20.623         52.98          22.552         47.765         48.673         20.138         47.098         48.787         48.903         39.201         20.883         22.094         44.821         
+parasilo-7     25.088         26.163         25.589         3.271          29.588         3.002          23.918         25.745         2.384          25.319         26.282         27.39          20.883         1.667          5.242          24.038         
+parasilo-8     26.653         27.293         26.792         5.463          30.181         5.247          24.882         27.357         3.682          25.544         26.926         27.903         22.094         5.242          4.973          24.696         
+parasilo-9     47.043         47.953         47.31          23.777         53.673         25.813         50.844         51.912         22.703         47.038         47.99          48.608         44.821         24.038         24.696         30.98          
+
+[0m[2024-02-17T14:59:32] [RES_MNGR] Shortest path nodes: ['parasilo-7', 'parasilo-28', 'parasilo-25', 'parasilo-22', 'parasilo-8', 'parasilo-6', 'parasilo-26', 'parasilo-9', 'parasilo-2', 'parasilo-3', 'parasilo-21', 'parasilo-27', 'parasilo-20', 'parasilo-4', 'parasilo-5', 'parasilo-24']
+[0m[2024-02-17T14:59:32] [RES_MNGR] Observed delays: [0, 2.3844000000000003, 3.0018000000000002, 3.2706000000000004, 5.242299999999999, 20.882600000000004, 23.9184, 24.0382, 25.087600000000002, 25.3191, 25.589199999999998, 25.7452, 26.163, 26.282400000000003, 27.390000000000004, 29.5879, 4.0405]
+[0m[2024-02-17T14:59:32] [RES_MNGR] NDmax: 58.4482
+/transscale/utils/prediction/models/ParallelismModel.py:55: OptimizeWarning: Covariance of the parameters could not be estimated
+  popt, _ = curve_fit(lambda x, alpha, beta, gamma: alpha * x[0] ** beta - gamma * x[1],
+[0m[2024-02-17T14:59:32] [COMBO_CTRL] Reconf: Scale Up Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)<br/>+-_Timestamps/Watermarks from par 3
+[0;96m[2024-02-17T14:59:32] [DEBUG] + [PRED_MATRIX] Current prediction matrix is:
+ [[     0.      0.      0.]
+ [     0.  43819.  87638.]
+ [     0.  87438. 174876.]
+ [     0. 117633. 235266.]
+ [     0. 139796. 279577.]
+ [     0.  65185. 130234.]
+ [     0.  74835. 149511.]
+ [     0. 103093. 206024.]
+ [     0. 123990. 247808.]
+ [     0. 149586. 298997.]
+ [     0. 174169. 348159.]
+ [     0. 198872. 397561.]
+ [     0. 221208. 442227.]
+ [     0. 245054. 489915.]
+ [     0. 261697. 523189.]
+ [     0. 270483. 540742.]
+ [     0. 467823. 935617.]] [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + [PRED_MATRIX] 	par, transp: 1, 1 target tput: 117633 new_tput %: 43819.0 tput diff %: -168.45204135192498  [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + [PRED_MATRIX] 	par, transp: 1, 2 target tput: 117633 new_tput %: 87638.0 tput diff %: -34.22602067596248  [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + [PRED_MATRIX] 	par, transp: 2, 1 target tput: 117633 new_tput %: 87438.0 tput diff %: -34.53304055445001  [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + [PRED_MATRIX] 	par, transp: 2, 2 target tput: 117633 new_tput %: 174876.0 tput diff %: 32.733479722774995 ADDED [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + [PRED_MATRIX] 	par, transp: 3, 1 target tput: 117633 new_tput %: 117633.0 tput diff %: 0  [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + [PRED_MATRIX] 	par, transp: 3, 2 target tput: 117633 new_tput %: 235266.0 tput diff %: 50.0 ADDED [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + [PRED_MATRIX] 	par, transp: 4, 1 target tput: 117633 new_tput %: 139796.0 tput diff %: 15.85381555981573  [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + [PRED_MATRIX] 	par, transp: 4, 2 target tput: 117633 new_tput %: 279577.0 tput diff %: 57.924650454078844 ADDED [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + [PRED_MATRIX] 	par, transp: 5, 1 target tput: 117633 new_tput %: 65185.0 tput diff %: -80.46022858019484  [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + [PRED_MATRIX] 	par, transp: 5, 2 target tput: 117633 new_tput %: 130234.0 tput diff %: 9.675660733756162  [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + [PRED_MATRIX] 	par, transp: 6, 1 target tput: 117633 new_tput %: 74835.0 tput diff %: -57.18981759871718  [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + [PRED_MATRIX] 	par, transp: 6, 2 target tput: 117633 new_tput %: 149511.0 tput diff %: 21.321508116459658  [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + [PRED_MATRIX] 	par, transp: 7, 1 target tput: 117633 new_tput %: 103093.0 tput diff %: -14.103770382082198  [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + [PRED_MATRIX] 	par, transp: 7, 2 target tput: 117633 new_tput %: 206024.0 tput diff %: 42.903253989826425 ADDED [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + [PRED_MATRIX] 	par, transp: 8, 1 target tput: 117633 new_tput %: 123990.0 tput diff %: 5.127026373094604  [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + [PRED_MATRIX] 	par, transp: 8, 2 target tput: 117633 new_tput %: 247808.0 tput diff %: 52.53058819731405 ADDED [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + [PRED_MATRIX] 	par, transp: 9, 1 target tput: 117633 new_tput %: 149586.0 tput diff %: 21.360956239220247  [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + [PRED_MATRIX] 	par, transp: 9, 2 target tput: 117633 new_tput %: 298997.0 tput diff %: 60.65746479061663 ADDED [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + [PRED_MATRIX] 	par, transp: 10, 1 target tput: 117633 new_tput %: 174169.0 tput diff %: 32.46042636749364 ADDED [0m
+[0;96m[2024-02-17T14:59:32] [DEBUG] + [PRED_MATRIX] Scaling Possibilities: [(2, 2), (3, 2), (4, 2), (7, 2), (8, 2), (9, 2), (10, 1)] [0m
+
+[0;96m[2024-02-17T14:59:32] [DEBUG] + 	Getting overview info from url http://flink-jobmanager:8081/overview [0m
+[0m[2024-02-17T14:59:32] 
+*******************************************************
+[0m[2024-02-17T14:59:32] [RES_MNGR] Re-configuring PARALLELISM
+[0m[2024-02-17T14:59:32] 	Current Parallelism: 3
+[0m[2024-02-17T14:59:32] 	Target Parallelism: 4
+[0m[2024-02-17T14:59:32] [RES_MNGR] Stopping Flink for re-configuration...
+[0m[2024-02-17T14:59:36] Running command ['/bin/sh', '-c', 'flink stop 132fa44bc74d5c68f6f718d783f0655a'] on pod flink-jobmanager-5bc8b4d75c-bj4tm
+[0m[2024-02-17T15:00:03] [RES_MNGR] Re-scaling number of task managers...
+[0;96m[2024-02-17T15:00:03] [DEBUG] + 	Getting overview info from url http://flink-jobmanager:8081/overview [0m
+[0m[2024-02-17T15:00:03] [RES_MNGR] Average network latencies
+[0m[2024-02-17T15:00:03] 
+               parasilo-2     parasilo-20    parasilo-21    parasilo-22    parasilo-24    parasilo-25    parasilo-26    parasilo-27    parasilo-28    parasilo-3     parasilo-4     parasilo-5     parasilo-6     parasilo-7     parasilo-8     parasilo-9     
+parasilo-2     20.355         48.3           50.342         25.272         49.991         26.398         51.586         53.504         24.799         48.64          49.331         49.961         45.061         26.752         25.966         51.056         
+parasilo-20    48.3           28.254         50.203         24.484         52.518         26.214         52.771         50.094         24.91          49.137         49.852         50.215         47.979         25.542         26.041         51.181         
+parasilo-21    50.342         50.203         19.193         26.042         55.385         28.717         51.981         50.896         25.186         51.436         51.326         51.83          52.112         28.147         27.672         52.363         
+parasilo-22    25.272         24.484         26.042         1.352          25.917         3.824          23.837         23.814         4.108          25.387         24.65          27.214         22.188         4.771          5.196          27.754         
+parasilo-24    49.991         52.518         55.385         25.917         47.426         26.178         52.815         54.016         25.503         51.949         54.026         52.498         48.769         26.804         26.945         53.163         
+parasilo-25    26.398         26.214         28.717         3.824          26.178         3.691          25.822         26.387         5.474          26.896         27.094         28.486         23.614         5.659          6.326          28.887         
+parasilo-26    51.586         52.771         51.981         23.837         52.815         25.822         45.906         52.018         23.721         51.685         51.419         54.285         48.351         24.991         25.042         53.039         
+parasilo-27    53.504         50.094         50.896         23.814         54.016         26.387         52.018         47.229         24.359         52.734         53.989         54.153         50.602         25.437         26.061         54.944         
+parasilo-28    24.799         24.91          25.186         4.108          25.503         5.474          23.721         24.359         2.245          24.371         23.931         26.285         22.446         2.013          5.524          27.876         
+parasilo-3     48.64          49.137         51.436         25.387         51.949         26.896         51.685         52.734         24.371         35.382         49.842         50.658         47.185         26.691         24.99          51.412         
+parasilo-4     49.331         49.852         51.326         24.65          54.026         27.094         51.419         53.989         23.931         49.842         24.507         50.795         48.936         26.312         24.957         52.036         
+parasilo-5     49.961         50.215         51.83          27.214         52.498         28.486         54.285         54.153         26.285         50.658         50.795         28.536         51.494         27.982         28.305         52.88          
+parasilo-6     45.061         47.979         52.112         22.188         48.769         23.614         48.351         50.602         22.446         47.185         48.936         51.494         38.013         22.815         23.004         47.259         
+parasilo-7     26.752         25.542         28.147         4.771          26.804         5.659          24.991         25.437         2.013          26.691         26.312         27.982         22.815         0.274          3.311          27.935         
+parasilo-8     25.966         26.041         27.672         5.196          26.945         6.326          25.042         26.061         5.524          24.99          24.957         28.305         23.004         3.311          4.967          29.089         
+parasilo-9     51.056         51.181         52.363         27.754         53.163         28.887         53.039         54.944         27.876         51.412         52.036         52.88          47.259         27.935         29.089         35.537         
+
+[0m[2024-02-17T15:00:03] [RES_MNGR] Shortest path nodes: ['parasilo-7', 'parasilo-28', 'parasilo-8', 'parasilo-22']
+[0m[2024-02-17T15:00:03] [RES_MNGR] Observed delays: [0, 2.012800000000001, 3.3114, 4.7706, 5.524400000000001]
+[0m[2024-02-17T15:00:03] [RES_MNGR] NDmax: 29.089099999999995
+[0;96m[2024-02-17T15:00:04] [DEBUG] + 	 Running taskmanager reset: target_par 0  [0m
+[0m[2024-02-17T15:00:04] Deployment flink-taskmanager scaled to 0 replica.
+[0;96m[2024-02-17T15:00:07] [DEBUG] + 	 Running taskmanager rescale: target_par 4  [0m
+[0m[2024-02-17T15:00:07] Deployment flink-taskmanager scaled to 4 replica.
+[0;96m[2024-02-17T15:00:12] [DEBUG] + 	Getting overview info from url http://flink-jobmanager:8081/overview [0m
+[0;96m[2024-02-17T15:00:12] [DEBUG] + 	Current Taskmanagers: 0 [0m
+[0;96m[2024-02-17T15:00:12] [DEBUG] + 	Target Parallelism: 4 [0m
+[0;96m[2024-02-17T15:00:17] [DEBUG] + 	Getting overview info from url http://flink-jobmanager:8081/overview [0m
+[0;96m[2024-02-17T15:00:17] [DEBUG] + 	Current Taskmanagers: 4 [0m
+[0;96m[2024-02-17T15:00:17] [DEBUG] + 	Target Parallelism: 4 [0m
+[0m[2024-02-17T15:00:17] [RES_MNGR] Resuming Flink with new configuration...
+[0m[2024-02-17T15:00:17] Running job /tmp/jobs/myjoin-transscale-all.jar
+[0m[2024-02-17T15:00:21] Running command ['/bin/sh', '-c', "flink run -s s3://flink-bucket/savepoints/savepoint-132fa4-07fb02032301 -d -j /tmp/jobs/myjoin-transscale-all.jar --parmap 'Sink__Sink:1;Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)<br/>+-_Timestamps/Watermarks:4;Timestamps/Watermarks<br/>+-_Map:1;Source__Source1:1;Timestamps/Watermarks<br/>+-_Map:1;Source__Source2:1'"] on pod flink-jobmanager-5bc8b4d75c-bj4tm
+[0;96m[2024-02-17T15:00:45] [DEBUG] + Job is running, waiting to check for errors [0m
+[0m[2024-02-17T15:01:00] 
+*******************************************************
+[0m[2024-02-17T15:01:00] Warming up for 240 seconds
+[0m[2024-02-17T15:05:00] [MONITOR]: Retrieving job details from flink-jobmanager:8081 ...
+[0m[2024-02-17T15:05:00] [MONITOR]:: Details about the job:
+[0m[2024-02-17T15:05:00] 	 Job ID: 8b5228870ae4b88d7a27a60ac2919e2e
+[0m[2024-02-17T15:05:00] 	 Operators: 6
+[0m[2024-02-17T15:05:00] TRANSSCALE:: Monitoring the throughput and back pressure every 60 seconds...
+[0m[2024-02-17T15:06:00] 
+TRANSSCALE:: Periodic Monitoring...
+[0;96m[2024-02-17T15:06:00] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + 	Getting operator (41a95396e613c9f62f1da16142d5ddd2) backpressure from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + 	Getting operator (41a95396e613c9f62f1da16142d5ddd2) busyness from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + 	Getting operator (32f0ffe0b6f0b990239bb81cec28b9d8) backpressure from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + 	Getting operator (32f0ffe0b6f0b990239bb81cec28b9d8) busyness from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + 	Getting operator (31ec045e3401e87fc7879b43d8e8625d) backpressure from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + 	Getting operator (31ec045e3401e87fc7879b43d8e8625d) busyness from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + 	Getting operator (dca33db40b2f8f122636cd5297c0c511) backpressure from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + 	Getting operator (dca33db40b2f8f122636cd5297c0c511) busyness from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + 	Getting operator (e926317ddf99720773e3c7f4f412c3d7) backpressure from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + 	Getting operator (e926317ddf99720773e3c7f4f412c3d7) busyness from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + 	Getting operator (9c7327831b3b5b4ae2c580979f474a9c) backpressure from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + 	Getting operator (9c7327831b3b5b4ae2c580979f474a9c) busyness from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0m[2024-02-17T15:06:00] [MONITOR]:: Runtime performance metrics:
+[0m[2024-02-17T15:06:00] 	 Job Run Time: 330505 ms
+
+[0;93m[2024-02-17T15:06:00] [WARNING]Back Pressure Level low, preparing for scale down[0m
+[0;93m[2024-02-17T15:06:00] [WARNING]Resources are already at max level for operator 41a95396e613c9f62f1da16142d5ddd2. Cannot scale-down.[0m
+[0m[2024-02-17T15:06:00] [RES_MNGR] Average network latencies
+[0m[2024-02-17T15:06:00] 
+               parasilo-2     parasilo-20    parasilo-21    parasilo-22    parasilo-24    parasilo-25    parasilo-26    parasilo-27    parasilo-28    parasilo-3     parasilo-4     parasilo-5     parasilo-6     parasilo-7     parasilo-8     parasilo-9     
+parasilo-2     14.775         49.419         49.377         28.021         49.701         29.856         53.29          52.081         32.184         49.532         48.069         50.194         51.316         26.043         25.82          48.642         
+parasilo-20    49.419         16.361         48.34          26.879         48.654         30.249         51.012         49.886         30.179         48.101         47.664         50.321         52.25          25.257         25.546         48.989         
+parasilo-21    49.377         48.34          12.316         25.168         49.931         29.094         49.524         52.664         31.204         48.622         48.144         50.067         50.326         24.364         24.875         47.179         
+parasilo-22    28.021         26.879         25.168         0.243          21.045         2.136          20.789         23.867         8.27           26.211         25.363         26.787         22.271         2.779          3.91           26.725         
+parasilo-24    49.701         48.654         49.931         21.045         39.503         22.902         46.761         45.982         24.388         47.504         47.881         49.903         44.867         18.776         18.014         51.178         
+parasilo-25    29.856         30.249         29.094         2.136          22.902         2.649          25.172         26.846         7.134          28.785         26.413         29.502         24.771         5.094          8.535          29.839         
+parasilo-26    53.29          51.012         49.524         20.789         46.761         25.172         42.874         48.75          26.816         51.414         51.19          50.883         47.756         19.774         21.422         49.937         
+parasilo-27    52.081         49.886         52.664         23.867         45.982         26.846         48.75          44.959         27.259         52.688         52.187         51.918         48.93          21.696         21.954         53.06          
+parasilo-28    32.184         30.179         31.204         8.27           24.388         7.134          26.816         27.259         11.804         31.163         29.18          31.316         27.427         7.608          8.419          32.35          
+parasilo-3     49.532         48.101         48.622         26.211         47.504         28.785         51.414         52.688         31.163         24.894         47.844         49.732         48.709         24.931         24.796         47.825         
+parasilo-4     48.069         47.664         48.144         25.363         47.881         26.413         51.19          52.187         29.18          47.844         10.458         49.131         50.149         23.455         22.767         47.908         
+parasilo-5     50.194         50.321         50.067         26.787         49.903         29.502         50.883         51.918         31.316         49.732         49.131         21.52          52.475         25.201         25.267         49.036         
+parasilo-6     51.316         52.25          50.326         22.271         44.867         24.771         47.756         48.93          27.427         48.709         50.149         52.475         42.848         20.361         20.73          50.404         
+parasilo-7     26.043         25.257         24.364         2.779          18.776         5.094          19.774         21.696         7.608          24.931         23.455         25.201         20.361         0.44           2.172          25.385         
+parasilo-8     25.82          25.546         24.875         3.91           18.014         8.535          21.422         21.954         8.419          24.796         22.767         25.267         20.73          2.172          0.738          26.562         
+parasilo-9     48.642         48.989         47.179         26.725         51.178         29.839         49.937         53.06          32.35          47.825         47.908         49.036         50.404         25.385         26.562         14.966         
+
+[0m[2024-02-17T15:06:00] [RES_MNGR] Shortest path nodes: ['parasilo-7', 'parasilo-8', 'parasilo-22', 'parasilo-25', 'parasilo-28', 'parasilo-24', 'parasilo-26', 'parasilo-6', 'parasilo-27', 'parasilo-4', 'parasilo-21', 'parasilo-3', 'parasilo-5', 'parasilo-20', 'parasilo-9', 'parasilo-2']
+[0m[2024-02-17T15:06:00] [RES_MNGR] Observed delays: [0, 2.1725, 2.7791999999999994, 5.0945, 7.608199999999999, 18.7758, 19.773699999999998, 20.361000000000004, 21.6964, 23.454800000000002, 24.363799999999998, 24.93070000000001, 25.201099999999997, 25.256600000000006, 25.384799999999995, 26.043400000000002, 3.9096]
+[0m[2024-02-17T15:06:00] [RES_MNGR] NDmax: 53.290499999999994
+[0m[2024-02-17T15:06:00] [COMBO_CTRL] Reconf: Scale Down Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)<br/>+-_Timestamps/Watermarks from par 4
+[0;96m[2024-02-17T15:06:00] [DEBUG] + [PRED_MATRIX] Current prediction matrix is:
+ [[      0.       0.       0.]
+ [      0.   43819.   87638.]
+ [      0.   87438.  174876.]
+ [      0.  117633.  235266.]
+ [      0.  144740.  289480.]
+ [      0.  118085.  236171.]
+ [      0.  151980.  303960.]
+ [      0.  187513.  375026.]
+ [      0.  217804.  435608.]
+ [      0.  244921.  489843.]
+ [      0.  276648.  553297.]
+ [      0.  309972.  619945.]
+ [      0.  344666.  689332.]
+ [      0.  380275.  760550.]
+ [      0.  415090.  830181.]
+ [      0.  446369.  892738.]
+ [      0.  615390. 1230781.]] [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + [PRED_MATRIX] 	par, transp: 1, 1 target tput: 143834 new_tput %: 43819.0 tput diff %: -228.24573815011752  [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + [PRED_MATRIX] 	par, transp: 1, 2 target tput: 143834 new_tput %: 87638.0 tput diff %: -64.12286907505876  [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + [PRED_MATRIX] 	par, transp: 2, 1 target tput: 143834 new_tput %: 87438.0 tput diff %: -64.4982730620554  [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + [PRED_MATRIX] 	par, transp: 2, 2 target tput: 143834 new_tput %: 174876.0 tput diff %: 17.7508634689723  [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + [PRED_MATRIX] 	par, transp: 3, 1 target tput: 143834 new_tput %: 117633.0 tput diff %: -22.273511684646316  [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + [PRED_MATRIX] 	par, transp: 3, 2 target tput: 143834 new_tput %: 235266.0 tput diff %: 38.863244157676846 ADDED [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + [PRED_MATRIX] 	par, transp: 4, 1 target tput: 143834 new_tput %: 144740.0 tput diff %: 0.6259499792731795  [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + [PRED_MATRIX] 	par, transp: 4, 2 target tput: 143834 new_tput %: 289480.0 tput diff %: 50.31297498963659 ADDED [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + [PRED_MATRIX] 	par, transp: 5, 1 target tput: 143834 new_tput %: 118085.0 tput diff %: -21.80547910403523  [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + [PRED_MATRIX] 	par, transp: 5, 2 target tput: 143834 new_tput %: 236171.0 tput diff %: 39.09751832358757 ADDED [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + [PRED_MATRIX] 	par, transp: 6, 1 target tput: 143834 new_tput %: 151980.0 tput diff %: 5.359915778391894  [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + [PRED_MATRIX] 	par, transp: 6, 2 target tput: 143834 new_tput %: 303960.0 tput diff %: 52.67995788919595 ADDED [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + [PRED_MATRIX] 	par, transp: 7, 1 target tput: 143834 new_tput %: 187513.0 tput diff %: 23.293851626287243  [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + [PRED_MATRIX] 	par, transp: 7, 2 target tput: 143834 new_tput %: 375026.0 tput diff %: 61.646925813143625 ADDED [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + [PRED_MATRIX] 	par, transp: 8, 1 target tput: 143834 new_tput %: 217804.0 tput diff %: 33.96172705735432 ADDED [0m
+[0;96m[2024-02-17T15:06:00] [DEBUG] + [PRED_MATRIX] Scaling Possibilities: [(3, 2), (4, 2), (5, 2), (6, 2), (7, 2), (8, 1)] [0m
+[0;93m[2024-02-17T15:06:00] [WARNING]Resources are already at max level for operator 31ec045e3401e87fc7879b43d8e8625d. Cannot scale-down.[0m
+[0;93m[2024-02-17T15:06:00] [WARNING]Resources are already at max level for operator dca33db40b2f8f122636cd5297c0c511. Cannot scale-down.[0m
+[0;93m[2024-02-17T15:06:00] [WARNING]Resources are already at max level for operator e926317ddf99720773e3c7f4f412c3d7. Cannot scale-down.[0m
+[0;93m[2024-02-17T15:06:00] [WARNING]Resources are already at max level for operator 9c7327831b3b5b4ae2c580979f474a9c. Cannot scale-down.[0m
+[0;93m[2024-02-17T15:06:00] [WARNING]TRANSSCALE:: Couldn't rescale
+[0m
+[0m[2024-02-17T15:07:00] 
+TRANSSCALE:: Periodic Monitoring...
+[0;96m[2024-02-17T15:07:00] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T15:07:00] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T15:07:00] [DEBUG] + 	Getting operator (41a95396e613c9f62f1da16142d5ddd2) backpressure from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T15:07:00] [DEBUG] + 	Getting operator (41a95396e613c9f62f1da16142d5ddd2) busyness from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/41a95396e613c9f62f1da16142d5ddd2/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T15:07:00] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T15:07:00] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T15:07:00] [DEBUG] + 	Getting operator (32f0ffe0b6f0b990239bb81cec28b9d8) backpressure from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T15:07:00] [DEBUG] + 	Getting operator (32f0ffe0b6f0b990239bb81cec28b9d8) busyness from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/32f0ffe0b6f0b990239bb81cec28b9d8/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T15:07:00] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T15:07:00] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T15:07:00] [DEBUG] + 	Getting operator (31ec045e3401e87fc7879b43d8e8625d) backpressure from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T15:07:00] [DEBUG] + 	Getting operator (31ec045e3401e87fc7879b43d8e8625d) busyness from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/31ec045e3401e87fc7879b43d8e8625d/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T15:07:00] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T15:07:00] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T15:07:00] [DEBUG] + 	Getting operator (dca33db40b2f8f122636cd5297c0c511) backpressure from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T15:07:00] [DEBUG] + 	Getting operator (dca33db40b2f8f122636cd5297c0c511) busyness from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/dca33db40b2f8f122636cd5297c0c511/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T15:07:00] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T15:07:00] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T15:07:00] [DEBUG] + 	Getting operator (e926317ddf99720773e3c7f4f412c3d7) backpressure from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T15:07:00] [DEBUG] + 	Getting operator (e926317ddf99720773e3c7f4f412c3d7) busyness from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/e926317ddf99720773e3c7f4f412c3d7/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0;96m[2024-02-17T15:07:00] [DEBUG] + 	Getting operator out throughput from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=numRecordsOutPerSecond [0m
+[0;96m[2024-02-17T15:07:00] [DEBUG] + 	Getting operator in throughput from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=numRecordsInPerSecond [0m
+[0;96m[2024-02-17T15:07:00] [DEBUG] + 	Getting operator (9c7327831b3b5b4ae2c580979f474a9c) backpressure from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=backPressuredTimeMsPerSecond [0m
+[0;96m[2024-02-17T15:07:00] [DEBUG] + 	Getting operator (9c7327831b3b5b4ae2c580979f474a9c) busyness from url http://flink-jobmanager:8081/jobs/8b5228870ae4b88d7a27a60ac2919e2e/vertices/9c7327831b3b5b4ae2c580979f474a9c/subtasks/metrics?get=busyTimeMsPerSecond [0m
+[0m[2024-02-17T15:07:00] [MONITOR]:: Runtime performance metrics:
+[0m[2024-02-17T15:07:00] 	 Job Run Time: 390918 ms
+
+[0;93m[2024-02-17T15:07:00] [WARNING]Back Pressure Level low, preparing for scale down[0m
+[0;93m[2024-02-17T15:07:00] [WARNING]Resources are already at max level for operator 41a95396e613c9f62f1da16142d5ddd2. Cannot scale-down.[0m
+[0m[2024-02-17T15:07:00] [RES_MNGR] Average network latencies
+[0m[2024-02-17T15:07:00] 
+               parasilo-2     parasilo-20    parasilo-21    parasilo-22    parasilo-24    parasilo-25    parasilo-26    parasilo-27    parasilo-28    parasilo-3     parasilo-4     parasilo-5     parasilo-6     parasilo-7     parasilo-8     parasilo-9     
+parasilo-2     11.559         49.352         47.498         33.902         55.158         24.379         49.856         43.122         25.889         49.589         49.609         49.917         55.694         26.606         30.343         48.787         
+parasilo-20    49.352         13.351         48.016         34.98          55.963         26.385         51.128         42.22          28.076         49.312         49.795         51.41          58.333         29.451         34.61          49.662         
+parasilo-21    47.498         48.016         9.259          31.2           56.09          22.967         48.044         41.299         25.179         48.199         48.647         49.286         54.386         25.147         30.75          47.229         
+parasilo-22    33.902         34.98          31.2           9.678          36.995         5.431          28.502         21.11          7.76           32.84          35.253         34.912         33.333         7.488          11.775         31.269         
+parasilo-24    55.158         55.963         56.09          36.995         51.412         25.678         54.838         45.542         28.075         52.856         57.309         56.676         58.384         28.748         34.027         60.518         
+parasilo-25    24.379         26.385         22.967         5.431          25.678         0.172          19.771         12.039         6.116          23.386         25.491         25.054         25.011         4.271          5.143          25.733         
+parasilo-26    49.856         51.128         48.044         28.502         54.838         19.771         41.094         37.18          21.738         52.764         53.415         51.634         52.446         22.149         27.234         50.274         
+parasilo-27    43.122         42.22          41.299         21.11          45.542         12.039         37.18          26.3           14.019         44.547         45.529         43.22          44.012         14.763         20.339         43.917         
+parasilo-28    25.889         28.076         25.179         7.76           28.075         6.116          21.738         14.019         6.454          26.057         28.129         27.978         26.67          8.732          9.194          27.808         
+parasilo-3     49.589         49.312         48.199         32.84          52.856         23.386         52.764         44.547         26.057         22.64          50.199         50.563         55.559         25.712         31.204         49.255         
+parasilo-4     49.609         49.795         48.647         35.253         57.309         25.491         53.415         45.529         28.129         50.199         7.145          51.073         58.787         27.781         32.259         49.999         
+parasilo-5     49.917         51.41          49.286         34.912         56.676         25.054         51.634         43.22          27.978         50.563         51.073         21.045         57.924         26.889         33.016         50.204         
+parasilo-6     55.694         58.333         54.386         33.333         58.384         25.011         52.446         44.012         26.67          55.559         58.787         57.924         53.082         27.442         32.855         56.351         
+parasilo-7     26.606         29.451         25.147         7.488          28.748         4.271          22.149         14.763         8.732          25.712         27.781         26.889         27.442         4.453          8.077          27.418         
+parasilo-8     30.343         34.61          30.75          11.775         34.027         5.143          27.234         20.339         9.194          31.204         32.259         33.016         32.855         8.077          3.49           32.573         
+parasilo-9     48.787         49.662         47.229         31.269         60.518         25.733         50.274         43.917         27.808         49.255         49.999         50.204         56.351         27.418         32.573         14.298         
+
+[0m[2024-02-17T15:07:00] [RES_MNGR] Shortest path nodes: ['parasilo-7', 'parasilo-25', 'parasilo-22', 'parasilo-8', 'parasilo-28', 'parasilo-27', 'parasilo-26', 'parasilo-21', 'parasilo-3', 'parasilo-2', 'parasilo-5', 'parasilo-9', 'parasilo-6', 'parasilo-4', 'parasilo-24', 'parasilo-20']
+[0m[2024-02-17T15:07:00] [RES_MNGR] Observed delays: [0, 4.2714, 7.488100000000001, 8.0768, 8.731900000000001, 14.7626, 22.149200000000004, 25.147100000000002, 25.711700000000008, 26.6065, 26.888700000000007, 27.4178, 27.442499999999995, 27.7814, 28.7478, 29.451100000000004, 5.430900000000001]
+[0m[2024-02-17T15:07:00] [RES_MNGR] NDmax: 60.518299999999996
+[0m[2024-02-17T15:07:01] [COMBO_CTRL] Reconf: Scale Down Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)<br/>+-_Timestamps/Watermarks from par 4
+[0;96m[2024-02-17T15:07:01] [DEBUG] + [PRED_MATRIX] Current prediction matrix is:
+ [[      0.       0.       0.]
+ [      0.   43819.   87638.]
+ [      0.   87438.  174876.]
+ [      0.  117633.  235266.]
+ [      0.  152784.  305568.]
+ [      0.  185253.  370507.]
+ [      0.  216843.  433686.]
+ [      0.  247718.  495437.]
+ [      0.  277996.  555992.]
+ [      0.  307760.  615520.]
+ [      0.  337075.  674151.]
+ [      0.  365993.  731986.]
+ [      0.  394553.  789107.]
+ [      0.  422790.  845581.]
+ [      0.  450732.  901465.]
+ [      0.  478403.  956807.]
+ [      0.  505823. 1011647.]] [0m
+[0;96m[2024-02-17T15:07:01] [DEBUG] + [PRED_MATRIX] 	par, transp: 1, 1 target tput: 141078 new_tput %: 43819.0 tput diff %: -221.95622903306784  [0m
+[0;96m[2024-02-17T15:07:01] [DEBUG] + [PRED_MATRIX] 	par, transp: 1, 2 target tput: 141078 new_tput %: 87638.0 tput diff %: -60.97811451653392  [0m
+[0;96m[2024-02-17T15:07:01] [DEBUG] + [PRED_MATRIX] 	par, transp: 2, 1 target tput: 141078 new_tput %: 87438.0 tput diff %: -61.34632539628079  [0m
+[0;96m[2024-02-17T15:07:01] [DEBUG] + [PRED_MATRIX] 	par, transp: 2, 2 target tput: 141078 new_tput %: 174876.0 tput diff %: 19.326837301859605  [0m
+[0;96m[2024-02-17T15:07:01] [DEBUG] + [PRED_MATRIX] 	par, transp: 3, 1 target tput: 141078 new_tput %: 117633.0 tput diff %: -19.930631710489404  [0m
+[0;96m[2024-02-17T15:07:01] [DEBUG] + [PRED_MATRIX] 	par, transp: 3, 2 target tput: 141078 new_tput %: 235266.0 tput diff %: 40.034684144755296 ADDED [0m
+[0;96m[2024-02-17T15:07:01] [DEBUG] + [PRED_MATRIX] 	par, transp: 4, 1 target tput: 141078 new_tput %: 152784.0 tput diff %: 7.661797046811184  [0m
+[0;96m[2024-02-17T15:07:01] [DEBUG] + [PRED_MATRIX] 	par, transp: 4, 2 target tput: 141078 new_tput %: 305568.0 tput diff %: 53.830898523405594 ADDED [0m
+[0;96m[2024-02-17T15:07:01] [DEBUG] + [PRED_MATRIX] 	par, transp: 5, 1 target tput: 141078 new_tput %: 185253.0 tput diff %: 23.845767679875628  [0m
+[0;96m[2024-02-17T15:07:01] [DEBUG] + [PRED_MATRIX] 	par, transp: 5, 2 target tput: 141078 new_tput %: 370507.0 tput diff %: 61.922986610239484 ADDED [0m
+[0;96m[2024-02-17T15:07:01] [DEBUG] + [PRED_MATRIX] 	par, transp: 6, 1 target tput: 141078 new_tput %: 216843.0 tput diff %: 34.94002573290353 ADDED [0m
+[0;96m[2024-02-17T15:07:01] [DEBUG] + [PRED_MATRIX] Scaling Possibilities: [(3, 2), (4, 2), (5, 2), (6, 1)] [0m
+[0;93m[2024-02-17T15:07:01] [WARNING]Resources are already at max level for operator 31ec045e3401e87fc7879b43d8e8625d. Cannot scale-down.[0m
+[0;93m[2024-02-17T15:07:01] [WARNING]Resources are already at max level for operator dca33db40b2f8f122636cd5297c0c511. Cannot scale-down.[0m
+[0;93m[2024-02-17T15:07:01] [WARNING]Resources are already at max level for operator e926317ddf99720773e3c7f4f412c3d7. Cannot scale-down.[0m
+[0;93m[2024-02-17T15:07:01] [WARNING]Resources are already at max level for operator 9c7327831b3b5b4ae2c580979f474a9c. Cannot scale-down.[0m
+[0;93m[2024-02-17T15:07:01] [WARNING]TRANSSCALE:: Couldn't rescale
+[0m
+[0m[2024-02-17T15:07:01] TRANSSCALE:: Max tries achieved: closing auto-scaler

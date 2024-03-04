@@ -1,0 +1,6 @@
+[CONFIG]
+{"platform.type": "Grid5000", "platform.site": "rennes", "platform.cluster": "parasilo", "platform.kubernetes_type": "k3s", "platform.controllers": "1", "platform.workers": "15", "platform.queue": "default", "platform.walltime": "4:00:00", "platform.walltime_extension": "1:00", "experiment.name": "scalehub", "experiment.job_file": "mymap-transscale-all.jar", "experiment.task_name": "Map", "experiment.db_url": "localhost/vm", "experiment.load_generators": [{"name": "generator1", "topic": "input-topic1", "num_sensors": "50000", "interval_ms": "1000", "replicas": "7", "value": "5"}, {"name": "generator2", "topic": "input-topic1", "num_sensors": "50000", "interval_ms": "1000", "replicas": "7", "value": "5"}], "experiment.delay.enable": "true", "experiment.delay.latency": "25ms", "experiment.delay.jitter": "0ms", "experiment.delay.correlation": "0", "experiment.output.skip_s": "120", "experiment.output.stats": "true", "experiment.output.plot": "true", "transscale.max_parallelism": "9", "transscale.monitoring.warmup": "240", "transscale.monitoring.interval": "60"}
+
+[TIMESTAMPS]
+Experiment start at : 1702910073
+Experiment end at : 1702912228
