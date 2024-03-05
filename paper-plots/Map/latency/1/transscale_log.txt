@@ -95,8 +95,7 @@ parasilo-8     25.727         0.502          26.782         27.032         0.515
  Observed delays are [0, 0.232, 0.339, 0.465, 0.502, 25.676, 25.873, 26.457, 26.697] with NDmax 52.078
 /usr/local/lib/python3.11/site-packages/scipy/optimize/_minpack_py.py:1010: OptimizeWarning: Covariance of the parameters could not be estimated
   warnings.warn('Covariance of the parameters could not be estimated',
-[2023-12-11T10:17:34]
-[COMBO_CTRL] Reconf: Scale Up Map from par 1
+[2023-12-11T10:17:34] [COMBO_CTRL] Reconf: Scale Up Map from par 1
 [2023-12-11T10:17:34] [DEBUG] + [PRED_MATRIX] Current prediction matrix is:
  [[     0.      0.      0.]
  [     0.  23479.  46958.]
@@ -227,8 +226,7 @@ parasilo-8     26.606         0.36           25.822         26.768         0.296
 
 [2023-12-11T10:25:55] [DEBUG] + Best nodes for par 9 are ['parasilo-21', 'parasilo-27', 'parasilo-3', 'parasilo-8', 'parasilo-6', 'parasilo-5', 'parasilo-23', 'parasilo-18', 'parasilo-7'].
  Observed delays are [0, 0.261, 0.282, 0.36, 0.687, 25.589, 25.71, 26.601, 26.821] with NDmax 50.868
-[2023-12-11T10:25:55]
-[COMBO_CTRL] Reconf: Scale Up Map from par 2
+[2023-12-11T10:25:55] [COMBO_CTRL] Reconf: Scale Up Map from par 2
 [2023-12-11T10:25:55] [DEBUG] + [PRED_MATRIX] Current prediction matrix is:
  [[     0.      0.      0.]
  [     0.  23479.  46958.]

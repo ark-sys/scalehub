@@ -131,8 +131,7 @@ parasilo-8     25.622         50.853         50.725         25.735         25.66
  Observed delays are [0, 26.116, 26.174, 26.306, 26.311, 26.351, 50.431, 50.508, 50.578] with NDmax 50.81
 /usr/local/lib/python3.11/site-packages/scipy/optimize/_minpack_py.py:1010: OptimizeWarning: Covariance of the parameters could not be estimated
   warnings.warn('Covariance of the parameters could not be estimated',
-[2023-12-07T09:35:18]
-[COMBO_CTRL] Reconf: Scale Up Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)<br/>+-_Timestamps/Watermarks from par 1
+[2023-12-07T09:35:18] [COMBO_CTRL] Reconf: Scale Up Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)<br/>+-_Timestamps/Watermarks from par 1
 [2023-12-07T09:35:18] [DEBUG] + [PRED_MATRIX] Current prediction matrix is:
  [[     0.      0.      0.]
  [     0.  16648.  33296.]
@@ -299,8 +298,7 @@ parasilo-8     25.876         50.633         50.794         25.862         25.66
 
 [2023-12-07T09:43:44] [DEBUG] + Best nodes for par 9 are ['parasilo-17', 'parasilo-27', 'parasilo-7', 'parasilo-3', 'parasilo-25', 'parasilo-8', 'parasilo-23', 'parasilo-4', 'parasilo-5'].
  Observed delays are [0, 0.506, 0.508, 0.567, 0.568, 25.876, 26.157, 26.464, 26.643] with NDmax 50.69
-[2023-12-07T09:43:44]
-[COMBO_CTRL] Reconf: Scale Up Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)<br/>+-_Timestamps/Watermarks from par 2
+[2023-12-07T09:43:44] [COMBO_CTRL] Reconf: Scale Up Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)<br/>+-_Timestamps/Watermarks from par 2
 [2023-12-07T09:43:44] [DEBUG] + [PRED_MATRIX] Current prediction matrix is:
  [[     0.      0.      0.]
  [     0.  16648.  33296.]
@@ -469,8 +467,7 @@ parasilo-8     25.668         50.753         50.774         25.963         25.74
 
 [2023-12-07T09:52:10] [DEBUG] + Best nodes for par 9 are ['parasilo-25', 'parasilo-17', 'parasilo-27', 'parasilo-7', 'parasilo-3', 'parasilo-8', 'parasilo-23', 'parasilo-5', 'parasilo-4'].
  Observed delays are [0, 0.533, 0.561, 0.622, 0.636, 25.963, 26.217, 26.389, 26.475] with NDmax 50.829
-[2023-12-07T09:52:10]
-[COMBO_CTRL] Reconf: Scale Up Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)<br/>+-_Timestamps/Watermarks from par 3
+[2023-12-07T09:52:10] [COMBO_CTRL] Reconf: Scale Up Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)<br/>+-_Timestamps/Watermarks from par 3
 [2023-12-07T09:52:10] [DEBUG] + [PRED_MATRIX] Current prediction matrix is:
  [[     0.      0.      0.]
  [     0.  16648.  33296.]
