@@ -31,9 +31,14 @@ data:
     metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
     metrics.reporter.prom.interval: 5 SECONDS
     metrics.reporter.prom.port: 9249
+    metrics.fetcher.update-interval: 5000
+    metrics.latency.granularity: subtask
     
     state.backend.latency-track.keyed-state-enabled: true
     state.backend.type: rocksdb
+    #state.backend.incremental: true
+
+    state.backend.rocksdb.metrics.estimate-num-keys: true
     state.backend.rocksdb.memory.managed: true
     state.backend.rocksdb.async-threads: 4
     state.backend.rocksdb.localdir: /mnt/data/tmp
@@ -51,6 +56,8 @@ data:
     execution.checkpointing.unaligned.enabled: true
     execution.checkpointing.aligned-checkpoint-timeout: 10 s
     execution.checkpointing.checkpoints-after-tasks-finish.enabled: true
+    
+
   log4j-console.properties: |+
     # This affects logging for both user code and Flink
     rootLogger.level=INFO
