@@ -7,10 +7,182 @@ from io import StringIO
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
+from matplotlib.ticker import MaxNLocator
 
 from .Conf import Conf
 from .Defaults import DefaultKeys as Key
 from .Logger import Logger
+
+class BoxPlot:
+    def generate_box_plot_per_subtask(self, experiment_path):
+        # Iterate through all subdirs of experiment_path and load final_df.csv of each subdir
+        dfs = []
+        for root, dirs, files in os.walk(experiment_path):
+            for file in files:
+                if file == "final_df.csv":
+                    file_path = os.path.join(root, file)
+                    df = pd.read_csv(file_path)
+
+                    # Append the DataFrame to the list
+                    dfs.append(df)
+
+        # Concatenate all the DataFrames into a single DataFrame
+        final_df = pd.concat(dfs)
+        throughput_cols = [
+            col
+            for col in final_df.columns
+            if "flink_taskmanager_job_task_numRecordsInPerSecond" in str(col)
+        ]
+        # Prepare data for boxplot
+        boxplot_data = [final_df[col].dropna() for col in throughput_cols]
+        labels = [col[1] for col in throughput_cols]
+
+        # Create boxplot
+        plt.boxplot(boxplot_data, labels=labels)
+        plt.xlabel("Subtask")
+        plt.ylabel("numRecordsInPerSecond")
+        plt.title("Boxplot of numRecordsInPerSecond for each subtask")
+        # plt.show()
+
+    def generate_box_plot_per_parallelism(self, experiments_path):
+        # Iterate through all subdirs of experiment_path and load final_df.csv of each subdir
+        dfs = []
+        for root, dirs, files in os.walk(experiments_path):
+            for file in files:
+                if file == "final_df.csv":
+                    file_path = os.path.join(root, file)
+                    df = pd.read_csv(file_path)
+
+                    # Group by 'Parallelism'. Timestamp column represents seconds. So we skip the first 60 seconds of each Paralaellism group
+                    df = df.groupby("Parallelism").apply(lambda x: x.iloc[skip:])
+
+                    # Get back to a normal DataFrame
+                    df = df.reset_index(drop=True)
+
+                    # Eval throughput
+                    numRecordsInPerSecond_cols = [
+                        col
+                        for col in df.columns
+                        if "flink_taskmanager_job_task_numRecordsInPerSecond" in str(col)
+                    ]
+
+                    # Add a new column 'Sum' to the DataFrame which is the sum of 'numRecordsInPerSecond' across all subtasks
+                    df["Throughput"] = df[numRecordsInPerSecond_cols].sum(axis=1)
+
+                    # Only keep the columns 'Parallelism' and 'Throughput'
+                    df = df[["Parallelism", "Throughput"]]
+
+                    # Remove rows with Parallelism = 0
+                    df = df[df["Parallelism"] != 0]
+                    # Append the DataFrame to the list
+                    dfs.append(df)
+        # Get number of files
+        num_runs = len(dfs)
+
+        final_df = pd.concat(dfs)
+
+        # Group by 'Parallelism' and use 'Parallelism' values as index
+        final_df = final_df.groupby("Parallelism")
+        final_df = final_df.apply(lambda x: x.reset_index(drop=True))
+        # Drop the 'Parallelism' column
+        final_df = final_df.drop(columns="Parallelism")
+        # Convert the MultiIndex dataframe into a list of arrays
+        boxplot_data = [
+            group["Throughput"].values for _, group in final_df.groupby(level=0)
+        ]
+        labels = [name for name, _ in final_df.groupby(level=0)]
+
+        fig, ax = plt.subplots()
+        ax.boxplot(boxplot_data, labels=labels, showfliers=False, meanline=True)
+        ax.set_xlabel("Operator Parallelism")
+        ax.set_ylabel("Records per Second")
+
+        # Add straight dotted line at y=100000
+        ax.axhline(y=100000, color="r", linestyle="--", label="100000")
+
+        # Decompose the path to get the operator name and the type of experiment
+        experiment_path = experiments_path.split("/")
+        experiment = experiment_path[-2]
+        type = experiment_path[-1]
+        # set title
+        ax.set_title(f"{experiment} operator - {type}")
+        # set subtitle
+        # fig.suptitle(f"Experiment runs : {num_runs}", fontsize=12)
+        # Save the plot
+        output_path = os.path.join(experiments_path, f"{experiment}_{type}.png")
+        fig.savefig(output_path)
+        fig.show()
+
+    # Load the mean_stderr.csv file and generate a boxplot
+    def generate_box_for_means(self, exp_path):
+        dfs = []
+        for root, dirs, files in os.walk(exp_path):
+            for file in files:
+                if file == "mean_stderr.csv":
+                    file_path = os.path.join(root, file)
+                    df = pd.read_csv(file_path)
+                    dfs.append(df)
+
+        num_runs = len(dfs)
+        final_df = pd.concat(dfs)
+
+        final_df = final_df.groupby("Parallelism")
+        final_df = final_df.apply(lambda x: x.reset_index(drop=True))
+        final_df = final_df.drop(columns="Parallelism")
+        boxplot_data = [
+            group["Throughput"].values for _, group in final_df.groupby(level=0)
+        ]
+        labels = [name for name, _ in final_df.groupby(level=0)]
+
+        fig, ax = plt.subplots()
+        ax.boxplot(boxplot_data, labels=labels, showfliers=False, meanline=True)
+        ax.set_xlabel("Operator Parallelism")
+        ax.set_ylabel("Records per Second")
+
+        # Add straight dotted line at y=100000
+        ax.axhline(y=100000, color="r", linestyle="--", label="100000")
+
+        # Decompose the path to get the operator name and the type of experiment
+        experiment_path = exp_path.split("/")
+        experiment = experiment_path[-2]
+        type = experiment_path[-1]
+        # set title
+        ax.set_title(f"{experiment} operator - {type}")
+        # set subtitle
+        # fig.suptitle(f"Experiment runs : {num_runs}", fontsize=12)
+        # Save the plot
+        output_path = os.path.join(exp_path, f"{experiment}_{type}_mean.png")
+        fig.savefig(output_path)
+        fig.show()
+
+        def export(self):
+            base_path = "../info/paper-plots"
+            log: Logger = Logger()
+            experiments = ["Join-kk", "Join-kv", "Map"]
+            types = ["no_lat", "latency", "latency_jitter"]
+
+            # # Export data and evaluate mean and stderr for each experiment
+            # for experiment in experiments:
+            #     for type in types:
+            #         experiment_path = os.path.join(base_path, experiment, type)
+            #         # If path exists, but folder is empty, skip
+            #         if os.path.exists(experiment_path):
+            #             # Get subdirectories
+            #             subdirs = [f.path for f in os.scandir(experiment_path) if f.is_dir()]
+            #             for subdir in subdirs:
+            #                 data: ExperimentData = ExperimentData(log, subdir)
+            #                 data.export_experiment_data()
+            #                 data.eval_mean_stderr()
+            #                 data.eval_summary_plot()
+            for experiment in experiments:
+                for type in types:
+                    experiment_path = os.path.join(base_path, experiment, type)
+                    # If path exists, but folder is empty, skip
+                    if os.path.exists(experiment_path):
+                        if len(os.listdir(experiment_path)) == 0:
+                            continue
+                        generate_box_for_means(experiment_path)
+
 
 
 class ExperimentData:
@@ -86,9 +258,9 @@ class ExperimentData:
         return res
 
     def export_timeseries_json(
-            self,
-            time_series_name: str,
-            format_labels="__name__,__timestamp__:unix_s,__value__",
+        self,
+        time_series_name: str,
+        format_labels="__name__,__timestamp__:unix_s,__value__",
     ):
         # Export all timeseries in native format
         output_file = os.path.join(self.export_path, f"{time_series_name}_export.json")
@@ -117,9 +289,9 @@ class ExperimentData:
                 self.__log.error(f"Error exporting data: {response.text}")
 
     def export_timeseries_csv(
-            self,
-            time_series_name: str,
-            format_labels="__name__,__timestamp__:unix_s,__value__",
+        self,
+        time_series_name: str,
+        format_labels="__name__,__timestamp__:unix_s,__value__",
     ):
         output_file = os.path.join(self.export_path, f"{time_series_name}_export.csv")
 
@@ -166,7 +338,7 @@ class ExperimentData:
 
     # Extract metrics per subtask from a json exported metrics file from victoriametrics
     def get_metrics_per_subtask(
-            self, metrics_content, metric_name, task_name
+        self, metrics_content, metric_name, task_name
     ) -> tuple[str, pd.DataFrame]:
         data = {}
         output_file = os.path.join(self.export_path, f"{metric_name}_export.csv")
@@ -349,6 +521,15 @@ class ExperimentData:
             if "flink_taskmanager_job_task_numRecordsInPerSecond" in str(col)
         ]
 
+        busyTimePerSecond_cols = [
+            col
+            for col in df.columns
+            if "flink_taskmanager_job_task_busyTimeMsPerSecond" in str(col)
+        ]
+
+        # Add a new column 'BusyTime' to the DataFrame which is the mean of 'busyTimePerSecond' across all subtasks
+        df["BusyTime"] = df[busyTimePerSecond_cols].mean(axis=1)
+
         # Add a new column 'Sum' to the DataFrame which is the sum of 'numRecordsInPerSecond' across all subtasks
         df["Sum"] = df[numRecordsInPerSecond_cols].sum(axis=1)
 
@@ -362,33 +543,42 @@ class ExperimentData:
         df_filtered = df_grouped.apply(
             lambda group: group[
                 (
-                        group.index
-                        >= group.index.min() + pd.Timedelta(seconds=self.start_skip)
+                    group.index
+                    >= group.index.min() + pd.Timedelta(seconds=self.start_skip)
                 )
                 & (
-                        group.index
-                        <= group.index.max() - pd.Timedelta(seconds=self.end_skip)
+                    group.index
+                    <= group.index.max() - pd.Timedelta(seconds=self.end_skip)
                 )
-                ]
+            ]
         )
 
         df_filtered = df_filtered.drop(columns=["Parallelism"])
         df_filtered.reset_index(inplace=True)
 
         # Calculate mean and standard error
-        df_final = df_filtered.groupby("Parallelism")["Sum"].agg(
+        df_final = df_filtered.groupby("Parallelism")["Sum", "BusyTime"].agg(
             ["mean", lambda x: np.std(x) / np.sqrt(x.count())]
         )
         # Rename the columns
-        df_final.columns = ["Mean", "StdErr"]
+        df_final.columns = [
+            "Throughput",
+            "ThroughputStdErr",
+            "BusyTime",
+            "BusyTimeStdErr",
+        ]
 
         # Extract predictions from transscale log
         predictions = self.__export_predictions()
-        # Add the predictions to the DataFrame
-        df_final["Predictions"] = np.nan
-        for prediction in predictions:
-            time, current_parallelism, target_parallelism, throughput = prediction
-            df_final.loc[target_parallelism, "Predictions"] = throughput
+
+        if len(predictions) == 0:
+            self.__log.error("No predictions found in transscale log.")
+        else:
+            # Add the predictions to the DataFrame
+            df_final["Predictions"] = np.nan
+            for prediction in predictions:
+                time, current_parallelism, target_parallelism, throughput = prediction
+                df_final.loc[target_parallelism, "Predictions"] = throughput
 
         # Save the DataFrame to a CSV file
         df_final.to_csv(os.path.join(self.exp_path, "mean_stderr.csv"))
@@ -460,13 +650,13 @@ class ExperimentData:
         dataset = self.eval_mean_stderr()
 
         # Plot timeseries
-        fig, ax = plt.subplots()
+        fig, ax1 = plt.subplots()
 
-        # Plot the 'Mean' column with error bars for 'StdErr'
-        ax.errorbar(
+        # Plot the 'Throughput' column with error bars for 'ThroughputStdErr'
+        ax1.errorbar(
             dataset.index,
-            dataset["Mean"],
-            yerr=dataset["StdErr"],
+            dataset["Throughput"],
+            yerr=dataset["ThroughputStdErr"],
             fmt="o",
             linestyle="-",
             color="b",
@@ -474,33 +664,87 @@ class ExperimentData:
             label="Throughput In",
         )
 
-        # Plot the 'Predictions' column
-        ax.plot(
+        ax2 = ax1.twinx()
+        ax2.errorbar(
             dataset.index,
-            dataset["Predictions"],
-            linestyle="--",
+            dataset["BusyTime"],
+            yerr=dataset["BusyTimeStdErr"],
+            linestyle=":",
             marker="o",
-            color="r",
-            label="Predictions",
+            color="g",
+            label="BusyTime",
         )
 
-        # Calculate percentage error and add it to the plot
-        percentage_error = (
-                                   (dataset["Predictions"] - dataset["Mean"]) / dataset["Mean"]
-                           ) * 100
-        for x, y, error in zip(dataset.index, dataset["Predictions"], percentage_error):
-            ax.annotate(
-                f"{error:.2f}%",
-                (x, y),
-                textcoords="offset points",
-                xytext=(0, 10),
-                ha="center",
+        # Set the y-axis limit for 'BusyTime' between 0 and 1000
+        ax2.set_ylim(0, 1000)
+
+        # Set the x-axis to display all integers
+        ax1.xaxis.set_major_locator(MaxNLocator(integer=True))
+
+        # Check if predictions are available
+        if "Predictions" in dataset.columns:
+
+            # Plot the 'Predictions' column
+            ax1.plot(
+                dataset.index,
+                dataset["Predictions"],
+                linestyle="--",
+                marker="o",
+                color="r",
+                label="Predictions",
             )
 
+            # Calculate percentage error and add it to the plot
+            percentage_error = (
+                (dataset["Predictions"] - dataset["Throughput"]) / dataset["Throughput"]
+            ) * 100
+            for x, y, error in zip(
+                dataset.index, dataset["Predictions"], percentage_error
+            ):
+                ax1.annotate(
+                    f"{error:.2f}%",
+                    (x, y),
+                    textcoords="offset points",
+                    xytext=(0, 10),
+                    ha="center",
+                )
+
+        # Get operator name from config file
+        jobname = self.conf.get(Key.Experiment.job_file)
+        # Extract the operator name from the job name
+        if "join" in jobname:
+            if "kk" in jobname:
+                operator_name = "Join (kk)"
+            elif "kv" in jobname:
+                operator_name = "Join (kv)"
+            else:
+                operator_name = "Join"
+        elif "map" in jobname:
+            operator_name = "Map"
+        else:
+            operator_name = "Unknown"
+
+        # Check if latency is enabled, and if so, check if jitter is enabled
+        if self.conf.get(Key.Experiment.Chaos.enable) == "true":
+            jitter = self.conf.get(Key.Experiment.Chaos.delay_jitter_ms)
+            if int(jitter) > 0:
+                title = f"{operator_name} - Latency and Jitter"
+            else:
+                title = f"{operator_name} - Latency"
+        else:
+            self.__log.warning(f"No latency was enabled in conf {self.conf}")
+            title = f"{operator_name} - No Latency"
+
         # Set the title and labels
-        ax.set_title("Mean numRecordsInPerSecond with StdErr")
-        ax.set_xlabel("Parallelism Level")
-        ax.set_ylabel("Mean numRecordsInPerSecond")
+        ax1.set_title(title)
+        ax1.set_xlabel("Parallelism Level")
+        ax1.set_ylabel("Mean numRecordsInPerSecond")
+        ax2.set_ylabel("Mean busyTimeMsPerSecond")
+
+        # Add a legend
+        handles1, labels1 = ax1.get_legend_handles_labels()
+        handles2, labels2 = ax2.get_legend_handles_labels()
+        ax1.legend(handles1 + handles2, labels1 + labels2, loc="lower right")
 
         # Save the plot to a file
         plot_file = f"{self.plots_path}/summary_plot.png"
@@ -512,7 +756,7 @@ class ExperimentData:
 
         # Convert lastCheckpointSize to MB
         dataset["flink_jobmanager_job_lastCheckpointSize"] = (
-                dataset["flink_jobmanager_job_lastCheckpointSize"] / 1024 / 1024
+            dataset["flink_jobmanager_job_lastCheckpointSize"] / 1024 / 1024
         )
 
         # Stacked plot with numRecordsInPerSecond, lastCheckpointSize and busyTimePerSecond
@@ -556,38 +800,41 @@ class ExperimentData:
         fig.savefig(plot_file)
 
     def __export_predictions(self) -> list[tuple[int, int, int, float]]:
-        with open(self.transscale_log, "r") as file:
-            log_content = file.read()
+        try:
+            with open(self.transscale_log, "r") as file:
+                log_content = file.read()
 
-        # Define the regular expression pattern
-        pattern = r"\[(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})\] \[COMBO_CTRL\] Reconf: Scale (Up|Down) (.*) from par (\d+)([\s\S]*?)\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\] \[RES_MNGR\] Re-configuring PARALLELISM[\s\S].*\n.*Target Parallelism: (\d+)"
-        # Extract the matches
-        predictions = []
-        for match in re.finditer(pattern, log_content):
-            # Extract the match
-            current_parallelism = int(match.group(4))
-            target_parallelism = int(match.group(6))
-            prediction_block = match.group(5)
-            operator = match.group(3)
-            time = match.group(1)
+            # Define the regular expression pattern
+            pattern = r"\[(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})\] \[COMBO_CTRL\] Reconf: Scale (Up|Down) (.*) from par (\d+)([\s\S]*?)\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\] \[RES_MNGR\] Re-configuring PARALLELISM[\s\S].*\n.*Target Parallelism: (\d+)"
+            # Extract the matches
+            predictions = []
+            for match in re.finditer(pattern, log_content):
+                # Extract the match
+                current_parallelism = int(match.group(4))
+                target_parallelism = int(match.group(6))
+                prediction_block = match.group(5)
+                operator = match.group(3)
+                time = match.group(1)
 
-            operator_name = self.conf.get(Key.Experiment.task_name)
+                operator_name = self.conf.get(Key.Experiment.task_name)
 
-            if operator_name in operator:
-                throughput_pattern = rf".*par, transp: {target_parallelism}, 1 target tput: (\d+) new_tput %: (\d+\.\d+)"
-                # Extract the throughput from prediction block
-                throughput_match = re.search(throughput_pattern, prediction_block)
-                if throughput_match:
-                    throughput = float(throughput_match.group(2))
-                    # time is in format "2024-02-04T12:00:00", transform it to milliseconds
-                    time = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S").timestamp()
-                    predictions.append(
-                        (
-                            int(time + 3600),
-                            current_parallelism,
-                            target_parallelism,
-                            throughput,
+                if operator_name in operator:
+                    throughput_pattern = rf".*par, transp: {target_parallelism}, 1 target tput: (\d+) new_tput %: (\d+\.\d+)"
+                    # Extract the throughput from prediction block
+                    throughput_match = re.search(throughput_pattern, prediction_block)
+                    if throughput_match:
+                        throughput = float(throughput_match.group(2))
+                        # time is in format "2024-02-04T12:00:00", transform it to milliseconds
+                        time = datetime.strptime(time, "%Y-%m-%dT%H:%M:%S").timestamp()
+                        predictions.append(
+                            (
+                                int(time + 3600),
+                                current_parallelism,
+                                target_parallelism,
+                                throughput,
+                            )
                         )
-                    )
-
+        except:
+            self.__log.error("Failed to extract predictions from transscale log.")
+            predictions = []
         return predictions

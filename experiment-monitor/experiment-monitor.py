@@ -10,7 +10,7 @@ from transitions import Machine
 
 from utils.Conf import Conf
 from utils.Defaults import DefaultKeys as Key
-from utils.ExperimentsData import ExperimentData
+from utils.Data import ExperimentData
 from utils.KubernetesManager import KubernetesManager
 from utils.Logger import Logger
 
@@ -309,7 +309,7 @@ class ExperimentFSM:
 
             # Export experiment data
             data: ExperimentData = ExperimentData(
-                log=self.__log, exp_path=self.exp_path, config=self.config
+                log=self.__log, exp_path=self.exp_path
             )
 
             # Export data from victoriametrics
@@ -317,13 +317,12 @@ class ExperimentFSM:
 
             if self.config.get_bool(Key.Experiment.output_stats):
                 # If output_stats is enabled, evaluate mean throughput and extract predictions from transscale-job logs in stats.csv file
-                stats, _ = data.eval_stats(
-                    self.config.get_int(Key.Experiment.output_skip_s)
-                )
+                stats, _ = data.eval_mean_stderr()
                 # If output_plot is enabled, evaluate plot from stats.csv file
                 if self.config.get_bool(Key.Experiment.output_plot):
-                    data.eval_plot(stats)
-                    data.eval_everything()
+                    data.eval_summary_plot()
+                    data.eval_experiment_plot()
+                    data.eval_plot_with_checkpoints()
 
             self.__log.info("Experiment ended.")
         except Exception as e:
