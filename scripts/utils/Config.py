@@ -123,6 +123,9 @@ class Config:
             Key.Experiment.Flink.fibonacci_value
         ] = Value.Experiment.Flink.fibonacci_value
 
+    def __str__(self):
+        return self.to_str()
+
     def get(self, key) -> any:
         if key in self.__config:
             return self.__config[key]
@@ -297,3 +300,6 @@ class Config:
         # Join the lines between [CONFIG] and [TIMESTAMPS] and load as JSON
         config_content = "".join(lines[start_line:end_line])
         self.__conf = json.loads(config_content)
+
+    def to_str(self):
+        return json.dumps(self.__conf, indent=4)
