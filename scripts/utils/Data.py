@@ -234,8 +234,7 @@ class ExperimentData:
         self.start_skip = 10
         self.end_skip = 10
         # VictoriaMetrics database url
-        # self.db_url = "victoria-metrics-single-server.default.svc.cluster.local:8428"
-        self.db_url = "localhost/vm"
+        self.db_url = "victoria-metrics-single-server.default.svc.cluster.local:8428"
 
     def __get_timestamps_from_log(self, log_path: str) -> tuple[int, int]:
         # Parse log file for experiment info
