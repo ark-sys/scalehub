@@ -6,9 +6,9 @@ import enoslib as en
 import paho.mqtt.client as mqtt
 from paho.mqtt.enums import CallbackAPIVersion
 
-from .utils.Config import Config
-from .utils.Defaults import DefaultKeys as Key
-from .utils.Logger import Logger
+from scripts.utils.Config import Config
+from scripts.utils.Defaults import DefaultKeys as Key
+from scripts.utils.Logger import Logger
 
 
 # 1. Create MQTT client

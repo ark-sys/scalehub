@@ -3,7 +3,7 @@ import json
 from inspect import getmembers, isclass
 from os.path import exists
 
-from .Defaults import (
+from scripts.utils.Defaults import (
     DefaultValues as Value,
     DefaultKeys as Key,
 )
@@ -13,20 +13,33 @@ from .Logger import Logger
 class Config:
     __config = {}
 
-    def __init__(self, log: Logger, conf_path: str = None):
+    def __init__(self, log: Logger, conf):
         self.__log = log
-
         # Initialize default values
         self.__init_defaults()
 
         # Initialize the configuration parser
         self.cp = cp.ConfigParser()
 
-        # Check that the configuration file exists and is valid
-        self.validate(conf_path)
+        # Check the type of the configuration file
+        if isinstance(conf, dict):
+            # If the configuration is a dictionary, load it directly in self.__config
+            self.__config = conf
+        elif isinstance(conf, str):
+            # If the configuration is a string, lets assume it is a path to a configuration file
 
-        # Read the configuration file
-        self.__read_config_file(conf_path)
+            # Now check if the file matches the .ini format
+            if conf.endswith(".ini"):
+                self.validate(conf)
+                self.__read_config_file(conf)
+            # Otherwise we might be reading a .txt log file with the configuration
+            elif "log" in conf:
+                self.load_from_log(conf)
+        else:
+            self.__log.error(
+                f"Invalid type for conf: {type(conf)}. Expected path (str) or dict."
+            )
+            exit(1)
 
     def __init_defaults(self):
         self.__config[Key.Scalehub.playbook] = Value.Scalehub.playbooks
@@ -106,7 +119,9 @@ class Config:
         self.__config[
             Key.Experiment.Flink.window_size_ms
         ] = Value.Experiment.Flink.window_size_ms
-        self.__config[Key.Experiment.Flink.fibonacci_value] = Value.Experiment.Flink.fibonacci_value
+        self.__config[
+            Key.Experiment.Flink.fibonacci_value
+        ] = Value.Experiment.Flink.fibonacci_value
 
     def get(self, key) -> any:
         if key in self.__config:
@@ -268,3 +283,17 @@ class Config:
     # Serialize the configuration to a JSON string
     def to_json(self):
         return json.dumps(self.__config)
+
+    def load_from_log(self, log_path: str):
+        with open(log_path, "r") as f:
+            lines = f.readlines()
+
+        # Find the line number where [CONFIG] starts
+        start_line = lines.index("[CONFIG]\n") + 1
+
+        # Find the line number where [TIMESTAMPS] starts
+        end_line = lines.index("[TIMESTAMPS]\n")
+
+        # Join the lines between [CONFIG] and [TIMESTAMPS] and load as JSON
+        config_content = "".join(lines[start_line:end_line])
+        self.__conf = json.loads(config_content)

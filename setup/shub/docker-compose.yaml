@@ -24,7 +24,7 @@ services:
       - source: ssh_key
         target: id_rsa
     build:
-      context: .
+      context: ${SCALEHUB_BASEDIR}/setup/shub
       dockerfile: Dockerfile
       args:
         - UID=${UID}
@@ -33,16 +33,16 @@ services:
     # Source paths refer to scalehub root path
     volumes:
       - type: bind
-        source: ../conf
+        source: ${SCALEHUB_BASEDIR}/conf
         target: /app/conf
       - type: bind
-        source: ../playbooks
+        source: ${SCALEHUB_BASEDIR}/playbooks
         target: /app/playbooks
       - type: bind
-        source: ../script
-        target: /app/script
+        source: ${SCALEHUB_BASEDIR}/scripts
+        target: /app/scripts
       - type: bind
-        source: ../experiments-data
+        source: ${SCALEHUB_BASEDIR}/experiments-data
         target: /app/experiments-data
   # OpenVPN client service to connect to Grid5000
   vpn:

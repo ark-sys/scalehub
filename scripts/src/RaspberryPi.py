@@ -1,11 +1,10 @@
-from .Platform import Platform
-from .utils import Logger
-from .utils.Config import Config, Key
+from scripts.src.Platform import Platform
+from scripts.utils.Logger import Logger
+from scripts.utils.Config import Config
 
 
 # TODO: Implement RaspberryPi class
 class RaspberryPi(Platform):
-
     def __init__(self, log: Logger, config: Config):
         self.__log = log
         self.config = config

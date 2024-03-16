@@ -5,10 +5,10 @@ from time import sleep
 from src.Client import Client, Playbooks
 from src.G5k import G5k
 from src.Platform import Platform
-from src.utils.Config import Config
-from src.utils.Defaults import DefaultKeys as Key, DefaultValues as Value
-from src.utils.KubernetesManager import KubernetesManager
-from src.utils.Logger import Logger
+from utils.Config import Config
+from utils.Defaults import DefaultKeys as Key, DefaultValues as Value
+from utils.KubernetesManager import KubernetesManager
+from utils.Logger import Logger
 
 
 # Build cluster and install dependencies

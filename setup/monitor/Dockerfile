@@ -8,9 +8,9 @@ RUN mkdir -p /app
 RUN mkdir -p /app/conf
 
 # Copy source code
-COPY experiment-monitor.py /app/experiment-monitor.py
-COPY utils /app/utils
-COPY templates /app/templates
+COPY ../../scripts/monitor/experiment-monitor.py /app/experiment-monitor.py
+COPY ../../scripts/utils /app/utils
+COPY ../../scripts/monitor/templates /app/templates
 
 # Set working directory
 WORKDIR /app
@@ -23,7 +23,7 @@ ENV MQTT_BROKER_PORT="1883"
 ENV MQTT_BROKER_USERNAME="monitor"
 ENV MQTT_BROKER_PASSWORD="m_password"
 ENV KUBECONFIG="/app/conf/kubeconfig"
-# Redirect python script output to container logs
+# Redirect python scripts output to container logs
 ENV PYTHONUNBUFFERED=1
 
 ## Run the application

@@ -11,7 +11,7 @@ export GID=$(id -g)
 #export username=$(whoami)
 
 # Set credentials path
-export g5k_creds_path="$SCALEHUB_BASEDIR/dockerfile/secrets/Grid5000_creds.yaml"
+export g5k_creds_path="$SCALEHUB_BASEDIR/setup/shub/secrets/Grid5000_creds.yaml"
 
 # Function to display help message
 function display_help() {
@@ -72,11 +72,11 @@ function restart_service(){
 
 # Function to create the Docker container
 function create_service() {
-  docker-compose -p scalehub -f $SCALEHUB_BASEDIR/dockerfile/docker-compose.yaml up --build -d
+  docker-compose -p scalehub -f $SCALEHUB_BASEDIR/setup/shub/docker-compose.yaml up --build -d
 }
 
 function remove_service() {
-  docker-compose -p scalehub -f $SCALEHUB_BASEDIR/dockerfile/docker-compose.yaml down --rmi all --remove-orphans
+  docker-compose -p scalehub -f $SCALEHUB_BASEDIR/setup/shub/docker-compose.yaml down --rmi all --remove-orphans
 }
 
 # Function to check if the service is running
