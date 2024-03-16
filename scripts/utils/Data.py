@@ -9,11 +9,14 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from matplotlib.ticker import MaxNLocator
 
-from .Conf import Conf
-from .Defaults import DefaultKeys as Key
-from .Logger import Logger
+from scripts.utils.Config import Config
+from scripts.utils.Defaults import DefaultKeys as Key
+from scripts.utils.Logger import Logger
+
 
 class BoxPlot:
+    skip = 30
+
     def generate_box_plot_per_subtask(self, experiment_path):
         # Iterate through all subdirs of experiment_path and load final_df.csv of each subdir
         dfs = []
@@ -54,7 +57,7 @@ class BoxPlot:
                     df = pd.read_csv(file_path)
 
                     # Group by 'Parallelism'. Timestamp column represents seconds. So we skip the first 60 seconds of each Paralaellism group
-                    df = df.groupby("Parallelism").apply(lambda x: x.iloc[skip:])
+                    df = df.groupby("Parallelism").apply(lambda x: x.iloc[self.skip :])
 
                     # Get back to a normal DataFrame
                     df = df.reset_index(drop=True)
@@ -63,7 +66,8 @@ class BoxPlot:
                     numRecordsInPerSecond_cols = [
                         col
                         for col in df.columns
-                        if "flink_taskmanager_job_task_numRecordsInPerSecond" in str(col)
+                        if "flink_taskmanager_job_task_numRecordsInPerSecond"
+                        in str(col)
                     ]
 
                     # Add a new column 'Sum' to the DataFrame which is the sum of 'numRecordsInPerSecond' across all subtasks
@@ -181,8 +185,7 @@ class BoxPlot:
                     if os.path.exists(experiment_path):
                         if len(os.listdir(experiment_path)) == 0:
                             continue
-                        generate_box_for_means(experiment_path)
-
+                        self.generate_box_for_means(experiment_path)
 
 
 class ExperimentData:
@@ -220,7 +223,7 @@ class ExperimentData:
             os.makedirs(self.plots_path)
 
         # Parse configuration file for experiment
-        self.conf: Conf = Conf(log, log_path=self.log_file)
+        self.conf: Config = Config(log, self.log_file)
 
         self.force = force
 

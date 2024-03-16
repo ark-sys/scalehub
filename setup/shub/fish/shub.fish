@@ -2,7 +2,7 @@
 
 # Define default scalehub paths
 # SHUB_PATH: The root directory of the scalehub application
-set -gx SHUB_PATH /app
+set -gx SHUB_PATH /app/scripts
 # SHUB_CONF_PATH: The directory where the configuration files are stored
 set -gx SHUB_CONF_PATH $SHUB_PATH/conf
 # SHUB_PLAYBOOKS_PATH: The directory where the playbook files are stored

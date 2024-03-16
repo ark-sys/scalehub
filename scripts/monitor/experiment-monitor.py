@@ -8,11 +8,11 @@ import paho.mqtt.client as mqtt
 from paho.mqtt.enums import CallbackAPIVersion
 from transitions import Machine
 
-from utils.Conf import Conf
-from utils.Defaults import DefaultKeys as Key
-from utils.Data import ExperimentData
-from utils.KubernetesManager import KubernetesManager
-from utils.Logger import Logger
+from scripts.utils.Config import Config
+from scripts.utils.Defaults import DefaultKeys as Key
+from scripts.utils.Data import ExperimentData
+from scripts.utils.KubernetesManager import KubernetesManager
+from scripts.utils.Logger import Logger
 
 
 # Objective
@@ -440,7 +440,7 @@ class MQTTClient:
                     self.__log.info(f"Received config: {config}")
 
                     # Format config as json
-                    config = Conf(self.__log, json.loads(config))
+                    config = Config(self.__log, json.loads(config))
                     self.fsm.set_config(config)
 
                     # Trigger start transition
