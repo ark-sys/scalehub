@@ -6,8 +6,8 @@ ENV TZ="Europe/Paris"
 ENV KUBECONFIG="/app/conf/kubeconfig"
 ENV ANSIBLE_CONFIG="/app/conf/ansible.cfg"
 ENV SHUB_CONFIG="/app/conf/scalehub.ini"
-ENV PATH="$PATH:/app/script"
-
+ENV PATH="$PATH:/app/scripts"
+ENV PYTHONPATH="/app:/app/scripts"
 # Get build arguments, default to 1000:1000 if not set
 ARG UID=1000
 ARG GID=1000
@@ -45,7 +45,7 @@ RUN curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -
 RUN cd /tmp && curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 && chmod 700 get_helm.sh && ./get_helm.sh && rm ./get_helm.sh
 
 # Install auto-complete for kubectl
-COPY fish/kubectl.fish /usr/share/fish/vendor_completions.d/
+COPY fish/kubectl.fish /usr/share/fish/vendor_completions.d/kubectl.fish
 # RUN curl -o /usr/share/fish/vendor_completions.d/kubectl.fish https://raw.githubusercontent.com/evanlucas/fish-kubectl-completions/main/completions/kubectl.fish
 
 # Install auto-completion for shub
@@ -75,7 +75,7 @@ RUN sudo chmod +x /entrypoint.sh
 # Copy reverse-proxy config
 COPY nginx/nginx.conf /etc/nginx/conf.d/scalehub.conf
 
-# Create working directory for the script at the root. This easily allows to mount a volume to this directory
+# Create working directory for the scripts at the root. This easily allows to mount a volume to this directory
 # Also set the permissions to rwx for all users to avoid permission issues
 RUN sudo mkdir -m a=rwx /app/
 

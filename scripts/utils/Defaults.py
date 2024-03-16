@@ -117,13 +117,13 @@ class DefaultValues:
         class Flink:
             checkpoint_interval_ms = 4000
             window_size_ms = 1000
-            fibonacci_value = 20
+            fibonacci_value = 18
 
         class Chaos:
             enable = False
-            latency_ms = "25"
-            jitter_ms = "0"
-            correlation = "0"
+            latency_ms = 25
+            jitter_ms = 0
+            correlation = 0
             bandwidth_rate_mbps = 100
             bandwidth_limit = 1000
             bandwidth_buffer = 100

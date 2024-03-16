@@ -1,23 +1,23 @@
 import os
 import threading
 from time import sleep
-
 import jinja2
 import yaml
-from kubernetes import client as Client, config as Kubeconfig
+from kubernetes import config as Kubeconfig, client as Client
 from kubernetes.client import Configuration
 from kubernetes.client.api import core_v1_api
 from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
 from kubernetes.watch import watch
 
-from .Logger import Logger
+from scripts.utils.Logger import Logger
 
 
 class KubernetesManager:
     def __init__(self, log: Logger):
         self.__log = log
         self.kubeconfig = Kubeconfig.load_kube_config(os.environ["KUBECONFIG"])
+        # Execute a command on all pods of a deployment by label
 
     # Scale a deployment to a specified number of replicas
     def scale_deployment(self, deployment_name, replicas=1):
@@ -50,16 +50,16 @@ class KubernetesManager:
 
     def create_deployment(self, template_filename, params, namespace="default"):
         # Load resource definition from file
-        resource_object = self.load_resource_definition(
-            template_filename, params
-        )
+        resource_object = self.load_resource_definition(template_filename, params)
         api_instance = Client.AppsV1Api()
         try:
             api_instance.create_namespaced_deployment(
                 namespace=namespace,
                 body=resource_object,
             )
-            self.__log.info(f"Deployment {resource_object['metadata']['name']} created.")
+            self.__log.info(
+                f"Deployment {resource_object['metadata']['name']} created."
+            )
 
         except ApiException as e:
             self.__log.error(
@@ -67,18 +67,19 @@ class KubernetesManager:
             )
             return
 
-
     def delete_deployment(self, template_filename, params):
         # Load resource definition from file
-        resource_object = self.load_resource_definition(
-            template_filename, params
-        )
+        resource_object = self.load_resource_definition(template_filename, params)
         api_instance = Client.AppsV1Api()
         try:
             api_instance.delete_namespaced_deployment(
-                name=resource_object["metadata"]["name"], namespace=resource_object["metadata"]["namespace"], async_req=False
+                name=resource_object["metadata"]["name"],
+                namespace=resource_object["metadata"]["namespace"],
+                async_req=False,
             )
-            self.__log.info(f"Deployment {resource_object['metadata']['name']} deleted.")
+            self.__log.info(
+                f"Deployment {resource_object['metadata']['name']} deleted."
+            )
         except ApiException as e:
             self.__log.error(
                 f"Exception when calling AppsV1Api->delete_namespaced_deployment: {e}\n"
@@ -87,17 +88,13 @@ class KubernetesManager:
 
     def create_service(self, template_filename, params, namespace="default"):
         # Load resource definition from file
-        resource_object = self.load_resource_definition(
-            template_filename, params
-        )
+        resource_object = self.load_resource_definition(template_filename, params)
         api_instance = Client.CoreV1Api()
         try:
 
             # Create service
             api_instance.create_namespaced_service(
-                namespace=namespace,
-                body=resource_object,
-                async_req=False
+                namespace=namespace, body=resource_object, async_req=False
             )
             self.__log.info(f"Service {resource_object['metadata']['name']} created.")
         except ApiException as e:
@@ -108,13 +105,13 @@ class KubernetesManager:
 
     def delete_service(self, template_filename, params):
         # Load resource definition from file
-        resource_object = self.load_resource_definition(
-            template_filename, params
-        )
+        resource_object = self.load_resource_definition(template_filename, params)
         api_instance = Client.CoreV1Api()
         try:
             api_instance.delete_namespaced_service(
-                name=resource_object["metadata"]["name"], namespace=resource_object["metadata"]["namespace"], async_req=False
+                name=resource_object["metadata"]["name"],
+                namespace=resource_object["metadata"]["namespace"],
+                async_req=False,
             )
             self.__log.info(f"Service {resource_object['metadata']['name']} deleted.")
         except ApiException as e:
@@ -122,49 +119,7 @@ class KubernetesManager:
                 f"Exception when calling CoreV1Api->delete_namespaced_service: {e}\n"
             )
             return
-    # Execute a command on first pod of a deployment
-    def execute_command_on_pod(self, deployment_name, command):
 
-        try:
-            c = Configuration().get_default_copy()
-        except AttributeError:
-            c = Configuration()
-            c.assert_hostname = False
-        Configuration.set_default(c)
-
-        core_v1 = core_v1_api.CoreV1Api()
-
-        pod_list = core_v1.list_pod_for_all_namespaces(watch=False)
-        target_pod = None
-        for pod in pod_list.items:
-            if pod.metadata.name.startswith(deployment_name):
-                target_pod = pod
-                break
-
-        if not target_pod:
-            self.__log.error(f"No running pods found for deployment {deployment_name}")
-            return
-
-        pod_name = target_pod.metadata.name
-
-        try:
-            exec_command = ["/bin/sh", "-c", command]
-            self.__log.info(f"Running command {exec_command} on pod {pod_name}")
-            resp = stream(
-                core_v1.connect_get_namespaced_pod_exec,
-                name=pod_name,
-                namespace=target_pod.metadata.namespace,
-                command=exec_command,
-                stderr=True,
-                stdin=False,
-                stdout=True,
-                tty=False,
-            )
-            return resp  # Return the captured output
-        except ApiException as e:
-            self.__log.error(f"Error executing command on pod {pod_name}: {e}")
-
-    # Execute a command on all pods of a deployment by label
     def execute_command_on_pods_by_label(self, label_selector, command):
         core_v1 = core_v1_api.CoreV1Api()
         try:
@@ -181,7 +136,8 @@ class KubernetesManager:
                 f"Exception when calling CoreV1Api->list_namespaced_pod: {e}"
             )
 
-    # Delete job by name
+        # Delete job by name
+
     def delete_job(self, job_name):
         # Create a Kubernetes API client
         api_instance = Client.BatchV1Api()
@@ -195,7 +151,8 @@ class KubernetesManager:
                 f"Exception when calling BatchV1Api->delete_namespaced_job: {e}"
             )
 
-    # Retrieve job status
+        # Retrieve job status
+
     def get_job_status(self, job_name):
         # Create a Kubernetes API client
         api_instance = Client.BatchV1Api()
@@ -209,7 +166,8 @@ class KubernetesManager:
         except Client.ApiException as e:
             return e
 
-    # Retrieve content of a configmap
+        # Retrieve content of a configmap
+
     def get_configmap(self, configmap_name, namespace="default"):
         # Create a Kubernetes API client
         api_instance = Client.CoreV1Api()
@@ -225,7 +183,8 @@ class KubernetesManager:
                 f"Exception when calling CoreV1Api->read_namespaced_config_map: {e}"
             )
 
-    # Deploy a job from a yaml resource definition
+        # Deploy a job from a yaml resource definition
+
     def create_job(self, resource_definition):
         try:
             api_instance = Client.BatchV1Api()
@@ -269,7 +228,8 @@ class KubernetesManager:
         )
         reset_thread.start()
 
-    # Workaround to reset the latency experiment on rescale as the NetworkChaos resource does not support dynamic updates on target pods
+        # Workaround to reset the latency experiment on rescale as the NetworkChaos resource does not support dynamic updates on target pods
+
     def __reset_latency(self, deployment_name, experiment_params):
         # Definition of the NetworkChaos resource on Flink
         resource_object = self.load_resource_definition(
@@ -315,7 +275,8 @@ class KubernetesManager:
                     )
                     old_replica_count = new_replica_count
 
-    # Get node by pod name
+        # Get node by pod name
+
     def get_node_by_pod_name(self, pod_name, namespace="default"):
         v1 = Client.CoreV1Api()
         try:
@@ -327,7 +288,8 @@ class KubernetesManager:
             )
             return None
 
-    # Get names of nodes. If label_selector is specified, only return nodes with label
+        # Get names of nodes. If label_selector is specified, only return nodes with label
+
     def get_nodes(self, label_selector):
         v1 = Client.CoreV1Api()
         try:
@@ -341,7 +303,8 @@ class KubernetesManager:
             self.__log.error(f"Exception when calling CoreV1Api->list_node: {e}\n")
             return None
 
-    # Delete pods by label
+        # Delete pods by label
+
     def delete_pods_by_label(self, label_selector, namespace="default"):
         v1 = Client.CoreV1Api()
         try:
@@ -358,7 +321,8 @@ class KubernetesManager:
                 f"Exception when calling CoreV1Api->list_namespaced_pod: {e}"
             )
 
-    # Reset the autoscaling labels so that flink runs first on worker nodes not impacted by chaos
+        # Reset the autoscaling labels so that flink runs first on worker nodes not impacted by chaos
+
     def reset_autoscaling_labels(self):
         v1 = Client.CoreV1Api()
         try:
@@ -451,7 +415,8 @@ class KubernetesManager:
         except ApiException as e:
             self.__log.error(f"Exception when calling CoreV1Api->list_node: {e}\n")
 
-    # Delete all networkchaos resources
+        # Delete all networkchaos resources
+
     def delete_networkchaos(self):
         custom_api = Client.CustomObjectsApi()
         try:
@@ -468,7 +433,8 @@ class KubernetesManager:
             return
         self.__log.info("NetworkChaos resources deleted.")
 
-    # Load resource definition template from file and fill in the parameters
+        # Load resource definition template from file and fill in the parameters
+
     def load_resource_definition(self, resource_filename, experiment_params):
         try:
             with open(resource_filename, "r") as f:
@@ -482,7 +448,8 @@ class KubernetesManager:
             self.__log.error(f"File not found: {resource_filename}")
             return
 
-    # Deploy a networkchaos resource
+        # Deploy a networkchaos resource
+
     def create_networkchaos(self, template_filename, experiment_params):
         # Load resource definition from file
         resource_object = self.load_resource_definition(
@@ -504,7 +471,8 @@ class KubernetesManager:
             return
         self.__log.info("NetworkChaos resource created.")
 
-    # Get pods impacted by networkchaos
+        # Get pods impacted by networkchaos
+
     def get_networkchaos_instances(self):
         custom_api = Client.CustomObjectsApi()
         try:
@@ -527,7 +495,8 @@ class KubernetesManager:
             )
             return
 
-    # Get node names of impacted consul pods
+        # Get node names of impacted consul pods
+
     def get_impacted_nodes(self):
 
         instances = self.get_networkchaos_instances()
@@ -537,3 +506,61 @@ class KubernetesManager:
             node_names.append(self.get_node_by_pod_name(instance, "consul"))
 
         return node_names
+
+    def execute_command_on_pod(self, deployment_name, command):
+
+        try:
+            c = Configuration().get_default_copy()
+        except AttributeError:
+            c = Configuration()
+            c.assert_hostname = False
+        Configuration.set_default(c)
+
+        core_v1 = core_v1_api.CoreV1Api()
+
+        pod_list = core_v1.list_pod_for_all_namespaces(watch=False)
+        target_pod = None
+        for pod in pod_list.items:
+            if pod.metadata.name.startswith(deployment_name):
+                target_pod = pod
+                break
+
+        if not target_pod:
+            self.__log.error(f"No running pods found for deployment {deployment_name}")
+            return
+
+        pod_name = target_pod.metadata.name
+
+        try:
+            exec_command = ["/bin/sh", "-c", command]
+            self.__log.info(f"Running command {exec_command} on pod {pod_name}")
+            resp = stream(
+                core_v1.connect_get_namespaced_pod_exec,
+                name=pod_name,
+                namespace=target_pod.metadata.namespace,
+                command=exec_command,
+                stderr=True,
+                stdin=False,
+                stdout=True,
+                tty=False,
+            )
+            return resp  # Return the captured output
+        except ApiException as e:
+            self.__log.error(f"Error executing command on pod {pod_name}: {e}")
+
+    # get_token(secret_name, namespace)
+    def get_token(self, secret_name, namespace):
+        import base64
+
+        try:
+            core_v1 = core_v1_api.CoreV1Api()
+            secret = core_v1.read_namespaced_secret(secret_name, namespace)
+            token = secret.data["token"]
+        except ApiException as e:
+            self.__log.error(
+                f"Exception when calling CoreV1Api->read_namespaced_secret: {e}"
+            )
+            return
+
+        # decode token from base64
+        return base64.b64decode(token).decode("utf-8")
