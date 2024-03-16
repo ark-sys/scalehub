@@ -16,7 +16,7 @@ build-and-push:
     - small
   script:
     # build the image of experiment-monitor context
-    - docker build -t "$CI_REGISTRY/$CI_REGISTRY_PROJECT/scalehub/monitor" setup/monitor
+    - docker build -t "$CI_REGISTRY/$CI_REGISTRY_PROJECT/scalehub/monitor" -f setup/monitor/Dockerfile .
     # push the image to the registry
     - docker push "$CI_REGISTRY/$CI_REGISTRY_PROJECT/scalehub/monitor"
 
