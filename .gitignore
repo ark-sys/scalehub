@@ -4,5 +4,5 @@ __pycache__/
 .idea/
 experiments-data
 conf/kubeconfig
-/setup/shub/secrets/
+setup/shub/secrets/
 conf/
