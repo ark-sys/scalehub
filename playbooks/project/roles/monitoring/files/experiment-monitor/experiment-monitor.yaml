@@ -23,7 +23,7 @@ spec:
         - name: gitlab-scalehub
       containers:
         - name: experiment-monitor
-          image: registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/experiment-monitor:latest
+          image: registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/monitor:latest
           imagePullPolicy: Always
           env:
             - name: MQTT_BROKER_HOST
