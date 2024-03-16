@@ -22,7 +22,7 @@
         definition: "{{ lookup('ansible.builtin.file', 'experiment-monitor/mqtt-broker.yaml') | from_yaml_all }}"
     - name: Copy gitlab-scalehub secret from default namespace to experiment-monitor namespace
       block:
-        - name : Get gitlab-scalehub secret from default namespace
+        - name: Get gitlab-scalehub secret from default namespace
           kubernetes.core.k8s_info:
             api_version: v1
             kind: Secret
@@ -31,19 +31,19 @@
           register: gitlab_scalehub_secret
         - name: Create gitlab-scalehub secret in experiment-monitor namespace
           kubernetes.core.k8s:
-              state: present
-              definition:
-                apiVersion: v1
-                kind: Secret
-                metadata:
-                    name: gitlab-scalehub
-                    namespace: experiment-monitor
-                type: kubernetes.io/dockerconfigjson
-                data:
-                    .dockerconfigjson: "{{ gitlab_scalehub_secret.resources[0].data['.dockerconfigjson'] }}"
+            state: present
+            definition:
+              apiVersion: v1
+              kind: Secret
+              metadata:
+                name: gitlab-scalehub
+                namespace: experiment-monitor
+              type: kubernetes.io/dockerconfigjson
+              data:
+                .dockerconfigjson: "{{ gitlab_scalehub_secret.resources[0].data['.dockerconfigjson'] }}"
     - name: Copy kubeconfig secret from default namespace to experiment-monitor namespace
       block:
-        - name : Get kubeconfig secret from default namespace
+        - name: Get kubeconfig secret from default namespace
           kubernetes.core.k8s_info:
             api_version: v1
             kind: Secret
@@ -52,16 +52,16 @@
           register: kubeconfig_secret
         - name: Create kubeconfig secret in experiment-monitor namespace
           kubernetes.core.k8s:
-              state: present
-              definition:
-                apiVersion: v1
-                kind: Secret
-                metadata:
-                    name: kube-secret
-                    namespace: experiment-monitor
-                type: Opaque
-                data:
-                    kubeconfig: "{{ kubeconfig_secret.resources[0].data['kubeconfig'] }}"
+            state: present
+            definition:
+              apiVersion: v1
+              kind: Secret
+              metadata:
+                name: kube-secret
+                namespace: experiment-monitor
+              type: Opaque
+              data:
+                kubeconfig: "{{ kubeconfig_secret.resources[0].data['kubeconfig'] }}"
     - name: Deploy experiment-monitor
       kubernetes.core.k8s:
         state: present
@@ -75,12 +75,12 @@
         definition: "{{ lookup('ansible.builtin.file', 'experiment-monitor/experiment-monitor.yaml') | from_yaml }}"
     - name: Delete mqtt-broker
       kubernetes.core.k8s:
-          state: absent
-          definition: "{{ lookup('ansible.builtin.file', 'experiment-monitor/mqtt-broker.yaml') | from_yaml_all }}"
+        state: absent
+        definition: "{{ lookup('ansible.builtin.file', 'experiment-monitor/mqtt-broker.yaml') | from_yaml_all }}"
     - name: Delete configmaps for mqtt-broker
       kubernetes.core.k8s:
-          state: absent
-          definition: "{{ lookup('ansible.builtin.file', 'experiment-monitor/mqtt-configmaps.yaml') | from_yaml }}"
+        state: absent
+        definition: "{{ lookup('ansible.builtin.file', 'experiment-monitor/mqtt-configmaps.yaml') | from_yaml }}"
     - name: Delete secrets
       block:
         - name: Delete kube-secret
@@ -95,16 +95,3 @@
             kind: Secret
             namespace: experiment-monitor
             state: absent
-# Perhaps we should not delete the PVC as it deletes the data
-#    - name: Delete PVC and wait for it to be deleted
-#      kubernetes.core.k8s:
-#          name: experiments-pvc
-#          kind: PersistentVolumeClaim
-#          namespace: experiment-monitor
-#          state: absent
-#          wait: true
-    - name: Delete experiment-monitor namespace
-      kubernetes.core.k8s:
-        name: experiment-monitor
-        kind: Namespace
-        state: absent

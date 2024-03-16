@@ -299,7 +299,7 @@ class Config:
 
         # Join the lines between [CONFIG] and [TIMESTAMPS] and load as JSON
         config_content = "".join(lines[start_line:end_line])
-        self.__conf = json.loads(config_content)
+        self.__config = json.loads(config_content)
 
     def to_str(self):
-        return json.dumps(self.__conf, indent=4)
+        return json.dumps(self.__config, indent=4)
