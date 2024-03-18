@@ -195,7 +195,7 @@ class G5k(Platform):
     def sync_data(self):
         experiments_path = self.config.get_str(Key.Scalehub.experiments)
         # rsync command from rennes.g5k:~/scalehub-pvc/experiment-monitor-experiments-pvc to config.get_str(Key.Scalehub.experiments)
-        cmd = f"rsync -avz rennes.g5k:~/scalehub-pvc/experiment-monitor-experiments-pvc/ {experiments_path}"
+        cmd = f"rsync -avz --ignore-existing rennes.g5k:~/scalehub-pvc/experiment-monitor-experiments-pvc/ {experiments_path}"
 
         self.__log.info(f"Syncing data from Grid5000 to {experiments_path}")
         # Execute the command
