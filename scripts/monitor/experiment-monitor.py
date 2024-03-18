@@ -317,7 +317,7 @@ class ExperimentFSM:
 
             if self.config.get_bool(Key.Experiment.output_stats):
                 # If output_stats is enabled, evaluate mean throughput and extract predictions from transscale-job logs in stats.csv file
-                stats, _ = data.eval_mean_stderr()
+                data.eval_mean_stderr()
                 # If output_plot is enabled, evaluate plot from stats.csv file
                 if self.config.get_bool(Key.Experiment.output_plot):
                     data.eval_summary_plot()
