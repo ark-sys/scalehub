@@ -4,11 +4,11 @@
 # SHUB_PATH: The root directory of the scalehub application
 set -gx SHUB_PATH /app/scripts
 # SHUB_CONF_PATH: The directory where the configuration files are stored
-set -gx SHUB_CONF_PATH $SHUB_PATH/conf
+set -gx SHUB_CONF_PATH /app/conf
 # SHUB_PLAYBOOKS_PATH: The directory where the playbook files are stored
-set -gx SHUB_PLAYBOOKS_PATH $SHUB_PATH/playbooks/project
+set -gx SHUB_PLAYBOOKS_PATH /app/playbooks/project
 # SHUB_EXPERIMENTS_DATA_PATH: The directory where the experiment data is stored
-set -gx SHUB_EXPERIMENTS_DATA_PATH $SHUB_PATH/experiments-data
+set -gx SHUB_EXPERIMENTS_DATA_PATH /app/experiments-data
 
 # Define the list of commands that can be used with the 'shub' script
 set -l shub_commands provision destroy deploy delete reload experiment tokens sync run export

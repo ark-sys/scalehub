@@ -3,6 +3,7 @@ import os
 import re
 from datetime import datetime
 from io import StringIO
+import requests
 
 import numpy as np
 import pandas as pd
@@ -168,28 +169,30 @@ class ExportData:
     def export(self):
         self.__log.info(f"Handling export for {self.base_path}")
         # Export data and evaluate mean and stderr for each experiment
-        for experiment in self.experiments:
-            for type in self.types:
-                experiment_path = os.path.join(self.base_path, experiment, type)
-                # If path exists, but folder is empty, skip
-                if os.path.exists(experiment_path):
-                    # Get subdirectories
-                    subdirs = [
-                        f.path for f in os.scandir(experiment_path) if f.is_dir()
-                    ]
-                    for subdir in subdirs:
-                        data: ExperimentData = ExperimentData(self.__log, subdir)
-                        data.export_experiment_data()
-                        data.eval_mean_stderr()
-                        data.eval_summary_plot()
         # for experiment in self.experiments:
         #     for type in self.types:
         #         experiment_path = os.path.join(self.base_path, experiment, type)
         #         # If path exists, but folder is empty, skip
         #         if os.path.exists(experiment_path):
-        #             if len(os.listdir(experiment_path)) == 0:
-        #                 continue
-        #             self.generate_box_for_means(experiment_path)
+        #             # Get subdirectories
+        #             subdirs = [
+        #                 f.path for f in os.scandir(experiment_path) if f.is_dir()
+        #             ]
+        #             for subdir in subdirs:
+        #                 data: ExperimentData = ExperimentData(self.__log, subdir)
+        #                 data.export_experiment_data()
+        #                 data.eval_mean_stderr()
+        #                 data.eval_summary_plot()
+        #                 data.eval_plot_with_checkpoints()
+        #                 data.eval_experiment_plot()
+        for experiment in self.experiments:
+            for type in self.types:
+                experiment_path = os.path.join(self.base_path, experiment, type)
+                # If path exists, but folder is empty, skip
+                if os.path.exists(experiment_path):
+                    if len(os.listdir(experiment_path)) == 0:
+                        continue
+                    self.generate_box_for_means(experiment_path)
 
 
 class EvalData:
@@ -243,6 +246,7 @@ class ExperimentData:
         self.end_skip = 10
         # VictoriaMetrics database url
         self.db_url = "victoria-metrics-single-server.default.svc.cluster.local:8428"
+        self.db_url_local = "localhost/vm"
 
     def __get_timestamps_from_log(self, log_path: str) -> tuple[int, int]:
         # Parse log file for experiment info
@@ -280,16 +284,29 @@ class ExperimentData:
             )
             return output_file
         else:
-            api_url = f"http://{self.db_url}/api/v1/export"
+            json_url = f"http://{self.db_url}/api/v1/export"
             params = {
                 "format": format_labels,
                 "match[]": time_series_name,
                 "start": self.start_ts,
                 "end": self.end_ts,
             }
-            import requests
 
-            response = requests.get(api_url, params=params)
+            try:
+                response = requests.get(json_url, params=params)
+                response.raise_for_status()
+
+            except requests.exceptions.RequestException as e:
+                self.__log.warning(
+                    f"Failed to connect to VictoriaMetrics at {self.db_url}: {e}"
+                )
+                self.__log.info(
+                    f"Trying to connect to local VictoriaMetrics at {self.db_url_local}"
+                )
+                json_url = f"http://{self.db_url_local}/api/v1/export"
+                response = requests.get(json_url, params=params)
+                response.raise_for_status()
+
             if response.status_code == 200:
                 with open(output_file, "wb") as file:
                     file.write(response.content)
@@ -313,16 +330,26 @@ class ExperimentData:
             return output_file, pd.read_csv(output_file, index_col="Timestamp")
         else:
             # VictoriaMetrics export CSV api
-            api_url = f"http://{self.db_url}/api/v1/export/csv"
+            csv_url = f"http://{self.db_url}/api/v1/export/csv"
             params = {
                 "format": format_labels,
                 "match": time_series_name,
                 "start": self.start_ts,
                 "end": self.end_ts,
             }
-            import requests
-
-            response = requests.get(api_url, params=params)
+            try:
+                response = requests.get(csv_url, params=params)
+                response.raise_for_status()
+            except requests.exceptions.RequestException as e:
+                self.__log.warning(
+                    f"Failed to connect to VictoriaMetrics at {self.db_url}: {e}"
+                )
+                self.__log.info(
+                    f"Trying to connect to local VictoriaMetrics at {self.db_url_local}"
+                )
+                csv_url = f"http://{self.db_url_local}/api/v1/export/csv"
+                response = requests.get(csv_url, params=params)
+                response.raise_for_status()
             if response.status_code == 200:
 
                 data = response.text
@@ -373,7 +400,9 @@ class ExperimentData:
         df.sort_index(inplace=True)
 
         # Extract subtask indices from column names and sort columns by these indices
-        df.columns = df.columns.str.extract("(\d+)", expand=False).astype(int)
+        df.columns = (
+            df.columns.astype(str).str.extract("(\d+)", expand=False).astype(int)
+        )
         df = df.sort_index(axis=1)
 
         # Multindex subtask columns under the metric name
@@ -445,7 +474,7 @@ class ExperimentData:
 
     def perf_query(self, query: str):
         # VictoriaMetrics query api
-        api_url = f"http://{self.db_url}/api/v1/query_range"
+        query_url = f"http://{self.db_url}/api/v1/query_range"
         params = {
             "query": query,
             "start": self.start_ts,
@@ -455,9 +484,19 @@ class ExperimentData:
 
         self.__log.info(f"Performing query with parameters: {params}")
 
-        import requests
-
-        response = requests.get(api_url, params=params)
+        try:
+            response = requests.get(query_url, params=params)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            self.__log.warning(
+                f"Failed to connect to VictoriaMetrics at {self.db_url}: {e}"
+            )
+            self.__log.info(
+                f"Trying to connect to local VictoriaMetrics at {self.db_url_local}"
+            )
+            query_url = f"http://{self.db_url_local}/api/v1/query_range"
+            response = requests.get(query_url, params=params)
+            response.raise_for_status()
         if response.status_code == 200:
             return response.json()
         else:
