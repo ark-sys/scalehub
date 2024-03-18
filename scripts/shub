@@ -200,9 +200,10 @@ def sync_experiment_data(config: Config):
 # Export data for a given date
 def export(config: Config):
     log.info("Exporting...")
-    base_path = os.path.join(
-        config.get_str(Key.Scalehub.experiments), "output_2024-03-14_2024-03-17"
-    )
+    # base_path = os.path.join(
+    #     config.get_str(Key.Scalehub.experiments), "output_2024-03-14_2024-03-17"
+    # )
+    base_path = os.path.join(os.path.curdir, "info", "paper-plots2")
     e: ExportData = ExportData(log, base_path)
     e.export()
 

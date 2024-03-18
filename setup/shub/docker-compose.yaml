@@ -44,6 +44,9 @@ services:
       - type: bind
         source: ${SCALEHUB_BASEDIR}/experiments-data
         target: /app/experiments-data
+      - type: bind
+        source: ${SCALEHUB_BASEDIR}/info
+        target: /app/info
   # OpenVPN client service to connect to Grid5000
   vpn:
     image: dperson/openvpn-client
