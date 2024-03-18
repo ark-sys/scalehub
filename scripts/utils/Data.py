@@ -14,8 +14,14 @@ from scripts.utils.Defaults import DefaultKeys as Key
 from scripts.utils.Logger import Logger
 
 
-class BoxPlot:
+class ExportData:
     skip = 30
+    experiments = ["Join-kk", "Join-kv", "Map"]
+    types = ["no_lat", "latency", "latency_jitter"]
+
+    def __init__(self, log: Logger, base_path):
+        self.base_path = base_path
+        self.__log: Logger = log
 
     def generate_box_plot_per_subtask(self, experiment_path):
         # Iterate through all subdirs of experiment_path and load final_df.csv of each subdir
@@ -57,7 +63,7 @@ class BoxPlot:
                     df = pd.read_csv(file_path)
 
                     # Group by 'Parallelism'. Timestamp column represents seconds. So we skip the first 60 seconds of each Paralaellism group
-                    df = df.groupby("Parallelism").apply(lambda x: x.iloc[self.skip:])
+                    df = df.groupby("Parallelism").apply(lambda x: x.iloc[self.skip :])
 
                     # Get back to a normal DataFrame
                     df = df.reset_index(drop=True)
@@ -67,7 +73,7 @@ class BoxPlot:
                         col
                         for col in df.columns
                         if "flink_taskmanager_job_task_numRecordsInPerSecond"
-                           in str(col)
+                        in str(col)
                     ]
 
                     # Add a new column 'Sum' to the DataFrame which is the sum of 'numRecordsInPerSecond' across all subtasks
@@ -159,33 +165,35 @@ class BoxPlot:
         fig.savefig(output_path)
         fig.show()
 
-        def export(self):
-            base_path = "../info/paper-plots"
-            log: Logger = Logger()
-            experiments = ["Join-kk", "Join-kv", "Map"]
-            types = ["no_lat", "latency", "latency_jitter"]
+    def export(self):
+        self.__log.info(f"Handling export for {self.base_path}")
+        # Export data and evaluate mean and stderr for each experiment
+        for experiment in self.experiments:
+            for type in self.types:
+                experiment_path = os.path.join(self.base_path, experiment, type)
+                # If path exists, but folder is empty, skip
+                if os.path.exists(experiment_path):
+                    # Get subdirectories
+                    subdirs = [
+                        f.path for f in os.scandir(experiment_path) if f.is_dir()
+                    ]
+                    for subdir in subdirs:
+                        data: ExperimentData = ExperimentData(self.__log, subdir)
+                        data.export_experiment_data()
+                        data.eval_mean_stderr()
+                        data.eval_summary_plot()
+        # for experiment in self.experiments:
+        #     for type in self.types:
+        #         experiment_path = os.path.join(self.base_path, experiment, type)
+        #         # If path exists, but folder is empty, skip
+        #         if os.path.exists(experiment_path):
+        #             if len(os.listdir(experiment_path)) == 0:
+        #                 continue
+        #             self.generate_box_for_means(experiment_path)
 
-            # # Export data and evaluate mean and stderr for each experiment
-            # for experiment in experiments:
-            #     for type in types:
-            #         experiment_path = os.path.join(base_path, experiment, type)
-            #         # If path exists, but folder is empty, skip
-            #         if os.path.exists(experiment_path):
-            #             # Get subdirectories
-            #             subdirs = [f.path for f in os.scandir(experiment_path) if f.is_dir()]
-            #             for subdir in subdirs:
-            #                 data: ExperimentData = ExperimentData(log, subdir)
-            #                 data.export_experiment_data()
-            #                 data.eval_mean_stderr()
-            #                 data.eval_summary_plot()
-            for experiment in experiments:
-                for type in types:
-                    experiment_path = os.path.join(base_path, experiment, type)
-                    # If path exists, but folder is empty, skip
-                    if os.path.exists(experiment_path):
-                        if len(os.listdir(experiment_path)) == 0:
-                            continue
-                        self.generate_box_for_means(experiment_path)
+
+class EvalData:
+    pass
 
 
 class ExperimentData:
@@ -260,9 +268,9 @@ class ExperimentData:
         return res
 
     def export_timeseries_json(
-            self,
-            time_series_name: str,
-            format_labels="__name__,__timestamp__:unix_s,__value__",
+        self,
+        time_series_name: str,
+        format_labels="__name__,__timestamp__:unix_s,__value__",
     ):
         # Export all timeseries in native format
         output_file = os.path.join(self.export_path, f"{time_series_name}_export.json")
@@ -291,9 +299,9 @@ class ExperimentData:
                 self.__log.error(f"Error exporting data: {response.text}")
 
     def export_timeseries_csv(
-            self,
-            time_series_name: str,
-            format_labels="__name__,__timestamp__:unix_s,__value__",
+        self,
+        time_series_name: str,
+        format_labels="__name__,__timestamp__:unix_s,__value__",
     ):
         output_file = os.path.join(self.export_path, f"{time_series_name}_export.csv")
 
@@ -340,7 +348,7 @@ class ExperimentData:
 
     # Extract metrics per subtask from a json exported metrics file from victoriametrics
     def get_metrics_per_subtask(
-            self, metrics_content, metric_name, task_name
+        self, metrics_content, metric_name, task_name
     ) -> tuple[str, pd.DataFrame]:
         data = {}
         output_file = os.path.join(self.export_path, f"{metric_name}_export.csv")
@@ -545,21 +553,21 @@ class ExperimentData:
         df_filtered = df_grouped.apply(
             lambda group: group[
                 (
-                        group.index
-                        >= group.index.min() + pd.Timedelta(seconds=self.start_skip)
+                    group.index
+                    >= group.index.min() + pd.Timedelta(seconds=self.start_skip)
                 )
                 & (
-                        group.index
-                        <= group.index.max() - pd.Timedelta(seconds=self.end_skip)
+                    group.index
+                    <= group.index.max() - pd.Timedelta(seconds=self.end_skip)
                 )
-                ]
+            ]
         )
 
         df_filtered = df_filtered.drop(columns=["Parallelism"])
         df_filtered.reset_index(inplace=True)
 
         # Calculate mean and standard error
-        df_final = df_filtered.groupby("Parallelism")["Sum", "BusyTime"].agg(
+        df_final = df_filtered.groupby("Parallelism")[["Sum", "BusyTime"]].agg(
             ["mean", lambda x: np.std(x) / np.sqrt(x.count())]
         )
         # Rename the columns
@@ -698,10 +706,10 @@ class ExperimentData:
 
             # Calculate percentage error and add it to the plot
             percentage_error = (
-                                       (dataset["Predictions"] - dataset["Throughput"]) / dataset["Throughput"]
-                               ) * 100
+                (dataset["Predictions"] - dataset["Throughput"]) / dataset["Throughput"]
+            ) * 100
             for x, y, error in zip(
-                    dataset.index, dataset["Predictions"], percentage_error
+                dataset.index, dataset["Predictions"], percentage_error
             ):
                 ax1.annotate(
                     f"{error:.2f}%",
@@ -758,7 +766,7 @@ class ExperimentData:
 
         # Convert lastCheckpointSize to MB
         dataset["flink_jobmanager_job_lastCheckpointSize"] = (
-                dataset["flink_jobmanager_job_lastCheckpointSize"] / 1024 / 1024
+            dataset["flink_jobmanager_job_lastCheckpointSize"] / 1024 / 1024
         )
 
         # Stacked plot with numRecordsInPerSecond, lastCheckpointSize and busyTimePerSecond

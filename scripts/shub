@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 import argparse
+import os
 from time import sleep
 
+from scripts.utils.Data import ExportData
 from src.Client import Client, Playbooks
 from src.G5k import G5k
 from src.Platform import Platform
@@ -196,9 +198,14 @@ def sync_experiment_data(config: Config):
 
 
 # Export data for a given date
-@DeprecationWarning
-def export(config: Config, exp_path: str, action_type=None):
+def export(config: Config):
     log.info("Exporting...")
+    base_path = os.path.join(
+        config.get_str(Key.Scalehub.experiments), "output_2024-03-14_2024-03-17"
+    )
+    e: ExportData = ExportData(log, base_path)
+    e.export()
+
     #
     # def get_timestamp_from_log(path):
     #     # Verify that a log file exists for the chosen experiment
@@ -370,15 +377,15 @@ def main(log: Logger):
 
     # Export command
     export_subparser = subparsers.add_parser("export", help="Export data")
-    export_subparser.add_argument(
-        "date", help="Provide experiment path in format 'DD-MM-YYYY/N'"
-    )
-    export_subparser.add_argument(
-        "type",
-        help="Choose what to export between 'stats', 'plot' or 'all'",
-        nargs="?",
-        default=None,
-    )
+    # export_subparser.add_argument(
+    #     "date", help="Provide experiment path in format 'DD-MM-YYYY/N'"
+    # )
+    # export_subparser.add_argument(
+    #     "type",
+    #     help="Choose what to export between 'stats', 'plot' or 'all'",
+    #     nargs="?",
+    #     default=None,
+    # )
 
     # Parse command line arguments
     args = parser.parse_args()
@@ -411,8 +418,9 @@ def main(log: Logger):
         type = args.type
         run(action, type, config)
     elif args.command == "export":
-        date = args.date
-        type = args.type
+        # date = args.date
+        # type = args.type
+        export(config)
     else:
         parser.print_help()
 

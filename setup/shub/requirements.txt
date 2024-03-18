@@ -3,3 +3,6 @@ enoslib
 kubernetes
 jmespath
 paho-mqtt
+numpy
+pandas
+matplotlib
