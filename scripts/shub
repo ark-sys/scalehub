@@ -203,7 +203,7 @@ def export(config: Config):
     # base_path = os.path.join(
     #     config.get_str(Key.Scalehub.experiments), "output_2024-03-14_2024-03-17"
     # )
-    base_path = os.path.join(os.path.curdir, "info", "paper-plots2")
+    base_path = os.path.join(os.path.curdir, "info", "paper-plots3")
     e: ExportData = ExportData(log, base_path)
     e.export()
 

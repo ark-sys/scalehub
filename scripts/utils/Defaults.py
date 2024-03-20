@@ -51,6 +51,7 @@ class DefaultKeys:
 
         class Chaos:
             enable = "experiment.chaos.enable"
+            affected_nodes_percentage = "experiment.chaos.affected_nodes_percentage"
             delay_latency_ms = "experiment.chaos.delay_latency_ms"
             delay_jitter_ms = "experiment.chaos.delay_jitter_ms"
             delay_correlation = "experiment.chaos.delay_correlation"
@@ -121,6 +122,7 @@ class DefaultValues:
 
         class Chaos:
             enable = False
+            affected_nodes_percentage = 50
             latency_ms = 25
             jitter_ms = 0
             correlation = 0

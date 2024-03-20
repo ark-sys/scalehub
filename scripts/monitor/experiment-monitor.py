@@ -152,6 +152,9 @@ class ExperimentFSM:
 
                 # Setup experiment_params
                 chaos_params = {
+                    "affected_nodes_percentage": self.config.get_int(
+                        Key.Experiment.Chaos.affected_nodes_percentage
+                    ),
                     "latency": self.config.get_int(
                         Key.Experiment.Chaos.delay_latency_ms
                     ),
