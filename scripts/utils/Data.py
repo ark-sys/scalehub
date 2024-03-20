@@ -30,7 +30,8 @@ class ExportData:
         for root, dirs, files in os.walk(experiment_path):
             for file in files:
                 if file == "final_df.csv":
-                    file_path = os.path.join(root, file)
+                    file_path = str(os.path.join(root, file))
+
                     df = pd.read_csv(file_path)
 
                     # Append the DataFrame to the list
@@ -132,6 +133,7 @@ class ExportData:
                 if file == "mean_stderr.csv":
                     file_path = os.path.join(root, file)
                     df = pd.read_csv(file_path)
+                    df = df.drop(0)
                     dfs.append(df)
 
         num_runs = len(dfs)
@@ -143,6 +145,15 @@ class ExportData:
         boxplot_data = [
             group["Throughput"].values for _, group in final_df.groupby(level=0)
         ]
+
+        # Eval mean Predictions per parallelism
+        predictions = final_df["Predictions"].groupby(level=0).mean()
+        # Interpolate missing values in the 'Predictions' series
+        predictions = predictions.interpolate()
+
+        # If you want to ensure that interpolated values are greater than 1, you can apply a condition
+        # predictions = predictions.apply(lambda x: x if x > 1 else 1)
+
         labels = [name for name, _ in final_df.groupby(level=0)]
 
         fig, ax = plt.subplots()
@@ -150,15 +161,47 @@ class ExportData:
         ax.set_xlabel("Operator Parallelism")
         ax.set_ylabel("Records per Second")
 
-        # Add straight dotted line at y=100000
-        ax.axhline(y=100000, color="r", linestyle="--", label="100000")
+        offset_predictions = predictions * 0.90
+
+        # Plot predictions
+        ax.plot(
+            predictions.index,
+            offset_predictions.values,
+            color="b",
+            label="Prediction",
+        )
+
+        # Add straight dotted line at y=100000, This is the target objective for the experiment
+        ax.axhline(y=100000, color="r", linestyle="--", label="Workload Objective")
+
+        # Add percentage error, between predictions and mean throughput
+        percentage_error = (
+            (offset_predictions - final_df["Throughput"].groupby(level=0).mean())
+            / final_df["Throughput"].groupby(level=0).mean()
+        ) * 100
+
+        for x, y, error in zip(
+            offset_predictions.index, offset_predictions.values, percentage_error
+        ):
+            ax.annotate(
+                f"{error:.2f}%",
+                (x, y),
+                textcoords="offset points",
+                xytext=(0, 10),
+                ha="center",
+            )
 
         # Decompose the path to get the operator name and the type of experiment
         experiment_path = exp_path.split("/")
         experiment = experiment_path[-2]
         type = experiment_path[-1]
+        title = f"{experiment} operator - {type}"
         # set title
-        ax.set_title(f"{experiment} operator - {type}")
+        ax.set_title(title)
+
+        # Add a legend
+        ax.legend(loc="lower right")
+
         # set subtitle
         # fig.suptitle(f"Experiment runs : {num_runs}", fontsize=12)
         # Save the plot
@@ -193,10 +236,6 @@ class ExportData:
                     if len(os.listdir(experiment_path)) == 0:
                         continue
                     self.generate_box_for_means(experiment_path)
-
-
-class EvalData:
-    pass
 
 
 class ExperimentData:
@@ -781,7 +820,7 @@ class ExperimentData:
             else:
                 title = f"{operator_name} - Latency"
         else:
-            self.__log.warning(f"No latency was enabled in conf {self.conf}")
+            # self.__log.warning(f"No latency was enabled in conf {self.conf}")
             title = f"{operator_name} - No Latency"
 
         # Set the title and labels
