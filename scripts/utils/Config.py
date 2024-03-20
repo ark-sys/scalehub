@@ -77,6 +77,10 @@ class Config:
         self.__config[Key.Experiment.Chaos.enable] = Value.Experiment.Chaos.enable
 
         self.__config[
+            Key.Experiment.Chaos.affected_nodes_percentage
+        ] = Value.Experiment.Chaos.affected_nodes_percentage
+
+        self.__config[
             Key.Experiment.Chaos.delay_latency_ms
         ] = Value.Experiment.Chaos.latency_ms
         self.__config[
