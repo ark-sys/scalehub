@@ -16,7 +16,7 @@ spec:
   # All values are described here
   # https://chaos-mesh.org/docs/simulate-network-chaos-on-kubernetes/#field-description
   mode: fixed-percent
-  value: '70'
+  value: '"{{ affected_nodes_percentage }}"'
   action: delay
   delay:
     latency: "{{ latency }}ms"
