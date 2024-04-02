@@ -4,3 +4,4 @@ pandas
 matplotlib
 jinja2
 transitions
+seaborn

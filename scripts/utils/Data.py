@@ -8,8 +8,8 @@ import requests
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
-from matplotlib.ticker import MaxNLocator
-
+from matplotlib.ticker import MaxNLocator, FuncFormatter
+import seaborn as sns
 from scripts.utils.Config import Config
 from scripts.utils.Defaults import DefaultKeys as Key
 from scripts.utils.Logger import Logger
@@ -127,6 +127,10 @@ class ExportData:
 
     # Load the mean_stderr.csv file and generate a boxplot
     def generate_box_for_means(self, exp_path):
+        def thousands_formatter(x, pos):
+            "The two args are the value and tick position"
+            return "%1.0fk" % (x * 1e-3)
+
         dfs = []
         for root, dirs, files in os.walk(exp_path):
             for file in files:
@@ -155,12 +159,23 @@ class ExportData:
         # predictions = predictions.apply(lambda x: x if x > 1 else 1)
 
         labels = [name for name, _ in final_df.groupby(level=0)]
+        formatter = FuncFormatter(thousands_formatter)
 
-        fig, ax = plt.subplots()
-        ax.boxplot(boxplot_data, labels=labels, showfliers=False, meanline=True)
-        ax.set_xlabel("Operator Parallelism")
-        ax.set_ylabel("Records per Second")
+        fig, ax = plt.subplots(figsize=(8, 6))
+        ax.boxplot(
+            boxplot_data,
+            labels=labels,
+            showfliers=False,
+            meanline=True,
+            whis=0,
+        )
 
+        ax.yaxis.set_major_formatter(formatter)
+        ax.set_ylim(0, 120000)
+        ax.set_xlabel("Operator Parallelism", fontsize=24)
+        ax.set_ylabel("Throughput (records/s)", fontsize=24)
+        plt.xticks(fontsize=20)
+        ax.tick_params(axis="y", labelsize=20)
         offset_predictions = predictions * 0.90
 
         # Plot predictions
@@ -168,11 +183,11 @@ class ExportData:
             predictions.index,
             offset_predictions.values,
             color="b",
-            label="Prediction",
+            label="Prediction with error",
         )
 
         # Add straight dotted line at y=100000, This is the target objective for the experiment
-        ax.axhline(y=100000, color="r", linestyle="--", label="Workload Objective")
+        ax.axhline(y=100000, color="r", linestyle="--", label="Workload objective")
 
         # Add percentage error, between predictions and mean throughput
         percentage_error = (
@@ -187,8 +202,9 @@ class ExportData:
                 f"{error:.2f}%",
                 (x, y),
                 textcoords="offset points",
-                xytext=(0, 10),
+                xytext=(0, 20),
                 ha="center",
+                fontsize=16,
             )
 
         # Decompose the path to get the operator name and the type of experiment
@@ -197,14 +213,15 @@ class ExportData:
         type = experiment_path[-1]
         title = f"{experiment} operator - {type}"
         # set title
-        ax.set_title(title)
+        # ax.set_title(title)
 
         # Add a legend
-        ax.legend(loc="lower right")
+        ax.legend(loc="lower right", fontsize=22)
 
         # set subtitle
         # fig.suptitle(f"Experiment runs : {num_runs}", fontsize=12)
         # Save the plot
+        fig.tight_layout()
         output_path = os.path.join(exp_path, f"{experiment}_{type}_mean.png")
         fig.savefig(output_path)
         fig.show()
@@ -228,6 +245,7 @@ class ExportData:
         #                 data.eval_summary_plot()
         #                 data.eval_plot_with_checkpoints()
         #                 data.eval_experiment_plot()
+        #                 data.eval_mean_with_backpressure()
         for experiment in self.experiments:
             for type in self.types:
                 experiment_path = os.path.join(self.base_path, experiment, type)
@@ -281,8 +299,8 @@ class ExperimentData:
         self.start_ts, self.end_ts = self.__get_timestamps_from_log(self.log_file)
 
         # Time to skip in seconds at the beginning and the end of a parallelism region
-        self.start_skip = 10
-        self.end_skip = 10
+        self.start_skip = 30
+        self.end_skip = 30
         # VictoriaMetrics database url
         self.db_url = "victoria-metrics-single-server.default.svc.cluster.local:8428"
         self.db_url_local = "localhost/vm"
@@ -440,7 +458,7 @@ class ExperimentData:
 
         # Extract subtask indices from column names and sort columns by these indices
         df.columns = (
-            df.columns.astype(str).str.extract("(\d+)", expand=False).astype(int)
+            df.columns.astype(str).str.extract(r"(\d+)", expand=False).astype(int)
         )
         df = df.sort_index(axis=1)
 
@@ -495,7 +513,7 @@ class ExperimentData:
             df.sort_index(inplace=True)
 
             # Extract subtask indices from column names and sort columns by these indices
-            df.columns = df.columns.str.extract("(\d+)", expand=False).astype(int)
+            df.columns = df.columns.str.extract(r"(\d+)", expand=False).astype(int)
             df = df.sort_index(axis=1)
 
             # Multindex subtask columns under the metric name
@@ -600,6 +618,10 @@ class ExperimentData:
 
     def eval_mean_stderr(self):
         # Load the DataFrame
+        if not hasattr(self, "final_df"):
+            self.final_df = pd.read_csv(
+                os.path.join(self.exp_path, "final_df.csv"), index_col=0
+            )
         df = self.final_df
 
         # Identify the columns related to 'numRecordsInPerSecond'
@@ -614,6 +636,15 @@ class ExperimentData:
             for col in df.columns
             if "flink_taskmanager_job_task_busyTimeMsPerSecond" in str(col)
         ]
+
+        backpressureTimePerSecond_cols = [
+            col
+            for col in df.columns
+            if "flink_taskmanager_job_task_hardBackPressuredTimeMsPerSecond" in str(col)
+        ]
+
+        # Add a new column 'BackpressureTime' to the DataFrame which is the mean of 'hardBackPressuredTimeMsPerSecond' across all subtasks
+        df["BackpressureTime"] = df[backpressureTimePerSecond_cols].mean(axis=1)
 
         # Add a new column 'BusyTime' to the DataFrame which is the mean of 'busyTimePerSecond' across all subtasks
         df["BusyTime"] = df[busyTimePerSecond_cols].mean(axis=1)
@@ -645,15 +676,17 @@ class ExperimentData:
         df_filtered.reset_index(inplace=True)
 
         # Calculate mean and standard error
-        df_final = df_filtered.groupby("Parallelism")[["Sum", "BusyTime"]].agg(
-            ["mean", lambda x: np.std(x) / np.sqrt(x.count())]
-        )
+        df_final = df_filtered.groupby("Parallelism")[
+            ["Sum", "BusyTime", "BackpressureTime"]
+        ].agg(["mean", lambda x: np.std(x) / np.sqrt(x.count())])
         # Rename the columns
         df_final.columns = [
             "Throughput",
             "ThroughputStdErr",
             "BusyTime",
             "BusyTimeStdErr",
+            "BackpressureTime",
+            "BackpressureTimeStdErr",
         ]
 
         # Extract predictions from transscale log
@@ -866,7 +899,7 @@ class ExperimentData:
 
         axs[0].set_title("numRecordsInPerSecond per subtask")
         axs[0].set_ylabel("Records/s")
-        axs[0].legend(bbox_to_anchor=(1.05, 1), loc="upper left")
+        axs[0].set_xlabel("Parallelism")
 
         # Plot busyTimePerSecond for each subtask
         for col in busyTimePerSecond_cols:
@@ -880,7 +913,6 @@ class ExperimentData:
         axs[2].plot(dataset.index, dataset["flink_jobmanager_job_lastCheckpointSize"])
         axs[2].set_title("lastCheckpointSize")
         axs[2].set_ylabel("MB")
-        axs[2].set_xlabel("Time (s)")
         plt.show()
 
         # Save the plot to a file
@@ -926,3 +958,70 @@ class ExperimentData:
             self.__log.error("Failed to extract predictions from transscale log.")
             predictions = []
         return predictions
+
+    # Create stacked plots of mean tpt and backpressure time with predictions
+    def eval_mean_with_backpressure(self):
+        dataset = self.eval_mean_stderr()
+        dataset = dataset.drop(0)
+        # Set style
+        # sns.set_style("whitegrid")
+
+        # Set a colorblind-friendly color palette
+        # sns.set_palette(sns.color_palette("colorblind"))
+
+        # Set font scale for better readability
+        # sns.set(font_scale=1.2)
+
+        # Create a figure and a set of subplots
+        fig, axs = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
+
+        # Plot the 'Throughput' column with error bars for 'ThroughputStdErr'
+        axs[0].errorbar(
+            dataset.index,
+            dataset["Throughput"],
+            yerr=dataset["ThroughputStdErr"],
+            fmt="o",
+            linestyle="-",
+            linewidth=3,
+            color="b",
+            capsize=10,
+            label="Throughput In",
+        )
+        axs[0].set_ylabel("Throughput\n(Records/s)", fontsize=30)
+        # Add straight dotted line at y=100000
+        axs[0].axhline(y=100000, color="r", linestyle="--", label="100000")
+
+        # Thousands formatter
+        def thousands_formatter(x, pos):
+            "The two args are the value and tick position"
+            return "%1.0fk" % (x * 1e-3)
+
+        axs[0].yaxis.set_major_formatter(FuncFormatter(thousands_formatter))
+
+        # Set tick parameters
+        axs[0].tick_params(axis="both", labelsize=26)
+        axs[0].xaxis.set_major_locator(MaxNLocator(integer=True))
+        axs[0].set_ylim(0, 120000)
+
+        axs[1].tick_params(axis="both", labelsize=26)
+        axs[1].set_xlabel("Parallelism", fontsize=30)
+        axs[1].errorbar(
+            dataset.index,
+            dataset["BackpressureTime"],
+            yerr=dataset["BackpressureTimeStdErr"],
+            linestyle="-",
+            marker="o",
+            color="g",
+            label="BackpressureTime",
+            linewidth=3,
+            markersize=10,
+        )
+        axs[1].set_ylim(0, 1000)
+        axs[1].set_ylabel("Backpressure\n(ms/s)", fontsize=30)
+
+        # Tight layout often produces nicer results
+        fig.tight_layout()
+        plt.show()
+
+        plot_file = f"{self.plots_path}/mean_with_backpressure.png"
+        fig.savefig(plot_file)

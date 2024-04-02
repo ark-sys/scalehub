@@ -6,3 +6,4 @@ paho-mqtt
 numpy
 pandas
 matplotlib
+seaborn

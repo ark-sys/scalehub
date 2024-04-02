@@ -24,7 +24,6 @@ data:
     taskmanager.numberOfTaskSlots: 1
     taskmanager.memory.process.size: 4Gb
     taskmanager.memory.managed.fraction: 0.2
-    taskmanager.memory.task.off-heap.size: 2048mb
     taskmanager.network.memory.buffer-debloat.enabled: true
     taskmanager.network.detailed-metrics: true
     
