@@ -3,7 +3,7 @@ import argparse
 import os
 from time import sleep
 
-from scripts.utils.Data import ExportData
+from scripts.utils.Data import ExportData, ExperimentData
 from src.Client import Client, Playbooks
 from src.G5k import G5k
 from src.Platform import Platform
@@ -200,14 +200,22 @@ def sync_experiment_data(config: Config):
 # Export data for a given date
 def export(config: Config):
     log.info("Exporting...")
+
     # base_path = os.path.join(
     #     config.get_str(Key.Scalehub.experiments), "output_2024-03-14_2024-03-17"
     # )
-    base_path = os.path.join(os.path.curdir, "info", "paper-plots3")
+    # base_path = os.path.join(
+    #     "/app", "info", "paper-plots3", "Join-kk", "latency_70", "25ms"
+    # )
+    base_path = os.path.join("/app", "info", "paper-plots3")
     e: ExportData = ExportData(log, base_path)
     e.export()
-
     #
+    # print(base_path)
+    # e: ExperimentData = ExperimentData(log, base_path)
+
+    # e.eval_mean_with_backpressure()
+
     # def get_timestamp_from_log(path):
     #     # Verify that a log file exists for the chosen experiment
     #     log_path = os.path.join(path, "exp_log.txt")
