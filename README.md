@@ -13,6 +13,14 @@ Playbooks will help set up an environment for data stream processing experiments
 - Transscale is used to scale Flink Taskmanagers and specific job operators, based on the load and the network latency estimations.
 
 
+:exclamation: TODO:
+- [ ] Update the documentation with the latest changes.
+- [ ] Update the images in the README.
+- [ ] Update the list of playbooks.
+- [ ] Update the final cluster setup image.
+- [ ] Review basic requirements for scalehub setup.
+- [ ] Review script commands and options.
+
 ## Table of Contents
 
 - [Introduction](#introduction)
