@@ -1,0 +1,32 @@
+---
+- name: Install K3S and setup kubeconfig
+  tags: [ create ]
+  block:
+    - name: Install k3s on controller
+      environment:
+        # Disable ipv6 for now
+#        INSTALL_K3S_EXEC: --disable=traefik,local-storage --data-dir=/tmp/k3s --cluster-cidr=10.42.0.0/16,2001:cafe:42::/56 --service-cidr=10.43.0.0/16,2001:cafe:43::/112
+        INSTALL_K3S_EXEC: --disable=traefik,local-storage --data-dir=/tmp/k3s
+      shell:
+        cmd: "curl -sfL https://get.k3s.io | sh -s -"
+    - name: Get kubeconfig from controller
+      ansible.builtin.shell:
+        cmd: cat /etc/rancher/k3s/k3s.yaml
+      register: kubeconfig_content
+    - name: Replace localhost with control node IP address
+      set_fact:
+        kubeconfig_content: "{{ kubeconfig_content.stdout | replace('127.0.0.1', hostvars[groups['control'][0]]['ansible_default_ipv4']['address']) }}"
+    - name: Get kubeconfig path
+      set_fact:
+        kubeconfig_path: "{{ lookup('env', 'KUBECONFIG') }}"
+    - name: Save kubeconfig to localhost
+      delegate_to: localhost
+      ansible.builtin.copy:
+        content: "{{ kubeconfig_content }}"
+        dest: "{{ kubeconfig_path }}"
+        mode: '644'
+
+- name: Uninstall k3s server
+  tags: [ delete ]
+  shell:
+    cmd: "/usr/local/bin/k3s-uninstall.sh"

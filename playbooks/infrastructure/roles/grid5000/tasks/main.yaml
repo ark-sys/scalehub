@@ -1,0 +1,5 @@
+- name: Special tasks for Grid5000 baremetal nodes
+  tags: [ create ]
+  block:
+    - name: Enable ipv6
+      command: dhclient -6 br0

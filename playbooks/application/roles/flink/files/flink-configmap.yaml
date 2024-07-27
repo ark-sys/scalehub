@@ -9,14 +9,110 @@ metadata:
 data:
   flink-conf.yaml: |+
     #scheduler-mode: reactive
-    web.upload.dir: /mnt/data
-    io.tmp.dirs: /mnt/data/tmp
+    web.upload.dir: /tmp
+    io.tmp.dirs: /tmp
     
     akka.framesize: 104857600b
     blob.server.port: 6124
     
     jobmanager.rpc.address: flink-jobmanager
-    jobmanager.memory.process.size: 4Gb
+    jobmanager.memory.process.size: 16Gb
+    jobmanager.rpc.port: 6123
+    queryable-state.proxy.ports: 6125
+    
+    taskmanager.rpc.port: 6122
+    taskmanager.numberOfTaskSlots: 1
+    taskmanager.memory.process.size: 16Gb
+    taskmanager.memory.managed.fraction: 0.2
+    taskmanager.network.memory.buffer-debloat.enabled: true
+    taskmanager.network.detailed-metrics: true
+    
+    metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
+    metrics.reporter.prom.interval: 5 SECONDS
+    metrics.reporter.prom.port: 9249
+    metrics.fetcher.update-interval: 5000
+    metrics.latency.granularity: subtask
+    
+    state.backend.latency-track.keyed-state-enabled: true
+    state.backend.type: rocksdb
+    #state.backend.incremental: true
+
+    state.backend.rocksdb.metrics.estimate-num-keys: true
+    state.backend.rocksdb.memory.managed: true
+    state.backend.rocksdb.async-threads: 4
+    state.backend.rocksdb.localdir: /mnt/data/tmp
+    state.checkpoint-storage: filesystem
+    state.checkpoints.dir: s3://flink-bucket/checkpoints
+    state.savepoints.dir: s3://flink-bucket/savepoints
+    s3.path.style.access: true
+    s3.endpoint: http://minio.minio-operator.svc.cluster.local
+    s3.access-key: minio
+    s3.secret-key: minio123
+
+    # gives metrics about inbound/outbound network queue lengths
+    table.exec.state.ttl: 10 ms
+    execution.checkpointing.mode: EXACTLY_ONCE
+    execution.checkpointing.unaligned.enabled: true
+    execution.checkpointing.aligned-checkpoint-timeout: 10 s
+    execution.checkpointing.checkpoints-after-tasks-finish.enabled: true
+
+  flink-conf-vm_small.yaml: |+
+    #scheduler-mode: reactive
+    web.upload.dir: /tmp
+    io.tmp.dirs: /tmp
+    
+    akka.framesize: 104857600b
+    blob.server.port: 6124
+    
+    jobmanager.rpc.address: flink-jobmanager
+    jobmanager.rpc.port: 6123
+    queryable-state.proxy.ports: 6125
+    
+    taskmanager.rpc.port: 6122
+    taskmanager.numberOfTaskSlots: 1
+    taskmanager.memory.process.size: 2Gb
+    taskmanager.memory.managed.fraction: 0.2
+    taskmanager.network.memory.buffer-debloat.enabled: true
+    taskmanager.network.detailed-metrics: true
+    
+    metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
+    metrics.reporter.prom.interval: 5 SECONDS
+    metrics.reporter.prom.port: 9249
+    metrics.fetcher.update-interval: 5000
+    metrics.latency.granularity: subtask
+    
+    state.backend.latency-track.keyed-state-enabled: true
+    state.backend.type: rocksdb
+    #state.backend.incremental: true
+
+    state.backend.rocksdb.metrics.estimate-num-keys: true
+    state.backend.rocksdb.memory.managed: true
+    state.backend.rocksdb.async-threads: 4
+    state.backend.rocksdb.localdir: /mnt/data/tmp
+    state.checkpoint-storage: filesystem
+    state.checkpoints.dir: s3://flink-bucket/checkpoints
+    state.savepoints.dir: s3://flink-bucket/savepoints
+    s3.path.style.access: true
+    s3.endpoint: http://minio.minio-operator.svc.cluster.local
+    s3.access-key: minio
+    s3.secret-key: minio123
+
+    # gives metrics about inbound/outbound network queue lengths
+    table.exec.state.ttl: 10 ms
+    execution.checkpointing.mode: EXACTLY_ONCE
+    execution.checkpointing.unaligned.enabled: true
+    execution.checkpointing.aligned-checkpoint-timeout: 10 s
+    execution.checkpointing.checkpoints-after-tasks-finish.enabled: true
+
+  flink-conf-vm_medium.yaml: |+
+    #scheduler-mode: reactive
+    web.upload.dir: /tmp
+    io.tmp.dirs: /tmp
+    
+    akka.framesize: 104857600b
+    blob.server.port: 6124
+    
+    jobmanager.rpc.address: flink-jobmanager
     jobmanager.rpc.port: 6123
     queryable-state.proxy.ports: 6125
     
@@ -55,8 +151,6 @@ data:
     execution.checkpointing.unaligned.enabled: true
     execution.checkpointing.aligned-checkpoint-timeout: 10 s
     execution.checkpointing.checkpoints-after-tasks-finish.enabled: true
-    
-
   log4j-console.properties: |+
     # This affects logging for both user code and Flink
     rootLogger.level=INFO
@@ -97,3 +191,4 @@ data:
     # Suppress the irrelevant (wrong) warnings from the Netty channel handler
     logger.netty.name=org.apache.flink.shaded.akka.org.jboss.netty.channel.DefaultChannelPipeline
     logger.netty.level=OFF
+

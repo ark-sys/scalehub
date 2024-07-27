@@ -17,7 +17,7 @@ spec:
         component: jobmanager
     spec:
       nodeSelector:
-        node-role.kubernetes.io/worker: 'consumer'
+        node-role.kubernetes.io/control-plane: "true"
       terminationGracePeriodSeconds: 0
       imagePullSecrets:
         - name: gitlab-scalehub
@@ -47,8 +47,8 @@ spec:
               value: "{{ fibonacci_value }}"
           resources:
             limits:
-              memory: 4Gi
-              cpu: 1000m
+              memory: 8Gi
+              cpu: 4000m
           args: [ "jobmanager" ]
           ports:
             - containerPort: 6123

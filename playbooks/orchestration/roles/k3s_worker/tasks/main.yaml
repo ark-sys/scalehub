@@ -1,0 +1,26 @@
+---
+- name: Install K3S on worker nodes
+  tags: [ create ]
+  block:
+    - name: Get node token from controller for workers hosts
+      delegate_to: "{{ groups['control'][0] }}"
+      shell: "cat /tmp/k3s/server/node-token"
+      register: node_token
+    - name: Install k3s on workers
+      environment:
+        K3S_URL: "https://{{ hostvars[groups['control'][0]]['ansible_default_ipv4']['address'] }}:6443"
+        K3S_TOKEN: "{{ node_token.stdout }}"
+        INSTALL_K3S_VERSION: v1.29.1+k3s1
+        INSTALL_K3S_EXEC: --data-dir=/tmp/k3s
+      shell:
+        cmd: "curl -sfL https://get.k3s.io | sh -s -"
+      # Skip this task if the consumers nodes or the producers nodes are the same as the control node. This is a single node cluster.
+      when: "inventory_hostname not in groups['control']"
+
+- name: Uninstall K3S
+  tags: [ delete ]
+  block:
+    - name: Uninstall k3s agent
+      shell:
+          cmd: "/usr/local/bin/k3s-agent-uninstall.sh"
+      when: "inventory_hostname not in groups['control']"
