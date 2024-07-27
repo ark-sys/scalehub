@@ -1,0 +1,10 @@
+- name : pico tasks
+  tags : [ always ]
+  block :
+    - name: Test connection to node whomai
+      command: whoami
+      register: whoami
+
+    - name: Print whoami
+      debug:
+        var: whoami.stdout

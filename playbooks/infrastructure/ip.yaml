@@ -1,0 +1,26 @@
+- name: Some kubernetes tests
+  hosts: consumers, producers
+  become: false
+  gather_facts: false
+  tags: [ always ]
+  tasks:
+    - name: Install pip
+      package:
+        name: python3-pip
+        state: present
+    - name: Install kubernetes library
+      pip:
+        name:
+            - openshift
+            - kubernetes
+            - pyyaml
+        state: present
+    - name: get nodes info
+      kubernetes.core.k8s_info:
+        kubeconfig: '{{ lookup("env", "KUBECONFIG") }}'
+        kind: Node
+      register: nodes
+
+    - name: debug nodes
+      debug:
+        var: nodes

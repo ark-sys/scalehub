@@ -1,0 +1,20 @@
+---
+- name: Install k3s on control node
+  hosts: control
+  become: true
+  gather_facts: true
+  roles:
+    - role: k3s_control
+
+- name: Install k3s on worker nodes
+  hosts: consumers, producers
+  become: true
+  gather_facts: true
+  roles:
+    - role: k3s_worker
+
+- name: Run post-install configuration tasks (these are kubectl tasks run on localhost, but reflected on the cluster nodes joinable with the kubeconfig)
+  hosts: localhost
+  become: true
+  roles:
+    - role: post_install

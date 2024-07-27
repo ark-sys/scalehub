@@ -22,7 +22,7 @@
     - name: Deploy services
       kubernetes.core.k8s:
         state: present
-        definition: "{{ lookup('ansible.builtin.file', item) | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.file', item) | from_yaml_all }}"
       with_fileglob:
         - "../files/*.yaml"
 
@@ -34,7 +34,23 @@
     - name: Deploy taskmanager
       kubernetes.core.k8s:
         state: present
-        definition: "{{ lookup('ansible.builtin.template', 'taskmanager-deployment.yaml.j2') | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.template', 'taskmanager-deployment.yaml.j2') | from_yaml_all }}"
+
+#    - name: Scale instances of taskmanager-vm_small to 0
+#      kubernets.core.k8s_scale:
+#        api_version: v1
+#        kind: Deployment
+#        name: flink-taskmanager-vm-small
+#        namespace: default
+#        replicas: 0
+#
+#    - name: Scale instances of taskmanager-vm_medium to 0
+#      kubernets.core.k8s_scale:
+#          api_version: v1
+#          kind: Deployment
+#          name: flink-taskmanager-vm-medium
+#          namespace: default
+#          replicas: 0
 
 
 - name: Delete Flink
@@ -43,7 +59,7 @@
     - name: Delete services
       kubernetes.core.k8s:
         state: absent
-        definition: "{{ lookup('ansible.builtin.file', item) | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.file', item) | from_yaml_all }}"
       with_fileglob:
         - "../files/*.yaml"
 
@@ -55,7 +71,7 @@
     - name: Delete taskmanager
       kubernetes.core.k8s:
         state: absent
-        definition: "{{ lookup('ansible.builtin.template', 'taskmanager-deployment.yaml.j2') | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.template', 'taskmanager-deployment.yaml.j2') | from_yaml_all }}"
 
     - name: Delete pre-pull daemon-set
       kubernetes.core.k8s:

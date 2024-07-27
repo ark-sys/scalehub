@@ -117,7 +117,7 @@
               - servers: "{{ consumer_nodes.resources | length }}"
                 volumesPerServer: 1
                 name: flink-pool
-                size: 50Gi
+                size: 10Gi
                 storageClassName: local-path
                 # deploy one tenant on each worker node
                 affinity:

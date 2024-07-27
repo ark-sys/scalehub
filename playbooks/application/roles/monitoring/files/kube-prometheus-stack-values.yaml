@@ -27,6 +27,11 @@ prometheus:
         sourceLabels:
           - __meta_kubernetes_pod_node_name
         targetLabel: instance
+prometheus-node-exporter:
+  # Change default port from 9100 to 9123
+    service:
+        port: 9123
+
 grafana:
   ingress:
     enabled: true
