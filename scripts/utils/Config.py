@@ -47,16 +47,18 @@ class Config:
         self.__config[Key.Scalehub.experiments] = Value.Scalehub.experiments
         self.__config[Key.Scalehub.debug_level] = Value.Scalehub.Debug.level
 
-        self.__config[Key.Platform.type] = Value.Platform.type
-        self.__config[Key.Platform.reservation_name] = Value.Platform.reservation_name
-        self.__config[Key.Platform.site] = Value.Platform.site
-        self.__config[Key.Platform.cluster] = Value.Platform.cluster
-        self.__config[Key.Platform.producers] = Value.Platform.producers
-        self.__config[Key.Platform.consumers] = Value.Platform.consumers
-        self.__config[Key.Platform.queue] = Value.Platform.queue
-        self.__config[Key.Platform.walltime] = Value.Platform.walltime
-        self.__config[Key.Platform.kubernetes_type] = Value.Platform.kubernetes_type
-        self.__config[Key.Platform.start_time] = Value.Platform.start_time
+        # self.__config[Key.Platform.type] = Value.Platform.type
+        # self.__config[Key.Platform.reservation_name] = Value.Platform.reservation_name
+        # self.__config[Key.Platform.site] = Value.Platform.site
+        # self.__config[Key.Platform.cluster] = Value.Platform.cluster
+        # self.__config[Key.Platform.producers] = Value.Platform.producers
+        # self.__config[Key.Platform.consumers] = Value.Platform.consumers
+        # self.__config[Key.Platform.queue] = Value.Platform.queue
+        # self.__config[Key.Platform.walltime] = Value.Platform.walltime
+        # self.__config[Key.Platform.kubernetes_type] = Value.Platform.kubernetes_type
+        # self.__config[Key.Platform.start_time] = Value.Platform.start_time
+
+        self.__config[Key.Platforms.platforms] = Value.Platforms.platforms
 
         self.__config[Key.Experiment.name] = Value.Experiment.name
         self.__config[Key.Experiment.job_file] = Value.Experiment.job_file
@@ -73,6 +75,7 @@ class Config:
         self.__config[
             Key.Experiment.kafka_partitions
         ] = Value.Experiment.kafka_partitions
+        self.__config[Key.Experiment.first_node] = Value.Experiment.first_node
 
         self.__config[Key.Experiment.Chaos.enable] = Value.Experiment.Chaos.enable
 
@@ -146,7 +149,7 @@ class Config:
     def get_float(self, key) -> float:
         return float(self.get(key))
 
-    def get_str(self, key):
+    def get_str(self, key) -> str:
         return str(self.get(key))
 
     def get_list_str(self, key):
@@ -154,6 +157,134 @@ class Config:
 
     def get_list_int(self, key):
         return [int(value) for value in self.get_str(key).split(",")]
+
+    def parse_platform(self):
+        # Get platform names
+        platform_str = []
+        for value in self.cp[Key.Platforms.platforms].values():
+            platform_str = value.split(",")
+        platforms = []
+        for platform_name in platform_str:
+            name = platform_name.strip()
+
+            # Get section name for platform
+            platform_section = f"platforms.{name}"
+
+            # Get values for platform
+            type = self.cp[platform_section]["type"]
+
+            # If type is RaspberryPi, Required fields are "cluster", "contro", "producers", "consumers", "kubernetes_type". Otherwise, require everything else.
+            if type == "RaspberryPi":
+                cluster = self.cp[platform_section]["cluster"]
+                producers = self.cp[platform_section]["producers"]
+                consumers = self.cp[platform_section]["consumers"]
+                kubernetes_type = self.cp[platform_section]["kubernetes_type"]
+                control = self.cp[platform_section]["control"]
+                # Create platform dictionary
+                platform = {
+                    "name": name,
+                    "type": type,
+                    "cluster": cluster,
+                    "producers": int(producers),
+                    "consumers": int(consumers),
+                    "kubernetes_type": kubernetes_type,
+                    "control": True if control.lower() == "true" else False,
+                }
+            # If type is FIT, Required fields are "reservation_name", "site", "archi", "producers", "consumers", "walltime". Otherwise, require everything else.
+            elif type == "FIT":
+                reservation_name = self.cp[platform_section]["reservation_name"]
+                site = self.cp[platform_section]["site"]
+                archi = self.cp[platform_section]["archi"]
+                producers = self.cp[platform_section]["producers"]
+                consumers = self.cp[platform_section]["consumers"]
+                walltime = self.cp[platform_section]["walltime"]
+                start_time = (
+                    self.cp[platform_section]["start_time"]
+                    if self.cp.has_option(platform_section, "start_time")
+                    else None
+                )
+                control = self.cp[platform_section]["control"]
+                # Create platform dictionary
+                platform = {
+                    "name": name,
+                    "type": type,
+                    "reservation_name": reservation_name,
+                    "site": site,
+                    "archi": archi,
+                    "producers": int(producers),
+                    "consumers": int(consumers),
+                    "walltime": walltime,
+                    "start_time": start_time,
+                    "control": True if control.lower() == "true" else False,
+                }
+            elif type == "VM_on_Grid5000":
+                reservation_name = self.cp[platform_section]["reservation_name"]
+                site = self.cp[platform_section]["site"]
+                cluster = self.cp[platform_section]["cluster"]
+                producers = self.cp[platform_section]["producers"]
+                consumers = self.cp[platform_section]["consumers"]
+                core_per_vm = self.cp[platform_section]["core_per_vm"]
+                memory_per_vm = self.cp[platform_section]["memory_per_vm"]
+                disk_per_vm = self.cp[platform_section]["disk_per_vm"]
+                queue = self.cp[platform_section]["queue"]
+                walltime = self.cp[platform_section]["walltime"]
+                start_time = (
+                    self.cp[platform_section]["start_time"]
+                    if self.cp.has_option(platform_section, "start_time")
+                    else None
+                )
+                control = self.cp[platform_section]["control"]
+                # Create platform dictionary
+                platform = {
+                    "name": name,
+                    "type": type,
+                    "reservation_name": reservation_name,
+                    "site": site,
+                    "cluster": cluster,
+                    "producers": int(producers),
+                    "consumers": int(consumers),
+                    "core_per_vm": int(core_per_vm),
+                    "memory_per_vm": int(memory_per_vm),
+                    "disk_per_vm": int(disk_per_vm),
+                    "queue": queue,
+                    "walltime": walltime,
+                    "start_time": start_time,
+                    "control": True if control.lower() == "true" else False,
+                }
+
+            else:
+                reservation_name = self.cp[platform_section]["reservation_name"]
+                site = self.cp[platform_section]["site"]
+                cluster = self.cp[platform_section]["cluster"]
+                producers = self.cp[platform_section]["producers"]
+                consumers = self.cp[platform_section]["consumers"]
+                queue = self.cp[platform_section]["queue"]
+                walltime = self.cp[platform_section]["walltime"]
+                kubernetes_type = self.cp[platform_section]["kubernetes_type"]
+                control = self.cp[platform_section]["control"]
+                start_time = (
+                    self.cp[platform_section]["start_time"]
+                    if self.cp.has_option(platform_section, "start_time")
+                    else None
+                )
+                # Create platform dictionary
+                platform = {
+                    "name": name,
+                    "type": type,
+                    "reservation_name": reservation_name,
+                    "site": site,
+                    "cluster": cluster,
+                    "producers": int(producers),
+                    "consumers": int(consumers),
+                    "kubernetes_type": kubernetes_type,
+                    "control": True if control.lower() == "true" else False,
+                    "queue": queue,
+                    "walltime": walltime,
+                    "start_time": start_time,
+                }
+            # Add platform to list
+            platforms.append(platform)
+        return platforms
 
     def parse_load_generators(self):
         # Get load_generators names
@@ -190,7 +321,7 @@ class Config:
         section_base = "experiment"
         # Validate subclasses of Experiment
         for name, cls in getmembers(Key.Experiment, isclass):
-            # Skip private attributes and the Generators class in this step
+            # Skip private attributes, the Generators class in this step
             if name.startswith("__") and name.endswith("__") or name == "Generators":
                 continue
             section = f"{section_base}.{name.lower()}"
@@ -249,6 +380,74 @@ class Config:
                                 f"[CONF] Key [{key}] is missing in section [{section}] in configuration file {conf_path}"
                             )
                             exit(1)
+        # Validate the Platform sections
+        platform_str = []
+        for value in self.cp[Key.Platforms.platforms].values():
+            platform_str = value.split(",")
+        for platform_name in platform_str:
+            name = platform_name.strip()
+            platform_section = f"platforms.{name}"
+
+            if not self.cp.has_section(platform_section):
+                self.__log.error(
+                    f"[CONF] Section [{platform_section}] is missing in configuration file {conf_path}"
+                )
+                exit(1)
+            else:
+                # Get values for platform
+                type = self.cp[platform_section]["type"]
+
+                # If type is RaspberryPi, Required fields are "cluster", "producers", "consumers", "kubernetes_type". Otherwise, require everything else.
+                if type == "RaspberryPi":
+                    required_keys = [
+                        "cluster",
+                        "control",
+                        "producers",
+                        "consumers",
+                        "kubernetes_type",
+                    ]
+                # If type is FIT, Required fields are "reservation_name", "site", "archi", "producers", "consumers", "control". Otherwise, require everything else.
+                elif type == "FIT":
+                    required_keys = [
+                        "reservation_name",
+                        "control",
+                        "site",
+                        "archi",
+                        "producers",
+                        "consumers",
+                    ]
+                elif type == "VM_on_Grid5000":
+                    required_keys = [
+                        "reservation_name",
+                        "control",
+                        "site",
+                        "cluster",
+                        "producers",
+                        "consumers",
+                        "core_per_vm",
+                        "memory_per_vm",
+                        "queue",
+                        "walltime",
+                    ]
+                else:
+                    required_keys = [
+                        "reservation_name",
+                        "control",
+                        "site",
+                        "cluster",
+                        "producers",
+                        "consumers",
+                        "queue",
+                        "walltime",
+                    ]
+
+                # Check that all keys are defined in the configuration file for this section
+                for key in required_keys:
+                    if not self.cp.has_option(platform_section, key):
+                        self.__log.error(
+                            f"[CONF] Key [{key}] is missing in section [{platform_section}] in configuration file {conf_path}"
+                        )
+                        exit(1)
 
     def validate(self, conf_path: str):
         # Check that the configuration file exists
@@ -282,6 +481,8 @@ class Config:
             for key in self.cp[section]:
                 dict_key = f"{section}.{key}"
                 self.__config[dict_key] = self.cp[section][key]
+
+        self.__config[Key.Platforms.platforms] = self.parse_platform()
 
         self.__config[
             Key.Experiment.Generators.generators

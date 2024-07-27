@@ -1,3 +1,29 @@
+metrics_dict = {
+    "operator_metrics": [
+        "flink_taskmanager_job_task_numRecordsInPerSecond",
+        "flink_taskmanager_job_task_busyTimeMsPerSecond",
+    ],
+    "sources_metrics": ["flink_taskmanager_job_task_hardBackPressuredTimeMsPerSecond"],
+    "state_metrics": [
+        "flink_jobmanager_job_lastCheckpointSize",
+        "flink_jobmanager_job_lastCheckpointDuration",
+    ],
+    "job_metrics": [
+        "flink_taskmanager_job_task_Shuffle_Netty_Input_Buffers_inputQueueLength",
+        "flink_taskmanager_job_task_Shuffle_Netty_Output_Buffers_outputQueueLength",
+        "flink_taskmanager_job_task_estimatedTimeToConsumeBuffersMs",
+    ],
+}
+
+MAP_PIPELINE_DICT = {1: "Source:_Source", 2: "Map", 3: "Sink:_Sink"}
+JOIN_PIPELINE_DICT = {
+    1: ("Source:_Source1", "Source:_Source2"),
+    2: "Timestamps_Watermarks____Map",
+    3: "TumblingEventTimeWindows____Timestamps_Watermarks",
+    4: "Sink:_Sink",
+}
+
+
 class DefaultKeys:
     class Scalehub:
         inventory = "scalehub.inventory"
@@ -5,17 +31,26 @@ class DefaultKeys:
         experiments = "scalehub.experiments"
         debug_level = "scalehub.debug_level"
 
-    class Platform:
-        type = "platform.type"
-        reservation_name = "platform.reservation_name"
-        site = "platform.site"
-        cluster = "platform.cluster"
-        producers = "platform.producers"
-        consumers = "platform.consumers"
-        queue = "platform.queue"
-        walltime = "platform.walltime"
-        start_time = "platform.start_time"
-        kubernetes_type = "platform.kubernetes_type"
+    class Platforms:
+        platforms = "platforms"
+
+        class Platform:
+            name = "platforms.name"
+            type = "platforms.name.type"
+            reservation_name = "platforms.name.reservation_name"
+            site = "platforms.name.site"
+            cluster = "platforms.name.cluster"
+            producers = "platforms.name.producers"
+            consumers = "platforms.name.consumers"
+            core_per_vm = "platforms.name.core_per_vm"
+            memory_per_vm = "platforms.name.memory_per_vm"
+            disk_per_vm = "platforms.name.disk_per_vm"
+            queue = "platforms.name.queue"
+            walltime = "platforms.name.walltime"
+            start_time = "platforms.name.start_time"
+            kubernetes_type = "platforms.name.kubernetes_type"
+            archi = "platforms.name.archi"
+            control = "platforms.name.control"
 
     class Experiment:
         name = "experiment.name"
@@ -27,6 +62,7 @@ class DefaultKeys:
         broker_mqtt_host = "experiment.broker_mqtt_host"
         broker_mqtt_port = "experiment.broker_mqtt_port"
         kafka_partitions = "experiment.kafka_partitions"
+        first_node = "experiment.first_node"
 
         class Generators:
             generators = "experiment.generators"
@@ -76,17 +112,26 @@ class DefaultValues:
             LEVEL_1 = 1
             level = DISABLED
 
-    class Platform:
-        type = "Grid5000"
-        reservation_name = "scalehub"
-        site = "rennes"
-        cluster = "parasilo"
-        producers = 1
-        consumers = 1
-        queue = "default"
-        walltime = "1:00:00"
-        start_time = None
-        kubernetes_type = "k3s"
+    class Platforms:
+        platforms = ["grid5000"]
+
+        class Platform:
+            type = "Grid5000"
+            reservation_name = "scalehub"
+            site = "rennes"
+            cluster = "parasilo"
+            producers = 1
+            consumers = 1
+            queue = "default"
+            walltime = "1:00:00"
+            core_per_vm = 2
+            memory_per_vm = 4096
+            disk_per_vm = 40
+            start_time = None
+            kubernetes_type = "k3s"
+            archi = "rpi3:at86rf233"
+            # This platform reservation contains a control node
+            control = True
 
     class Experiment:
         name = "scalehub"
@@ -98,6 +143,7 @@ class DefaultValues:
         broker_mqtt_host = "broker-mqtt.scalehub.local"
         broker_mqtt_port = 1883
         kafka_partitions = 1000
+        first_node = "grid5000"
 
         class Generators:
             generators = ["generator1"]

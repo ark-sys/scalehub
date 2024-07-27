@@ -1,6 +1,7 @@
 import os
 import threading
 from time import sleep
+
 import jinja2
 import yaml
 from kubernetes import config as Kubeconfig, client as Client
@@ -17,7 +18,53 @@ class KubernetesManager:
     def __init__(self, log: Logger):
         self.__log = log
         self.kubeconfig = Kubeconfig.load_kube_config(os.environ["KUBECONFIG"])
-        # Execute a command on all pods of a deployment by label
+
+    # Prepare scaling when manually initiated
+    def prepare_scaling(self, config, monitored_task, job_file):
+        # Get current job id
+        job_id = self.execute_command_on_pod(
+            deployment_name="flink-jobmanager",
+            command="flink list -r 2>/dev/null | grep RUNNING | awk '{print $4}'",
+        ).strip()
+
+        self.__log.info(f"Job id: {job_id}")
+
+        # Get current job operators list
+        import requests
+
+        r = requests.get(f"http://localhost/flink/jobs/{job_id}/plan")
+        self.__log.info(f"Job plan response: {r.text}")
+        job_plan = r.json()
+
+        # Extract and clean operator names
+        operator_names = []
+        for node in job_plan["plan"]["nodes"]:
+            operator_name = (
+                node["description"]
+                .replace("</br>", "")
+                .replace("<br/>", "")
+                .replace(":", "_")
+                .replace(" ", "_")
+            )
+            operator_names.append(operator_name)
+
+        # Stop current job and save returned string as savepoint path
+        resp = self.execute_command_on_pod(
+            deployment_name="flink-jobmanager",
+            command=f"flink stop {job_id}",
+        )
+        savepoint_path = None
+        for line in resp.split("\n"):
+            if "Savepoint completed." in line:
+                savepoint_path = line.split("Path:")[1].strip()
+                break
+        if savepoint_path is None:
+            self.__log.error("Savepoint failed.")
+            return None, None, None
+
+        sleep(15)
+
+        return job_id, operator_names, savepoint_path
 
     # Scale a deployment to a specified number of replicas
     def scale_deployment(self, deployment_name, replicas=1):
@@ -35,10 +82,14 @@ class KubernetesManager:
             return
 
         # Scale the deployment
-        deployment.spec.replicas = replicas
+        # deployment.spec.replicas = replicas
+
+        patch = {"spec": {"replicas": int(replicas)}}
         try:
             api_instance.patch_namespaced_deployment(
-                name=deployment_name, namespace="default", body=deployment
+                name=deployment_name,
+                namespace="default",
+                body=patch,
             )
             self.__log.info(
                 f"Deployment {deployment_name} scaled to {replicas} replica."
@@ -83,6 +134,155 @@ class KubernetesManager:
         except ApiException as e:
             self.__log.error(
                 f"Exception when calling AppsV1Api->delete_namespaced_deployment: {e}\n"
+            )
+            return
+
+    def rescale_taskmanagers_heterogeneous(self, n_replicas_p, tm_type_p) -> int:
+        tm = "flink-taskmanager"
+        tm_types = ["bm", "vm-small", "vm-medium"]
+
+        # Taskmanagers: "bm" should run on "grid5000" nodes, "small_vm" on "grid5000-vm_small" nodes, and "medium_vm" on "grid5000-vm_medium" nodes
+        # node-role.kubernetes.io/node-type
+        node_roles = ["grid5000", "grid5000-vm_small", "grid5000-vm_medium"]
+        target_role = node_roles[tm_types.index(tm_type_p)]
+
+        # Gather current number of running replicas for each node type
+        replicas = {}
+        for type in tm_types:
+            replicas[type] = self.get_deployment_replicas(f"{tm}-{type}", "default")
+
+        self.__log.info(f"Current replicas: {replicas}")
+
+        # Current level of parallelism is the sum of all replicas
+        current_parallelism = sum(replicas.values())
+
+        # Check if the number of replicas is already the desired one
+        if replicas[tm_type_p] == n_replicas_p:
+            self.__log.warning(
+                f"Number of replicas for {tm_type_p} is already {n_replicas_p}."
+            )
+            return 1, None
+        try:
+
+            # Create a Kubernetes API client
+            api_instance = Client.CoreV1Api()
+
+            # Retrieve all nodes tha match the desired labels
+            try:
+                labels = ",".join(
+                    [
+                        f"node-role.kubernetes.io/node-type={target_role}",
+                        "node-role.kubernetes.io/worker=consumer",
+                    ]
+                )
+                nodes = api_instance.list_node(label_selector=labels)
+            except ApiException as e:
+                self.__log.error(f"Exception when calling CoreV1Api->list_node: {e}\n")
+                return 2, None
+
+            # Count the number of available nodes for each node type
+            # available_nodes = {role: 0 for role in node_roles}
+            # for node in nodes.items:
+            #     node_type = node.metadata.labels.get(
+            #         "node-role.kubernetes.io/node-type"
+            #     )
+            #     is_consumer = (
+            #         "node-role.kubernetes.io/worker=consumer" in node.metadata.labels
+            #     )
+            #     if node_type in available_nodes and is_consumer:
+            #         available_nodes[node_type] += 1
+
+            self.__log.info(f"Available nodes: {len(nodes.items)}")
+            # Check if there are enough nodes to scale the desired node type
+            if len(nodes.items) < n_replicas_p:
+                self.__log.error("Not enough available nodes to scale.")
+                return 2, None
+
+            # Relabel nodes with auta-scaling labels to ensure that the flink taskmanagers are scheduled on the correct nodes
+            current_replicas = replicas[tm_type_p]
+            scale_direction = "up" if n_replicas_p > current_replicas else "down"
+            changes_needed = abs(n_replicas_p - current_replicas)
+
+            self.__log.info(
+                f"Scaling {tm_type_p} from {current_replicas} to {n_replicas_p} replicas."
+            )
+
+            if scale_direction == "up":
+                for node in nodes.items:
+                    if changes_needed == 0:
+                        break
+                    autoscaling_label = node.metadata.labels.get(
+                        "node-role.kubernetes.io/autoscaling"
+                    )
+                    if autoscaling_label != "SCHEDULABLE":
+                        # The node is either unschedulable or does not have the autoscaling label
+                        node.metadata.labels[
+                            "node-role.kubernetes.io/autoscaling"
+                        ] = "SCHEDULABLE"
+                        api_instance.patch_node(
+                            node.metadata.name,
+                            {"metadata": {"labels": node.metadata.labels}},
+                        )
+                        changes_needed -= 1
+            else:  # scale down
+                for node in nodes.items:
+                    if changes_needed == 0:
+                        break
+                    if (
+                        node.metadata.labels.get("node-role.kubernetes.io/autoscaling")
+                        == "SCHEDULABLE"
+                    ):
+                        node.metadata.labels[
+                            "node-role.kubernetes.io/autoscaling"
+                        ] = "UNSCHEDULABLE"
+                        api_instance.patch_node(
+                            node.metadata.name,
+                            {"metadata": {"labels": node.metadata.labels}},
+                        )
+                        changes_needed -= 1
+
+            # Check if changes_needed is 0
+            if changes_needed != 0:
+                self.__log.error("Failed to correctly relabel nodes.")
+                return 2, None
+
+            # Scale every node type to 0
+            for type in tm_types:
+                self.scale_deployment(f"{tm}-{type}", 0)
+
+            # Give some time for tasks to execute
+            sleep(7)
+
+            # Scale the desired node type to the desired number of replicas and the rest back to their original number
+            for type in tm_types:
+                if tm_type_p == type:
+                    self.scale_deployment(f"{tm}-{type}", n_replicas_p)
+                else:
+                    self.scale_deployment(f"{tm}-{type}", replicas[type])
+
+            new_parallelism = sum(
+                [
+                    self.get_deployment_replicas(f"{tm}-{type}", "default")
+                    for type in tm_types
+                ]
+            )
+            self.__log.info(f"New parallelism: {new_parallelism}")
+
+        except Exception as e:
+            self.__log.error(f"Error during rescale: {e}")
+            return 2, None
+        return 0, new_parallelism
+
+    def get_deployment_replicas(self, deployment_name, namespace):
+        api_instance = Client.AppsV1Api()
+        try:
+            deployment = api_instance.read_namespaced_deployment(
+                name=deployment_name, namespace=namespace, async_req=False
+            )
+            return int(deployment.spec.replicas)
+        except ApiException as e:
+            self.__log.error(
+                f"Exception when calling AppsV1Api->read_namespaced_deployment: {e}\n"
             )
             return
 
