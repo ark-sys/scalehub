@@ -6,7 +6,7 @@ set -gx SHUB_PATH /app/scripts
 # SHUB_CONF_PATH: The directory where the configuration files are stored
 set -gx SHUB_CONF_PATH /app/conf
 # SHUB_PLAYBOOKS_PATH: The directory where the playbook files are stored
-set -gx SHUB_PLAYBOOKS_PATH /app/playbooks/project
+set -gx SHUB_PLAYBOOKS_PATH /app/playbooks
 # SHUB_EXPERIMENTS_DATA_PATH: The directory where the experiment data is stored
 set -gx SHUB_EXPERIMENTS_DATA_PATH /app/experiments-data
 
@@ -33,15 +33,21 @@ complete -c shub -n "__fish_use_subcommand" -a "run" -d "Run action"
 # Autocompletion for 'deploy' and 'delete' commands
 # This function returns the names of the playbook files
 function __fish_shub_deploy_delete_complete
-    set playbook_files $SHUB_PLAYBOOKS_PATH/*.yaml
-    for file in $playbook_files
-        set filename (basename $file .yaml)
-        # If the file name begins with 'cluster-setup', skip it
-        if string match -q "cluster-setup*" $filename
-            continue
+    set playbook_dirs $SHUB_PLAYBOOKS_PATH/*
+    for dir in $playbook_dirs
+        if test -d $dir
+            set playbook_files $dir/*.yaml
+            for file in $playbook_files
+                set filename (basename $file .yaml)
+                # If the file name begins with 'cluster-setup', skip it
+                if string match -q "cluster-setup*" $filename
+                    continue
+                end
+                echo (basename $dir)/$filename
+            end
         end
-        echo $filename
     end
+
 end
 
 # Enable autocompletion for the 'deploy' and 'delete' commands with the playbook file names
@@ -54,7 +60,7 @@ function __fish_shub_export_complete
         if test -d $dir
             set dirname (basename $dir)
             # If the directory name matches the 'DD-MM-YYYY' format, echo it
-            if string match -q -r '^[0-9]{2}-[0-9]{2}-[0-9]{4}$' $dirname
+            if string match -q -r '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' $dirname
                 echo $dirname
                 # Iterate over the subdirectories of the current directory
                 for subdir in $dir/*

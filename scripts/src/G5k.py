@@ -3,18 +3,20 @@ import subprocess
 
 import enoslib as en
 import yaml
+from ansible.inventory.manager import InventoryManager
+from ansible.parsing.dataloader import DataLoader
 
 from scripts.src.Platform import Platform
+from scripts.utils.Config import Key
 from scripts.utils.Logger import Logger
-from scripts.utils.Config import Config, Key
 
 
 class G5k(Platform):
-    def __init__(self, config: Config, log: Logger, verbose: bool = True):
+    def __init__(self, log: Logger, platform_config: dict, verbose: bool = True):
         super().__init__()
         _ = en.init_logging()
         self.__log = log
-        self.config = config
+        self.config = platform_config
 
         # Create .python-grid5000.yaml required by enoslib
         self.check_credentials_file()
@@ -28,68 +30,79 @@ class G5k(Platform):
 
     # Create a reservation
     def create(self, verbose: bool = True):
-        self.reservation_name = self.config.get_str(Key.Platform.reservation_name)
-        self.site = self.config.get_str(Key.Platform.site)
-        self.cluster = self.config.get_str(Key.Platform.cluster)
-        self.producers = self.config.get_int(Key.Platform.producers)
-        self.consumers = self.config.get_int(Key.Platform.consumers)
-        self.queue = self.config.get_str(Key.Platform.queue)
-        self.walltime = self.config.get_str(Key.Platform.walltime)
-        self.start_time = self.config.get(Key.Platform.start_time)
+        self.reservation_name = self.config["reservation_name"]
+        self.site = self.config["site"]
+        self.cluster = self.config["cluster"]
+        self.producers = self.config["producers"]
+        self.consumers = self.config["consumers"]
+        self.queue = self.config["queue"]
+        self.walltime = self.config["walltime"]
+        self.start_time = self.config["start_time"]
+        self.control = self.config["control"]
 
         # Setup request of resources as specified in configuration file
         network = en.G5kNetworkConf(type="prod", roles=["my_network"], site=self.site)
 
-        # If producers or consumers are set to 0, crate a single node with 3 roles
-        if self.producers == 0 or self.consumers == 0:
-            conf = (
-                en.G5kConf.from_settings(
-                    job_name=self.reservation_name,
-                    queue=self.queue,
-                    walltime=self.walltime,
+        # Create base configuration
+        conf = en.G5kConf.from_settings(
+            job_name=self.reservation_name,
+            queue=self.queue,
+            walltime=self.walltime,
+        ).add_network_conf(network)
+
+        # If control is not set, don't add it to the configuration
+        if not self.control:
+            # If both producers and consumers are 0, throw an error
+            if self.producers == 0 and self.consumers == 0:
+                self.__log.error(
+                    "No control, producers or consumers specified in configuration file."
                 )
-                .add_network_conf(network)
-                .add_machine(
-                    roles=["control", "producers", "consumers"],
-                    cluster=self.cluster,
-                    nodes=1,
-                    primary_network=network,
+                raise Exception(
+                    "No control, producers or consumers specified in configuration file."
                 )
-                .finalize()
-            )
+            else:
+                if self.producers > 0:
+                    conf.add_machine(
+                        roles=["producers"],
+                        cluster=self.cluster,
+                        nodes=self.producers,
+                        primary_network=network,
+                    )
+                if self.consumers > 0:
+                    conf.add_machine(
+                        roles=["consumers"],
+                        cluster=self.cluster,
+                        nodes=self.consumers,
+                        primary_network=network,
+                    )
         else:
-            conf = (
-                en.G5kConf.from_settings(
-                    job_name=self.reservation_name,
-                    queue=self.queue,
-                    walltime=self.walltime,
-                )
-                .add_network_conf(network)
-                .add_machine(
-                    roles=["control"],
-                    cluster=self.cluster,
-                    nodes=1,
-                    primary_network=network,
-                )
-                .add_machine(
+            conf.add_machine(
+                roles=["control"],
+                cluster=self.cluster,
+                nodes=1,
+                primary_network=network,
+            )
+
+            if self.producers > 0:
+                conf.add_machine(
                     roles=["producers"],
                     cluster=self.cluster,
                     nodes=self.producers,
                     primary_network=network,
                 )
-                .add_machine(
+            if self.consumers > 0:
+                conf.add_machine(
                     roles=["consumers"],
                     cluster=self.cluster,
                     nodes=self.consumers,
                     primary_network=network,
                 )
-                .finalize()
-            )
 
-        self.conf = conf
+        self.conf = conf.finalize()
         self.provider = en.G5k(self.conf)
 
     def setup(self):
+
         # If start_time is set, convert it to an int timestamp. Format is "HH:MM:SS" of the day
         if self.start_time is not None:
             import datetime
@@ -105,19 +118,37 @@ class G5k(Platform):
         else:
             # Request resources from Grid5000
             roles, networks = self.provider.init()
-        inventory = ""
 
-        for role, hosts in roles.items():
-            # Add role header
-            inventory += f"[{role}]\n"
+        inventory: InventoryManager = InventoryManager(loader=DataLoader())
 
-            # Add hosts for the role
-            for host in hosts:
-                inventory += f"{host.alias}\n"
+        inventory.add_group("grid5000")
+        # Add the roles to the inventory
+        for role in roles:
+            inventory.add_group(role)
+            for host in roles[role]:
+                host_name = host.address
+                inventory.add_host(host_name, group=role)
+                inventory.add_host(host_name, group="grid5000")
+                inventory.add_host(host_name, group="all")
 
-            # Add an extra newline to separate roles
-            inventory += "\n"
-        # Return inventory dictionary
+        # Get list of hosts of group "all"
+        all_hosts = inventory.get_hosts("all")
+        self.__log.debug(f"all_hosts: {all_hosts}")
+
+        # Setup IPv6 on reserved nodes
+        # https://www.grid5000.fr/w/Reconfigurable_Firewall
+        # https://www.grid5000.fr/w/IPv6#IPv6_communication_from_the_Internet_to_a_grid5000_node
+        # https://discovery.gitlabpages.inria.fr/enoslib/jupyter/fit_and_g5k/01_networking.html#Setting-up-IPv6
+        # https://discovery.gitlabpages.inria.fr/enoslib/tutorials/grid5000.html#reconfigurable-firewall-open-ports-to-the-external-world
+
+        try:
+            self.provider.fw_create(proto="all")
+        except Exception as e:
+            self.__log.error(f"Error creating firewall: {e}")
+        # en.run("dhclient -6 br0", all_hosts)
+        # en.run("apt update && apt install -y nginx", all_hosts)
+
+        # Return inventory
         return inventory
 
     def check_credentials_file(self):
@@ -200,3 +231,192 @@ class G5k(Platform):
         self.__log.info(f"Syncing data from Grid5000 to {experiments_path}")
         # Execute the command
         subprocess.run(cmd, shell=True)
+
+
+class G5k_VM(Platform):
+    def __init__(self, log: Logger, platform_config: dict, verbose: bool = True):
+        super().__init__()
+        _ = en.init_logging()
+        self.__log = log
+        self.config = platform_config
+
+        # Create .python-grid5000.yaml required by enoslib
+        self.check_credentials_file()
+
+        if verbose:
+            # Check that Grid5000 is joinable
+            en.check()
+
+        # Performance tuning for VM interactions https://discovery.gitlabpages.inria.fr/enoslib/tutorials/performance_tuning.html#performance-tuning
+        os.environ["ANSIBLE_PIPELINING"] = "True"
+
+        # Set up the reservation
+        self.create(verbose)
+
+    # Create a reservation
+    def create(self, verbose: bool = True):
+        self.reservation_name = self.config["reservation_name"]
+        self.site = self.config["site"]
+        self.cluster = self.config["cluster"]
+        self.producers = self.config["producers"]
+        self.consumers = self.config["consumers"]
+        self.queue = self.config["queue"]
+        self.walltime = self.config["walltime"]
+        self.start_time = self.config["start_time"]
+        self.control = self.config["control"]
+        self.core_per_vm = self.config["core_per_vm"]
+        self.memory_per_vm = self.config["memory_per_vm"]
+        self.disk_per_vm = self.config["disk_per_vm"]
+
+        # Create base configuration
+        conf = en.VMonG5kConf.from_settings(
+            job_name=self.reservation_name,
+            queue=self.queue,
+            walltime=self.walltime,
+        )
+
+        # If control is not set, don't add it to the configuration
+        if not self.control:
+            # If both producers and consumers are 0, throw an error
+            if self.producers == 0 and self.consumers == 0:
+                self.__log.error(
+                    "No control, producers or consumers specified in configuration file."
+                )
+                raise Exception(
+                    "No control, producers or consumers specified in configuration file."
+                )
+            else:
+                if self.producers > 0:
+                    conf.add_machine(
+                        roles=["producers"],
+                        cluster=self.cluster,
+                        number=self.producers,
+                        vcore_type="core",
+                        flavour_desc={
+                            "core": self.core_per_vm,
+                            "mem": self.memory_per_vm,
+                            # "disk": self.disk_per_vm,
+                        },
+                    )
+                if self.consumers > 0:
+                    conf.add_machine(
+                        roles=["consumers"],
+                        cluster=self.cluster,
+                        number=self.consumers,
+                        vcore_type="core",
+                        flavour_desc={
+                            "core": self.core_per_vm,
+                            "mem": self.memory_per_vm,
+                            # "disk": self.disk_per_vm,
+                        },
+                    )
+        else:
+            conf.add_machine(
+                roles=["control"],
+                cluster=self.cluster,
+                number=1,
+                vcore_type="core",
+                flavour_desc={
+                    "core": self.core_per_vm,
+                    "mem": self.memory_per_vm,
+                    # "disk": self.disk_per_vm,
+                },
+            )
+
+            if self.producers > 0:
+                conf.add_machine(
+                    roles=["producers"],
+                    cluster=self.cluster,
+                    number=self.producers,
+                    vcore_type="core",
+                    flavour_desc={
+                        "core": self.core_per_vm,
+                        "mem": self.memory_per_vm,
+                        # "disk": self.disk_per_vm,
+                    },
+                )
+            if self.consumers > 0:
+                conf.add_machine(
+                    roles=["consumers"],
+                    cluster=self.cluster,
+                    number=self.consumers,
+                    vcore_type="core",
+                    flavour_desc={
+                        "core": self.core_per_vm,
+                        "mem": self.memory_per_vm,
+                        # "disk": self.disk_per_vm,
+                    },
+                )
+        self.conf = conf.finalize()
+        self.provider = en.VMonG5k(self.conf)
+
+    def setup(self):
+
+        # If start_time is set, convert it to an int timestamp. Format is "HH:MM:SS" of the day
+        if self.start_time is not None:
+            import datetime
+
+            now = datetime.datetime.now()
+            start_time = datetime.datetime.strptime(self.start_time, "%H:%M:%S")
+            start_time = now.replace(
+                hour=start_time.hour, minute=start_time.minute, second=start_time.second
+            )
+            self.start_time = int(start_time.timestamp())
+            # Request resources from Grid5000
+            roles, networks = self.provider.init(start_time=self.start_time)
+        else:
+            # Request resources from Grid5000
+            roles, networks = self.provider.init()
+        # Display the mapping from VM to physical nodes
+        for role, vms in roles.items():
+            print(f"\n=== {role} ===")
+            for vm in vms:
+                print(f"vm is {vm}")
+                print(f"{vm.alias:20} {vm.address:15} {vm.pm.alias}")
+
+        inventory: InventoryManager = InventoryManager(loader=DataLoader())
+
+        inventory.add_group("vm_grid5000")
+        # Add the roles to the inventory
+        for role in roles:
+            inventory.add_group(role)
+            for host in roles[role]:
+                host_info = f"{host.alias} ansible_ssh_host={host.address} grid_node={host.pm.alias} node_size={self.core_per_vm},{self.memory_per_vm}"
+
+                inventory.add_host(host_info, group=role)
+                inventory.add_host(host_info, group="vm_grid5000")
+                inventory.add_host(host_info, group="all")
+
+        # Return inventory
+        return inventory
+
+    def check_credentials_file(self):
+        # Get the home directory
+        home_directory = os.path.expanduser("~")
+
+        # Specify the path to the credentials file
+        credentials_file_path = os.path.join(home_directory, ".python-grid5000.yaml")
+
+        # Check if the file exists
+        if os.path.exists(credentials_file_path):
+            # Load the YAML content from the file
+            with open(credentials_file_path, "r") as file:
+                credentials = yaml.safe_load(file)
+
+                # Check if 'username' and 'password' keys exist in the YAML content
+                if "username" in credentials and "password" in credentials:
+                    # Check if 'username' and 'password' values are not empty
+                    if credentials["username"] and credentials["password"]:
+                        self.username = credentials["username"]
+                        self.password = credentials["password"]
+                        return True  # Credentials are present and non-empty
+                    else:
+                        return False  # Either 'username' or 'password' is empty
+                else:
+                    return False  # Either 'username' or 'password' is missing
+        else:
+            return False  # File does not exist
+
+    def destroy(self):
+        # Destroy all resources from Grid5000
+        self.provider.destroy()

@@ -1,5 +1,5 @@
 # Base image
-FROM python:slim-bullseye
+FROM python:3.10-bookworm
 
 # Set default env variables
 ENV TZ="Europe/Paris"
@@ -8,11 +8,20 @@ ENV ANSIBLE_CONFIG="/app/conf/ansible.cfg"
 ENV SHUB_CONFIG="/app/conf/scalehub.ini"
 ENV PATH="$PATH:/app/scripts"
 ENV PYTHONPATH="/app:/app/scripts"
+# Silence warnirngs related to dependencies
+ENV PYTHONWARNINGS=ignore::UserWarning
 # Get build arguments, default to 1000:1000 if not set
 ARG UID=1000
 ARG GID=1000
 # Eric B. is on the cut and my name is
 ARG USER=rakim
+
+# Create working directory for the scripts at the root. This easily allows to mount a volume to this directory
+# Also set the permissions to rwx for all users to avoid permission issues
+RUN mkdir -m a=rwx /app/
+
+# Set the working directory to /app
+WORKDIR /app/
 
 # Install necessary dependencies
 RUN apt-get update && apt-get install -y \
@@ -30,7 +39,10 @@ RUN apt-get update && apt-get install -y \
     nginx \
     sudo \
     rsync \
-    cron
+    cron  \
+    nano  \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install python requirements
 COPY requirements.txt requirements.txt
@@ -54,6 +66,15 @@ COPY fish/shub.fish /usr/share/fish/vendor_completions.d/shub.fish
 # Install some custom functions to enhance prompt
 COPY fish/functions/* /usr/share/fish/functions/
 
+# Copy reverse-proxy config
+COPY nginx/nginx.conf /etc/nginx/conf.d/scalehub.conf
+
+# Download and install the mitogen plugin for Ansible
+RUN mkdir -p /app/ansible && wget -O /app/ansible/mitogen-plugin.tar.gz https://files.pythonhosted.org/packages/source/m/mitogen/mitogen-0.3.7.tar.gz && \
+    tar -xzf /app/ansible/mitogen-plugin.tar.gz -C /app/ansible && \
+    rm /app/ansible/mitogen-plugin.tar.gz && \
+    mv /app/ansible/mitogen-0.3.7 /app/ansible/mitogen
+
 # Set host user id and group id without password
 RUN groupadd -g $GID $USER && \
     useradd -m -u $UID -g $GID -o -s /usr/bin/fish $USER && \
@@ -68,18 +89,9 @@ RUN echo 'if [[ $(ps --no-header --pid=$PPID --format=comm) != "fish" && -z ${BA
     exec fish $LOGIN_OPTION -d3\n\
 fi' >> ~/.bashrc
 
+# Setup the entrypoint
 COPY entrypoint.sh /entrypoint.sh
 
 RUN sudo chmod +x /entrypoint.sh
-
-# Copy reverse-proxy config
-COPY nginx/nginx.conf /etc/nginx/conf.d/scalehub.conf
-
-# Create working directory for the scripts at the root. This easily allows to mount a volume to this directory
-# Also set the permissions to rwx for all users to avoid permission issues
-RUN sudo mkdir -m a=rwx /app/
-
-# Set the working directory to /app
-WORKDIR /app/
 
 ENTRYPOINT ["/entrypoint.sh"]

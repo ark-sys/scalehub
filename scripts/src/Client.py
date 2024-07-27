@@ -17,8 +17,10 @@ from scripts.utils.Logger import Logger
 
 
 class Playbooks:
-    # Main call to run a playbook, checks if type is create or delete
-    def run_playbook(self, playbook, config: Config, tag=None, extra_vars=None):
+    def __init__(self, log: Logger):
+        self.__log = log
+
+    def run(self, playbook, config: Config, tag=None, extra_vars=None):
         if extra_vars is None:
             extra_vars = {}
         inventory = config.get_str(Key.Scalehub.inventory)
@@ -28,7 +30,6 @@ class Playbooks:
             raise FileNotFoundError(f"The file doesn't exist: {playbook_filename}")
 
         playbook_vars = {
-            "kubeconfig_path": os.environ["KUBECONFIG"],
             "shub_config": config.to_json(),
         }
         playbook_vars.update(extra_vars)
@@ -44,18 +45,22 @@ class Playbooks:
                 arg_tags = []
 
         # Run the playbook with additional tags and extra vars
-        en.run_ansible(
-            playbooks=[playbook_filename],
-            tags=arg_tags,
-            extra_vars=playbook_vars,
-            inventory_path=inventory,
-        )
+        try:
+            en.run_ansible(
+                playbooks=[playbook_filename],
+                tags=arg_tags,
+                extra_vars=playbook_vars,
+                inventory_path=inventory,
+            )
+        except Exception as e:
+            self.__log.error(e.__str__())
+            return e
 
 
 class Client:
     def __init__(self, log: Logger, config: Config):
         self.__log = log
-        self.p: Playbooks = Playbooks()
+        self.p: Playbooks = Playbooks(log)
 
         self.client = mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION1)
         self.config = config

@@ -9,10 +9,12 @@ from paho.mqtt.enums import CallbackAPIVersion
 from transitions import Machine
 
 from scripts.utils.Config import Config
+from scripts.utils.DataEval import DataEval
+from scripts.utils.DataExporter import DataExporter
 from scripts.utils.Defaults import DefaultKeys as Key
-from scripts.utils.Data import ExperimentData
 from scripts.utils.KubernetesManager import KubernetesManager
 from scripts.utils.Logger import Logger
+from scripts.utils.Tools import Tools
 
 
 # Objective
@@ -49,6 +51,7 @@ class ExperimentFSM:
     def __init__(self, log: Logger):
         self.__log = log
         self.k: KubernetesManager = KubernetesManager(log)
+        self.t: Tools = Tools(log)
 
         self.config = None
         self.start_ts = None
@@ -89,27 +92,6 @@ class ExperimentFSM:
 
     def set_config(self, config):
         self.config = config
-
-    def create_exp_folder(self, date):
-        # Create the base folder path
-        base_folder_path = os.path.join(self.EXPERIMENTS_BASE_PATH, date)
-        # Find the next available subfolder number
-        subfolder_number = 1
-        while True:
-            subfolder_path = os.path.join(base_folder_path, str(subfolder_number))
-            if not os.path.exists(subfolder_path):
-                break
-            subfolder_number += 1
-        try:
-            # Create the subfolder
-            os.makedirs(subfolder_path)
-        except OSError as e:
-            self.__log.error(
-                f"Error while creating experiment folder {subfolder_path}: {e}"
-            )
-            raise e
-        # Return the path to the new subfolder
-        return subfolder_path
 
     def create_log_file(self):
         # Create log file
@@ -296,8 +278,9 @@ class ExperimentFSM:
         self.end_ts = int(datetime.now().timestamp())
         try:
             # Create experiment folder for results, ordered by date (YYYY-MM-DD)
-            self.exp_path = self.create_exp_folder(
-                datetime.fromtimestamp(self.start_ts).strftime("%Y-%m-%d")
+            self.exp_path = self.t.create_exp_folder(
+                self.EXPERIMENTS_BASE_PATH,
+                datetime.fromtimestamp(self.start_ts).strftime("%Y-%m-%d"),
             )
 
             # Create log file with start timestamp
@@ -311,21 +294,22 @@ class ExperimentFSM:
                 file.write(transscale_logs)
 
             # Export experiment data
-            data: ExperimentData = ExperimentData(
+            data_exp: DataExporter = DataExporter(
                 log=self.__log, exp_path=self.exp_path
             )
 
             # Export data from victoriametrics
-            data.export_experiment_data()
+            data_exp.export()
 
             if self.config.get_bool(Key.Experiment.output_stats):
+                data_eval = DataEval(log=self.__log, exp_path=self.exp_path)
                 # If output_stats is enabled, evaluate mean throughput and extract predictions from transscale-job logs in stats.csv file
-                data.eval_mean_stderr()
+                data_eval.eval_mean_stderr()
                 # If output_plot is enabled, evaluate plot from stats.csv file
                 if self.config.get_bool(Key.Experiment.output_plot):
-                    data.eval_summary_plot()
-                    data.eval_experiment_plot()
-                    data.eval_plot_with_checkpoints()
+                    data_eval.eval_summary_plot()
+                    data_eval.eval_experiment_plot()
+                    data_eval.eval_plot_with_checkpoints()
 
             self.__log.info("Experiment ended.")
         except Exception as e:

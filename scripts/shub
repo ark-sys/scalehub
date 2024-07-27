@@ -1,104 +1,181 @@
 #!/usr/bin/env python3
 import argparse
+import configparser
 import os
+import re
+from datetime import datetime
 from time import sleep
 
-from scripts.utils.Data import ExportData, ExperimentData
-from src.Client import Client, Playbooks
-from src.G5k import G5k
-from src.Platform import Platform
-from utils.Config import Config
-from utils.Defaults import DefaultKeys as Key, DefaultValues as Value
-from utils.KubernetesManager import KubernetesManager
-from utils.Logger import Logger
+from ansible.inventory.manager import InventoryManager
+from ansible.parsing.dataloader import DataLoader
+
+from scripts.src.Client import Client, Playbooks
+from scripts.src.FIT import FIT
+from scripts.src.G5k import G5k, G5k_VM
+from scripts.src.Platform import Platform, merge_inventories
+from scripts.src.RaspberryPi import RaspberryPi
+from scripts.utils.Config import Config
+from scripts.utils.DataEval import DataEval
+from scripts.utils.DataExporter import DataExporter
+from scripts.utils.Defaults import DefaultKeys as Key, DefaultValues as Value
+from scripts.utils.KubernetesManager import KubernetesManager
+from scripts.utils.Logger import Logger
+from scripts.utils.Tools import Tools
 
 
 # Build cluster and install dependencies
 def provision(config: Config):
-    platform_type = config.get_str(Key.Platform.type)
-    match platform_type:
-        case "Grid5000":
-            # Initiate oarsub request
-            log.info("Reserving...")
-            p: Platform = G5k(config, log)
+    final_inventory = InventoryManager(loader=DataLoader(), sources=[])
+    platforms = config.get(Key.Platforms.platforms)
 
-            inventory = p.setup()
+    if platforms is not None:
+        log.info(f"Found {len(platforms)} platforms to provision.")
+        for platform_info in platforms:
+            platform_type = platform_info["type"]
+            if platform_type == "Grid5000":
+                # Initiate oarsub request
+                log.info("Reserving...")
+                p: Platform = G5k(log, platform_info)
+                g5k_inventory = p.setup()
+                final_inventory = merge_inventories(final_inventory, g5k_inventory)
+            elif platform_type == "VM_on_Grid5000":
+                # Initiate oarsub request
+                log.info("Reserving VM on Grid5000...")
+                p: Platform = G5k_VM(log, platform_info)
+                g5k_inventory = p.setup()
+                final_inventory = merge_inventories(final_inventory, g5k_inventory)
+            elif platform_type == "RaspberryPi":
+                log.info("Provisioning RaspberryPi...")
+                p: Platform = RaspberryPi(log, platform_info)
+                pi_inventory = p.setup()
+                final_inventory = merge_inventories(final_inventory, pi_inventory)
+            elif platform_type == "FIT":
+                log.info("Provisioning FIT...")
+                p: Platform = FIT(log, platform_info)
+                fit_inventory = p.setup()
+                final_inventory = merge_inventories(final_inventory, fit_inventory)
+            else:
+                platform_name = platform_info["name"]
 
-            # Dump list of requested nodes to file
-            with open(config.get_str(Key.Scalehub.inventory), "w") as f:
-                f.write(inventory)
+                log.error(
+                    f"Provision is not implemented for platform {platform_name}, which is of type {platform_type}"
+                )
 
-            # Setup cluster with kubernetes
-            p: Playbooks = Playbooks()
-            kubernetes_type = (
-                f"cluster-setup.{config.get_str(Key.Platform.kubernetes_type)}"
-            )
-            return p.run_playbook(kubernetes_type, config=config)
+        # Create ConfigParser object
+        config_parser = configparser.ConfigParser(allow_no_value=True)
 
-        case _:
-            log.error(f"Provision is not implemented for platform {platform_type}")
+        # Add inventory to ConfigParser object
+        for group in final_inventory.get_groups_dict():
+            config_parser.add_section(group)
+            for host in final_inventory.get_hosts(group):
+                config_parser.set(group, host.name)
+
+        # Write final inventory to file
+        final_inventory_path = os.path.join(config.get_str(Key.Scalehub.inventory))
+
+        with open(final_inventory_path, "w") as f:
+            config_parser.write(f)
+
+        log.info(f"Inventory file written to {final_inventory_path}")
+
+        # Setup Kubernetes
+        p: Playbooks = Playbooks(log)
+
+        # Run infrastructure playbook
+        try:
+            p.run("infrastructure/setup", tag="create", config=config)
+        except Exception as e:
+            log.error(f"Error during infrastructure setup: {e}")
+            exit(1)
+    else:
+        log.error("No platforms are specified in the configuration file.")
 
 
 # Destroy cluster
 def destroy(config: Config):
-    platform_type = config.get_str(Key.Platform.type)
-    match platform_type:
-        case "Grid5000":
-            # Initiate oardel request
-            p: Platform = G5k(config, log)
-            return p.destroy()
-        case _:
-            log.error(f"Destroy is not implemented for platform {platform_type}")
+    platforms = config.get(Key.Platforms.platforms)
+    for platform_info in platforms:
+        platform_type = platform_info["type"]
+        match platform_type:
+            case "Grid5000":
+                # Initiate oardel request
+                p: Platform = G5k(log, platform_info)
+                p.destroy()
+            case "VM_on_Grid5000":
+                # Initiate oardel request
+                p: Platform = G5k_VM(log, platform_info)
+                p.destroy()
+            case "RaspberryPi":
+                log.info("Destroying RaspberryPi...")
+                p: Platform = RaspberryPi(log, platform_info)
+                p.destroy()
+            case "FIT":
+                log.info("Destroying FIT...")
+                p: Platform = FIT(log, platform_info)
+                p.destroy()
+            case _:
+                log.error(f"Destroy is not implemented for platform {platform_type}")
 
 
 # Execute tasks with "deploy" tag for a given playbook
 def deploy(playbook, config: Config):
     log.info(f"Executing deployment tasks in playbook : {playbook} ...")
-    p: Playbooks = Playbooks()
+    p: Playbooks = Playbooks(log)
     tag = "create"
-    if playbook == "load_generators":
-        for lg_config in config.get(Key.Experiment.Generators.generators):
-            load_generator_params = {
-                "lg_name": lg_config["name"],
-                "lg_topic": lg_config["topic"],
-                "lg_numsensors": int(lg_config["num_sensors"]),
-                "lg_intervalms": int(lg_config["interval_ms"]),
-                "lg_replicas": int(lg_config["replicas"]),
-                "lg_value": int(lg_config["value"]),
-            }
-            p.run_playbook(
-                playbook,
-                config=config,
-                tag=tag,
-                extra_vars=load_generator_params,
-            )
-    else:
-        return p.run_playbook(playbook, config=config, tag=tag)
+    try:
+        if playbook == "application/load_generators":
+            for lg_config in config.get(Key.Experiment.Generators.generators):
+                load_generator_params = {
+                    "lg_name": lg_config["name"],
+                    "lg_topic": lg_config["topic"],
+                    "lg_numsensors": int(lg_config["num_sensors"]),
+                    "lg_intervalms": int(lg_config["interval_ms"]),
+                    "lg_replicas": int(lg_config["replicas"]),
+                    "lg_value": int(lg_config["value"]),
+                }
+                p.run(
+                    playbook,
+                    config=config,
+                    tag=tag,
+                    extra_vars=load_generator_params,
+                )
+        else:
+            p.run(playbook, config=config, tag=tag)
+    except Exception as e:
+        log.error(f"Error during deployment: {e}")
+        exit(1)
+    return
 
 
 # Execute tasks with "delete" tag for a given playbook
 def delete(playbook, config: Config):
     log.info(f"Executing deletion tasks in playbook : {playbook} ...")
-    p: Playbooks = Playbooks()
+    p: Playbooks = Playbooks(log)
     tag = "delete"
-    if playbook == "load_generators":
-        for lg_config in config.get(Key.Experiment.Generators.generators):
-            load_generator_params = {
-                "lg_name": lg_config["name"],
-                "lg_topic": lg_config["topic"],
-                "lg_numsensors": int(lg_config["num_sensors"]),
-                "lg_intervalms": int(lg_config["interval_ms"]),
-                "lg_replicas": int(lg_config["replicas"]),
-                "lg_value": int(lg_config["value"]),
-            }
-            p.run_playbook(
-                playbook,
-                config=config,
-                tag=tag,
-                extra_vars=load_generator_params,
-            )
-    else:
-        return p.run_playbook(playbook, config=config, tag=tag)
+    try:
+        if playbook == "application/load_generators":
+            for lg_config in config.get(Key.Experiment.Generators.generators):
+                load_generator_params = {
+                    "lg_name": lg_config["name"],
+                    "lg_topic": lg_config["topic"],
+                    "lg_numsensors": int(lg_config["num_sensors"]),
+                    "lg_intervalms": int(lg_config["interval_ms"]),
+                    "lg_replicas": int(lg_config["replicas"]),
+                    "lg_value": int(lg_config["value"]),
+                }
+                p.run(
+                    playbook,
+                    config=config,
+                    tag=tag,
+                    extra_vars=load_generator_params,
+                )
+
+        else:
+            p.run(playbook, config=config, tag=tag)
+    except Exception as e:
+        log.error(f"Error during deletion: {e}")
+        exit(1)
+    return
 
 
 # Delete and re-deploy 'playbook' parameter
@@ -140,24 +217,141 @@ def tokens():
 
 
 # Quick action commands
-def run(action, action_type, config: Config):
+def run(action, attr, type, config: Config, export_dir):
+    # def validate_scale_params(num_replicas, type_of_node):
+    #     help_message = (
+    #         "Usage: scale <number_of_replicas> <type_of_node> \n"
+    #         "number_of_replicas: Number of replicas to scale to. \n"
+    #         "type_of_node: Type of node to be added or removed after the rescale. {baremetal | small_vm | medium_vm | pico }"
+    #     )
+    #     valid_node_types = ["bm", "vm-small", "vm-medium"]
+    #     if not isinstance(num_replicas, int):
+    #         log.warning(help_message)
+    #         raise ValueError("num_replicas must be an integer.")
+    #     if type_of_node not in valid_node_types:
+    #         log.warning(help_message)
+    #         raise ValueError(f"type_of_node must be one of {valid_node_types}.")
+
     log.debug(f"Running action {action} ...")
     k: KubernetesManager = KubernetesManager(log)
-    p: Playbooks = Playbooks()
+    p: Playbooks = Playbooks(log)
+    t: Tools = Tools(log)
+    if export_dir and action == "job":
+        start_ts = int(datetime.now().timestamp())
+        exp_path = t.create_exp_folder(
+            config.get_str(Key.Scalehub.experiments),
+            datetime.fromtimestamp(start_ts).strftime("%Y-%m-%d"),
+        )
+        log_file = os.path.join(exp_path, "exp_log.txt")
+        # Dump running configuration to file
+        with open(log_file, "w") as file:
+            file.write(f"[CONFIG]\n")
+            file.write(f"{config.to_str()}\n\n")
+            file.write(f"[TIMESTAMPS]\n")
+            file.write(f"Experiment start at : {start_ts}\n")
+
     match action:
         case "job":
             return k.execute_command_on_pod(
                 deployment_name="flink-jobmanager",
                 command=f"flink run -d -j /tmp/jobs/{config.get_str(Key.Experiment.job_file)}",
             )
+        case "sscale":
+            # Simple scale involves scaling up and down taskmanagers and operators
+            # of the running job to the specified number of replicas
+            monitored_task = config.get_str(Key.Experiment.task_name)
+            job_file = config.get_str(Key.Experiment.job_file)
+            num_replicas = attr
+
+            # Stop current job and get scaling info
+            job_id, operator_names, savepoint_path = k.prepare_scaling(
+                config, monitored_task, job_file
+            )
+            if savepoint_path is None:
+                return
+
+            # Rescale taskmanagers
+            type_of_node = type
+            tm_full_name = f"flink-taskmanager-{type_of_node}"
+
+            k.scale_deployment(tm_full_name, int(num_replicas))
+
+            par_map = []
+
+            log.info(
+                f"Scaling operator {monitored_task} to parallelism {num_replicas}."
+            )
+
+            # Build new operator list with operator_name and new parallelism
+
+            for operator in operator_names:
+                if operator == monitored_task:
+                    par_map.append(f"{operator}:{num_replicas}")
+                else:
+                    par_map.append(f"{operator}:1")
+
+            # Run job with option --parmap
+            return k.execute_command_on_pod(
+                deployment_name="flink-jobmanager",
+                command=f"flink run -d -s {savepoint_path} -j /tmp/jobs/{job_file} --parmap '{';'.join(par_map)}'",
+            )
+
+        case "scale":
+
+            # Check parameters
+
+            type_of_node = type
+
+            # Scale up taskmanagers and the operator of the running job to the specified number of replicas
+            monitored_task = config.get_str(Key.Experiment.task_name)
+            job_file = config.get_str(Key.Experiment.job_file)
+            num_replicas = attr
+
+            # Stop current job and get scaling info
+            job_id, operator_names, savepoint_path = k.prepare_scaling(
+                config, monitored_task, job_file
+            )
+            if savepoint_path is None:
+                return
+
+            # Rescale taskmanagers
+            ret, par = k.rescale_taskmanagers_heterogeneous(
+                int(num_replicas), type_of_node
+            )
+            match ret:
+                case 0:
+                    log.info("Rescale successful.")
+                case 1:
+                    log.info("Rescale not needed.")
+                case _:
+                    log.error("Rescale failed.")
+                    exit(1)
+
+            par_map = []
+
+            log.info(f"Scaling operator {monitored_task} to parallelism {par}.")
+
+            # Build new operator list with operator_name and new parallelism
+            for operator in operator_names:
+                if operator == monitored_task:
+                    par_map.append(f"{operator}:{par}")
+                else:
+                    par_map.append(f"{operator}:1")
+
+            # Run job with option --parmap
+            return k.execute_command_on_pod(
+                deployment_name="flink-jobmanager",
+                command=f"flink run -d -s {savepoint_path} -j /tmp/jobs/{job_file} --parmap '{';'.join(par_map)}'",
+            )
+
         case "chaos":
             # Check if chaos has to be created or deleted
-            match action_type:
+            match attr:
                 case "create":
                     experiment = {
                         "run_experiment": "true",
                     }
-                    p.run_playbook(
+                    p.run(
                         "chaos",
                         config=config,
                         tag=["experiment"],
@@ -167,7 +361,7 @@ def run(action, action_type, config: Config):
                     experiment = {
                         "delete_experiment": "true",
                     }
-                    p.run_playbook(
+                    p.run(
                         "chaos",
                         config=config,
                         tag=["experiment"],
@@ -183,7 +377,7 @@ def run(action, action_type, config: Config):
             # Restart Flink
             reload("flink", config)
             # Remove chaos
-            run("chaos", "delete", config)
+            run("chaos", "delete", None, config)
 
         case "test":
             pass
@@ -198,121 +392,67 @@ def sync_experiment_data(config: Config):
 
 
 # Export data for a given date
-def export(config: Config):
+def export(config: Config, exp_path, action_type):
     log.info("Exporting...")
+    t: Tools = Tools(log)
 
-    # base_path = os.path.join(
-    #     config.get_str(Key.Scalehub.experiments), "output_2024-03-14_2024-03-17"
-    # )
-    # base_path = os.path.join(
-    #     "/app", "info", "paper-plots3", "Join-kk", "latency_70", "25ms"
-    # )
-    base_path = os.path.join("/app", "info", "paper-plots3")
-    e: ExportData = ExportData(log, base_path)
-    e.export()
-    #
-    # print(base_path)
-    # e: ExperimentData = ExperimentData(log, base_path)
+    # Build full path from exp_path name
+    # exp_path should be 'DD-MM-YYYY/N' where or 'DD-MM-YYYY' :
+    #   DD-MM-YYYY is the date of the experiments
+    #   N is the number of the experiment
 
-    # e.eval_mean_with_backpressure()
+    # Define regular expression patterns for 'YYYY-MM-DD' and 'YYYY-MM-DD/N' formats
+    exact_format_pattern = r"^\d{4}-\d{2}-\d{2}$"
+    with_integer_pattern = r"^\d{4}-\d{2}-\d{2}/(\d+)$"
 
-    # def get_timestamp_from_log(path):
-    #     # Verify that a log file exists for the chosen experiment
-    #     log_path = os.path.join(path, "exp_log.txt")
-    #     if not os.path.exists(log_path):
-    #         log.error("Log file for experiment not found.")
-    #         exit(1)
-    #     else:
-    #         # Verify if experiment executed correctly by checking start and end timestamps
-    #         try:
-    #             with open(log_path, "r") as log_file:
-    #                 logs = log_file.read()
-    #
-    #             start_match = re.search(r"Experiment start at : (\d+)", logs)
-    #             end_match = re.search(r"Experiment end at : (\d+)", logs)
-    #             if start_match and end_match:
-    #                 start_timestamp = int(start_match.group(1))
-    #                 end_timestamp = int(end_match.group(1))
-    #                 return start_timestamp, end_timestamp
-    #             else:
-    #                 log.error("Log file is incomplete: missing timestamp.")
-    #                 exit(1)
-    #         except FileNotFoundError:
-    #             log.error("Log file not found.")
-    #             return 0, 0
-    #
-    # # Build full path from exp_path name
-    # # exp_path should be 'DD-MM-YYYY/N' where or 'DD-MM-YYYY' :
-    # #   DD-MM-YYYY is the date of the experiments
-    # #   N is the number of the experiment
-    #
-    # # Define regular expression patterns for 'DD-MM-YYYY' and 'DD-MM-YYYY/N' formats
-    # exact_format_pattern = r"^\d{2}-\d{2}-\d{4}$"
-    # with_integer_pattern = r"^\d{2}-\d{2}-\d{4}/(\d+)$"
-    #
-    # # Try to match the 'DD-MM-YYYY' format
-    # exact_match = re.match(exact_format_pattern, exp_path)
-    # # If it doesn't match the exact format, try the 'DD-MM-YYYY/N' format
-    # with_integer_match = re.match(with_integer_pattern, exp_path)
-    #
-    # if exact_match:
-    #     base_exp_path = os.path.join(config.get_str(Key.Scalehub.experiments), exp_path)
-    #     log.info(f"Exporting experiments for {base_exp_path}.")
-    #     # Iterate through each experiment folder of the base exp path
-    #     for exp in os.listdir(base_exp_path):
-    #         full_exp_path = os.path.join(base_exp_path, exp)
-    #         # Retrieve timestamps from logs
-    #         start_ts, end_ts = get_timestamp_from_log(full_exp_path)
-    #         data: ExperimentData = ExperimentData(
-    #             log=log,
-    #             exp_path=full_exp_path,
-    #             start_ts=start_ts,
-    #             end_ts=end_ts,
-    #         )
-    #         match action_type:
-    #             case "stats":
-    #                 # If stats, only generate stats.csv with mean throughputs, parallelism and transscale predictions
-    #                 # This options requires a joined_outputs.csv file containing throughput and parallelism data
-    #                 data.eval_stats(
-    #                     skip_duration=config.get_int(Key.Experiment.output_skip_s)
-    #                 )
-    #             case "plot":
-    #                 # If plot, only generate a plot.png
-    #                 # This options requires a stats.csv file
-    #                 stats, _ = data.eval_stats(
-    #                     skip_duration=config.get_int(Key.Experiment.output_skip_s)
-    #                 )
-    #                 data.eval_plot(stats)
-    #             case _:
-    #                 # Default option is to retrieve experiment data from DataBase and save it in a joined_output.csv for stats and plot generation
-    #                 data.export_experiment_data()
-    # elif with_integer_match:
-    #     log.info(f"Exporting {exp_path} experiment.")
-    #     full_exp_path = os.path.join(config.get_str(Key.Scalehub.experiments), exp_path)
-    #     # Retrieve timestamps from logs
-    #     start_ts, end_ts = get_timestamp_from_log(full_exp_path)
-    #     data: ExperimentData = ExperimentData(
-    #         log=log, exp_path=full_exp_path, start_ts=start_ts, end_ts=end_ts
-    #     )
-    #     match action_type:
-    #         case "stats":
-    #             # If stats, only generate stats.csv with mean throughputs, parallelism and transscale predictions
-    #             # This options requires a joined_outputs.csv file containing throughput and parallelism data
-    #             data.eval_stats(
-    #                 skip_duration=config.get_int(Key.Experiment.output_skip_s)
-    #             )
-    #         case "plot":
-    #             # If plot, only generate a plot.png
-    #             # This options requires a stats.csv file
-    #             stats, _ = data.eval_stats(
-    #                 skip_duration=config.get_int(Key.Experiment.output_skip_s)
-    #             )
-    #             data.eval_plot(stats)
-    #         case _:
-    #             # Default option is to retrieve experiment data from DataBase and save it in a joined_output.csv for stats and plot generation
-    #             data.export_experiment_data()
-    # else:
-    #     log.error("Error during export.")
+    # Try to match the 'DD-MM-YYYY' format
+    exact_match = re.match(exact_format_pattern, exp_path)
+    # If it doesn't match the exact format, try the 'DD-MM-YYYY/N' format
+    with_integer_match = re.match(with_integer_pattern, exp_path)
+
+    if exact_match:
+        base_exp_path: str = os.path.join(
+            config.get_str(Key.Scalehub.experiments), exp_path
+        )
+        log.info(f"Exporting experiments for {base_exp_path}.")
+        # Iterate through each experiment folder of the base exp path
+        for exp in os.listdir(base_exp_path):
+            full_exp_path = os.path.join(base_exp_path, exp)
+            # Retrieve timestamps from logs
+            data_exp: DataExporter = DataExporter(
+                log=log,
+                exp_path=full_exp_path,
+            )
+
+            match action_type:
+                case "plots":
+                    # Evaluate some plots
+                    data_eval: DataEval = DataEval(log, full_exp_path)
+                    data_eval.eval_summary_plot()
+                    data_eval.eval_experiment_plot()
+                case _:
+                    # Default option is to retrieve experiment data from DataBase and save it in a joined_output.csv for stats and plot generation
+                    data_exp.export()
+    elif with_integer_match:
+        log.info(f"Exporting {exp_path} experiment.")
+        full_exp_path = os.path.join(config.get_str(Key.Scalehub.experiments), exp_path)
+        # Retrieve timestamps from logs
+        data_exp: DataExporter = DataExporter(
+            log=log,
+            exp_path=full_exp_path,
+        )
+        match action_type:
+            case "plots":
+                # Evaluate some plots
+                data_eval: DataEval = DataEval(log, full_exp_path)
+                data_eval.eval_summary_plot()
+                data_eval.eval_experiment_plot()
+                data_eval.eval_mean_stderr()
+            case _:
+                # Default option is to retrieve experiment data from DataBase and save it in a joined_output.csv for stats and plot generation
+                data_exp.export()
+    else:
+        log.error("Error during export.")
 
 
 def main(log: Logger):
@@ -372,13 +512,28 @@ def main(log: Logger):
     # Run command
     run_parser = subparsers.add_parser("run", help="Run action.")
     run_parser.add_argument(
-        "action", help="Specify the action to be run. {job | transscale | chaos}"
+        "action",
+        help="Specify the action to be run. {job | transscale | chaos | scale }",
     )
     run_parser.add_argument(
-        "type",
-        help="Specify if {create | delete} action should be run. Only for 'chaos', 'transscale' and 'job' actions. Default is 'create'.",
+        "--ed",
+        "--export_dir",
+        dest="export_dir",
+        help="Create export directory for the experiment data.",
+        action="store_true",
+    )
+    run_parser.add_argument(
+        "action_arg_1",
+        help="Specify if {create | delete} action should be run (default 'create'). Only for 'chaos', 'transscale', and 'job' actions. If 'run scale', the this parameter is the number of replicas.",
         nargs="?",
         default="create",
+    )
+
+    run_parser.add_argument(
+        "action_arg_2",
+        help="Only for 'scale' action. Specify the type of node to be added or removed after the rescale. {baremetal | small_vm | medium_vm | pico }",
+        nargs="?",
+        default="baremetal",
     )
 
     # Reservation time command
@@ -386,15 +541,15 @@ def main(log: Logger):
 
     # Export command
     export_subparser = subparsers.add_parser("export", help="Export data")
-    # export_subparser.add_argument(
-    #     "date", help="Provide experiment path in format 'DD-MM-YYYY/N'"
-    # )
-    # export_subparser.add_argument(
-    #     "type",
-    #     help="Choose what to export between 'stats', 'plot' or 'all'",
-    #     nargs="?",
-    #     default=None,
-    # )
+    export_subparser.add_argument(
+        "date", help="Provide experiment path in format 'DD-MM-YYYY/N'"
+    )
+    export_subparser.add_argument(
+        "type",
+        help="Choose what to export between 'stats', 'plot' or 'all'",
+        nargs="?",
+        default=None,
+    )
 
     # Parse command line arguments
     args = parser.parse_args()
@@ -424,12 +579,15 @@ def main(log: Logger):
         sync_experiment_data(config)
     elif args.command == "run":
         action = args.action
-        type = args.type
-        run(action, type, config)
+        attr = args.action_arg_1
+        type = args.action_arg_2
+        export_dir = args.export_dir
+
+        run(action, attr, type, config, export_dir)
     elif args.command == "export":
-        # date = args.date
-        # type = args.type
-        export(config)
+        date = args.date
+        type = args.type
+        export(config, date, type)
     else:
         parser.print_help()
 
