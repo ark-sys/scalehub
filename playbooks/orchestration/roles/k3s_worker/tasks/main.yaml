@@ -6,6 +6,7 @@
       delegate_to: "{{ groups['control'][0] }}"
       shell: "cat /tmp/k3s/server/node-token"
       register: node_token
+      run_once: true
     - name: Install k3s on workers
       environment:
         K3S_URL: "https://{{ hostvars[groups['control'][0]]['ansible_default_ipv4']['address'] }}:6443"

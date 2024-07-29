@@ -137,7 +137,7 @@ class KubernetesManager:
             )
             return
 
-    def rescale_taskmanagers_heterogeneous(self, n_replicas_p, tm_type_p) -> int:
+    def rescale_taskmanagers_heterogeneous(self, n_replicas_p, tm_type_p) -> (int, int):
         tm = "flink-taskmanager"
         tm_types = ["bm", "vm-small", "vm-medium"]
 
