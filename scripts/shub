@@ -218,19 +218,19 @@ def tokens():
 
 # Quick action commands
 def run(action, attr, type, config: Config, export_dir):
-    # def validate_scale_params(num_replicas, type_of_node):
-    #     help_message = (
-    #         "Usage: scale <number_of_replicas> <type_of_node> \n"
-    #         "number_of_replicas: Number of replicas to scale to. \n"
-    #         "type_of_node: Type of node to be added or removed after the rescale. {baremetal | small_vm | medium_vm | pico }"
-    #     )
-    #     valid_node_types = ["bm", "vm-small", "vm-medium"]
-    #     if not isinstance(num_replicas, int):
-    #         log.warning(help_message)
-    #         raise ValueError("num_replicas must be an integer.")
-    #     if type_of_node not in valid_node_types:
-    #         log.warning(help_message)
-    #         raise ValueError(f"type_of_node must be one of {valid_node_types}.")
+    def validate_scale_params(num_replicas, type_of_node):
+        help_message = (
+            "Usage: scale <number_of_replicas> <type_of_node> \n"
+            "number_of_replicas: Number of replicas to scale to. \n"
+            "type_of_node: Type of node to be added or removed after the rescale. {baremetal | small_vm | medium_vm | pico }"
+        )
+        valid_node_types = ["bm", "vm-small", "vm-medium"]
+        if not isinstance(num_replicas, int):
+            log.warning(help_message)
+            raise ValueError("num_replicas must be an integer.")
+        if type_of_node not in valid_node_types:
+            log.warning(help_message)
+            raise ValueError(f"type_of_node must be one of {valid_node_types}.")
 
     log.debug(f"Running action {action} ...")
     k: KubernetesManager = KubernetesManager(log)
@@ -256,6 +256,36 @@ def run(action, attr, type, config: Config, export_dir):
                 deployment_name="flink-jobmanager",
                 command=f"flink run -d -j /tmp/jobs/{config.get_str(Key.Experiment.job_file)}",
             )
+        case "jscale":
+            # Scale only the job to the specified number of replicas
+            job_file = config.get_str(Key.Experiment.job_file)
+            monitored_task = config.get_str(Key.Experiment.task_name)
+            num_replicas = attr
+
+            # Stop current job and get scaling info
+            job_id, operator_names, savepoint_path = k.prepare_scaling(
+                config, monitored_task, job_file
+            )
+            if savepoint_path is None:
+                return
+
+            # Wait some time
+            sleep(5)
+
+            # Build new operator list with operator_name and new parallelism
+            par_map = []
+            for operator in operator_names:
+                if operator == monitored_task:
+                    par_map.append(f"{operator}:{num_replicas}")
+                else:
+                    par_map.append(f"{operator}:1")
+
+            # Run job with option --parmap
+            return k.execute_command_on_pod(
+                deployment_name="flink-jobmanager",
+                command=f"flink run -d -s {savepoint_path} -j /tmp/jobs/{job_file} --parmap '{';'.join(par_map)}'",
+            )
+
         case "sscale":
             # Simple scale involves scaling up and down taskmanagers and operators
             # of the running job to the specified number of replicas
@@ -285,7 +315,7 @@ def run(action, attr, type, config: Config, export_dir):
             # Build new operator list with operator_name and new parallelism
 
             for operator in operator_names:
-                if operator == monitored_task:
+                if monitored_task in operator:
                     par_map.append(f"{operator}:{num_replicas}")
                 else:
                     par_map.append(f"{operator}:1")
@@ -305,7 +335,9 @@ def run(action, attr, type, config: Config, export_dir):
             # Scale up taskmanagers and the operator of the running job to the specified number of replicas
             monitored_task = config.get_str(Key.Experiment.task_name)
             job_file = config.get_str(Key.Experiment.job_file)
-            num_replicas = attr
+            num_replicas = int(attr)
+
+            validate_scale_params(num_replicas, type_of_node)
 
             # Stop current job and get scaling info
             job_id, operator_names, savepoint_path = k.prepare_scaling(
@@ -315,9 +347,7 @@ def run(action, attr, type, config: Config, export_dir):
                 return
 
             # Rescale taskmanagers
-            ret, par = k.rescale_taskmanagers_heterogeneous(
-                int(num_replicas), type_of_node
-            )
+            ret, par = k.rescale_taskmanagers_heterogeneous(num_replicas, type_of_node)
             match ret:
                 case 0:
                     log.info("Rescale successful.")
@@ -333,7 +363,7 @@ def run(action, attr, type, config: Config, export_dir):
 
             # Build new operator list with operator_name and new parallelism
             for operator in operator_names:
-                if operator == monitored_task:
+                if monitored_task == operator:
                     par_map.append(f"{operator}:{par}")
                 else:
                     par_map.append(f"{operator}:1")
