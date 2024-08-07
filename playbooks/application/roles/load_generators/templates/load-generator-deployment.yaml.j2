@@ -26,7 +26,7 @@ spec:
         - name: gitlab-scalehub
       containers:
         - name: workload-generator
-          image: "{{image}}:{{tag}}"
+          image: "{{theodolite_lg_image}}:{{theodolite_lg_tag}}"
           ports:
             - containerPort: 5701
               name: coordination

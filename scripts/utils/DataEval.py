@@ -512,7 +512,13 @@ class Plotter:
                     linestyle="--",
                 )
                 axs[i].tick_params(axis="both", labelsize=self.tick_size)
-                axs[i].legend(loc="upper right", fontsize=16, title="Latency (ms)")
+                axs[i].legend(
+                    loc="upper right",
+                    fontsize=14,
+                    title="Latency (ms)",
+                    title_fontsize="14",
+                )
+
                 max_value = max(
                     series.max()
                     for series in data_dict[subplot_label].values()

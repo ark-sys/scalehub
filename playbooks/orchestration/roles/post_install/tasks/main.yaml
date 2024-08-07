@@ -126,3 +126,4 @@
           data:
             kubeconfig: "{{ lookup('file', lookup('env', 'KUBECONFIG')) | b64encode }}"
 
+- include_tasks: network.yaml

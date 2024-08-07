@@ -1,0 +1,13 @@
+- name: Deploy Redis
+  tags: [ create ]
+  block:
+
+    - name: Create Redis Service
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('file', 'redis-service.yaml') }}"
+
+    - name: Create Redis Deployment
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('template', 'redis-deployment.yaml.j2') }}"

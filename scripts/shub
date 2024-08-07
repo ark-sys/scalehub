@@ -15,7 +15,7 @@ from scripts.src.G5k import G5k, G5k_VM
 from scripts.src.Platform import Platform, merge_inventories
 from scripts.src.RaspberryPi import RaspberryPi
 from scripts.utils.Config import Config
-from scripts.utils.DataEval import DataEval
+from scripts.utils.DataEval import DataEval, GroupedDataEval
 from scripts.utils.DataExporter import DataExporter
 from scripts.utils.Defaults import DefaultKeys as Key, DefaultValues as Value
 from scripts.utils.KubernetesManager import KubernetesManager
@@ -275,7 +275,7 @@ def run(action, attr, type, config: Config, export_dir):
             # Build new operator list with operator_name and new parallelism
             par_map = []
             for operator in operator_names:
-                if operator == monitored_task:
+                if monitored_task in operator:
                     par_map.append(f"{operator}:{num_replicas}")
                 else:
                     par_map.append(f"{operator}:1")
@@ -363,7 +363,7 @@ def run(action, attr, type, config: Config, export_dir):
 
             # Build new operator list with operator_name and new parallelism
             for operator in operator_names:
-                if monitored_task == operator:
+                if monitored_task in operator:
                     par_map.append(f"{operator}:{par}")
                 else:
                     par_map.append(f"{operator}:1")
@@ -410,6 +410,10 @@ def run(action, attr, type, config: Config, export_dir):
             run("chaos", "delete", None, config)
 
         case "test":
+            base_path = "/app/info/paper-plots3/Join-kk/latency_70"
+            g: GroupedDataEval = GroupedDataEval(log, base_path)
+            g.eval_mean_with_backpressure_multiple()
+
             pass
         case _:
             log.error(f"Action {action} is not implemented.")
