@@ -32,13 +32,17 @@ spec:
             - name: CHECKPOINTING
               value: "true"
             - name: KAFKA_INPUT_TOPIC1
-              value: "input-topic1"
+              value: "ad-events"
             - name: KAFKA_INPUT_TOPIC2
               value: "input-topic2"
             - name: KAFKA_OUTPUT_TOPIC
               value: "output-topic"
             - name: FLINK_STATE_BACKEND
               value: "rocksdb"
+            - name: REDIS_HOST
+              value: "redis-service"
+            - name: ZOOKEEPER_SERVER
+              value: "zookeeper-service"
             - name: CHECKPOINTING_INTERVAL_MS
               value: "{{ checkpoint_interval }}"
             - name: JOB_WINDOW_SIZE
