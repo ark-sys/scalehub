@@ -63,6 +63,7 @@ class DefaultKeys:
         broker_mqtt_port = "experiment.broker_mqtt_port"
         kafka_partitions = "experiment.kafka_partitions"
         first_node = "experiment.first_node"
+        unchained_tasks = "experiment.unchained_tasks"
 
         class Generators:
             generators = "experiment.generators"
@@ -144,6 +145,7 @@ class DefaultValues:
         broker_mqtt_port = 1883
         kafka_partitions = 1000
         first_node = "grid5000"
+        unchained_tasks = False
 
         class Generators:
             generators = ["generator1"]

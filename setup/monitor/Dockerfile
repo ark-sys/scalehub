@@ -34,5 +34,5 @@ ENV PYTHONUNBUFFERED=1
 ## Run the application
 ENTRYPOINT ["python3", "/app/scripts/experiment-monitor.py"]
 
-## Hang the entrypoint so the container doesn't exit
+## DEBUG: Hang the entrypoint so the container doesn't exit
 #CMD ["tail", "-f", "/dev/null"]

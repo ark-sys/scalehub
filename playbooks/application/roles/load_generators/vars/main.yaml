@@ -2,5 +2,5 @@
 theodolite_lg_image: registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/workload-generator
 theodolite_lg_tag: latest
 
-ysb_lg_image: registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/ysb_load_generator
+ysb_lg_image: registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/ysb-workload-generator
 ysb_lg_tag: latest

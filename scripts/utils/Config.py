@@ -76,7 +76,7 @@ class Config:
             Key.Experiment.kafka_partitions
         ] = Value.Experiment.kafka_partitions
         self.__config[Key.Experiment.first_node] = Value.Experiment.first_node
-
+        self.__config[Key.Experiment.unchained_tasks] = Value.Experiment.unchained_tasks
         self.__config[Key.Experiment.Chaos.enable] = Value.Experiment.Chaos.enable
 
         self.__config[

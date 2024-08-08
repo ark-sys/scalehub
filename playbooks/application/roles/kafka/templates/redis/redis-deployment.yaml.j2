@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -16,6 +17,10 @@ spec:
       labels:
         app: redis
     spec:
+      nodeSelector:
+        node-role.kubernetes.io/worker: producer
+      imagePullSecrets:
+        - name: gitlab-scalehub
       containers:
         - name: redis
           image: "{{redis_image}}:{{redis_tag}}"
@@ -26,4 +31,5 @@ spec:
             - name: GET_HOSTS_FROM
               value: env
       restartPolicy: Always
+
       
