@@ -1,7 +1,8 @@
 FROM python:3.12-slim
 
 # Install dependencies
-RUN --mount=type=bind,source=requirements.txt,target=requirements.txt pip install -r requirements.txt
+ADD requirements.txt /requirements.txt
+RUN pip install -r requirements.txt
 
 RUN mkdir -p /app /app/conf /app/scripts
 
