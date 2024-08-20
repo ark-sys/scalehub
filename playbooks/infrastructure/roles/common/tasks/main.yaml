@@ -33,6 +33,7 @@
           - containerd.io
         state: latest
         update_cache: true
+
     - name: Create Docker daemon configuration file with size limits for the logging
       ansible.builtin.copy:
         content: |

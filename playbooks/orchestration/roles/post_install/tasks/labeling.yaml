@@ -1,0 +1,95 @@
+- name: Post-install configuration
+  tags: [ create ]
+  block:
+    - name: Check if all groups are defined in the hosts file
+      set_fact:
+        vm_grid5000_exists: "{{ 'vm_grid5000' in groups }}"
+        grid5000_exists: "{{ 'grid5000' in groups }}"
+
+    - name: Create monitoring namespace
+      kubernetes.core.k8s:
+        kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
+        name: monitoring
+        api_version: v1
+        kind: Namespace
+        state: present
+
+    - name: Apply consumer role label to consumer nodes
+      kubernetes.core.k8s:
+        kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
+        name: "{{ item }}"
+        api_version: v1
+        kind: Node
+        definition:
+          metadata:
+            labels:
+              node-role.kubernetes.io/consumer: ""
+              node-role.kubernetes.io/worker: "consumer"
+        state: present
+      loop: "{{ groups['consumers'] }}"
+
+    - name: Apply producer role label to producer nodes
+      kubernetes.core.k8s:
+        kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
+        name: "{{ item }}"
+        api_version: v1
+        kind: Node
+        definition:
+          metadata:
+            labels:
+              node-role.kubernetes.io/producer: ""
+              node-role.kubernetes.io/worker: "producer"
+        state: present
+      loop: "{{ groups['producers'] }}"
+
+    - name: Apply grid5000 role label to grid5000 nodes
+      kubernetes.core.k8s:
+        kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
+        name: "{{ item }}"
+        api_version: v1
+        kind: Node
+        definition:
+          metadata:
+            labels:
+              node-role.kubernetes.io/grid5000: ""
+              node-role.kubernetes.io/node-type: "grid5000"
+        state: present
+      loop: "{{ groups['grid5000'] }}"
+      when: grid5000_exists
+
+    - name: For each host in group vm_grid5000, apply node-type grid5000-vm_small if it has node_size 2,4096 or grid5000-vm_medium if it has node_size 4,8192
+      kubernetes.core.k8s:
+        kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
+        name: "{{ item }}"
+        api_version: v1
+        kind: Node
+        definition:
+          metadata:
+            labels:
+              node-role.kubernetes.io/node-type: "{{ 'grid5000-vm_small' if hostvars[item].node_size == [2, 4096] else 'grid5000-vm_medium' if hostvars[item].node_size == [4, 8192] else 'undefined' }}"
+        state: present
+      loop: "{{ groups['vm_grid5000'] }}"
+      when: vm_grid5000_exists
+
+#    - name: Retrieve the name of a node that is consumer and grid5000
+#      set_fact:
+#          first_node: "{{ item }}"
+#      loop: "{{ groups['consumers'] }}"
+#      when: item in groups['grid5000']
+
+    - name: first_node is the name of the group, retrieve a node from the group
+      set_fact:
+        node: "{{ groups[first_node][0] }}"
+      when: shub_config['first_node'] is defined
+
+    - name: If first_node is defined, apply SCHEDULABLE label to allow deployment of flink. Otherwise apply over a random consumer node
+      kubernetes.core.k8s:
+          kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
+          name: "{{ node | default(groups['consumers'][0]) }}"
+          api_version: v1
+          kind: Node
+          definition:
+            metadata:
+              labels:
+                  node-role.kubernetes.io/autoscaling: "SCHEDULABLE"
+          state: present
