@@ -14,9 +14,10 @@ Playbooks will help set up an environment for data stream processing experiments
 
 
 :exclamation: TODO:
-- [ ] Update the documentation with the latest changes.
+
+- [x] Update the documentation with the latest changes.
 - [ ] Update the images in the README.
-- [ ] Update the list of playbooks.
+- [x] Update the list of playbooks.
 - [ ] Update the final cluster setup image.
 - [ ] Review basic requirements for scalehub setup.
 - [x] Review script commands and options.
@@ -42,6 +43,9 @@ The project has the following folder structure:
   - **`secrets`**: Contains the Grid5000 VPN connection files and the ssh private key for Grid5000.
   - **`fish`**: Contains the fish shell autocomplete configuration files.
   - **`nginx`**: Contains the nginx configuration files.
+  - **`monitor`**: Contains the Dockerfile for the experiment-monitor container that manages the lifecycle of the
+    experiments.
+  - **`flink`**: Contains a custom Flink 1.20 image with the S3 presto plugin enabled.
 - **deploy.sh**:  Helps building, running, updating the Docker image, and managing Docker secrets.
 
 
@@ -158,20 +162,66 @@ Refer to the script's help section for detailed information on each action.
 
 ### Nomimal execution order for playbooks
 
-During reservation of G5k nodes (with `shub provision`), the playbook **infrastructure/setup.yaml** is executed and it sets up kubernetes on the reserved nodes.
+For more details about the role of each playbook, refer to the [playbooks documentation](playbooks/PLAYBOOKS.md).
 
-This is the state of the cluster after the execution of the previous playbooks:
+During reservation of G5k nodes (with `shub provision`), the playbook **infrastructure/setup.yaml** is executed and it
+sets up dependencies and other basic settings on reserved nodes.
 
-![after_playbook_base](images/cluster-deployment-base.png)
-#TODO update setup image
+To setup Kubernetes on the cluster, you can execute the following playbooks:
 
-The other playbooks will deploy the following applications:
+```shell
+shub deploy orchestration/setup.yaml
+```
 
-![playbooks](images/deployed_playbooks.png)
-#TODO update list of playbooks
-:exclamation: All setup playbooks can be executed individually with the `shub deploy` command. The same applies for the deletion of the applications with the `shub delete` command.
+At this point the cluster is ready for the deployment of the applications. The following playbook can be executed to
+deploy all applications:
 
-:exclamation: To deploy all applications at once, use the `shub deploy all` command. To delete all applications at once, use the `shub delete all` command.
+```shell
+shub deploy application/setup.yaml
+```
+
+Otherwise the each application can be deployed individually with the `shub deploy` command. The same applies for the
+deletion of the applications with the `shub delete` command.
+
+[//]: # ()
+
+[//]: # (The following playbooks can be executed to deploy the applications:)
+
+[//]: # ()
+
+[//]: # (![playbooks]&#40;images/deployed_playbooks.png&#41;)
+
+[//]: # (#TODO update list of playbooks)
+
+[//]: # ()
+
+[//]: # (:exclamation: To deploy all applications at once, use the `shub deploy all` command. To delete all applications at once, use the `shub delete all` command.)
+
+[//]: # ()
+
+[//]: # (This is the state of the cluster after the execution of the previous playbooks:)
+
+[//]: # ()
+
+[//]: # (![after_playbook_base]&#40;images/cluster-deployment-base.png&#41;)
+
+[//]: # (#TODO update setup image)
+
+[//]: # ()
+
+[//]: # (The other playbooks will deploy the following applications:)
+
+[//]: # ()
+
+[//]: # (![playbooks]&#40;images/deployed_playbooks.png&#41;)
+
+[//]: # (#TODO update list of playbooks)
+
+[//]: # (:exclamation: All setup playbooks can be executed individually with the `shub deploy` command. The same applies for the deletion of the applications with the `shub delete` command.)
+
+[//]: # ()
+
+[//]: # (:exclamation: To deploy all applications at once, use the `shub deploy all` command. To delete all applications at once, use the `shub delete all` command.)
 
 The deployment of all playbooks will lead the cluster at this state:
 
@@ -188,7 +238,7 @@ A nginx server is started in the scalehub container. Its purpose is to reverse-p
 - **chaos** : http://localhost/chaos/
 - **minio-operator console** : http://localhost/minio/
 - **minio-tenant console**: http://localhost/minio-tenant/
-- **vm**: http://localhost/vm/
+- **victoria-metrics**: http://localhost/vm/
 - **prometheus** : http://localhost/prometheus/graph/ (WIP: Prometheus is not yet completely configured)
 - **consul** : http://localhost/consul/ (WIP: Consul is not yet completely configured)
 
