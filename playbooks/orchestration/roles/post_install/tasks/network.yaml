@@ -11,6 +11,7 @@
           state: present
     - name: Install Ingress
       kubernetes.core.helm:
+        kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
         chart_ref: ingress-nginx/ingress-nginx
         name: ingress-nginx
         release_namespace: ingress-nginx
@@ -29,6 +30,7 @@
     - name: Deploy ingress for Flink
       kubernetes.core.k8s:
         state: present
+        kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
         definition: "{{ lookup('ansible.builtin.file', 'flink-ingress.yaml') | from_yaml }}"
 
 - name: Ingress - Deletion block
@@ -43,4 +45,5 @@
     - name: Delete Ingress for Flink
       kubernetes.core.k8s:
         state: absent
+        kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
         definition: "{{ lookup('ansible.builtin.file', 'flink-ingress.yaml') | from_yaml }}"
