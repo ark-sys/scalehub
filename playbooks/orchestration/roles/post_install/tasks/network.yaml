@@ -18,32 +18,28 @@
         create_namespace: true
         wait: true
         release_state: present
-    - name: Save ingress controller IP
-      set_fact:
-        ingress_ip: "{{ lookup('pipe', 'kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath={.status.loadBalancer.ingress[0].ip}') }}"
+    - name: Retrieve server IP address only from kubeconfig and save it as ingress_ip. remove protocol and port
+      ansible.builtin.shell: awk '/server:/ {print $2}' "{{ lookup('env', 'KUBECONFIG') }}"  | sed 's/https:\/\///' | sed 's/:6443//' | sed 's/\"//g'
+      register: ingress_ip
     - name: Update /etc/hosts with ingress IP
       become: true
-      ansible.builtin.shell: awk -v domain="ingress.scalehub.local" -v new_ip="{{ ingress_ip }}" '$2 == domain {$1 = new_ip; found = 1} {print $0} END {if (found != 1) print new_ip, domain}' /etc/hosts | tee /etc/hosts > /dev/null
+      ansible.builtin.shell: awk -v domain="ingress.scalehub.local" -v new_ip="{{ ingress_ip.stdout }}" '$2 == domain {$1 = new_ip; found = 1} {print $0} END {if (found != 1) print new_ip, domain}' /etc/hosts | tee /etc/hosts > /dev/null
     - name: Trigger nginx reload on scalehub container
       become: true
       ansible.builtin.shell: nginx -s reload
-    - name: Deploy ingress for Flink
-      kubernetes.core.k8s:
-        state: present
-        kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
-        definition: "{{ lookup('ansible.builtin.file', 'flink-ingress.yaml') | from_yaml }}"
 
 - name: Ingress - Deletion block
   tags: [ delete ]
   delegate_to: localhost
   block:
+    - name: Delete Ingress with Helm
+      kubernetes.core.helm:
+        kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
+        name: ingress-nginx
+        release_namespace: ingress-nginx
+        release_state: absent
     - name: Delete Ingress repo
       kubernetes.core.helm_repository:
           name: ingress-nginx
           repo_url: https://kubernetes.github.io/ingress-nginx
           state: absent
-    - name: Delete Ingress for Flink
-      kubernetes.core.k8s:
-        state: absent
-        kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
-        definition: "{{ lookup('ansible.builtin.file', 'flink-ingress.yaml') | from_yaml }}"

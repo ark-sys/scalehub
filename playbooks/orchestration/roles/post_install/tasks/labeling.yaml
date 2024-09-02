@@ -52,12 +52,12 @@
           metadata:
             labels:
               node-role.kubernetes.io/grid5000: ""
-              node-role.kubernetes.io/node-type: "grid5000"
+              node-role.kubernetes.io/tnode: "grid5000"
         state: present
       loop: "{{ groups['grid5000'] }}"
       when: grid5000_exists
 
-    - name: For each host in group vm_grid5000, apply node-type grid5000-vm_small if it has node_size 2,4096 or grid5000-vm_medium if it has node_size 4,8192
+    - name: Apply vm_grid5000 role label to vm_grid5000 nodes
       kubernetes.core.k8s:
         kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
         name: "{{ item }}"
@@ -66,16 +66,26 @@
         definition:
           metadata:
             labels:
-              node-role.kubernetes.io/node-type: "{{ 'grid5000-vm_small' if hostvars[item].node_size == [2, 4096] else 'grid5000-vm_medium' if hostvars[item].node_size == [4, 8192] else 'undefined' }}"
+              node-role.kubernetes.io/vm_grid5000: "{{ 'small' if hostvars[item].node_size == [2, 4096] else 'medium' if hostvars[item].node_size == [4, 8192] else 'undefined' }}"
+              node-role.kubernetes.io/tnode: "vm_grid5000"
         state: present
       loop: "{{ groups['vm_grid5000'] }}"
       when: vm_grid5000_exists
 
-#    - name: Retrieve the name of a node that is consumer and grid5000
-#      set_fact:
-#          first_node: "{{ item }}"
-#      loop: "{{ groups['consumers'] }}"
-#      when: item in groups['grid5000']
+    - name: Apply pico role label to pico nodes
+      kubernetes.core.k8s:
+        kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
+        name: "{{ item }}"
+        api_version: v1
+        kind: Node
+        definition:
+          metadata:
+            labels:
+              node-role.kubernetes.io/pico: ""
+              node-role.kubernetes.io/worker: "consumer"
+              node-role.kubernetes.io/tnode: "pico"
+        state: present
+      loop: "{{ groups['pico'] }}"
 
     - name: first_node is the name of the group, retrieve a node from the group
       set_fact:
