@@ -15,7 +15,7 @@ from scripts.src.G5k import G5k, G5k_VM
 from scripts.src.Platform import Platform, merge_inventories
 from scripts.src.RaspberryPi import RaspberryPi
 from scripts.utils.Config import Config
-from scripts.utils.DataEval import DataEval, GroupedDataEval
+from scripts.utils.DataEval import DataEval
 from scripts.utils.DataExporter import DataExporter
 from scripts.utils.Defaults import DefaultKeys as Key, DefaultValues as Value
 from scripts.utils.KubernetesManager import KubernetesManager
@@ -25,41 +25,41 @@ from scripts.utils.Tools import Tools
 
 # Build cluster and install dependencies
 def provision(config: Config):
+    def __setup_platform(platform_info):
+        platform_type = platform_info["type"]
+        log.info(
+            f"Provisioning platform {platform_info['name']} of type {platform_type}"
+        )
+        if platform_type == "Grid5000":
+            p: Platform = G5k(log, platform_info, verbose=False)
+            return p.setup()
+        elif platform_type == "VM_on_Grid5000":
+            p: Platform = G5k_VM(log, platform_info, verbose=False)
+            return p.setup()
+        elif platform_type == "RaspberryPi":
+            p: Platform = RaspberryPi(log, platform_info)
+            return p.setup()
+        elif platform_type == "FIT":
+            p: Platform = FIT(log, platform_info)
+            return p.setup()
+        else:
+            platform_name = platform_info["name"]
+            log.error(
+                f"Provision is not implemented for platform {platform_name}, which is of type {platform_type}"
+            )
+            return None
+
     final_inventory = InventoryManager(loader=DataLoader(), sources=[])
     platforms = config.get(Key.Platforms.platforms)
 
     if platforms is not None:
         log.info(f"Found {len(platforms)} platforms to provision.")
-        for platform_info in platforms:
-            platform_type = platform_info["type"]
-            if platform_type == "Grid5000":
-                # Initiate oarsub request
-                log.info("Reserving...")
-                p: Platform = G5k(log, platform_info)
-                g5k_inventory = p.setup()
-                final_inventory = merge_inventories(final_inventory, g5k_inventory)
-            elif platform_type == "VM_on_Grid5000":
-                # Initiate oarsub request
-                log.info("Reserving VM on Grid5000...")
-                p: Platform = G5k_VM(log, platform_info)
-                g5k_inventory = p.setup()
-                final_inventory = merge_inventories(final_inventory, g5k_inventory)
-            elif platform_type == "RaspberryPi":
-                log.info("Provisioning RaspberryPi...")
-                p: Platform = RaspberryPi(log, platform_info)
-                pi_inventory = p.setup()
-                final_inventory = merge_inventories(final_inventory, pi_inventory)
-            elif platform_type == "FIT":
-                log.info("Provisioning FIT...")
-                p: Platform = FIT(log, platform_info)
-                fit_inventory = p.setup()
-                final_inventory = merge_inventories(final_inventory, fit_inventory)
-            else:
-                platform_name = platform_info["name"]
 
-                log.error(
-                    f"Provision is not implemented for platform {platform_name}, which is of type {platform_type}"
-                )
+        # Deploy platforms iteratively
+        for platform_info in platforms:
+            i: InventoryManager = __setup_platform(platform_info)
+            if i is not None:
+                final_inventory = merge_inventories(final_inventory, i)
 
         # Create ConfigParser object
         config_parser = configparser.ConfigParser(allow_no_value=True)
@@ -99,11 +99,11 @@ def destroy(config: Config):
         match platform_type:
             case "Grid5000":
                 # Initiate oardel request
-                p: Platform = G5k(log, platform_info)
+                p: Platform = G5k(log, platform_info, verbose=False)
                 p.destroy()
             case "VM_on_Grid5000":
                 # Initiate oardel request
-                p: Platform = G5k_VM(log, platform_info)
+                p: Platform = G5k_VM(log, platform_info, verbose=False)
                 p.destroy()
             case "RaspberryPi":
                 log.info("Destroying RaspberryPi...")
@@ -128,6 +128,7 @@ def deploy(playbook, config: Config):
                 load_generator_params = {
                     "lg_name": lg_config["name"],
                     "lg_topic": lg_config["topic"],
+                    "lg_type": lg_config["type"],
                     "lg_numsensors": int(lg_config["num_sensors"]),
                     "lg_intervalms": int(lg_config["interval_ms"]),
                     "lg_replicas": int(lg_config["replicas"]),
@@ -224,7 +225,7 @@ def run(action, attr, type, config: Config, export_dir):
             "number_of_replicas: Number of replicas to scale to. \n"
             "type_of_node: Type of node to be added or removed after the rescale. {baremetal | small_vm | medium_vm | pico }"
         )
-        valid_node_types = ["bm", "vm-small", "vm-medium"]
+        valid_node_types = ["bm", "vm-small", "vm-medium", "pico"]
         if not isinstance(num_replicas, int):
             log.warning(help_message)
             raise ValueError("num_replicas must be an integer.")
@@ -256,7 +257,7 @@ def run(action, attr, type, config: Config, export_dir):
                 deployment_name="flink-jobmanager",
                 command=f"flink run -d -j /tmp/jobs/{config.get_str(Key.Experiment.job_file)}",
             )
-        case "jscale":
+        case "job-scale":
             # Scale only the job to the specified number of replicas
             job_file = config.get_str(Key.Experiment.job_file)
             monitored_task = config.get_str(Key.Experiment.task_name)
@@ -285,8 +286,14 @@ def run(action, attr, type, config: Config, export_dir):
                 deployment_name="flink-jobmanager",
                 command=f"flink run -d -s {savepoint_path} -j /tmp/jobs/{job_file} --parmap '{';'.join(par_map)}'",
             )
+        case "scale":
+            try:
+                # Check parameters
+                validate_scale_params(attr, type)
+            except ValueError as e:
+                log.error(str(e))
+                return
 
-        case "sscale":
             # Simple scale involves scaling up and down taskmanagers and operators
             # of the running job to the specified number of replicas
             monitored_task = config.get_str(Key.Experiment.task_name)
@@ -326,10 +333,8 @@ def run(action, attr, type, config: Config, export_dir):
                 command=f"flink run -d -s {savepoint_path} -j /tmp/jobs/{job_file} --parmap '{';'.join(par_map)}'",
             )
 
-        case "scale":
-
+        case "node-scale":
             # Check parameters
-
             type_of_node = type
 
             # Scale up taskmanagers and the operator of the running job to the specified number of replicas
@@ -337,8 +342,11 @@ def run(action, attr, type, config: Config, export_dir):
             job_file = config.get_str(Key.Experiment.job_file)
             num_replicas = int(attr)
 
-            validate_scale_params(num_replicas, type_of_node)
-
+            try:
+                validate_scale_params(num_replicas, type_of_node)
+            except ValueError as e:
+                log.error(str(e))
+                return
             # Stop current job and get scaling info
             job_id, operator_names, savepoint_path = k.prepare_scaling(
                 config, monitored_task, job_file
@@ -410,11 +418,14 @@ def run(action, attr, type, config: Config, export_dir):
             run("chaos", "delete", None, config)
 
         case "test":
-            base_path = "/app/info/paper-plots3/Join-kk/latency_70"
-            g: GroupedDataEval = GroupedDataEval(log, base_path)
-            g.eval_mean_with_backpressure_multiple()
+            # base_path = "/app/info/paper-plots3/Join-kk/latency_70"
+            # g: GroupedDataEval = GroupedDataEval(log, base_path)
+            # g.eval_mean_with_backpressure_multiple()
 
             pass
+        case "dump":
+            # Dump running configuration
+            log.info(f"Running configuration : \n{config.to_json()}")
         case _:
             log.error(f"Action {action} is not implemented.")
 

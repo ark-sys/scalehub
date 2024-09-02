@@ -71,6 +71,7 @@ class DefaultKeys:
             class Generator:
                 name = "experiment.generators.name"
                 topic = "experiment.generators.name.topic"
+                type = "experiment.generators.name.type"
                 num_sensors = "experiment.generators.name.num_sensors"
                 interval_ms = "experiment.generators.name.interval_ms"
                 replicas = "experiment.generators.name.replicas"
@@ -153,6 +154,7 @@ class DefaultValues:
             class Generator:
                 name = "generator1"
                 topic = "input-topic1"
+                type = "theodolite-lg"
                 num_sensors = 100000
                 interval_ms = 3000
                 replicas = 1

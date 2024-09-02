@@ -47,17 +47,6 @@ class Config:
         self.__config[Key.Scalehub.experiments] = Value.Scalehub.experiments
         self.__config[Key.Scalehub.debug_level] = Value.Scalehub.Debug.level
 
-        # self.__config[Key.Platform.type] = Value.Platform.type
-        # self.__config[Key.Platform.reservation_name] = Value.Platform.reservation_name
-        # self.__config[Key.Platform.site] = Value.Platform.site
-        # self.__config[Key.Platform.cluster] = Value.Platform.cluster
-        # self.__config[Key.Platform.producers] = Value.Platform.producers
-        # self.__config[Key.Platform.consumers] = Value.Platform.consumers
-        # self.__config[Key.Platform.queue] = Value.Platform.queue
-        # self.__config[Key.Platform.walltime] = Value.Platform.walltime
-        # self.__config[Key.Platform.kubernetes_type] = Value.Platform.kubernetes_type
-        # self.__config[Key.Platform.start_time] = Value.Platform.start_time
-
         self.__config[Key.Platforms.platforms] = Value.Platforms.platforms
 
         self.__config[Key.Experiment.name] = Value.Experiment.name
@@ -299,6 +288,7 @@ class Config:
 
             # Get values for generator
             topic = self.cp[generator_section]["topic"]
+            lg_type = self.cp[generator_section]["type"]
             num_sensors = self.cp[generator_section]["num_sensors"]
             interval_ms = self.cp[generator_section]["interval_ms"]
             replicas = self.cp[generator_section]["replicas"]
@@ -307,6 +297,7 @@ class Config:
             # Create generator dictionary
             generator = {
                 "name": name,
+                "type": lg_type,
                 "topic": topic,
                 "num_sensors": num_sensors,
                 "interval_ms": interval_ms,
