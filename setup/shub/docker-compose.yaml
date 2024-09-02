@@ -13,9 +13,14 @@ secrets:
   grid_pub:
     file: secrets/grid5000.pub
 
-
 networks:
   scalehub_net:
+    enable_ipv6: true
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 2001:cafe:42::/56
 
 services:
   scalehub:
@@ -64,9 +69,8 @@ services:
       - SSH_AUTH_SOCK=/ssh-agent
   # OpenVPN client service to connect to Grid5000
   vpn:
-    build:
-      context: ${SCALEHUB_BASEDIR}/setup/vpn
-      dockerfile: Dockerfile
+    image: dperson/openvpn-client
+    container_name: vpn
     # cap_add, security_opt, and volume required for the image to function
     hostname: scalehub
     cap_add:
@@ -95,25 +99,3 @@ services:
     command:
       - -D
     # Option description of -D : Don't use the connection as the default route -> don't break ssh connections from scalehub to g5k
-#  # Default production-like vault service for secrets management
-#  vault:
-#    image: hashicorp/vault
-#    container_name: vault
-#    hostname: vault
-#    command: server -config=/vault/config/vault.json
-#    networks:
-#        - scalehub_net
-#    cap_add:
-#      - IPC_LOCK
-#    ports:
-#      - "8200:8200"
-#    volumes:
-#      - ./secrets/vault/file:/vault/file
-#      - ./secrets/vault/config:/vault/config/
-#    environment:
-#      - VAULT_ADDR=http://0.0.0.0:8200
-#      - VAULT_API_ADDR=http://0.0.0.0:8200
-#      - VAULT_CLUSTER_ADDR=http://0.0.0.0:8201
-#    secrets:
-#      - source: vault_token
-#        target: .vault-token

@@ -42,6 +42,11 @@ generate_config() {
       else
         # Generate SSH config
         bash -c "cat << 'EOF' > $HOME_PATH/.ssh/config
+Host *
+  AddKeysToAgent yes
+  StrictHostKeyChecking no
+  UserKnownHostsFile=/dev/null
+
 Host pico2-* pico2-*.rennes.inria.fr
   User picocluster
   ProxyJump ssh-rba.inria.fr
@@ -66,6 +71,7 @@ Host access.grid5000.fr g5k
   IdentityFile ~/.ssh/id_rsa
   ForwardAgent no
   StrictHostKeyChecking no
+
 Host *.g5k
   User $username
   ProxyCommand ssh g5k -W \$(basename %h .g5k):%p

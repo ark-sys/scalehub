@@ -12,7 +12,7 @@
       register: control_node_ipv4
     - name: Get control node's IPv6 default route
       command: ip -6 route show default
-      register: control_ipv6_default_route
+      register: control_ipv6_default_route_with_via
     - name: Extract control node's IPv6 default route
       set_fact:
         control_ipv6_default_route: "{{ control_ipv6_default_route.stdout.split(' ')[2] }}"
@@ -50,9 +50,15 @@
         delay: 5
         timeout: 300
 
-#    - name:  Quickfix default route for IPv6
-#      ansible.builtin.shell:
-#        cmd: ip -6 route add default via {{ control_ipv6_default_route }} dev br0
+    - name: Check if we still have a default route for IPv6
+      command: ip -6 route show default
+      register: control_ipv6_default_route_check
+
+    - name: Quickfix default route for IPv6
+      ansible.builtin.shell:
+        cmd: ip -6 route add default via {{ control_ipv6_default_route }} dev br0
+      when: control_ipv6_default_route_check.stdout.find('via') != -1
+
 
 - name: Uninstall k3s server
   tags: [ delete ]
