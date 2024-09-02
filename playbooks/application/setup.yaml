@@ -3,7 +3,6 @@
   hosts: localhost
   gather_facts: false
   roles:
-    - network
     - storage
     - monitoring
     - kafka

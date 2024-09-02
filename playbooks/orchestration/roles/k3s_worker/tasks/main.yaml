@@ -7,11 +7,18 @@
       shell: "cat /tmp/k3s/server/node-token"
       register: node_token
       run_once: true
+
+    - name: Get control node IPv6 address
+      delegate_to: "{{ groups['control'][0] }}"
+      shell: ip -6 -br addr show dev br0 scope global | awk '{print $3}' | cut -d/ -f1
+      register: control_node_ipv6
+      run_once: true
+
     - name: Install k3s on workers
       environment:
-        K3S_URL: "https://{{ hostvars[groups['control'][0]]['ansible_default_ipv4']['address'] }}:6443"
+        K3S_URL: "https://[{{ control_node_ipv6.stdout }}]:6443"
         K3S_TOKEN: "{{ node_token.stdout }}"
-        INSTALL_K3S_VERSION: v1.29.1+k3s1
+        INSTALL_K3S_VERSION: v1.30.3+k3s1
         INSTALL_K3S_EXEC: --data-dir=/tmp/k3s
       shell:
         cmd: "curl -sfL https://get.k3s.io | sh -s -"

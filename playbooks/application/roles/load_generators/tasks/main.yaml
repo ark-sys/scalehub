@@ -1,1 +1,2 @@
-- import_tasks: ysb-lg.yaml
+---
+- import_tasks: "{{ lg_type }}.yaml"
