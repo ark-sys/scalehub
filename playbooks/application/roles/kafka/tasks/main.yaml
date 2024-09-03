@@ -50,6 +50,16 @@
         state: present
         definition: "{{ lookup('ansible.builtin.template', 'kafka/kafka-deployment.yaml.j2' ) | from_yaml }}"
 
+    - name: Deploy Redis service
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('ansible.builtin.file', 'redis/redis-service.yaml' ) | from_yaml }}"
+
+    - name: Deploy Redis
+      kubernetes.core.k8s:
+          state: present
+          definition: "{{ lookup('ansible.builtin.template', 'redis/redis-deployment.yaml.j2' ) | from_yaml }}"
+
 - name: Delete Kafka stack
   tags: [ delete ]
   block:
@@ -79,12 +89,18 @@
         state: absent
         definition: "{{ lookup('ansible.builtin.template', 'zookeeper/zookeeper-deployment.yaml.j2' ) | from_yaml }}"
 
-
     - name: Delete Kafka
       kubernetes.core.k8s:
         state: absent
         definition: "{{ lookup('ansible.builtin.template', 'kafka/kafka-deployment.yaml.j2' ) | from_yaml }}"
 
+    - name: Delete Redis service
+      kubernetes.core.k8s:
+          state: absent
+          definition: "{{ lookup('ansible.builtin.file', 'redis/redis-service.yaml' ) | from_yaml }}"
 
-
+    - name: Delete Redis
+      kubernetes.core.k8s:
+          state: absent
+          definition: "{{ lookup('ansible.builtin.template', 'redis/redis-deployment.yaml.j2' ) | from_yaml }}"
 

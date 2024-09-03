@@ -39,12 +39,18 @@ spec:
               value: "output-topic"
             - name: FLINK_STATE_BACKEND
               value: "rocksdb"
+            - name: REDIS_HOST
+              value: "redis-service"
+            - name: ZOOKEEPER_SERVER
+              value: "zookeeper-service"
             - name: CHECKPOINTING_INTERVAL_MS
               value: "{{ checkpoint_interval }}"
             - name: JOB_WINDOW_SIZE
               value: "{{ window_size }}"
             - name: FIB_INPUT
               value: "{{ fibonacci_value }}"
+            - name: UNCHAINED_TASKS
+              value: "{{ unchained_tasks }}"
           resources:
             limits:
               memory: 8Gi

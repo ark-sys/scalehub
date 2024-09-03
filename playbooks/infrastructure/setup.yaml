@@ -1,22 +1,27 @@
-# Debug shub_config
-#- name: If shub_config is not defined, define it by loading file "dummy_config.json" located at current path
-#  hosts: localhost
-#  gather_facts: false
-#  tasks:
-#    - name: Load shub_config from file
-#      set_fact:
-#          shub_config: "{{ lookup('file', 'dummy_config.json') | from_json }}"
-#      when: shub_config is not defined
-
-- name: Set facts about defined platforms
+---
+# Apply grid5000 specific configuration
+- name: Apply grid5000 specific configuration
+  hosts: grid5000
   gather_facts: false
-  hosts: localhost
-  tasks:
-    - name: Set facts about defined platforms
-      set_fact:
-        is_grid5000_defined: "'Grid5000' in [platform['type'] for platform in shub_config['platforms']]"
-        is_vm_on_grid5000_defined: "'VM_on_Grid5000' in [platform['type'] for platform in shub_config['platforms']]"
-        is_picocluster_defined: "'RaspberryPi' in [platform['type'] for platform in shub_config['platforms']]"
+  become: true
+  roles:
+    - role: grid5000
+
+# Apply vm_on_grid5000 specific configuration
+- name: Apply vm_on_grid5000 specific configuration
+  hosts: vm_grid5000
+  gather_facts: true
+  become: true
+  roles:
+    - role: vm_on_grid5000
+
+# Apply picocluster specific configuration
+- name: Apply picocluster specific configuration
+  hosts: pico
+  gather_facts: true
+  become: true
+  roles:
+    - role: picocluster
 
 # Install common packages to all types of nodes
 - name: Install common packages
@@ -25,30 +30,3 @@
   become: true
   roles:
     - common
-
-# Apply grid5000 specific configuration
-- name: Apply grid5000 specific configuration
-  hosts: grid5000
-  gather_facts: false
-  become: true
-  roles:
-    - role: grid5000
-      when: hostvars['localhost']['is_grid5000_defined'] is defined
-
-# Apply vm_on_grid5000 specific configuration
-- name: Apply vm_on_grid5000 specific configuration
-  hosts: vm_on_grid5000
-  gather_facts: false
-  become: true
-  roles:
-    - role: vm_on_grid5000
-      when: hostvars['localhost']['is_vm_on_grid5000_defined'] is defined
-
-# Apply picocluster specific configuration
-- name: Apply picocluster specific configuration
-  hosts: picocluster
-  gather_facts: false
-  become: true
-  roles:
-    - role: picocluster
-      when: hostvars['localhost']['is_picocluster_defined'] is defined

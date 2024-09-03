@@ -11,3 +11,6 @@ jmx_tag: latest
 zookeeper_image: registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/cp-zookeeper
 zookeeper_tag: latest
 
+redis_image: registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/redis
+redis_tag: 7.4.0
+
