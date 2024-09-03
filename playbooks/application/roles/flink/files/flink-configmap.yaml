@@ -11,6 +11,7 @@ data:
     #scheduler-mode: reactive
     web.upload.dir: /tmp
     io.tmp.dirs: /tmp
+    rest.profiling.enabled: true
     
     akka.framesize: 104857600b
     blob.server.port: 6124
@@ -60,6 +61,7 @@ data:
     #scheduler-mode: reactive
     web.upload.dir: /tmp
     io.tmp.dirs: /tmp
+    rest.profiling.enabled: true
     
     akka.framesize: 104857600b
     blob.server.port: 6124
@@ -108,6 +110,7 @@ data:
     #scheduler-mode: reactive
     web.upload.dir: /tmp
     io.tmp.dirs: /tmp
+    rest.profiling.enabled: true
     
     akka.framesize: 104857600b
     blob.server.port: 6124

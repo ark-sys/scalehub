@@ -5,7 +5,6 @@ from scripts.src.Platform import Platform
 from scripts.utils.Logger import Logger
 
 
-# TODO: Implement RaspberryPi class
 class RaspberryPi(Platform):
     pico_inventory = "/app/conf/pico_hosts"
 
@@ -35,24 +34,32 @@ class RaspberryPi(Platform):
         inventory = InventoryManager(loader=dl, sources=[])
         inventory.add_group("producers")
         inventory.add_group("consumers")
-        inventory.add_group("pico_hosts")
+        inventory.add_group("pico")
         inventory.add_group("all")
 
+        host_iter = iter(available_hosts.get_hosts())
+
         # Add the hosts to the inventory file
-        for host in available_hosts.get_hosts():
-            if control:
-                inventory.add_group("control")
-                inventory.add_host(host.name, group="control")
-                inventory.add_host(host.name, group="all")
-                control = False
-            if producers > 0:
-                inventory.add_host(host.name, group="producers")
-                inventory.add_host(host.name, group="all")
-                producers -= 1
-            elif consumers > 0:
-                inventory.add_host(host.name, group="consumers")
-                inventory.add_host(host.name, group="all")
-                consumers -= 1
-            inventory.add_host(host.name, group="pico_hosts")
+        if control:
+            inventory.add_group("control")
+            control_host = next(host_iter)
+            inventory.add_host(control_host.name, group="control")
+            inventory.add_host(control_host.name, group="all")
+            inventory.add_host(control_host.name, group="pico")
+
+        for i in range(producers):
+            producer_host = next(host_iter)
+            inventory.add_host(producer_host.name, group="producers")
+            inventory.add_host(producer_host.name, group="all")
+            inventory.add_host(producer_host.name, group="pico")
+
+        for i in range(consumers):
+            consumer_host = next(host_iter)
+            inventory.add_host(consumer_host.name, group="consumers")
+            inventory.add_host(consumer_host.name, group="all")
+            inventory.add_host(consumer_host.name, group="pico")
 
         return inventory
+
+    def destroy(self):
+        pass

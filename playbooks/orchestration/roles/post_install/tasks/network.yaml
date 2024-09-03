@@ -1,0 +1,45 @@
+---
+# Setup Ingress
+- name: Setting up Ingress
+  tags: [ create ]
+  delegate_to: localhost
+  block:
+    - name: Add Ingress repo
+      kubernetes.core.helm_repository:
+          name: ingress-nginx
+          repo_url: https://kubernetes.github.io/ingress-nginx
+          state: present
+    - name: Install Ingress
+      kubernetes.core.helm:
+        kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
+        chart_ref: ingress-nginx/ingress-nginx
+        name: ingress-nginx
+        release_namespace: ingress-nginx
+        create_namespace: true
+        wait: true
+        release_state: present
+    - name: Retrieve server IP address only from kubeconfig and save it as ingress_ip. remove protocol and port
+      ansible.builtin.shell: awk '/server:/ {print $2}' "{{ lookup('env', 'KUBECONFIG') }}"  | sed 's/https:\/\///' | sed 's/:6443//' | sed 's/\"//g'
+      register: ingress_ip
+    - name: Update /etc/hosts with ingress IP
+      become: true
+      ansible.builtin.shell: awk -v domain="ingress.scalehub.local" -v new_ip="{{ ingress_ip.stdout }}" '$2 == domain {$1 = new_ip; found = 1} {print $0} END {if (found != 1) print new_ip, domain}' /etc/hosts | tee /etc/hosts > /dev/null
+    - name: Trigger nginx reload on scalehub container
+      become: true
+      ansible.builtin.shell: nginx -s reload
+
+- name: Ingress - Deletion block
+  tags: [ delete ]
+  delegate_to: localhost
+  block:
+    - name: Delete Ingress with Helm
+      kubernetes.core.helm:
+        kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
+        name: ingress-nginx
+        release_namespace: ingress-nginx
+        release_state: absent
+    - name: Delete Ingress repo
+      kubernetes.core.helm_repository:
+          name: ingress-nginx
+          repo_url: https://kubernetes.github.io/ingress-nginx
+          state: absent

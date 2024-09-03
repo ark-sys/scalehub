@@ -1,0 +1,9 @@
+---
+- name: Deploy YSB benchmark stack
+  hosts: localhost
+  gather_facts: false
+  roles:
+    - redis
+    - kafka
+    - flink
+    - load_generators
