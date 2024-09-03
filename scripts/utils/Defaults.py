@@ -63,6 +63,7 @@ class DefaultKeys:
         broker_mqtt_port = "experiment.broker_mqtt_port"
         kafka_partitions = "experiment.kafka_partitions"
         first_node = "experiment.first_node"
+        unchained_tasks = "experiment.unchained_tasks"
 
         class Generators:
             generators = "experiment.generators"
@@ -70,6 +71,7 @@ class DefaultKeys:
             class Generator:
                 name = "experiment.generators.name"
                 topic = "experiment.generators.name.topic"
+                type = "experiment.generators.name.type"
                 num_sensors = "experiment.generators.name.num_sensors"
                 interval_ms = "experiment.generators.name.interval_ms"
                 replicas = "experiment.generators.name.replicas"
@@ -144,6 +146,7 @@ class DefaultValues:
         broker_mqtt_port = 1883
         kafka_partitions = 1000
         first_node = "grid5000"
+        unchained_tasks = False
 
         class Generators:
             generators = ["generator1"]
@@ -151,6 +154,7 @@ class DefaultValues:
             class Generator:
                 name = "generator1"
                 topic = "input-topic1"
+                type = "theodolite-lg"
                 num_sensors = 100000
                 interval_ms = 3000
                 replicas = 1

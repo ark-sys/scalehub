@@ -10,6 +10,7 @@
         checkpoint_interval: "{{shub_config_content['experiment.flink.checkpoint_interval_ms']}}"
         window_size: "{{shub_config_content['experiment.flink.window_size_ms']}}"
         fibonacci_value: "{{shub_config_content['experiment.flink.fibonacci_value']}}"
+        unchained_tasks: "{{shub_config_content['experiment.unchained_tasks']}}"
 
 - name: Deploy Flink
   tags: [ create ]
@@ -26,6 +27,11 @@
       with_fileglob:
         - "../files/*.yaml"
 
+    - name: Deploy ingress for Flink
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('ansible.builtin.file', 'flink-ingress.yaml') | from_yaml }}"
+
     - name: Deploy jobmanager
       kubernetes.core.k8s:
         state: present
@@ -36,22 +42,19 @@
         state: present
         definition: "{{ lookup('ansible.builtin.template', 'taskmanager-deployment.yaml.j2') | from_yaml_all }}"
 
-#    - name: Scale instances of taskmanager-vm_small to 0
-#      kubernets.core.k8s_scale:
-#        api_version: v1
-#        kind: Deployment
-#        name: flink-taskmanager-vm-small
-#        namespace: default
-#        replicas: 0
-#
-#    - name: Scale instances of taskmanager-vm_medium to 0
-#      kubernets.core.k8s_scale:
-#          api_version: v1
-#          kind: Deployment
-#          name: flink-taskmanager-vm-medium
-#          namespace: default
-#          replicas: 0
+    - name: Scale instances of taskmanager-vm_small to 0
+      kubernetes.core.k8s_scale:
+        kind: Deployment
+        namespace: default
+        name: flink-taskmanager-vm-small
+        replicas: 0
 
+    - name: Scale instances of taskmanager-vm_medium to 0
+      kubernetes.core.k8s_scale:
+        kind: Deployment
+        name: flink-taskmanager-vm-medium
+        namespace: default
+        replicas: 0
 
 - name: Delete Flink
   tags: [ delete ]
@@ -77,3 +80,8 @@
       kubernetes.core.k8s:
         state: absent
         definition: "{{ lookup('ansible.builtin.template', 'flink-prepull-daemon.yaml.j2') | from_yaml }}"
+
+    - name: Delete Ingress for Flink
+      kubernetes.core.k8s:
+        state: absent
+        definition: "{{ lookup('ansible.builtin.file', 'flink-ingress.yaml') | from_yaml }}"

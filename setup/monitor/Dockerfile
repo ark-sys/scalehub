@@ -1,17 +1,14 @@
 FROM python:3.12-slim
 
 # Install dependencies
-COPY setup/monitor/requirements.txt .
-RUN pip install -r requirements.txt
+RUN --mount=type=bind,source=setup/monitor/requirements.txt,target=requirements.txt pip install -r requirements.txt
 
-RUN mkdir -p /app
-RUN mkdir -p /app/conf
-RUN mkdir -p /app/scripts
+RUN mkdir -p /app /app/conf /app/scripts
 
 # Copy source code
-COPY scripts/monitor/experiment-monitor.py /app/scripts/experiment-monitor.py
-COPY scripts/monitor/templates /app/templates
-COPY scripts/utils /app/scripts/utils
+ADD scripts/monitor/experiment-monitor.py /app/scripts/experiment-monitor.py
+ADD scripts/monitor/templates /app/templates
+ADD scripts/utils /app/scripts/utils
 
 # Create __init__.py file to make the directory a package
 RUN touch /app/scripts/__init__.py
@@ -34,5 +31,5 @@ ENV PYTHONUNBUFFERED=1
 ## Run the application
 ENTRYPOINT ["python3", "/app/scripts/experiment-monitor.py"]
 
-## Hang the entrypoint so the container doesn't exit
+## DEBUG: Hang the entrypoint so the container doesn't exit
 #CMD ["tail", "-f", "/dev/null"]
