@@ -6,3 +6,4 @@ experiments-data
 conf/kubeconfig
 setup/shub/secrets/
 conf/
+info/

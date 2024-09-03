@@ -26,9 +26,9 @@ spec:
                   app: flink
                   component: taskmanager
       nodeSelector:
-        node-role.kubernetes.io/worker: 'consumer'
+        node-role.kubernetes.io/worker: consumer
         node-role.kubernetes.io/autoscaling: SCHEDULABLE
-        node-role.kubernetes.io/node-type: grid5000
+        node-role.kubernetes.io/tnode: grid5000
       terminationGracePeriodSeconds: 0
       imagePullSecrets:
         - name: gitlab-scalehub
@@ -38,7 +38,7 @@ spec:
           resources:
             limits:
               memory: 16Gi
-              cpu: 8000m
+              cpu: 4000m
           args: ["taskmanager"]
           ports:
             - containerPort: 6122
@@ -98,9 +98,10 @@ spec:
                   app: flink
                   component: taskmanager
       nodeSelector:
-        node-role.kubernetes.io/worker: 'consumer'
+        node-role.kubernetes.io/worker: consumer
         node-role.kubernetes.io/autoscaling: SCHEDULABLE
-        node-role.kubernetes.io/node-type: grid5000-vm_small
+        node-role.kubernetes.io/tnode: vm_grid5000
+        node-role.kubernetes.io/vm_grid5000: small
       terminationGracePeriodSeconds: 0
       imagePullSecrets:
         - name: gitlab-scalehub
@@ -170,9 +171,10 @@ spec:
                   app: flink
                   component: taskmanager
       nodeSelector:
-        node-role.kubernetes.io/worker: 'consumer'
+        node-role.kubernetes.io/worker: consumer
         node-role.kubernetes.io/autoscaling: SCHEDULABLE
-        node-role.kubernetes.io/node-type: grid5000-vm_medium
+        node-role.kubernetes.io/tnode: vm_grid5000
+        node-role.kubernetes.io/vm_grid5000: medium
       terminationGracePeriodSeconds: 0
       imagePullSecrets:
         - name: gitlab-scalehub

@@ -2,29 +2,63 @@
 - name: Install K3S and setup kubeconfig
   tags: [ create ]
   block:
+    - name: Get control node IPv6 address
+      ansible.builtin.shell:
+        cmd: ip -6 -br addr show dev br0 scope global | awk '{print $3}' | cut -d/ -f1
+      register: control_node_ipv6
+    - name: Get control node IPv4 address
+      ansible.builtin.shell:
+        cmd: ip -4 -br addr show dev br0 scope global | awk '{print $3}' | cut -d/ -f1
+      register: control_node_ipv4
+    - name: Get control node's IPv6 default route
+      command: ip -6 route show default
+      register: control_ipv6_default_route_with_via
+    - name: Extract control node's IPv6 default route
+      set_fact:
+        control_ipv6_default_route: "{{ control_ipv6_default_route_with_via.stdout.split(' ')[2] }}"
     - name: Install k3s on controller
       environment:
-        # Disable ipv6 for now
-#        INSTALL_K3S_EXEC: --disable=traefik,local-storage --data-dir=/tmp/k3s --cluster-cidr=10.42.0.0/16,2001:cafe:42::/56 --service-cidr=10.43.0.0/16,2001:cafe:43::/112
-        INSTALL_K3S_EXEC: --disable=traefik,local-storage --data-dir=/tmp/k3s
+        INSTALL_K3S_EXEC: --disable=traefik,local-storage --disable-network-policy --data-dir=/tmp/k3s  --cluster-cidr=10.42.0.0/16,2001:cafe:42::/56 --service-cidr=10.43.0.0/16,2001:cafe:43::/112 --node-ip={{ control_node_ipv4.stdout }},{{ control_node_ipv6.stdout }}
+        INSTALL_K3S_VERSION: v1.30.3+k3s1
       shell:
         cmd: "curl -sfL https://get.k3s.io | sh -s -"
+
     - name: Get kubeconfig from controller
       ansible.builtin.shell:
         cmd: cat /etc/rancher/k3s/k3s.yaml
       register: kubeconfig_content
-    - name: Replace localhost with control node IP address
+
+    - name: Replace localhost with control node IPv4 address
       set_fact:
-        kubeconfig_content: "{{ kubeconfig_content.stdout | replace('127.0.0.1', hostvars[groups['control'][0]]['ansible_default_ipv4']['address']) }}"
+        kubeconfig_content: "{{ kubeconfig_content.stdout | replace('127.0.0.1',  control_node_ipv4.stdout) }}"
+
     - name: Get kubeconfig path
       set_fact:
         kubeconfig_path: "{{ lookup('env', 'KUBECONFIG') }}"
+
     - name: Save kubeconfig to localhost
       delegate_to: localhost
       ansible.builtin.copy:
         content: "{{ kubeconfig_content }}"
         dest: "{{ kubeconfig_path }}"
         mode: '644'
+
+    - name: Wait for k3s to be ready
+      ansible.builtin.wait_for:
+        host: "{{ control_node_ipv4.stdout }}"
+        port: 6443
+        delay: 5
+        timeout: 300
+
+    - name: Check if we still have a default route for IPv6
+      command: ip -6 route show default
+      register: control_ipv6_default_route_check
+
+    - name: Quickfix default route for IPv6
+      ansible.builtin.shell:
+        cmd: ip -6 route add default via {{ control_ipv6_default_route }} dev br0
+      when: control_ipv6_default_route_check.stdout.find('via') != -1
+
 
 - name: Uninstall k3s server
   tags: [ delete ]

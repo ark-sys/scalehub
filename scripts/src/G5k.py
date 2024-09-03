@@ -122,31 +122,28 @@ class G5k(Platform):
         inventory: InventoryManager = InventoryManager(loader=DataLoader())
 
         inventory.add_group("grid5000")
-        # Add the roles to the inventory
-        for role in roles:
-            inventory.add_group(role)
-            for host in roles[role]:
-                host_name = host.address
-                inventory.add_host(host_name, group=role)
-                inventory.add_host(host_name, group="grid5000")
-                inventory.add_host(host_name, group="all")
-
-        # Get list of hosts of group "all"
-        all_hosts = inventory.get_hosts("all")
-        self.__log.debug(f"all_hosts: {all_hosts}")
-
-        # Setup IPv6 on reserved nodes
-        # https://www.grid5000.fr/w/Reconfigurable_Firewall
-        # https://www.grid5000.fr/w/IPv6#IPv6_communication_from_the_Internet_to_a_grid5000_node
-        # https://discovery.gitlabpages.inria.fr/enoslib/jupyter/fit_and_g5k/01_networking.html#Setting-up-IPv6
-        # https://discovery.gitlabpages.inria.fr/enoslib/tutorials/grid5000.html#reconfigurable-firewall-open-ports-to-the-external-world
 
         try:
+            # Setup IPv6 on reserved nodes
+            # https://www.grid5000.fr/w/Reconfigurable_Firewall
+            # https://www.grid5000.fr/w/IPv6#IPv6_communication_from_the_Internet_to_a_grid5000_node
+            # https://discovery.gitlabpages.inria.fr/enoslib/jupyter/fit_and_g5k/01_networking.html#Setting-up-IPv6
+            # https://discovery.gitlabpages.inria.fr/enoslib/tutorials/grid5000.html#reconfigurable-firewall-open-ports-to-the-external-world
             self.provider.fw_create(proto="all")
+
+            # Add the roles to the inventory
+            for role in roles:
+                inventory.add_group(role)
+                for host in roles[role]:
+                    ipv6_alias = f"{host.address.split('.')[0]}-ipv6.{host.address.split('.', 1)[1]} "
+                    host_info = f"{host.address} ipv6_alias={ipv6_alias}"
+
+                    inventory.add_host(host_info, group=role)
+                    inventory.add_host(host_info, group="grid5000")
+                    inventory.add_host(host_info, group="all")
+
         except Exception as e:
             self.__log.error(f"Error creating firewall: {e}")
-        # en.run("dhclient -6 br0", all_hosts)
-        # en.run("apt update && apt install -y nginx", all_hosts)
 
         # Return inventory
         return inventory
