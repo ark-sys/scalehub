@@ -5,7 +5,6 @@ from time import sleep
 import jinja2
 import yaml
 from kubernetes import config as Kubeconfig, client as Client
-from kubernetes.client import Configuration
 from kubernetes.client.api import core_v1_api
 from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
@@ -48,32 +47,47 @@ class KubernetesManager:
             )
             operator_names.append(operator_name)
 
-        # Stop current job and save returned string as savepoint path
-        resp = self.execute_command_on_pod(
-            deployment_name="flink-jobmanager",
-            command=f"flink stop {job_id}",
-        )
+        # # Stop current job and save returned string as savepoint path
+        # resp = self.execute_command_on_pod(
+        #     deployment_name="flink-jobmanager",
+        #     command=f"flink stop {job_id}",
+        # )
+        # savepoint_path = None
+        # for line in resp.split("\n"):
+        #     if "Savepoint completed." in line:
+        #         savepoint_path = line.split("Path:")[1].strip()
+        #         self.__log.info(f"Savepoint path: {savepoint_path}")
+        #         break
+
+        retries = 5
         savepoint_path = None
-        for line in resp.split("\n"):
-            if "Savepoint completed." in line:
-                savepoint_path = line.split("Path:")[1].strip()
-                break
+        while retries > 0 and savepoint_path is None:
+            resp = self.execute_command_on_pod(
+                deployment_name="flink-jobmanager",
+                command=f"flink stop -p -d {job_id}",
+            )
+            for line in resp.split("\n"):
+                if "Savepoint completed." in line:
+                    savepoint_path = line.split("Path:")[1].strip()
+                    self.__log.info(f"Savepoint path: {savepoint_path}")
+                    break
+            retries -= 1
+            sleep(2)
         if savepoint_path is None:
             self.__log.error("Savepoint failed.")
             return None, None, None
-
-        sleep(15)
+        sleep(5)
 
         return job_id, operator_names, savepoint_path
 
     # Scale a deployment to a specified number of replicas
-    def scale_deployment(self, deployment_name, replicas=1):
+    def scale_deployment(self, deployment_name, replicas=1, namespace="default"):
         # Create a Kubernetes API client
         api_instance = Client.AppsV1Api()
         # Fetch the deployment
         try:
             deployment = api_instance.read_namespaced_deployment(
-                name=deployment_name, namespace="default", async_req=False
+                name=deployment_name, namespace=namespace, async_req=False
             )
         except ApiException as e:
             self.__log.error(
@@ -88,7 +102,7 @@ class KubernetesManager:
         try:
             api_instance.patch_namespaced_deployment(
                 name=deployment_name,
-                namespace="default",
+                namespace=namespace,
                 body=patch,
             )
             self.__log.info(
@@ -139,17 +153,27 @@ class KubernetesManager:
 
     def rescale_taskmanagers_heterogeneous(self, n_replicas_p, tm_type_p) -> (int, int):
         tm = "flink-taskmanager"
-        tm_types = ["bm", "vm-small", "vm-medium"]
+        tm_types = ["bm", "vm-small", "vm-medium", "pico"]
 
-        # Taskmanagers: "bm" should run on "grid5000" nodes, "small_vm" on "grid5000-vm_small" nodes, and "medium_vm" on "grid5000-vm_medium" nodes
-        # node-role.kubernetes.io/node-type
-        node_roles = ["grid5000", "grid5000-vm_small", "grid5000-vm_medium"]
-        target_role = node_roles[tm_types.index(tm_type_p)]
+        __labels = ["node-role.kubernetes.io/worker=consumer"]
+
+        # Create labels for the requested node type
+        match tm_type_p:
+            case "bm":
+                __labels.append("node-role.kubernetes.io/tnode=grid5000")
+            case "vm-small" | "vm-medium":
+                size = tm_type_p.split("-")[1]
+                __labels.append(f"node-role.kubernetes.io/vm_grid5000={size}")
+                __labels.append("node-role.kubernetes.io/tnode=vm_grid5000")
+            case "pico":
+                __labels.append("node-role.kubernetes.io/tnode=pico")
+            case _:
+                self.__log.error(f"Invalid taskmanager type: {tm_type_p}")
 
         # Gather current number of running replicas for each node type
         replicas = {}
         for type in tm_types:
-            replicas[type] = self.get_deployment_replicas(f"{tm}-{type}", "default")
+            replicas[type] = self.get_deployment_replicas(f"{tm}-{type}", "flink")
 
         self.__log.info(f"Current replicas: {replicas}")
 
@@ -169,28 +193,11 @@ class KubernetesManager:
 
             # Retrieve all nodes tha match the desired labels
             try:
-                labels = ",".join(
-                    [
-                        f"node-role.kubernetes.io/node-type={target_role}",
-                        "node-role.kubernetes.io/worker=consumer",
-                    ]
-                )
+                labels = ",".join(__labels)
                 nodes = api_instance.list_node(label_selector=labels)
             except ApiException as e:
                 self.__log.error(f"Exception when calling CoreV1Api->list_node: {e}\n")
                 return 2, None
-
-            # Count the number of available nodes for each node type
-            # available_nodes = {role: 0 for role in node_roles}
-            # for node in nodes.items:
-            #     node_type = node.metadata.labels.get(
-            #         "node-role.kubernetes.io/node-type"
-            #     )
-            #     is_consumer = (
-            #         "node-role.kubernetes.io/worker=consumer" in node.metadata.labels
-            #     )
-            #     if node_type in available_nodes and is_consumer:
-            #         available_nodes[node_type] += 1
 
             self.__log.info(f"Available nodes: {len(nodes.items)}")
             # Check if there are enough nodes to scale the desired node type
@@ -248,21 +255,21 @@ class KubernetesManager:
 
             # Scale every node type to 0
             for type in tm_types:
-                self.scale_deployment(f"{tm}-{type}", 0)
+                self.scale_deployment(f"{tm}-{type}", 0, "flink")
 
             # Give some time for tasks to execute
             sleep(7)
 
-            # Scale the desired node type to the desired number of replicas and the rest back to their original number
+            # Scale the desired node type to the desired number of replicas and the reset back to their original number
             for type in tm_types:
                 if tm_type_p == type:
-                    self.scale_deployment(f"{tm}-{type}", n_replicas_p)
+                    self.scale_deployment(f"{tm}-{type}", n_replicas_p, "flink")
                 else:
-                    self.scale_deployment(f"{tm}-{type}", replicas[type])
+                    self.scale_deployment(f"{tm}-{type}", replicas[type], "flink")
 
             new_parallelism = sum(
                 [
-                    self.get_deployment_replicas(f"{tm}-{type}", "default")
+                    self.get_deployment_replicas(f"{tm}-{type}", "flink")
                     for type in tm_types
                 ]
             )
@@ -320,12 +327,14 @@ class KubernetesManager:
             )
             return
 
-    def execute_command_on_pods_by_label(self, label_selector, command):
+    def execute_command_on_pods_by_label(
+        self, label_selector, command, namespace="default"
+    ):
         core_v1 = core_v1_api.CoreV1Api()
         try:
             # Step 1: Query pods with the label "app=flink"
             pods = core_v1.list_namespaced_pod(
-                label_selector=label_selector, namespace="default"
+                label_selector=label_selector, namespace=namespace
             )
             for pod in pods.items:
                 self.__log.info(f"Running command {command} on pod {pod.metadata.name}")
@@ -708,13 +717,6 @@ class KubernetesManager:
         return node_names
 
     def execute_command_on_pod(self, deployment_name, command):
-
-        try:
-            c = Configuration().get_default_copy()
-        except AttributeError:
-            c = Configuration()
-            c.assert_hostname = False
-        Configuration.set_default(c)
 
         core_v1 = core_v1_api.CoreV1Api()
 

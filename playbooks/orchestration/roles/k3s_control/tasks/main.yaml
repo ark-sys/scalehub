@@ -57,7 +57,7 @@
     - name: Quickfix default route for IPv6
       ansible.builtin.shell:
         cmd: ip -6 route add default via {{ control_ipv6_default_route }} dev br0
-      when: control_ipv6_default_route_check.stdout.find('via') != -1
+      when: control_ipv6_default_route_check.stdout == ""
 
 
 - name: Uninstall k3s server
