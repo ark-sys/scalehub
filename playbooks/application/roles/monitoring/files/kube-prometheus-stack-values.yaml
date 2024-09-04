@@ -30,8 +30,14 @@ prometheus:
 prometheus-node-exporter:
   # Change default port from 9100 to 9123
     service:
-        port: 9123
-
+      type: ClusterIP
+      port: 19100
+      targetPort: 19100
+      nodePort:
+      portName: metrics
+      listenOnAllInterfaces: true
+      annotations:
+        prometheus.io/scrape: "true"
 grafana:
   ingress:
     enabled: true

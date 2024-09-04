@@ -5,7 +5,7 @@ kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: artifacts-pvc
-  namespace: default
+  namespace: flink
 spec:
   storageClassName: nfs-csi
   accessModes:

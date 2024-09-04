@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: flink-jobmanager
-  namespace: default
+  namespace: flink
 spec:
   replicas: 1
   selector:
@@ -26,9 +26,9 @@ spec:
           image: "{{image}}:{{tag}}"
           env:
             - name: KAFKA_BOOTSTRAP_SERVERS
-              value: "kafka-service:9092"
+              value: "kafka-service.default.svc.cluster.local:9092"
             - name: SCHEMA_REGISTRY_URL
-              value: "http://schema-registry-service:8081"
+              value: "http://schema-registry-service.default.svc.cluster.local:8081"
             - name: CHECKPOINTING
               value: "true"
             - name: KAFKA_INPUT_TOPIC1

@@ -49,13 +49,10 @@
             "log-opts": {
               "max-size": "200m"
             },
-            "data-root": "/tmp/docker-data"
-            {% if inventory_hostname not in groups['pico'] %}
-            ,
+            "data-root": "/tmp/docker-data",
             "registry-mirrors": [
               "http://docker-cache.grid5000.fr"
             ]
-            {% endif %}
             }
         dest: /etc/docker/daemon.json
 

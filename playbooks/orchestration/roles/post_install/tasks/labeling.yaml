@@ -5,11 +5,20 @@
       set_fact:
         vm_grid5000_exists: "{{ 'vm_grid5000' in groups }}"
         grid5000_exists: "{{ 'grid5000' in groups }}"
+        pico_exists: "{{ 'pico' in groups }}"
 
     - name: Create monitoring namespace
       kubernetes.core.k8s:
         kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
         name: monitoring
+        api_version: v1
+        kind: Namespace
+        state: present
+
+    - name: Create flink namespace
+      kubernetes.core.k8s:
+        kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
+        name: flink
         api_version: v1
         kind: Namespace
         state: present
@@ -86,6 +95,7 @@
               node-role.kubernetes.io/tnode: "pico"
         state: present
       loop: "{{ groups['pico'] }}"
+      when: pico_exists
 
     - name: first_node is the name of the group, retrieve a node from the group
       set_fact:

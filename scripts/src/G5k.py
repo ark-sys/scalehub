@@ -364,13 +364,6 @@ class G5k_VM(Platform):
         else:
             # Request resources from Grid5000
             roles, networks = self.provider.init()
-        # Display the mapping from VM to physical nodes
-        for role, vms in roles.items():
-            print(f"\n=== {role} ===")
-            for vm in vms:
-                print(f"vm is {vm}")
-                print(f"{vm.alias:20} {vm.address:15} {vm.pm.alias}")
-
         inventory: InventoryManager = InventoryManager(loader=DataLoader())
 
         inventory.add_group("vm_grid5000")
