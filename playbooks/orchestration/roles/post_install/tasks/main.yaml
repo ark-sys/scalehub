@@ -1,4 +1,6 @@
 ---
+- import_tasks: namespaces.yaml
+
 - import_tasks: labeling.yaml
 
 - import_tasks: secrets.yaml

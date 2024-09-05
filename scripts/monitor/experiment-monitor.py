@@ -193,9 +193,13 @@ class ExperimentFSM:
                 # Reset taskmanager replicas
                 self.__log.info("Resetting taskmanager replicas.")
                 # Reset to 0 and back to 1 to trigger placement of taskmanager on schedulable nodes
-                self.k.scale_deployment("flink-taskmanager", replicas=0)
+                self.k.scale_deployment(
+                    "flink-taskmanager", replicas=0, namespace="flink"
+                )
                 sleep(1)
-                self.k.scale_deployment("flink-taskmanager", replicas=1)
+                self.k.scale_deployment(
+                    "flink-taskmanager", replicas=1, namespace="flink"
+                )
 
             # Create load generators
             for generator in self.config.get(Key.Experiment.Generators.generators):
@@ -328,7 +332,7 @@ class ExperimentFSM:
         )
 
         # Scale down taskmanagers
-        self.k.scale_deployment("flink-taskmanager")
+        self.k.scale_deployment("flink-taskmanager", replicas=1, namespace="flink")
         # Clean transscale job
         self.k.delete_job("transscale-job")
         # Clean transscale remaining pods
