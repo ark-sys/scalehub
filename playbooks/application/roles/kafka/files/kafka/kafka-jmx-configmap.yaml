@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: jmx-configmap
-  namespace: default
+  namespace: kafka
 data:
   jmx-kafka-prometheus.yml: |+
     jmxUrl: service:jmx:rmi:///jndi/rmi://localhost:5555/jmxrmi

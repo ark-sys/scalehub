@@ -55,7 +55,6 @@
             "registry-mirrors": [
               "http://docker-cache.grid5000.fr"
             ]
-            {% endif %}
             }
         dest: /etc/docker/daemon.json
 

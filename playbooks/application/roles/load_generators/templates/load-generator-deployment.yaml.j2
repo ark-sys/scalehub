@@ -38,9 +38,9 @@ spec:
             - name: KUBERNETES_DNS_NAME
               value: "{{ lg_name }}.$(KUBERNETES_NAMESPACE).svc.cluster.local"
             - name: KAFKA_BOOTSTRAP_SERVERS
-              value: "kafka-service:9092"
+              value: "kafka-service.kafka.svc.cluster.local:9092"
             - name: SCHEMA_REGISTRY_URL
-              value: "http://schema-registry-service:8081"
+              value: "http://schema-registry-service.kafka.svc.cluster.local:8081"
             - name: KAFKA_INPUT_TOPIC
               value: "{{lg_topic}}"
             - name: NUM_SENSORS

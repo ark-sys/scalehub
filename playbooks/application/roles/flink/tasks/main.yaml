@@ -45,7 +45,7 @@
     - name: Scale instances of taskmanager-vm_small to 0
       kubernetes.core.k8s_scale:
         kind: Deployment
-        namespace: default
+        namespace: flink
         name: flink-taskmanager-vm-small
         replicas: 0
 
@@ -53,9 +53,15 @@
       kubernetes.core.k8s_scale:
         kind: Deployment
         name: flink-taskmanager-vm-medium
-        namespace: default
+        namespace: flink
         replicas: 0
 
+    - name: Scale instances of taskmanager-pico to 0
+      kubernetes.core.k8s_scale:
+        kind: Deployment
+        name: flink-taskmanager-pico
+        namespace: flink
+        replicas: 0
 - name: Delete Flink
   tags: [ delete ]
   block:

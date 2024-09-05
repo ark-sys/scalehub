@@ -159,6 +159,7 @@ def delete(playbook, config: Config):
                 load_generator_params = {
                     "lg_name": lg_config["name"],
                     "lg_topic": lg_config["topic"],
+                    "lg_type": lg_config["type"],
                     "lg_numsensors": int(lg_config["num_sensors"]),
                     "lg_intervalms": int(lg_config["interval_ms"]),
                     "lg_replicas": int(lg_config["replicas"]),
@@ -311,7 +312,7 @@ def run(action, attr, type, config: Config, export_dir):
             type_of_node = type
             tm_full_name = f"flink-taskmanager-{type_of_node}"
 
-            k.scale_deployment(tm_full_name, int(num_replicas))
+            k.scale_deployment(tm_full_name, int(num_replicas), "flink")
 
             par_map = []
 
@@ -421,11 +422,13 @@ def run(action, attr, type, config: Config, export_dir):
             # base_path = "/app/info/paper-plots3/Join-kk/latency_70"
             # g: GroupedDataEval = GroupedDataEval(log, base_path)
             # g.eval_mean_with_backpressure_multiple()
-
             pass
         case "dump":
             # Dump running configuration
             log.info(f"Running configuration : \n{config.to_json()}")
+        case "time":
+            # Get current timestamp
+            log.info(f"Current timestamp : {int(datetime.now().timestamp())}")
         case _:
             log.error(f"Action {action} is not implemented.")
 
@@ -439,8 +442,6 @@ def sync_experiment_data(config: Config):
 # Export data for a given date
 def export(config: Config, exp_path, action_type):
     log.info("Exporting...")
-    t: Tools = Tools(log)
-
     # Build full path from exp_path name
     # exp_path should be 'DD-MM-YYYY/N' where or 'DD-MM-YYYY' :
     #   DD-MM-YYYY is the date of the experiments

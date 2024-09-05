@@ -29,11 +29,11 @@ spec:
           image: "{{ysb_lg_image}}:{{ysb_lg_tag}}"
           env:
             - name: KAFKA_BROKER
-              value: kafka-service
+              value: kafka-service.kafka.svc.cluster.local
             - name: KAFKA_PORT
               value: "9092"
             - name: REDIS_HOST
-              value: "redis-service"
+              value: "redis-service.kafka.svc.cluster.local"
             - name: KAFKA_TOPIC
               value: "{{lg_topic}}"
             - name: KAFKA_PARTITIONS
