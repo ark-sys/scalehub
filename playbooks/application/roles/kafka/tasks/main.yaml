@@ -8,6 +8,7 @@
     - name: Extract checkpoint_interval and window_size from shub_config
       set_fact:
         partitions: "{{shub_config_content['experiment.kafka_partitions']}}"
+
 - name: Deploy Kafka stack
   tags: [ create ]
   block:
