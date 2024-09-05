@@ -1,0 +1,27 @@
+---
+- name: Post-install configuration
+  tags: [ create ]
+  block:
+    - name: Create monitoring namespace
+      kubernetes.core.k8s:
+        kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
+        name: monitoring
+        api_version: v1
+        kind: Namespace
+        state: present
+
+    - name: Create flink namespace
+      kubernetes.core.k8s:
+        kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
+        name: flink
+        api_version: v1
+        kind: Namespace
+        state: present
+
+    - name: Create kafka namespace
+      kubernetes.core.k8s:
+        kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
+        name: kafka
+        api_version: v1
+        kind: Namespace
+        state: present

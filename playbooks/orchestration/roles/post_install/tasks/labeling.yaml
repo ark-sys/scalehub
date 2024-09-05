@@ -7,22 +7,6 @@
         grid5000_exists: "{{ 'grid5000' in groups }}"
         pico_exists: "{{ 'pico' in groups }}"
 
-    - name: Create monitoring namespace
-      kubernetes.core.k8s:
-        kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
-        name: monitoring
-        api_version: v1
-        kind: Namespace
-        state: present
-
-    - name: Create flink namespace
-      kubernetes.core.k8s:
-        kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
-        name: flink
-        api_version: v1
-        kind: Namespace
-        state: present
-
     - name: Apply consumer role label to consumer nodes
       kubernetes.core.k8s:
         kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"

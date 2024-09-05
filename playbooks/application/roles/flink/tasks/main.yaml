@@ -15,27 +15,6 @@
 - name: Deploy Flink
   tags: [ create ]
   block:
-    - name: Copy gitlab-scalehub secret from default namespace to flink namespace
-      block:
-        - name: Get gitlab-scalehub secret from default namespace
-          kubernetes.core.k8s_info:
-            api_version: v1
-            kind: Secret
-            name: gitlab-scalehub
-            namespace: default
-          register: gitlab_scalehub_secret
-        - name: Create gitlab-scalehub secret in flink namespace
-          kubernetes.core.k8s:
-            state: present
-            definition:
-              apiVersion: v1
-              kind: Secret
-              metadata:
-                name: gitlab-scalehub
-                namespace: flink
-              type: kubernetes.io/dockerconfigjson
-              data:
-                .dockerconfigjson: "{{ gitlab_scalehub_secret.resources[0].data['.dockerconfigjson'] }}"
     - name: Pre-pull image on nodes for faster rescale operation
       kubernetes.core.k8s:
         state: present
