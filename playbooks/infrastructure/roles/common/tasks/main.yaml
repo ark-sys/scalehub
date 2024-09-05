@@ -49,7 +49,9 @@
             "log-opts": {
               "max-size": "200m"
             },
-            "data-root": "/tmp/docker-data",
+            "data-root": "/tmp/docker-data"
+            {% if inventory_hostname not in groups['pico'] %}
+            ,
             "registry-mirrors": [
               "http://docker-cache.grid5000.fr"
             ]
