@@ -3,9 +3,10 @@
   hosts: localhost
   gather_facts: false
   roles:
+    - network
     - storage
     - monitoring
     - kafka
     - flink
-    - chaos
-    - transscale
+#    - chaos
+#    - transscale

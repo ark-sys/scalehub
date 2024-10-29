@@ -23,8 +23,8 @@
   roles:
     - role: picocluster
 
-# Install common packages to all types of nodes
-- name: Install common packages
+# Common setup to all nodes
+- name: Do common setup for all nodes
   hosts: all
   gather_facts: true
   become: true

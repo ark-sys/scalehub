@@ -18,9 +18,15 @@
         create_namespace: true
         wait: true
         release_state: present
+        values: "{{ lookup('file', 'values.yaml' ) | from_yaml}}"
     - name: Retrieve server IP address only from kubeconfig and save it as ingress_ip. remove protocol and port
       ansible.builtin.shell: awk '/server:/ {print $2}' "{{ lookup('env', 'KUBECONFIG') }}"  | sed 's/https:\/\///' | sed 's/:6443//' | sed 's/\"//g'
       register: ingress_ip
+    - name: Get control node IPv6 address
+      delegate_to: "{{ groups['control'][0] }}"
+      ansible.builtin.shell:
+        cmd: ip -6 -br addr show dev br0 scope global | awk '{print $3}' | cut -d/ -f1
+      register: control_node_ipv6
     - name: Update /etc/hosts with ingress IP
       become: true
       ansible.builtin.shell: awk -v domain="ingress.scalehub.local" -v new_ip="{{ ingress_ip.stdout }}" '$2 == domain {$1 = new_ip; found = 1} {print $0} END {if (found != 1) print new_ip, domain}' /etc/hosts | tee /etc/hosts > /dev/null
@@ -28,18 +34,12 @@
       become: true
       ansible.builtin.shell: nginx -s reload
 
-- name: Ingress - Deletion block
+- name: Delete Ingress
   tags: [ delete ]
   delegate_to: localhost
-  block:
-    - name: Delete Ingress with Helm
-      kubernetes.core.helm:
-        kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
-        name: ingress-nginx
-        release_namespace: ingress-nginx
-        release_state: absent
-    - name: Delete Ingress repo
-      kubernetes.core.helm_repository:
-          name: ingress-nginx
-          repo_url: https://kubernetes.github.io/ingress-nginx
-          state: absent
+  kubernetes.core.helm:
+    kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
+    chart_ref: ingress-nginx/ingress-nginx
+    name: ingress-nginx
+    release_namespace: ingress-nginx
+    release_state: absent

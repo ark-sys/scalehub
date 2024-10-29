@@ -1,4 +1,46 @@
----
+#---
+#- name: Gather some facts about the control node
+#  tags: [ create ]
+#  block:
+#    - name: Get control node IPv6 address
+#      ansible.builtin.shell:
+#        cmd: ip -6 -br addr show dev br0 scope global | awk '{print $3}' | cut -d/ -f1
+#      register: control_node_ipv6
+#    - name: Get control node IPv4 address
+#      ansible.builtin.shell:
+#        cmd: ip -4 -br addr show dev br0 scope global | awk '{print $3}' | cut -d/ -f1
+#      register: control_node_ipv4
+#
+#    - name: Get control node's IPv6 default route
+#      command: ip -6 route show default
+#      register: control_ipv6_default_route_with_via
+#
+#    - name: Debug control node IPv6 address
+#      debug:
+#        var: control_node_ipv6.stdout
+- name: Gather some network facts
+  tags: [ create ]
+  block:
+    - name: Get control node IPv6 address
+      delegate_to: "{{ groups['control'][0] }}"
+      shell: ip -6 -br addr show dev br0 scope global | awk '{print $3}' | cut -d/ -f1
+      register: control_node_ipv6
+      run_once: true
+#
+#    - name: Save worker's IPv6 default route
+#      shell: ip -6 route show default
+#      register: worker_ipv6_default_route_with_via
+#
+#    - name: Extract worker's IPv6 default route
+#      set_fact:
+#          worker_ipv6_default_route: "{{ worker_ipv6_default_route_with_via.stdout.split(' ')[2] }}"
+#      when: worker_ipv6_default_route_with_via.stdout != ""
+#
+#    - name: Extract worker's interface name
+#      set_fact:
+#          worker_interface: "{{ worker_ipv6_default_route_with_via.stdout.split(' ')[4] }}"
+#      when: worker_ipv6_default_route_with_via.stdout != ""
+
 - name: Install K3S on worker nodes
   tags: [ create ]
   block:
@@ -13,17 +55,35 @@
       shell: ip -6 -br addr show dev br0 scope global | awk '{print $3}' | cut -d/ -f1
       register: control_node_ipv6
       run_once: true
+    #
+    #    - name: Get worker node IPv6 address
+    #      shell: ip -6 -br addr show dev br0 scope global | awk '{print $3}' | cut -d/ -f1
+    #      register: worker_node_ipv6
+    #      run_once: true
 
     - name: Install k3s on workers
       environment:
         K3S_URL: "https://[{{ control_node_ipv6.stdout }}]:6443"
         K3S_TOKEN: "{{ node_token.stdout }}"
-        INSTALL_K3S_VERSION: v1.30.3+k3s1
-        INSTALL_K3S_EXEC: --data-dir=/tmp/k3s
+        INSTALL_K3S_VERSION: v1.31.0+k3s1
+        INSTALL_K3S_EXEC: --prefer-bundled-bin  --data-dir=/tmp/k3s    --node-external-ip={{ ansible_default_ipv6.address }} --node-ip={{ ansible_default_ipv6.address }}
+      #         INSTALL_K3S_EXEC: --data-dir=/tmp/k3s
       shell:
         cmd: "curl -sfL https://get.k3s.io | sh -s -"
       # Skip this task if the consumers nodes or the producers nodes are the same as the control node. This is a single node cluster.
       when: "inventory_hostname not in groups['control']"
+      register: install_k3s_result
+      failed_when: install_k3s_result.rc != 0
+
+
+#    - name: Check if we still have a default route
+#      shell: ip -6 route show default
+#      register: worker_ipv6_default_route_check
+#      when: install_k3s_result is failed
+#
+#    - name: Restore default route if it was removed
+#      shell: ip -6 route add default via {{ worker_ipv6_default_route }} dev {{ worker_interface }}
+#      when: worker_ipv6_default_route_check == ""
 
 - name: Uninstall K3S
   tags: [ delete ]

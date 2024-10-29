@@ -2,18 +2,14 @@ import json
 import os
 import time
 
-import enoslib as en
+# import enoslib as en
+import ansible_runner
 import paho.mqtt.client as mqtt
 from paho.mqtt.enums import CallbackAPIVersion
 
 from scripts.utils.Config import Config
 from scripts.utils.Defaults import DefaultKeys as Key
 from scripts.utils.Logger import Logger
-
-
-# 1. Create MQTT client
-# 2. Connect to MQTT broker
-# 3. Publish "start" or "stop" message on experiment topic
 
 
 class Playbooks:
@@ -34,29 +30,30 @@ class Playbooks:
         }
         playbook_vars.update(extra_vars)
 
-        match tag:
-            case "create":
-                arg_tags = ["create"]
-            case "delete":
-                arg_tags = ["delete"]
-            case "experiment":
-                arg_tags = ["experiment"]
-            case _:
-                arg_tags = []
+        tags = tag if tag else ""
 
         # Run the playbook with additional tags and extra vars
         try:
-            en.run_ansible(
-                playbooks=[playbook_filename],
-                tags=arg_tags,
-                extra_vars=playbook_vars,
-                inventory_path=inventory,
+            r = ansible_runner.run(
+                private_data_dir="/tmp/ansible",
+                playbook=playbook_filename,
+                inventory=inventory,
+                extravars=playbook_vars,
+                tags=tags,
             )
+            if r.rc != 0:
+                self.__log.error(f"Failed to run playbook: {playbook_filename}")
+                return r.rc
+            else:
+                self.__log.info(f"Playbook {playbook_filename} executed successfully.")
         except Exception as e:
             self.__log.error(e.__str__())
             return e
 
 
+# 1. Create MQTT client
+# 2. Connect to MQTT broker
+# 3. Publish "start" or "stop" message on experiment topic
 class Client:
     def __init__(self, log: Logger, config: Config):
         self.__log = log

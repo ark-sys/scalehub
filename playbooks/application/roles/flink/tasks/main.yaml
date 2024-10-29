@@ -42,6 +42,13 @@
         state: present
         definition: "{{ lookup('ansible.builtin.template', 'taskmanager-deployment.yaml.j2') | from_yaml_all }}"
 
+    #    - name: Scale instances of taskmanager-bm to 0
+    #      kubernetes.core.k8s_scale:
+    #        kind: Deployment
+    #        namespace: flink
+    #        name: flink-taskmanager-bm
+    #        replicas: 0
+
     - name: Scale instances of taskmanager-vm_small to 0
       kubernetes.core.k8s_scale:
         kind: Deployment

@@ -237,7 +237,9 @@ class Plotter:
         ax1.set_title(title, fontsize=self.fontsize)
         ax1.set_xlabel(xlabel, fontsize=self.fontsize)
         # Set the x-axis to display all integers
-        ax1.xaxis.set_major_locator(MaxNLocator(integer=True))
+        ax1.xaxis.set_major_locator(plt.MultipleLocator(2))
+        # Put grid lines on the y-axis
+        ax1.yaxis.grid(True)
         # Use thousands formatter
         ax1.yaxis.set_major_formatter(FuncFormatter(self.__log.thousands_formatter))
 
@@ -686,6 +688,9 @@ class DataEval:
             "BackpressureTime",
             "BackpressureTimeStdErr",
         ]
+
+        # Clean up the DataFrame: rows with parallelism > 0 that have 0 throughput are removed
+        df_final = df_final[df_final["Throughput"] > 0]
 
         # Extract predictions from transscale log
         predictions = self.__export_predictions()

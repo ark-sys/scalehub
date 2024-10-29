@@ -17,13 +17,13 @@ data:
     blob.server.port: 6124
     
     jobmanager.rpc.address: flink-jobmanager
-    jobmanager.memory.process.size: 16Gb
+    jobmanager.memory.process.size: 32Gb
     jobmanager.rpc.port: 6123
     queryable-state.proxy.ports: 6125
     
     taskmanager.rpc.port: 6122
     taskmanager.numberOfTaskSlots: 1
-    taskmanager.memory.process.size: 16Gb
+    taskmanager.memory.process.size: 32Gb
     taskmanager.memory.managed.fraction: 0.2
     taskmanager.network.memory.buffer-debloat.enabled: true
     taskmanager.network.detailed-metrics: true
@@ -72,7 +72,7 @@ data:
     
     taskmanager.rpc.port: 6122
     taskmanager.numberOfTaskSlots: 1
-    taskmanager.memory.process.size: 2Gb
+    taskmanager.memory.process.size: 4Gb
     taskmanager.memory.managed.fraction: 0.2
     taskmanager.network.memory.buffer-debloat.enabled: true
     taskmanager.network.detailed-metrics: true
@@ -121,7 +121,7 @@ data:
     
     taskmanager.rpc.port: 6122
     taskmanager.numberOfTaskSlots: 1
-    taskmanager.memory.process.size: 4Gb
+    taskmanager.memory.process.size: 8Gb
     taskmanager.memory.managed.fraction: 0.2
     taskmanager.network.memory.buffer-debloat.enabled: true
     taskmanager.network.detailed-metrics: true
@@ -169,7 +169,7 @@ data:
     
     taskmanager.rpc.port: 6122
     taskmanager.numberOfTaskSlots: 1
-    taskmanager.memory.process.size: 4Gb
+    taskmanager.memory.process.size: 3Gb
     taskmanager.memory.managed.fraction: 0.2
     taskmanager.network.memory.buffer-debloat.enabled: true
     taskmanager.network.detailed-metrics: true

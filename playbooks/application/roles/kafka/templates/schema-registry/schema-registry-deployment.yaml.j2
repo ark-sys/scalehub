@@ -27,8 +27,8 @@ spec:
           value: kafka-service:9092
         image: registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/cp-schema-registry:7.0.1
         name: schema-registry
+        resources:
+          limits:
+            memory: 1Gi
+            cpu: 500m
       restartPolicy: Always
-      resources:
-        limits:
-          memory: 1Gi
-          cpu: 500m
