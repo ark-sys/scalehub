@@ -17,14 +17,14 @@ spec:
         component: taskmanager
     spec:
 #     Force scheduling of one taskmanager per node
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - topologyKey: kubernetes.io/hostname
-              labelSelector:
-                matchLabels:
-                  app: flink
-                  component: taskmanager
+      #      affinity:
+      #        podAntiAffinity:
+      #          requiredDuringSchedulingIgnoredDuringExecution:
+      #            - topologyKey: kubernetes.io/hostname
+      #              labelSelector:
+      #                matchLabels:
+      #                  app: flink
+      #                  component: taskmanager
       nodeSelector:
         node-role.kubernetes.io/worker: consumer
         node-role.kubernetes.io/autoscaling: SCHEDULABLE
@@ -37,8 +37,8 @@ spec:
           image: "{{image}}:{{tag}}"
           resources:
             limits:
-              memory: 16Gi
-              cpu: 4000m
+              memory: 32Gi
+              cpu: 16000m
           args: ["taskmanager"]
           ports:
             - containerPort: 6122
@@ -89,19 +89,19 @@ spec:
         component: taskmanager
     spec:
 #     Force scheduling of one taskmanager per node
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - topologyKey: kubernetes.io/hostname
-              labelSelector:
-                matchLabels:
-                  app: flink
-                  component: taskmanager
+      #      affinity:
+      #        podAntiAffinity:
+      #          requiredDuringSchedulingIgnoredDuringExecution:
+      #            - topologyKey: kubernetes.io/hostname
+      #              labelSelector:
+      #                matchLabels:
+      #                  app: flink
+      #                  component: taskmanager
       nodeSelector:
         node-role.kubernetes.io/worker: consumer
         node-role.kubernetes.io/autoscaling: SCHEDULABLE
-        node-role.kubernetes.io/tnode: vm_grid5000
-        node-role.kubernetes.io/vm_grid5000: small
+      #        node-role.kubernetes.io/tnode: vm_grid5000
+      #        node-role.kubernetes.io/vm_grid5000: small
       terminationGracePeriodSeconds: 0
       imagePullSecrets:
         - name: gitlab-scalehub
@@ -110,7 +110,7 @@ spec:
           image: "{{image}}:{{tag}}"
           resources:
             limits:
-              memory: 2Gi
+              memory: 4Gi
               cpu: 1000m
           args: ["taskmanager"]
           ports:
@@ -183,7 +183,7 @@ spec:
           image: "{{image}}:{{tag}}"
           resources:
             limits:
-              memory: 4Gi
+              memory: 8Gi
               cpu: 2000m
           args: ["taskmanager"]
           ports:
@@ -254,7 +254,7 @@ spec:
           image: "{{image}}:{{tag}}"
           resources:
             limits:
-              memory: 4Gi
+              memory: 3Gi
               cpu: 2000m
           args: [ "taskmanager" ]
           ports:
@@ -264,11 +264,11 @@ spec:
               name: query-state
             - containerPort: 9249
               name: metrics
-          livenessProbe:
-            tcpSocket:
-              port: 6122
-            initialDelaySeconds: 30
-            periodSeconds: 60
+          #          livenessProbe:
+          #            tcpSocket:
+          #              port: 6122
+          #            initialDelaySeconds: 30
+          #            periodSeconds: 60
           volumeMounts:
             - name: flink-config-volume
               mountPath: /opt/flink/conf/

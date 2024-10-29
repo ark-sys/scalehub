@@ -420,8 +420,6 @@ def run(action, attr, type, config: Config, export_dir):
 
         case "test":
             # base_path = "/app/info/paper-plots3/Join-kk/latency_70"
-            # g: GroupedDataEval = GroupedDataEval(log, base_path)
-            # g.eval_mean_with_backpressure_multiple()
             pass
         case "dump":
             # Dump running configuration

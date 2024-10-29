@@ -14,16 +14,16 @@ secrets:
     file: secrets/grid5000.pub
 
 networks:
-  scalehub_net:
+  ipv6_net:
 ##TODO fix this. Activating IPv6 breaks nginx reverse proxy
-#    enable_ipv6: true
-#    driver: bridge
-#    ipam:
-#      driver: default
-#      config:
-#        - subnet: 192.168.1.0/28
-#        - subnet: 2001:cafe:42::/56
-
+    enable_ipv6: true
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        ##        - subnet: 2001:ca::/64
+        #        - subnet: fd00:ca::/100
+        - subnet: 2001:cafe:43::/112
 services:
   scalehub:
     container_name: scalehub
@@ -81,7 +81,7 @@ services:
       # Initialize ingreess.scalehub.local in /etc/hosts with dummy IP
       - "ingress.scalehub.local:127.0.0.1"
     networks:
-      - scalehub_net
+      - ipv6_net
     ports:
       - "80:80"
     tmpfs:

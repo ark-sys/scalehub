@@ -1,10 +1,10 @@
 import configparser as cp
 import json
-import os.path
 from inspect import getmembers, isclass
 from os.path import exists
 
 from scripts.utils.Defaults import (
+    DefaultValues as Value,
     DefaultKeys as Key,
 )
 from .Logger import Logger
@@ -12,8 +12,112 @@ from .Logger import Logger
 
 class Config:
     __config = {}
-    RUNTIME_PATH = "/app/conf/runtime/"
-    DEFAULTS_PATH = "/app/conf/defaults.ini"
+
+    def __init__(self, log: Logger, conf):
+        self.__log = log
+        # Initialize default values
+        self.__init_defaults()
+
+        # Initialize the configuration parser
+        self.cp = cp.ConfigParser()
+
+        # Check the type of the configuration file
+        if isinstance(conf, dict):
+            # If the configuration is a dictionary, load it directly in self.__config
+            self.__config = conf
+        elif isinstance(conf, str):
+            # If the configuration is a string, lets assume it is a path to a configuration file
+
+            # Now check if the file matches the .ini format
+            if conf.endswith(".ini"):
+                self.validate(conf)
+                self.__read_config_file(conf)
+            # Otherwise we might be reading a .txt log file with the configuration
+            elif "log" in conf:
+                self.load_from_log(conf)
+        else:
+            self.__log.error(
+                f"Invalid type for conf: {type(conf)}. Expected path (str) or dict."
+            )
+            exit(1)
+
+    def __init_defaults(self):
+        self.__config[Key.Scalehub.playbook] = Value.Scalehub.playbooks
+        self.__config[Key.Scalehub.inventory] = Value.Scalehub.inventory
+        self.__config[Key.Scalehub.experiments] = Value.Scalehub.experiments
+        self.__config[Key.Scalehub.debug_level] = Value.Scalehub.Debug.level
+
+        self.__config[Key.Platforms.platforms] = Value.Platforms.platforms
+
+        self.__config[Key.Experiment.name] = Value.Experiment.name
+        self.__config[Key.Experiment.job_file] = Value.Experiment.job_file
+        self.__config[Key.Experiment.task_name] = Value.Experiment.task_name
+        self.__config[Key.Experiment.output_skip_s] = Value.Experiment.output_skip_s
+        self.__config[Key.Experiment.output_plot] = Value.Experiment.output_plot
+        self.__config[Key.Experiment.output_stats] = Value.Experiment.output_stats
+        self.__config[
+            Key.Experiment.broker_mqtt_host
+        ] = Value.Experiment.broker_mqtt_host
+        self.__config[
+            Key.Experiment.broker_mqtt_port
+        ] = Value.Experiment.broker_mqtt_port
+        self.__config[
+            Key.Experiment.kafka_partitions
+        ] = Value.Experiment.kafka_partitions
+        self.__config[Key.Experiment.first_node] = Value.Experiment.first_node
+        self.__config[Key.Experiment.unchained_tasks] = Value.Experiment.unchained_tasks
+        self.__config[Key.Experiment.Chaos.enable] = Value.Experiment.Chaos.enable
+
+        self.__config[
+            Key.Experiment.Chaos.affected_nodes_percentage
+        ] = Value.Experiment.Chaos.affected_nodes_percentage
+
+        self.__config[
+            Key.Experiment.Chaos.delay_latency_ms
+        ] = Value.Experiment.Chaos.latency_ms
+        self.__config[
+            Key.Experiment.Chaos.delay_jitter_ms
+        ] = Value.Experiment.Chaos.jitter_ms
+        self.__config[
+            Key.Experiment.Chaos.delay_correlation
+        ] = Value.Experiment.Chaos.correlation
+
+        self.__config[
+            Key.Experiment.Chaos.bandwidth_rate_mbps
+        ] = Value.Experiment.Chaos.bandwidth_rate_mbps
+
+        self.__config[
+            Key.Experiment.Chaos.bandwidth_limit
+        ] = Value.Experiment.Chaos.bandwidth_limit
+
+        self.__config[
+            Key.Experiment.Chaos.bandwidth_buffer
+        ] = Value.Experiment.Chaos.bandwidth_buffer
+
+        self.__config[
+            Key.Experiment.Generators.generators
+        ] = Value.Experiment.Generators
+
+        self.__config[
+            Key.Experiment.Transscale.max_parallelism
+        ] = Value.Experiment.Transscale.max_parallelism
+
+        self.__config[
+            Key.Experiment.Transscale.monitoring_warmup_s
+        ] = Value.Experiment.Transscale.monitoring_warmup_s
+        self.__config[
+            Key.Experiment.Transscale.monitoring_interval_s
+        ] = Value.Experiment.Transscale.monitoring_interval_s
+
+        self.__config[
+            Key.Experiment.Flink.checkpoint_interval_ms
+        ] = Value.Experiment.Flink.checkpoint_interval_ms
+        self.__config[
+            Key.Experiment.Flink.window_size_ms
+        ] = Value.Experiment.Flink.window_size_ms
+        self.__config[
+            Key.Experiment.Flink.fibonacci_value
+        ] = Value.Experiment.Flink.fibonacci_value
 
     def __str__(self):
         return self.to_str()
@@ -42,80 +146,6 @@ class Config:
 
     def get_list_int(self, key):
         return [int(value) for value in self.get_str(key).split(",")]
-
-    def __init__(self, log: Logger, _param):
-        self.__log = log
-        # Initialize the configuration parser
-        self.cp = cp.ConfigParser()
-        # Initialize default values
-        self.__init_defaults()
-
-        # Check the type of the configuration file
-        if isinstance(_param, dict):
-            # If the configuration is a dictionary, load it directly in self.__config
-            self.__config = _param
-        elif isinstance(_param, str):
-            # If the configuration is a string, lets assume it is a path to a configuration file
-
-            # Now check if the file matches the .ini format
-            if _param.endswith(".ini") and os.path.exists(_param):
-
-                # Verify we only have one section
-                sections_in_file = self.cp.sections()
-                if len(sections_in_file) == 1:
-                    section = sections_in_file[0]
-                    if section == "experiment":
-                        # Platform is already provided. Performing experiment related actions
-                        self.__validate_experiment(_param)
-                    elif section == "platforms":
-                        # Check if a platform is already running.
-                        self.__validate_platforms(_param)
-
-                        self.__read_config_file(_param)
-                    else:
-                        self.__log.error(
-                            f"Invalid configuration file {_param}. Expected either experiment or platforms section to be present in file."
-                        )
-                        exit(1)
-
-                # self.validate(_param)
-                # self.__read_config_file(_param)
-            # Otherwise we might be reading a .txt log file with the configuration
-            elif "log" in _param:
-                self.load_from_log(_param)
-        else:
-            self.__log.error(
-                f"Invalid type for conf: {type(_param)}. Expected path (str) or dict."
-            )
-            exit(1)
-
-    def __init_defaults(self):
-        # Load default values from /app/conf/defaults.ini . The only allowed section to be read is the scalehub section.
-        self.cp.read(self.DEFAULTS_PATH)
-        if self.cp.has_section("scalehub"):
-            for key in self.cp["scalehub"]:
-                dict_key = f"scalehub.{key}"
-                self.__config[dict_key] = self.cp["scalehub"][key]
-
-    def create_runtime_file(self, start_ts, end_ts):
-        file_path = os.path.join(self.RUNTIME_PATH, "runtime.ini")
-
-        # Create TIMESTAMPS section and add start timestamp and expected end timestamp
-        self.cp["TIMESTAMPS"] = {"start": start_ts, "end": end_ts}
-
-        # Write the configuration to the file
-        with open(file_path, "w") as f:
-            self.cp.write(f)
-
-    def delete_runtime_file(self):
-        file_path = os.path.join(self.RUNTIME_PATH, "runtime.ini")
-        if os.path.exists(file_path):
-            os.remove(file_path)
-
-    def check_active_platform(self):
-        runtime_file = os.path.join(self.RUNTIME_PATH, "runtime.ini")
-        if not os.path.exists(runtime_file):
-            return False
 
     def parse_platform(self):
         # Get platform names
@@ -341,8 +371,6 @@ class Config:
                                 f"[CONF] Key [{key}] is missing in section [{section}] in configuration file {conf_path}"
                             )
                             exit(1)
-
-    def __validate_platforms(self, conf_path: str):
         # Validate the Platform sections
         platform_str = []
         for value in self.cp[Key.Platforms.platforms].values():

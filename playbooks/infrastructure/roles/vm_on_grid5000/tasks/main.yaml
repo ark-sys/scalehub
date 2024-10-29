@@ -61,7 +61,10 @@
         method: POST
         body: '[{"addr": "{{ ipv6node }}", "proto": "all"}]'
         body_format: json
-        status_code: 200
+        status_code:
+          - 200
+          - 201
+          - 202
         headers:
           Content-Type: "application/json"
       with_items: "{{ oar_job_id_dict }}"

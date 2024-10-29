@@ -1,6 +1,6 @@
 kubernetes
 enoslib==10.0.0rc3
-ansible
+ansible-runner==2.4.0
 jmespath==1.0.1
 paho-mqtt==2.1.0
 numpy==2.0.0

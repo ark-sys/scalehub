@@ -17,6 +17,9 @@ ARG UID=1000
 ARG GID=1000
 # Eric B. is on the cut and my name is
 ARG USER=rakim
+# Parametrize MITOGEN_VERSION
+ARG MITOGEN_VERSION=0.3.14
+
 
 # Create working directory for the scripts at the root. This easily allows to mount a volume to this directory
 # Also set the permissions to rwx for all users to avoid permission issues
@@ -87,15 +90,21 @@ ENTRYPOINT ["/entrypoint.sh"]
 # Download and install the mitogen plugin for Ansible
 RUN mkdir -p /app/ansible
 
-ADD https://files.pythonhosted.org/packages/source/m/mitogen/mitogen-0.3.9.tar.gz /app/ansible/mitogen-plugin.tar.gz
+ADD https://files.pythonhosted.org/packages/source/m/mitogen/mitogen-$MITOGEN_VERSION.tar.gz /app/ansible/mitogen-plugin.tar.gz
 
 RUN tar -xzf /app/ansible/mitogen-plugin.tar.gz -C /app/ansible && \
     rm /app/ansible/mitogen-plugin.tar.gz && \
-    mv /app/ansible/mitogen-0.3.9 /app/ansible/mitogen
+    mv /app/ansible/mitogen-$MITOGEN_VERSION /app/ansible/mitogen
 
 # Image is ready, switch to the user
 USER $USER
 
+# Create private_dir for Ansible
+RUN mkdir -p /tmp/ansible
+
+# Create runtime folder for scalehub
+RUN mkdir -p /app/conf/runtime
+
 # Install additional Ansible collections
-RUN ansible-galaxy collection install bitwarden.secrets
+RUN ansible-galaxy collection install bitwarden.secrets kubernetes.core
 
