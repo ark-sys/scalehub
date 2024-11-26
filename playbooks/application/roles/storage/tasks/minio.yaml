@@ -30,128 +30,52 @@
             - node: DEFAULT_PATH_FOR_NON_LISTED_NODES
               paths:
                 - /tmp/data
+
     - name: Add MinIo chart
       kubernetes.core.helm_repository:
         name: minio-operator
         repo_url: https://operator.min.io/
-    - name: Get count of worker consumer nodes
+
+    - name: Get count of worker nodes that can host MinIO tenants
       kubernetes.core.k8s_info:
         kind: Node
         label_selectors:
-          - node-role.kubernetes.io/worker=consumer
-      register: consumer_nodes
+          - node-role.kubernetes.io/tnode=grid5000
+      register: num_tenant_nodes
+
+    - name: Fill tenant values with number of nodes
+      ansible.builtin.template:
+        src: tenant-values.yaml.j2
+        dest: /tmp/tenant-values.yaml
+        mode: '0644'
+      vars:
+        num_servers: "{{ num_tenant_nodes.resources | length }}"
+
     - name: Install MinIO Operator
       kubernetes.core.helm:
         name: minio-operator
         chart_ref: "minio-operator/operator"
-        chart_version: 5.0.10
+        chart_version: 6.0.4
         release_namespace: minio-operator
         create_namespace: true
         release_state: present
         wait: true
-        values:
-          operator:
-            nodeSelector:
-              node-role.kubernetes.io/control-plane: "true"
-            env:
-              - name: MINIO_PROMETHEUS_URL
-                value: "http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local"
-              - name: PROMETHEUS_NAMESPACE
-                value: "monitoring"
-          console:
-            enabled: true
-            env:
-              - name: MINIO_BROWSER
-                value: "on"
-              - name: MINIO_SERVER_URL
-                value: "http://minio.scalehub.local"
-              - name: MINIO_REDIRECT_URL
-                value: "http://minio-console.scalehub.local"
-              - name: MINIO_PROMETHEUS_URL
-                value: "http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local"
-              - name: PROMETHEUS_NAMESPACE
-                value: "monitoring"
-            nodeSelector:
-              node-role.kubernetes.io/control-plane: "true"
-            affinity:
-              podAntiAffinity:
-                requiredDuringSchedulingIgnoredDuringExecution:
-                  - labelSelector:
-                      matchExpressions:
-                        - key: name
-                          operator: In
-                          values:
-                            - minio-operator
-                    topologyKey: kubernetes.io/hostname
-            ingress:
-              enabled: true
-              ingressClassName: nginx
-              host: minio-console.scalehub.local
-              path: /
-              pathType: Prefix
-              annotations:
-                kubernetes.io/ingress.class: nginx
-                nginx.ingress.kubernetes.io/rewrite-target: /
+        values: "{{ lookup('file', 'minio/operator-values.yaml') | from_yaml }}"
+
     - name: Deploy MinIO tenant
       kubernetes.core.helm:
         name: minio-tenant
         chart_ref: "minio-operator/tenant"
-        chart_version: 5.0.10
+        chart_version: 6.0.4
         release_namespace: minio-operator
         release_state: present
         wait: true
-        values:
-          tenant:
-            # Disable TLS
-            certificate:
-              requestAutoCert: false
-            metrics:
-              enabled: true
-              port: 9000
-              protocol: http
-            #            prometheusOperator: true
-            name: scalehub-tenant
-            replicas: 1
-            pools:
-              # Deploy one server per consumer node
-              - servers: "{{ consumer_nodes.resources | length }}"
-                volumesPerServer: 1
-                name: flink-pool
-                size: 10Gi
-                storageClassName: local-path
-                # deploy one tenant on each worker node
-                affinity:
-                  nodeAffinity:
-                    requiredDuringSchedulingIgnoredDuringExecution:
-                      nodeSelectorTerms:
-                        - matchExpressions:
-                            - key: node-role.kubernetes.io/worker
-                              operator: In
-                              values:
-                                - consumer
-            nodeSelector:
-              node-role.kubernetes.io/worker: "consumer"
-            # Create a bucket for Flink
-            buckets:
-              - name: flink-bucket
-                policy: public
-                objectLocking: false
-            # Configure Prometheus endpoint
-            env:
-              - name: MINIO_PROMETHEUS_URL
-                value: "http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local"
-              - name: PROMETHEUS_NAMESPACE
-                value: "monitoring"
-          # Expose tenant console via ingress
-          ingress:
-            console:
-              enabled: true
-              host: minio-tenant.scalehub.local
-              path: /
-              pathType: Prefix
-              annotations:
-                kubernetes.io/ingress.class: nginx
-                nginx.ingress.kubernetes.io/rewrite-target: /
+        values: "{{ lookup('file', '/tmp/tenant-values.yaml') | from_yaml }}"
+
+    - name: Clean tmp/tenant-values.yaml
+      ansible.builtin.file:
+        path: /tmp/tenant-values.yaml
+        state: absent
 
 - name: MinIO - Deletion block
   tags: [ delete ]

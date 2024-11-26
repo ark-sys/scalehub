@@ -65,6 +65,14 @@ class DataExporter:
         except Exception as e:
             self.__log.error(f"Failed to load json file {file_path} due to : {e}")
 
+    def extract_pod_names(self, metrics_content) -> dict:
+        pod_names = {}
+        for metric in metrics_content:
+            subtask_index = metric["metric"]["subtask_index"]
+            pod_name = metric["metric"]["pod"]
+            pod_names[subtask_index] = pod_name
+        return pod_names
+
     def export_timeseries_json(
         self,
         time_series_name: str,
@@ -202,6 +210,7 @@ class DataExporter:
         self, metrics_content, metric_name, task_name
     ) -> tuple[str, pd.DataFrame]:
         data = {}
+        pod_names = self.extract_pod_names(metrics_content)
         output_file = os.path.join(self.export_path, f"{metric_name}_export.csv")
         for metric in metrics_content:
             if metric["metric"]["task_name"] == task_name:
@@ -239,7 +248,13 @@ class DataExporter:
         # Add "Timestamp" to the index
         df.index.name = "Timestamp"
 
-        # Set first three rows as pandas headers
+        print(pod_names)
+
+        # pod_df = pd.DataFrame.from_dict(pod_names, orient="index", columns=["Pod"])
+        # pod_df.index.name = "SubtaskIndex"
+        # pod_df.reset_index(inplace=True)
+        # pod_df.set_index(["Timestamp", "SubtaskIndex"], inplace=True)
+        # df = df.join(pod_df, on=["Timestamp", "SubtaskIndex"])
 
         # Save dataframe to csv
         df.to_csv(output_file)

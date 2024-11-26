@@ -209,21 +209,6 @@ server:
   # -- Readiness & Liveness probes
   probe:
     # -- Indicates whether the Container is ready to service requests. If the readiness probe fails, the endpoints controller removes the Pod's IP address from the endpoints of all Services that match the Pod. The default state of readiness before the initial delay is Failure. If a Container does not provide a readiness probe, the default state is Success.
-    readiness:
-      httpGet: { }
-      initialDelaySeconds: 5
-      periodSeconds: 15
-      timeoutSeconds: 5
-      failureThreshold: 3
-
-    # -- Indicates whether the Container is running. If the liveness probe fails, the kubelet kills the Container, and the Container is subjected to its restart policy. If a Container does not provide a liveness probe, the default state is Success.
-    liveness:
-      tcpSocket: { }
-      initialDelaySeconds: 30
-      periodSeconds: 30
-      timeoutSeconds: 5
-      failureThreshold: 10
-
     # -- Indicates whether the Container is done with potentially costly initialization. If set it is executed first. If it fails Container is restarted. If it succeeds liveness and readiness probes takes over.
     startup: { }
       #failureThreshold: 30
@@ -367,7 +352,7 @@ server:
     # -- Service IP family policy. Check [here](https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services) for details.
     ipFamilyPolicy: ""
     # -- List of service IP families. Check [here](https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services) for details.
-    ipFamilies: [ ]
+    ipFamilies: [ IPv4 ]
   statefulSet:
     # -- Creates statefulset instead of deployment, useful when you want to keep the cache
     enabled: true

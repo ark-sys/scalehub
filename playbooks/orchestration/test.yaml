@@ -1,0 +1,76 @@
+- name: Networks tests
+  tags: [ create ]
+  hosts: grid5000
+  gather_facts: true
+  tasks:
+    - name: Add default route to br0
+      become: true
+      ansible.builtin.shell:
+        cmd: ip -6 route add default via fe80::bcd7:a580:6462:bf00 dev br0
+      when: ansible_default_ipv4.gateway is defined
+    - name: Get ipv6 address from facts
+      debug:
+        var: ansible_default_ipv6.address
+#
+#- name: Networks tests
+#  tags : [create]
+#  hosts: vm_grid5000
+#  gather_facts: true
+#  tasks:
+#    - name:  Add default route to br0
+#      become: true
+#      ansible.builtin.shell:
+#          cmd: ip -6 route add default via fe80::bcd7:a580:6462:bf00 dev ens3
+#      when: ansible_default_ipv4.gateway is defined
+#    - name: Get ipv6 address from facts
+#      debug:
+#          var: ansible_default_ipv6.address
+
+#- name: Labeling test
+#  tags: [create]
+#  hosts: localhost
+#  tasks:
+#    - name: Check if all groups are defined in the hosts file
+#      set_fact:
+#        vm_grid5000_exists: "{{ 'vm_grid5000' in groups }}"
+#        grid5000_exists: "{{ 'grid5000' in groups }}"
+#        pico_exists: "{{ 'pico' in groups }}"
+#    - name: Get node size
+#      kubernetes.core.k8s_info:
+#        kind: Node
+#        name: "{{ item }}"
+#      register: node_info
+#      loop: "{{ groups['all'] }}"
+#
+#    - name: Retrieve allocatable resources
+#      set_fact:
+#        node_resources: "{{ node_resources | default({}) | combine({ item.item: { 'cpu': item.resources[0].status.allocatable.cpu, 'memory': (item.resources[0].status.allocatable.memory | regex_replace('Ki$', '') | int / 1024 / 1024) | int } }) }}"
+#      loop: "{{ node_info.results }}"
+#      loop_control:
+#        label: "{{ item.item }}"
+#      when: node_info.results is defined and node_info.results | length > 0
+#
+#    - name: Compute node scores
+#      set_fact:
+#        node_scores: "{{ node_scores | default({}) | combine({ item.key: (item.value.cpu | int) * (item.value.memory | int) }) }}"
+#      loop: "{{ node_resources | dict2items }}"
+#      loop_control:
+#        label: "{{ item.key }}"
+#
+#    - name: Give nodes size class based on score. small <= 16, medium <= 64, large > 64
+#      set_fact:
+#        node_size: "{{ node_size | default({}) | combine({ item.key: 'small' if item.value <= 16 else 'medium' if item.value <= 64 else 'large' }) }}"
+#      loop: "{{ node_scores | dict2items }}"
+#      loop_control:
+#        label: "{{ item.key }}"
+#
+#    - name: Combine resources, scores and size for one debuggable
+#      set_fact:
+#          node_info: "{{ node_info | default({}) | combine({ item.key: { 'resources': node_resources[item.key], 'score': node_scores[item.key], 'size': node_size[item.key] } }) }}"
+#      loop: "{{ node_resources | dict2items }}"
+#      loop_control:
+#          label: "{{ item.key }}"
+#
+#    - name: Display node info
+#      debug:
+#          var: node_info

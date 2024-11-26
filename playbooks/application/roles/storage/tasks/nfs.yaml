@@ -37,6 +37,9 @@
              node-role.kubernetes.io/control-plane: "true"
              # This fixes an issue with the controller unable to query an IPv6 address
            dnsPolicy: Default
+         node:
+           nodeSelector:
+             node-role.kubernetes.io/control-plane: "true"
       register: csi_driver
 
     - name: Install NFS Storage class

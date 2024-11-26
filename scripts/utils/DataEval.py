@@ -234,10 +234,11 @@ class Plotter:
                         marker=symbol,
                     )
 
-        ax1.set_title(title, fontsize=self.fontsize)
+        if title:
+            ax1.set_title(title, fontsize=self.fontsize)
         ax1.set_xlabel(xlabel, fontsize=self.fontsize)
         # Set the x-axis to display all integers
-        ax1.xaxis.set_major_locator(plt.MultipleLocator(2))
+        ax1.xaxis.set_major_locator(plt.MultipleLocator(1))
         # Put grid lines on the y-axis
         ax1.yaxis.grid(True)
         # Use thousands formatter
@@ -1338,8 +1339,6 @@ class GroupedDataEval:
                 "ylim": (0, 100),
             },
         }
-
-        print(dataset)
 
         # Generate stacked plot
         self.plotter.generate_stacked_plot_multiple_series_lazyass(
