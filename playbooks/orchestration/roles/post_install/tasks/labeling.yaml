@@ -35,6 +35,62 @@
         state: present
       loop: "{{ groups['producers'] }}"
 
+    - block:
+        - name: Get node size
+          kubernetes.core.k8s_info:
+            kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
+            kind: Node
+            name: "{{ item }}"
+          register: node_info
+          loop: "{{ groups['all'] }}"
+
+        - name: Retrieve allocatable resources
+          set_fact:
+            node_resources: "{{ node_resources | default({}) | combine({ item.item: { 'cpu': item.resources[0].status.allocatable.cpu, 'memory': (item.resources[0].status.allocatable.memory | regex_replace('Ki$', '') | int / 1024 / 1024) | int } }) }}"
+          loop: "{{ node_info.results }}"
+          loop_control:
+            label: "{{ item.item }}"
+          when: node_info.results is defined and node_info.results | length > 0
+
+        - name: Compute node scores
+          set_fact:
+            node_scores: "{{ node_scores | default({}) | combine({ item.key: (item.value.cpu | int) * (item.value.memory | int) }) }}"
+          loop: "{{ node_resources | dict2items }}"
+          loop_control:
+            label: "{{ item.key }}"
+
+        - name: Give nodes size class based on score. small <= 16, medium <= 64, large > 64
+          set_fact:
+            node_size: "{{ node_size | default({}) | combine({ item.key: 'small' if item.value <= 16 else 'medium' if item.value <= 64 else 'large' }) }}"
+          loop: "{{ node_scores | dict2items }}"
+          loop_control:
+            label: "{{ item.key }}"
+
+        - name: Combine resources, scores and size for one debuggable
+          set_fact:
+            node_info: "{{ node_info | default({}) | combine({ item.key: { 'resources': node_resources[item.key], 'score': node_scores[item.key], 'size': node_size[item.key] } }) }}"
+          loop: "{{ node_resources | dict2items }}"
+          loop_control:
+            label: "{{ item.key }}"
+
+        - name: Display node info
+          debug:
+            var: node_info
+
+        - name: Label each node with its size
+          kubernetes.core.k8s:
+            kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
+            name: "{{ item }}"
+            api_version: v1
+            kind: Node
+            definition:
+              metadata:
+                labels:
+                  node-role.kubernetes.io/node-size: "{{ node_info[item].size }}"
+            state: present
+          loop: "{{ groups['all'] }}"
+          when: node_info is defined
+
     - name: Apply grid5000 role label to grid5000 nodes
       kubernetes.core.k8s:
         kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
@@ -50,6 +106,7 @@
       loop: "{{ groups['grid5000'] }}"
       when: grid5000_exists
 
+
     - name: Apply vm_grid5000 role label to vm_grid5000 nodes
       kubernetes.core.k8s:
         kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
@@ -59,13 +116,13 @@
         definition:
           metadata:
             labels:
-              node-role.kubernetes.io/vm_grid5000: "{{ 'small' if hostvars[item].node_size == [2, 4096] else 'medium' if hostvars[item].node_size == [4, 8192] else 'undefined' }}"
+              node-role.kubernetes.io/vm_grid5000: "{{ node_info[item].size }}"
               node-role.kubernetes.io/tnode: "vm_grid5000"
         state: present
       loop: "{{ groups['vm_grid5000'] }}"
       when: vm_grid5000_exists
 
-    - name: Apply pico role label to pico nodes
+    - name: Apply pico role label to pico nodes2
       kubernetes.core.k8s:
         kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
         name: "{{ item }}"
@@ -81,6 +138,7 @@
       loop: "{{ groups['pico'] }}"
       when: pico_exists
 
+    ### Init the first node to be schedulable
     - name: first_node is the name of the group, retrieve a node from the group
       set_fact:
         node: "{{ groups[first_node][0] }}"

@@ -19,6 +19,8 @@ ARG GID=1000
 ARG USER=rakim
 # Parametrize MITOGEN_VERSION
 ARG MITOGEN_VERSION=0.3.14
+# Parametrize K9S_VERSION
+ARG K9S_VERSION=v0.32.5
 
 
 # Create working directory for the scripts at the root. This easily allows to mount a volume to this directory
@@ -46,6 +48,7 @@ RUN apt-get update && apt-get install -y \
     rsync \
     cron  \
     nano  \
+    vim \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -71,6 +74,9 @@ ADD fish/functions/* /usr/share/fish/functions/
 
 # Copy reverse-proxy config
 ADD nginx/nginx.conf /etc/nginx/conf.d/scalehub.conf
+
+# Install K9s
+RUN wget https://github.com/derailed/k9s/releases/download/$K9S_VERSION/k9s_linux_amd64.deb && apt install ./k9s_linux_amd64.deb && rm k9s_linux_amd64.deb
 
 # Set host user id and group id without password
 RUN groupadd -g $GID $USER && \

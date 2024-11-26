@@ -1,0 +1,49 @@
+tenant:
+  name: scalehub-tenant
+  replicas: 1
+  pools:
+    - servers: "{{ num_servers }}"
+      volumesPerServer: 1
+      name: flink-pool
+      size: 10Gi
+      storageClassName: local-path
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/worker
+                    operator: In
+                    values:
+                      - consumer
+                  - key: node-role.kubernetes.io/node-size
+                    operator: NotIn
+                    values:
+                      - small
+  nodeSelector:
+    node-role.kubernetes.io/worker: "consumer"
+  buckets:
+    - name: flink-bucket
+      policy: public
+      objectLocking: false
+  users: [ ]
+  metrics:
+    enabled: true
+    port: 9000
+    protocol: http
+  certificate:
+    requestAutoCert: false
+  env:
+    - name: MINIO_PROMETHEUS_URL
+      value: "http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local"
+    - name: PROMETHEUS_NAMESPACE
+      value: "monitoring"
+  ingress:
+    console:
+      enabled: true
+      host: minio-tenant.scalehub.local
+      path: /
+      pathType: Prefix
+      annotations:
+        kubernetes.io/ingress.class: nginx
+        nginx.ingress.kubernetes.io/rewrite-target: /

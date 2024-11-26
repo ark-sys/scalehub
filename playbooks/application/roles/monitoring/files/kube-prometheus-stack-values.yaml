@@ -18,7 +18,7 @@ prometheus:
     podMonitorSelectorNilUsesHelmValues: false
     probeSelectorNilUsesHelmValues: false
     remoteWrite:
-      - url: http://victoria-metrics-single-server.default.svc.cluster.local:8428/api/v1/write
+      - url: http://victoria-metrics-single-server.default:8428/api/v1/write
     nodeSelector:
       node-role.kubernetes.io/control-plane: "true"
   serviceMonitor:
@@ -28,17 +28,18 @@ prometheus:
           - __meta_kubernetes_pod_node_name
         targetLabel: instance
 prometheus-node-exporter:
-  # Change default port from 9100 to 9123
+  # Change default port from 9100 to 19100
     service:
-      type: ClusterIP
-      port: 19100
-      targetPort: 19100
-      nodePort:
       portName: metrics
       listenOnAllInterfaces: true
-      annotations:
-        prometheus.io/scrape: "true"
+      port: 19100
+      ipDualStack:
+        enabled: true
+        ipFamilyPolicy: PreferDualStack
+        IpFamilies: [ "IPv6", "IPv4" ]
 grafana:
+  service:
+    ipFamilyPolicy: PreferDualStack
   ingress:
     enabled: true
     annotations:
@@ -74,7 +75,7 @@ grafana:
       datasources:
         - name: VictoriaMetrics
           type: prometheus
-          url: http://victoria-metrics-single-server.default.svc.cluster.local:8428/
+          url: http://victoria-metrics-single-server.default:8428/
           access: proxy
           isDefault: true
   persistence:

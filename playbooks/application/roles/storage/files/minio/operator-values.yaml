@@ -1,0 +1,42 @@
+operator:
+  nodeSelector:
+    node-role.kubernetes.io/control-plane: "true"
+  env:
+    - name: MINIO_PROMETHEUS_URL
+      value: "http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local"
+    - name: PROMETHEUS_NAMESPACE
+      value: "monitoring"
+  console:
+    enabled: true
+    env:
+      - name: MINIO_BROWSER
+        value: "on"
+      - name: MINIO_SERVER_URL
+        value: "http://minio.scalehub.local"
+      - name: MINIO_REDIRECT_URL
+        value: "http://minio-console.scalehub.local"
+      - name: MINIO_PROMETHEUS_URL
+        value: "http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local"
+      - name: PROMETHEUS_NAMESPACE
+        value: "monitoring"
+    nodeSelector:
+      node-role.kubernetes.io/control-plane: "true"
+    affinity:
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+                - key: name
+                  operator: In
+                  values:
+                    - minio-operator
+            topologyKey: kubernetes.io/hostname
+    ingress:
+      enabled: true
+      ingressClassName: nginx
+      host: minio-console.scalehub.local
+      path: /
+      pathType: Prefix
+      annotations:
+        kubernetes.io/ingress.class: nginx
+        nginx.ingress.kubernetes.io/rewrite-target: /

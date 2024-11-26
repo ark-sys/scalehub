@@ -2,12 +2,12 @@
 - name: Install k3s on control node
   hosts: control
   become: true
-  gather_facts: false
+  gather_facts: true
   roles:
     - role: k3s_control
 
 - name: Install k3s on worker nodes
-  hosts: pico
+  hosts: consumers, producers
   become: true
   gather_facts: true
   roles:

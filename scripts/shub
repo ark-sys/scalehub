@@ -17,7 +17,7 @@ from scripts.src.RaspberryPi import RaspberryPi
 from scripts.utils.Config import Config
 from scripts.utils.DataEval import DataEval
 from scripts.utils.DataExporter import DataExporter
-from scripts.utils.Defaults import DefaultKeys as Key, DefaultValues as Value
+from scripts.utils.Defaults import DefaultKeys as Key
 from scripts.utils.KubernetesManager import KubernetesManager
 from scripts.utils.Logger import Logger
 from scripts.utils.Tools import Tools
@@ -60,6 +60,9 @@ def provision(config: Config):
             i: InventoryManager = __setup_platform(platform_info)
             if i is not None:
                 final_inventory = merge_inventories(final_inventory, i)
+
+        # Create runtime configuration file
+        config.create_runtime_file()
 
         # Create ConfigParser object
         config_parser = configparser.ConfigParser(allow_no_value=True)
@@ -115,6 +118,9 @@ def destroy(config: Config):
                 p.destroy()
             case _:
                 log.error(f"Destroy is not implemented for platform {platform_type}")
+
+    # Delete runtime file
+    config.delete_runtime_file()
 
 
 # Execute tasks with "deploy" tag for a given playbook
@@ -248,7 +254,7 @@ def run(action, attr, type, config: Config, export_dir):
         # Dump running configuration to file
         with open(log_file, "w") as file:
             file.write(f"[CONFIG]\n")
-            file.write(f"{config.to_str()}\n\n")
+            file.write(f"{config.to_json()}\n\n")
             file.write(f"[TIMESTAMPS]\n")
             file.write(f"Experiment start at : {start_ts}\n")
 
@@ -419,8 +425,11 @@ def run(action, attr, type, config: Config, export_dir):
             run("chaos", "delete", None, config)
 
         case "test":
-            # base_path = "/app/info/paper-plots3/Join-kk/latency_70"
-            pass
+            base_path = "/app/experiments-data/2024-11-05/4"
+            d: DataEval = DataEval(log, base_path)
+
+            d.eval_special()
+
         case "dump":
             # Dump running configuration
             log.info(f"Running configuration : \n{config.to_json()}")
@@ -508,8 +517,8 @@ def main(log: Logger):
         "--conf",
         dest="conf_file",
         action="store",
-        default=Value.conf_path,
-        help="Specify a custom path for the configuration file of scalehub.",
+        default=Config.RUNTIME_PATH,
+        help="Specify a custom path for the configuration used for either provisioning or experiment running.",
     )
     # Provision command
     subparsers.add_parser(
@@ -601,39 +610,48 @@ def main(log: Logger):
     # Parse configuration file values
     configuration_file = args.conf_file
 
-    # Store configuration file values in Config struct
-    config = Config(log, configuration_file)
+    # Store configuration file values in Config struct. If the command is 'destroy', use runtime configuration file.
+    # config = (
+    #     Config(log, Config.RUNTIME_PATH)
+    #     if args.command == "destroy"
+    #     else Config(log, configuration_file)
+    # )
 
-    if args.command == "provision":
-        provision(config)
-    elif args.command == "deploy":
-        deploy(args.playbook, config)
-    elif args.command == "delete":
-        delete(args.playbook, config)
-    elif args.command == "reload":
-        reload(args.playbook, config)
-    elif args.command == "destroy":
-        destroy(config)
-    elif args.command == "experiment":
-        action = args.action
-        experiment(action, config)
-    elif args.command == "tokens":
-        tokens()
-    elif args.command == "sync":
-        sync_experiment_data(config)
-    elif args.command == "run":
-        action = args.action
-        attr = args.action_arg_1
-        type = args.action_arg_2
-        export_dir = args.export_dir
-
-        run(action, attr, type, config, export_dir)
-    elif args.command == "export":
-        date = args.date
-        type = args.type
-        export(config, date, type)
+    if args.command != "destroy":
+        config = Config(log, configuration_file)
     else:
-        parser.print_help()
+        config = Config(log, Config.RUNTIME_PATH)
+
+    match args.command:
+        case "destroy":
+            destroy(config)
+        case "provision":
+            provision(config)
+        case "deploy":
+            deploy(args.playbook, config)
+        case "delete":
+            delete(args.playbook, config)
+        case "reload":
+            reload(args.playbook, config)
+        case "experiment":
+            experiment(args.action, config)
+        case "tokens":
+            tokens()
+        case "sync":
+            sync_experiment_data(config)
+        case "run":
+            action = args.action
+            attr = args.action_arg_1
+            type = args.action_arg_2
+            export_dir = args.export_dir
+
+            run(action, attr, type, config, export_dir)
+        case "export":
+            date = args.date
+            type = args.type
+            export(config, date, type)
+        case _:
+            parser.print_help()
 
 
 if __name__ == "__main__":

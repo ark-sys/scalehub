@@ -9,6 +9,9 @@ metadata:
 spec:
   type: ClusterIP
   clusterIP: None
+  ipFamilyPolicy: SingleStack
+  ipFamilies:
+    - IPv6
   ports:
     - name: metrics
       port: 9249

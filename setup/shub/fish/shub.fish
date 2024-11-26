@@ -79,3 +79,35 @@ end
 
 # Enable autocompletion for the 'export' command with the directory names
 complete -c shub -n "__fish_seen_subcommand_from export" -a '(__fish_shub_export_complete)'
+
+# Function to list filenames from the specified directories
+function __fish_shub_conf_experiment_complete
+    for dir in /app/conf/experiment/
+        if test -d $dir
+            for file in $dir/*
+                if test -f $file
+                    echo $file
+                end
+            end
+        end
+    end
+end
+
+# Enable autocompletion for the '-c' option of the 'shub' command
+complete -c shub -s c -l conf -a '(__fish_shub_conf_experiment_complete)' -d "Experiment configuration"
+
+# Function to list filenames from the specified directories
+function __fish_shub_conf_provision_complete
+    for dir in /app/conf/provision/
+        if test -d $dir
+            for file in $dir/*
+                if test -f $file
+                    echo $file
+                end
+            end
+        end
+    end
+end
+
+# Enable autocompletion for the '-c' option of the 'shub' command
+complete -c shub -s c -l conf -a '(__fish_shub_conf_provision_complete)' -d "Provision configuration"

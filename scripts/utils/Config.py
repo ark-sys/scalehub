@@ -2,7 +2,6 @@ import configparser as cp
 import json
 import os.path
 from inspect import getmembers, isclass
-from os.path import exists
 
 from scripts.utils.Defaults import (
     DefaultKeys as Key,
@@ -12,11 +11,11 @@ from .Logger import Logger
 
 class Config:
     __config = {}
-    RUNTIME_PATH = "/app/conf/runtime/"
+    RUNTIME_PATH = "/app/conf/runtime/runtime.ini"
     DEFAULTS_PATH = "/app/conf/defaults.ini"
 
     def __str__(self):
-        return self.to_str()
+        return self.to_json()
 
     def get(self, key) -> any:
         if key in self.__config:
@@ -56,33 +55,51 @@ class Config:
             self.__config = _param
         elif isinstance(_param, str):
             # If the configuration is a string, lets assume it is a path to a configuration file
-
-            # Now check if the file matches the .ini format
-            if _param.endswith(".ini") and os.path.exists(_param):
-
-                # Verify we only have one section
-                sections_in_file = self.cp.sections()
-                if len(sections_in_file) == 1:
-                    section = sections_in_file[0]
-                    if section == "experiment":
+            if not os.path.exists(_param):
+                self.__log.error(
+                    f"Configuration file {_param} not found or does not exist."
+                )
+                exit(1)
+            else:
+                # Now check if the file matches the .ini format
+                if _param.endswith(".ini"):
+                    self.cp.read(_param)
+                    # Verify we only have one section
+                    sections_in_file = self.cp.sections()
+                    sections_in_file = set(sections_in_file) - {"scalehub"}
+                    if all(
+                        section.startswith("experiment") for section in sections_in_file
+                    ):
                         # Platform is already provided. Performing experiment related actions
                         self.__validate_experiment(_param)
-                    elif section == "platforms":
+
+                        self.__read_experiment_config(_param)
+
+                    elif all(
+                        section.startswith("platforms") for section in sections_in_file
+                    ):
                         # Check if a platform is already running.
                         self.__validate_platforms(_param)
 
-                        self.__read_config_file(_param)
+                        self.__read_platform_config(_param)
                     else:
                         self.__log.error(
-                            f"Invalid configuration file {_param}. Expected either experiment or platforms section to be present in file."
+                            f"Invalid configuration file {_param}. Found {sections_in_file} sections in file. Expected either experiment or platforms section to be present in file."
                         )
+
                         exit(1)
 
-                # self.validate(_param)
-                # self.__read_config_file(_param)
-            # Otherwise we might be reading a .txt log file with the configuration
-            elif "log" in _param:
-                self.load_from_log(_param)
+                    # self.validate(_param)
+                    # self.__read_config_file(_param)
+                # Otherwise we might be reading a .txt log file with the configuration
+                elif "log" in _param:
+                    self.load_from_log(_param)
+                else:
+                    self.__log.error(
+                        f"Invalid configuration file {_param}. Expected .ini file or log file."
+                    )
+                    exit(1)
+
         else:
             self.__log.error(
                 f"Invalid type for conf: {type(_param)}. Expected path (str) or dict."
@@ -97,27 +114,16 @@ class Config:
                 dict_key = f"scalehub.{key}"
                 self.__config[dict_key] = self.cp["scalehub"][key]
 
-    def create_runtime_file(self, start_ts, end_ts):
-        file_path = os.path.join(self.RUNTIME_PATH, "runtime.ini")
-
-        # Create TIMESTAMPS section and add start timestamp and expected end timestamp
-        self.cp["TIMESTAMPS"] = {"start": start_ts, "end": end_ts}
-
+    def create_runtime_file(self):
         # Write the configuration to the file
-        with open(file_path, "w") as f:
+        with open(self.RUNTIME_PATH, "w") as f:
             self.cp.write(f)
 
     def delete_runtime_file(self):
-        file_path = os.path.join(self.RUNTIME_PATH, "runtime.ini")
-        if os.path.exists(file_path):
-            os.remove(file_path)
+        if os.path.exists(self.RUNTIME_PATH):
+            os.remove(self.RUNTIME_PATH)
 
-    def check_active_platform(self):
-        runtime_file = os.path.join(self.RUNTIME_PATH, "runtime.ini")
-        if not os.path.exists(runtime_file):
-            return False
-
-    def parse_platform(self):
+    def __parse_platform(self):
         # Get platform names
         platform_str = []
         for value in self.cp[Key.Platforms.platforms].values():
@@ -132,7 +138,7 @@ class Config:
             # Get values for platform
             type = self.cp[platform_section]["type"]
 
-            # If type is RaspberryPi, Required fields are "cluster", "contro", "producers", "consumers", "kubernetes_type". Otherwise, require everything else.
+            # If type is RaspberryPi, Required fields are "cluster", "control", "producers", "consumers", "kubernetes_type". Otherwise, require everything else.
             if type == "RaspberryPi":
                 cluster = self.cp[platform_section]["cluster"]
                 producers = self.cp[platform_section]["producers"]
@@ -245,7 +251,7 @@ class Config:
             platforms.append(platform)
         return platforms
 
-    def parse_load_generators(self):
+    def __parse_load_generators(self):
         # Get load_generators names
         load_generators_str = []
         for value in self.cp[Key.Experiment.Generators.generators].values():
@@ -412,31 +418,31 @@ class Config:
                         )
                         exit(1)
 
-    def validate(self, conf_path: str):
-        # Check that the configuration file exists
-        if not exists(conf_path):
-            self.__log.error(f"[CONF] Config file [{conf_path}] does not exist.")
-            exit(1)
-        else:
-            self.__log.debugg(f"[CONF] Config file [{conf_path}] found.")
+    # def validate(self, conf_path: str):
+    #     # Check that the configuration file exists
+    #     if not exists(conf_path):
+    #         self.__log.error(f"[CONF] Config file [{conf_path}] does not exist.")
+    #         exit(1)
+    #     else:
+    #         self.__log.debugg(f"[CONF] Config file [{conf_path}] found.")
+    #
+    #         # Read the configuration file
+    #         self.cp.read(conf_path)
+    #
+    #         # Check that the main sections are defined
+    #         for name, cls in getmembers(Key, isclass):
+    #             if name.startswith("__") and name.endswith("__"):
+    #                 continue
+    #             section = name.lower()
+    #             if not self.cp.has_section(section):
+    #                 self.__log.error(
+    #                     f"[CONF] Section [{section}] is missing in configuration file {conf_path}"
+    #                 )
+    #                 exit(1)
+    #         # Validate subclasses of Experiment
+    #         self.__validate_experiment(conf_path)
 
-            # Read the configuration file
-            self.cp.read(conf_path)
-
-            # Check that the main sections are defined
-            for name, cls in getmembers(Key, isclass):
-                if name.startswith("__") and name.endswith("__"):
-                    continue
-                section = name.lower()
-                if not self.cp.has_section(section):
-                    self.__log.error(
-                        f"[CONF] Section [{section}] is missing in configuration file {conf_path}"
-                    )
-                    exit(1)
-            # Validate subclasses of Experiment
-            self.__validate_experiment(conf_path)
-
-    def __read_config_file(self, conf_path: str):
+    def __read_platform_config(self, conf_path: str):
         # Read the configuration file
         self.cp.read(conf_path)
 
@@ -445,15 +451,24 @@ class Config:
                 dict_key = f"{section}.{key}"
                 self.__config[dict_key] = self.cp[section][key]
 
-        self.__config[Key.Platforms.platforms] = self.parse_platform()
+        self.__config[Key.Platforms.platforms] = self.__parse_platform()
+
+    def __read_experiment_config(self, conf_path: str):
+        # Read the configuration file
+        self.cp.read(conf_path)
+
+        for section in self.cp.sections():
+            for key in self.cp[section]:
+                dict_key = f"{section}.{key}"
+                self.__config[dict_key] = self.cp[section][key]
 
         self.__config[
             Key.Experiment.Generators.generators
-        ] = self.parse_load_generators()
+        ] = self.__parse_load_generators()
 
     # Serialize the configuration to a JSON string
     def to_json(self):
-        return json.dumps(self.__config)
+        return json.dumps(self.__config, indent=4)
 
     def load_from_log(self, log_path: str):
         with open(log_path, "r") as f:
@@ -468,6 +483,3 @@ class Config:
         # Join the lines between [CONFIG] and [TIMESTAMPS] and load as JSON
         config_content = "".join(lines[start_line:end_line])
         self.__config = json.loads(config_content)
-
-    def to_str(self):
-        return json.dumps(self.__config, indent=4)

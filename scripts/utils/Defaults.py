@@ -64,6 +64,7 @@ class DefaultKeys:
         kafka_partitions = "experiment.kafka_partitions"
         first_node = "experiment.first_node"
         unchained_tasks = "experiment.unchained_tasks"
+        type = "experiment.type"
 
         class Generators:
             generators = "experiment.generators"
@@ -147,6 +148,7 @@ class DefaultValues:
         kafka_partitions = 1000
         first_node = "grid5000"
         unchained_tasks = False
+        type = "standalone"
 
         class Generators:
             generators = ["generator1"]

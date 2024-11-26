@@ -37,8 +37,8 @@ spec:
           image: "{{image}}:{{tag}}"
           resources:
             limits:
-              memory: 32Gi
-              cpu: 16000m
+              memory: 64Gi
+              cpu: 30000m
           args: ["taskmanager"]
           ports:
             - containerPort: 6122
@@ -62,7 +62,7 @@ spec:
           configMap:
             name: flink-config
             items:
-              - key: flink-conf.yaml
+              - key: flink-conf-taskmanager-l.yaml
                 path: flink-conf.yaml
               - key: log4j-console.properties
                 path: log4j-console.properties
@@ -135,7 +135,7 @@ spec:
           configMap:
             name: flink-config
             items:
-              - key: flink-conf-vm_small.yaml
+              - key: flink-conf-taskmanager-s.yaml
                 path: flink-conf.yaml
               - key: log4j-console.properties
                 path: log4j-console.properties
@@ -162,19 +162,19 @@ spec:
         component: taskmanager
     spec:
 #     Force scheduling of one taskmanager per node
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - topologyKey: kubernetes.io/hostname
-              labelSelector:
-                matchLabels:
-                  app: flink
-                  component: taskmanager
+      #      affinity:
+      #        podAntiAffinity:
+      #          requiredDuringSchedulingIgnoredDuringExecution:
+      #            - topologyKey: kubernetes.io/hostname
+      #              labelSelector:
+      #                matchLabels:
+      #                  app: flink
+      #                  component: taskmanager
       nodeSelector:
         node-role.kubernetes.io/worker: consumer
         node-role.kubernetes.io/autoscaling: SCHEDULABLE
-        node-role.kubernetes.io/tnode: vm_grid5000
-        node-role.kubernetes.io/vm_grid5000: medium
+      #        node-role.kubernetes.io/tnode: vm_grid5000
+      #        node-role.kubernetes.io/vm_grid5000: medium
       terminationGracePeriodSeconds: 0
       imagePullSecrets:
         - name: gitlab-scalehub
@@ -208,7 +208,7 @@ spec:
           configMap:
             name: flink-config
             items:
-              - key: flink-conf-vm_medium.yaml
+              - key: flink-conf-taskmanager-m.yaml
                 path: flink-conf.yaml
               - key: log4j-console.properties
                 path: log4j-console.properties
@@ -254,7 +254,7 @@ spec:
           image: "{{image}}:{{tag}}"
           resources:
             limits:
-              memory: 3Gi
+              memory: 4Gi
               cpu: 2000m
           args: [ "taskmanager" ]
           ports:

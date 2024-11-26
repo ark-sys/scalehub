@@ -1,89 +1,97 @@
-#---
-#- name: Gather some facts about the control node
-#  tags: [ create ]
-#  block:
-#    - name: Get control node IPv6 address
-#      ansible.builtin.shell:
-#        cmd: ip -6 -br addr show dev br0 scope global | awk '{print $3}' | cut -d/ -f1
-#      register: control_node_ipv6
-#    - name: Get control node IPv4 address
-#      ansible.builtin.shell:
-#        cmd: ip -4 -br addr show dev br0 scope global | awk '{print $3}' | cut -d/ -f1
-#      register: control_node_ipv4
-#
-#    - name: Get control node's IPv6 default route
-#      command: ip -6 route show default
-#      register: control_ipv6_default_route_with_via
-#
-#    - name: Debug control node IPv6 address
-#      debug:
-#        var: control_node_ipv6.stdout
-- name: Gather some network facts
-  tags: [ create ]
-  block:
-    - name: Get control node IPv6 address
-      delegate_to: "{{ groups['control'][0] }}"
-      shell: ip -6 -br addr show dev br0 scope global | awk '{print $3}' | cut -d/ -f1
-      register: control_node_ipv6
-      run_once: true
-#
-#    - name: Save worker's IPv6 default route
-#      shell: ip -6 route show default
-#      register: worker_ipv6_default_route_with_via
-#
-#    - name: Extract worker's IPv6 default route
-#      set_fact:
-#          worker_ipv6_default_route: "{{ worker_ipv6_default_route_with_via.stdout.split(' ')[2] }}"
-#      when: worker_ipv6_default_route_with_via.stdout != ""
-#
-#    - name: Extract worker's interface name
-#      set_fact:
-#          worker_interface: "{{ worker_ipv6_default_route_with_via.stdout.split(' ')[4] }}"
-#      when: worker_ipv6_default_route_with_via.stdout != ""
+---
+- name: Check if ip_stack is defined and valid
+  fail:
+    msg: "The ip_stack variable must be defined and set to either 'ipv4', 'ipv6', or 'dual'."
+  when: ip_stack is not defined or ip_stack not in ['ipv4', 'ipv6', 'dual']
 
-- name: Install K3S on worker nodes
+- name: Gather network parameters for k3s
   tags: [ create ]
   block:
+    - name: Get worker node default interface name
+      shell: "ip -o -6 route show to default | awk '{print $5}'"
+      register: default_interface
+      when: ip_stack == "ipv6" or ip_stack == "dual"
+
+    - name: Get worker node default route
+      shell: "ip -6 route show to default | awk '{print $3}'"
+      register: default_route
+      when: ip_stack == "ipv6" or ip_stack == "dual"
+
     - name: Get node token from controller for workers hosts
       delegate_to: "{{ groups['control'][0] }}"
       shell: "cat /tmp/k3s/server/node-token"
       register: node_token
       run_once: true
 
-    - name: Get control node IPv6 address
+    - name: Get control node address based on ip_stack
       delegate_to: "{{ groups['control'][0] }}"
-      shell: ip -6 -br addr show dev br0 scope global | awk '{print $3}' | cut -d/ -f1
-      register: control_node_ipv6
+      shell: |
+        if [ "{{ ip_stack }}" = "ipv4" ]; then
+          ip -4 -br addr show dev br0 scope global | awk '{print $3}' | cut -d/ -f1
+        else
+          ip -6 -br addr show dev br0 scope global | awk '{print $3}' | cut -d/ -f1
+        fi
+      register: control_node_address
       run_once: true
-    #
-    #    - name: Get worker node IPv6 address
-    #      shell: ip -6 -br addr show dev br0 scope global | awk '{print $3}' | cut -d/ -f1
-    #      register: worker_node_ipv6
-    #      run_once: true
 
+    - name: Add square brackets to the IPv6 address
+      set_fact:
+        control_node_address: "[{{ control_node_address.stdout }}]"
+      when: ip_stack == "ipv6" or ip_stack == "dual"
+
+- name: Define INSTALL_K3S_EXEC if ip_stack is ipv6
+  tags: [ create ]
+  set_fact:
+    INSTALL_K3S_EXEC: "--prefer-bundled-bin --data-dir=/tmp/k3s --node-ip={{ ansible_default_ipv6.address }}"
+  when: ip_stack == "ipv6"
+
+- name: Define INSTALL_K3S_EXEC if ip_stack is ipv4
+  tags: [ create ]
+  set_fact:
+    INSTALL_K3S_EXEC: "--data-dir=/tmp/k3s --node-ip={{ ansible_default_ipv4.address }}"
+  when: ip_stack == "ipv4"
+
+- name: Define INSTALL_K3S_EXEC if ip_stack is dual
+  tags: [ create ]
+  set_fact:
+    INSTALL_K3S_EXEC: "--data-dir=/tmp/k3s --node-ip={{ ansible_default_ipv6.address }},{{ ansible_default_ipv4.address }} --node-external-ip={{ ansible_default_ipv6.address }}"
+  when: ip_stack == "dual"
+
+- name: Debug INSTALL_K3S_EXEC
+  tags: [ create ]
+  debug:
+    var: INSTALL_K3S_EXEC
+
+- name: Fail if the --node-ip parameter in INSTALL_K3S_EXEC is empty
+  fail:
+    msg: "The --node-ip parameter in INSTALL_K3S_EXEC must not be empty."
+  when: INSTALL_K3S_EXEC.find("--node-ip=") != -1 and INSTALL_K3S_EXEC.find("--node-ip=") == INSTALL_K3S_EXEC.find("--node-ip=") + 10
+
+- name: Install K3S on worker nodes
+  tags: [ create ]
+  block:
     - name: Install k3s on workers
       environment:
-        K3S_URL: "https://[{{ control_node_ipv6.stdout }}]:6443"
+        K3S_URL: "https://{{ control_node_address }}:6443"
         K3S_TOKEN: "{{ node_token.stdout }}"
-        INSTALL_K3S_VERSION: v1.31.0+k3s1
-        INSTALL_K3S_EXEC: --prefer-bundled-bin  --data-dir=/tmp/k3s    --node-external-ip={{ ansible_default_ipv6.address }} --node-ip={{ ansible_default_ipv6.address }}
-      #         INSTALL_K3S_EXEC: --data-dir=/tmp/k3s
+        INSTALL_K3S_VERSION: "{{ K3S_VERSION }}"
+        INSTALL_K3S_EXEC: "{{ INSTALL_K3S_EXEC }}"
       shell:
         cmd: "curl -sfL https://get.k3s.io | sh -s -"
       # Skip this task if the consumers nodes or the producers nodes are the same as the control node. This is a single node cluster.
       when: "inventory_hostname not in groups['control']"
       register: install_k3s_result
       failed_when: install_k3s_result.rc != 0
+  rescue:
+    # In ipv6 mode routes disappear for g5k and vms, which leads to a failed installation. This helps fix the issue.
+    - name: Set IPv6 default route to the default interface
+      shell: "ip -6 route add default via {{ default_route.stdout }} dev {{ default_interface.stdout }}"
+      when: ip_stack == "ipv6"
+  always:
+    - name: Fix default route for ipv6
+      shell: "ip -6 route add default via {{ default_route.stdout }} dev {{ default_interface.stdout }}"
+      when: ip_stack == "dual"
 
-
-#    - name: Check if we still have a default route
-#      shell: ip -6 route show default
-#      register: worker_ipv6_default_route_check
-#      when: install_k3s_result is failed
-#
-#    - name: Restore default route if it was removed
-#      shell: ip -6 route add default via {{ worker_ipv6_default_route }} dev {{ worker_interface }}
-#      when: worker_ipv6_default_route_check == ""
 
 - name: Uninstall K3S
   tags: [ delete ]
