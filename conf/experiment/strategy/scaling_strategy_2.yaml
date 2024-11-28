@@ -1,0 +1,16 @@
+- node: grid5000
+  taskmanager:
+    - number: 3
+      type: s
+    - number: 1
+      type: m
+- node: vm_grid5000
+  type: small
+  taskmanager:
+    - number: 1
+      type: s
+- node: vm_grid5000
+  type: medium
+  taskmanager:
+    - number: 1
+      type: m
