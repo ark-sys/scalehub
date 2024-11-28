@@ -101,12 +101,10 @@ class MultipleRunExperiment(Experiment):
     def initialize_cluster(self):
         # Check list of schedulable node, we should have 0
         schedulable_nodes = self.k.node_manager.get_schedulable_nodes()
-        self.log.info(f"Schedulable nodes: {schedulable_nodes}")
+        self.log.info(f"Schedulable nodes: {len(schedulable_nodes)}")
         # Check that we have the correct node labeled
         if len(schedulable_nodes) != 0:
-            self.log.error(
-                f"Expected 0 schedulable nodes, got {len(schedulable_nodes)}"
-            )
+            self.log.warning(f"Resetting scaling labels.")
             # Reset scaling labels, clean start.
             self.k.node_manager.reset_scaling_labels()
 
@@ -121,11 +119,7 @@ class MultipleRunExperiment(Experiment):
         self.log.info(f"First node: {first_node}")
 
         # Mark this node with schedulable
-        if first_node is None:
-            self.log.error("No nodes available for scaling")
-            return
-        else:
-            self.k.node_manager.mark_node_as_schedulable(first_node)
+        self.k.node_manager.mark_node_as_schedulable(first_node)
 
         # Get first taskmanager to deploy
         taskmanager_type = self.steps[0]["taskmanager"][0]["type"]

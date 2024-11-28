@@ -1,0 +1,4 @@
+- node: grid5000
+  taskmanager:
+    - number: 3
+      type: s

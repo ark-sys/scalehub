@@ -197,6 +197,7 @@ class DeploymentManager:
         self.t: Tools = Tools(self.__log)
         self.api_instance = client.AppsV1Api()
 
+    @DeprecationWarning
     def rescale_taskmanagers_heterogeneous(self, n_replicas_p, tm_type_p) -> (int, int):
         tm = "flink-taskmanager"
         tm_types = ["bm", "vm-small", "vm-medium", "pico"]
@@ -415,18 +416,36 @@ class ServiceManager:
     def create_service(self, template_filename, params, namespace="default"):
         # Load resource definition from file
         resource_object = self.t.load_resource_definition(template_filename, params)
-        try:
+        service_name = resource_object["metadata"]["name"]
 
-            # Create service
-            self.api_instance.create_namespaced_service(
-                namespace=namespace, body=resource_object, async_req=False
+        try:
+            # Check if the service already exists
+            existing_service = self.api_instance.read_namespaced_service(
+                name=service_name, namespace=namespace
             )
-            self.__log.info(f"Service {resource_object['metadata']['name']} created.")
+            self.__log.info(
+                f"Service {service_name} already exists. Patching the service."
+            )
+
+            # Patch the existing service
+            self.api_instance.patch_namespaced_service(
+                name=service_name,
+                namespace=namespace,
+                body=resource_object,
+            )
+            self.__log.info(f"Service {service_name} patched.")
         except ApiException as e:
-            self.__log.error(
-                f"Exception when calling CoreV1Api->create_namespaced_service: {e}\n"
-            )
-            return
+            if e.status == 404:
+                # Service does not exist, create it
+                self.api_instance.create_namespaced_service(
+                    namespace=namespace, body=resource_object, async_req=False
+                )
+                self.__log.info(f"Service {service_name} created.")
+            else:
+                self.__log.error(
+                    f"Exception when calling CoreV1Api->create_namespaced_service: {e}\n"
+                )
+                return
 
     def delete_service(self, template_filename, params):
         # Load resource definition from file
@@ -936,3 +955,15 @@ class StatefulSetManager:
                 f"flink-taskmanager-{type}", "flink"
             )
         return replicas
+
+    def get_statefulset_by_label(self, label_selector, namespace="default"):
+        try:
+            statefulsets = self.api_instance.list_namespaced_stateful_set(
+                namespace=namespace, label_selector=label_selector
+            )
+            return statefulsets.items
+        except ApiException as e:
+            self.__log.error(
+                f"Exception when calling AppsV1Api->list_namespaced_stateful_set: {e}\n"
+            )
+            return None
