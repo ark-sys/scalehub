@@ -69,7 +69,7 @@ class Experiment:
         import requests
 
         r = requests.get(
-            f"http://flink-jobmanager.flink.svc.cluster.local:8081/flink/jobs/{job_id}/plan"
+            f"http://flink-jobmanager.flink.svc.cluster.local:8081/jobs/{job_id}/plan"
         )
         self.__log.info(f"Job plan response: {r.text}")
         job_plan = r.json()
