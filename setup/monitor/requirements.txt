@@ -6,3 +6,4 @@ jinja2
 transitions
 seaborn
 networkx
+ansible-runner==2.4.0

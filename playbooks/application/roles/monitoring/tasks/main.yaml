@@ -6,4 +6,4 @@
 - import_tasks: prometheus.yaml
 - import_tasks: service-monitors.yaml
 #- import_tasks: consul.yaml
-#- import_tasks: experiment-monitor.yaml
+- import_tasks: experiment-monitor.yaml
