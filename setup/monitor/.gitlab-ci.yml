@@ -17,15 +17,38 @@ build:
   script:
     # build the image of experiment-monitor context
     - docker build -t "$CI_REGISTRY/$CI_REGISTRY_PROJECT/scalehub/monitor" -f setup/monitor/Dockerfile .
-
+    # Create artifact
+    - echo "Creating artifact"
+    - docker save "$CI_REGISTRY/$CI_REGISTRY_PROJECT/scalehub/monitor" > monitor.tar
+  artifacts:
+    paths:
+      - monitor.tar
 push:
   stage: push
   tags:
     - ci.inria.fr
     - small
+  # Get artifact from previous stage, docker import it and push it to the registry
   script:
     - echo "Pushing the image to the registry"
     # push the image to the registry
+    - docker load < monitor.tar
     - docker push "$CI_REGISTRY/$CI_REGISTRY_PROJECT/scalehub/monitor"
   needs:
     - job: build
+      artifacts: true
+
+#push:
+#  stage: push
+#  tags:
+#    - ci.inria.fr
+#    - small
+#  script:
+#    -
+#    - echo "Pushing the image to the registry"
+#    # push the image to the registry
+#    - docker push "$CI_REGISTRY/$CI_REGISTRY_PROJECT/scalehub/monitor"
+#  needs:
+#    - job: build
+#      artifacts: true
+
