@@ -33,7 +33,7 @@ ENV PYTHONPATH="/app"
 ENV PYTHONUNBUFFERED=1
 
 ## Run the application
-#ENTRYPOINT ["python3", "/app/scripts/monitor/experiment-monitor.py"]
+ENTRYPOINT ["python3", "/app/scripts/monitor/experiment-monitor.py"]
 
 ## DEBUG: Hang the entrypoint so the container doesn't exit
-CMD ["tail", "-f", "/dev/null"]
+#CMD ["tail", "-f", "/dev/null"]
