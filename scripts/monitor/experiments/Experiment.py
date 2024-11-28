@@ -135,7 +135,7 @@ class Experiment:
         for generator in self.config.get(Key.Experiment.Generators.generators):
             load_generator_params = {
                 "theodolite_lg_image": "registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/workload-generator",
-                "thedolite_lg_tag": "latest",
+                "theodolite_lg_tag": "latest",
                 "lg_name": generator["name"],
                 "lg_topic": generator["topic"],
                 "lg_numsensors": int(generator["num_sensors"]),
@@ -161,7 +161,7 @@ class Experiment:
         for generator in self.config.get(Key.Experiment.Generators.generators):
             load_generator_params = {
                 "theodolite_lg_image": "registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/workload-generator",
-                "thedolite_lg_tag": "latest",
+                "theodolite_lg_tag": "latest",
                 "lg_name": generator["name"],
                 "lg_topic": generator["topic"],
                 "lg_numsensors": int(generator["num_sensors"]),
