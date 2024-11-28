@@ -164,13 +164,13 @@ class MultipleRunExperiment(Experiment):
                     )
 
                     # Scale up stateful set
-                    taskmanagers_count_dict[tm_name] += 1
+                    taskmanagers_count_dict[tm_type] += 1
                     self.log.info(
-                        f"Scaling up {tm_name} to {taskmanagers_count_dict[tm_name]}"
+                        f"Scaling up {tm_name} to {taskmanagers_count_dict[tm_type]}"
                     )
                     self.k.statefulset_manager.scale_statefulset(
                         statefulset_name=tm_name,
-                        replicas=taskmanagers_count_dict[tm_name],
+                        replicas=taskmanagers_count_dict[tm_type],
                     )
 
                     # Stop job with savepoint
