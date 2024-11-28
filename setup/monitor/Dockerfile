@@ -3,7 +3,7 @@ FROM python:3.12-slim
 # Install dependencies
 RUN --mount=type=bind,source=setup/monitor/requirements.txt,target=requirements.txt pip install -r requirements.txt
 
-RUN mkdir -p /app /app/conf /app/scripts /app/templates /app/playbooks /tmp/ansible
+RUN mkdir -p /app /app/conf /app/scripts /app/templates /app/playbooks /tmp/ansible 
 
 # Copy source code
 ADD scripts/monitor/ /app/scripts/monitor/
