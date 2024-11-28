@@ -75,8 +75,7 @@ class Playbooks:
             raise FileNotFoundError(f"The file doesn't exist: {playbook_filename}")
         if not os.path.exists(inventory):
             # This can happen when running in experiment-monitor. Just create a dummy inventory file with localhost
-            with open(inventory, "w") as f:
-                f.write("localhost\n")
+            inventory = "localhost"
         playbook_vars = {
             "shub_config": config.to_json(),
         }
