@@ -142,7 +142,6 @@ class MultipleRunExperiment(Experiment):
         self.run_job()
 
     def scale_operator(self, taskmanagers, step):
-
         for taskmanager in taskmanagers:
             self.log.info(
                 f"Deploying {taskmanager['number']} taskmanagers of type {taskmanager['type']}"
@@ -160,6 +159,14 @@ class MultipleRunExperiment(Experiment):
                 if step == 0 and i == 0 and indexOf(taskmanagers, taskmanager) == 0:
                     continue
                 else:
+                    self.log.info(
+                        f"Waiting for {self.config.get_int(Key.Experiment.Scaling.interval_scaling_s)} seconds"
+                    )
+                    # Wait interval_scaling_s
+                    sleep(
+                        self.config.get_int(Key.Experiment.Scaling.interval_scaling_s)
+                    )
+
                     # Get current number of taskmanagers
                     taskmanagers_count_dict = (
                         self.k.statefulset_manager.get_count_of_taskmanagers()
@@ -198,10 +205,6 @@ class MultipleRunExperiment(Experiment):
                     self.log.info(
                         f"Updated number of taskmanagers: {taskmanagers_count_dict}"
                     )
-                self.log.info(
-                    f"Waiting for {self.config.get_int(Key.Experiment.Scaling.interval_scaling_s)} seconds"
-                )
-                sleep(self.config.get_int(Key.Experiment.Scaling.interval_scaling_s))
 
     def single_run(self):
         steps = self.steps
