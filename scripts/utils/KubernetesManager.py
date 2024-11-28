@@ -967,3 +967,13 @@ class StatefulSetManager:
                 f"Exception when calling AppsV1Api->list_namespaced_stateful_set: {e}\n"
             )
             return None
+
+    def reset_taskmanagers(self):
+        for type in self.taskmanager_types:
+            self.scale_statefulset(f"flink-taskmanager-{type}", 0, "flink")
+            sleep(1)
+
+        # Get current count of taskmanagers
+        replicas = self.get_count_of_taskmanagers()
+
+        self.__log.info(f"Current TaskManager replicas: {replicas}")
