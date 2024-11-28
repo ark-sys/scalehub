@@ -108,6 +108,9 @@ class MultipleRunExperiment(Experiment):
             # Reset scaling labels, clean start.
             self.k.node_manager.reset_scaling_labels()
 
+        # Reset all taskmanagers to 0 replicas
+        self.k.statefulset_manager.reset_taskmanagers()
+
         # Get the first node to scale based on what's defined in the strategy file
         node_type = self.steps[0]["node"]
         if node_type == "vm_grid5000":
