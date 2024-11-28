@@ -2,26 +2,34 @@ import os
 import threading
 from time import sleep
 
-import jinja2
 import yaml
-from kubernetes import config as Kubeconfig, client as Client
+from kubernetes import config as kubeconfig, client as client
 from kubernetes.client.api import core_v1_api
 from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
 from kubernetes.watch import watch
 
 from scripts.utils.Logger import Logger
+from scripts.utils.Tools import Tools
 
 
 class KubernetesManager:
     def __init__(self, log: Logger):
         self.__log = log
-        self.kubeconfig = Kubeconfig.load_kube_config(os.environ["KUBECONFIG"])
+        self.kubeconfig = kubeconfig.load_kube_config(os.environ["KUBECONFIG"])
+
+        self.pod_manager = PodManager(log)
+        self.deployment_manager = DeploymentManager(log)
+        self.service_manager = ServiceManager(log)
+        self.job_manager = JobManager(log)
+        self.node_manager = NodeManager(log)
+        self.chaos_manager = ChaosManager(log)
+        self.statefulset_manager = StatefulSetManager(log)
 
     # Prepare scaling when manually initiated
     def prepare_scaling(self, config, monitored_task, job_file):
         # Get current job id
-        job_id = self.execute_command_on_pod(
+        job_id = self.pod_manager.execute_command_on_pod(
             deployment_name="flink-jobmanager",
             command="flink list -r 2>/dev/null | grep RUNNING | awk '{print $4}'",
         ).strip()
@@ -48,7 +56,7 @@ class KubernetesManager:
             operator_names.append(operator_name)
 
         # # Stop current job and save returned string as savepoint path
-        # resp = self.execute_command_on_pod(
+        # resp = self.pod_manager.execute_command_on_pod(
         #     deployment_name="flink-jobmanager",
         #     command=f"flink stop {job_id}",
         # )
@@ -62,7 +70,7 @@ class KubernetesManager:
         retries = 5
         savepoint_path = None
         while retries > 0 and savepoint_path is None:
-            resp = self.execute_command_on_pod(
+            resp = self.pod_manager.execute_command_on_pod(
                 deployment_name="flink-jobmanager",
                 command=f"flink stop -p -d {job_id}",
             )
@@ -80,76 +88,114 @@ class KubernetesManager:
 
         return job_id, operator_names, savepoint_path
 
-    # Scale a deployment to a specified number of replicas
-    def scale_deployment(self, deployment_name, replicas=1, namespace="default"):
+    def get_configmap(self, configmap_name, namespace="default"):
         # Create a Kubernetes API client
-        api_instance = Client.AppsV1Api()
-        # Fetch the deployment
+        api_instance = client.CoreV1Api()
+
+        # Get the configmap
         try:
-            deployment = api_instance.read_namespaced_deployment(
-                name=deployment_name, namespace=namespace, async_req=False
+            configmap = api_instance.read_namespaced_config_map(
+                name=configmap_name, namespace=namespace
             )
+            return configmap.data
+        except ApiException as e:
+            self.__log.error(f"Exception when getting Job logs: {e}")
+
+    # get_token(secret_name, namespace)
+    def get_token(self, secret_name, namespace):
+        import base64
+
+        try:
+            core_v1 = core_v1_api.CoreV1Api()
+            secret = core_v1.read_namespaced_secret(secret_name, namespace)
+            token = secret.data["token"]
         except ApiException as e:
             self.__log.error(
-                f"Exception when calling AppsV1Api->read_namespaced_deployment: {e}\n"
+                f"Exception when calling CoreV1Api->read_namespaced_secret: {e}"
             )
             return
 
-        # Scale the deployment
-        # deployment.spec.replicas = replicas
+        # decode token from base64
+        return base64.b64decode(token).decode("utf-8")
 
-        patch = {"spec": {"replicas": int(replicas)}}
-        try:
-            api_instance.patch_namespaced_deployment(
-                name=deployment_name,
-                namespace=namespace,
-                body=patch,
-            )
-            self.__log.info(
-                f"Deployment {deployment_name} scaled to {replicas} replica."
-            )
-        except ApiException as e:
-            self.__log.error(
-                f"Exception when calling AppsV1Api->patch_namespaced_deployment: {e}\n"
-            )
 
-    def create_deployment(self, template_filename, params, namespace="default"):
-        # Load resource definition from file
-        resource_object = self.load_resource_definition(template_filename, params)
-        api_instance = Client.AppsV1Api()
-        try:
-            api_instance.create_namespaced_deployment(
-                namespace=namespace,
-                body=resource_object,
-            )
-            self.__log.info(
-                f"Deployment {resource_object['metadata']['name']} created."
-            )
+class PodManager:
+    def __init__(self, log: Logger):
+        self.__log = log
+        self.api_instance = client.CoreV1Api()
 
-        except ApiException as e:
-            self.__log.error(
-                f"Exception when calling AppsV1Api->create_namespaced_deployment: {e}\n"
-            )
+    def execute_command_on_pod(self, deployment_name, command):
+        pod_list = self.api_instance.list_pod_for_all_namespaces(watch=False)
+        target_pod = None
+        for pod in pod_list.items:
+            if pod.metadata.name.startswith(deployment_name):
+                target_pod = pod
+                break
+
+        if not target_pod:
+            self.__log.error(f"No running pods found for deployment {deployment_name}")
             return
 
-    def delete_deployment(self, template_filename, params):
-        # Load resource definition from file
-        resource_object = self.load_resource_definition(template_filename, params)
-        api_instance = Client.AppsV1Api()
+        pod_name = target_pod.metadata.name
+
         try:
-            api_instance.delete_namespaced_deployment(
-                name=resource_object["metadata"]["name"],
-                namespace=resource_object["metadata"]["namespace"],
-                async_req=False,
+            exec_command = ["/bin/sh", "-c", command]
+            self.__log.info(f"Running command {exec_command} on pod {pod_name}")
+            resp = stream(
+                self.api_instance.connect_get_namespaced_pod_exec,
+                name=pod_name,
+                namespace=target_pod.metadata.namespace,
+                command=exec_command,
+                stderr=True,
+                stdin=False,
+                stdout=True,
+                tty=False,
             )
-            self.__log.info(
-                f"Deployment {resource_object['metadata']['name']} deleted."
+            return resp  # Return the captured output
+        except ApiException as e:
+            self.__log.error(f"Error executing command on pod {pod_name}: {e}")
+
+    def execute_command_on_pods_by_label(
+        self, label_selector, command, namespace="default"
+    ):
+        try:
+            # Step 1: Query pods with the label "app=flink"
+            pods = self.api_instance.list_namespaced_pod(
+                label_selector=label_selector, namespace=namespace
             )
+            for pod in pods.items:
+                self.__log.info(f"Running command {command} on pod {pod.metadata.name}")
+                # Step 2: Execute command on the pod
+                self.execute_command_on_pod(pod.metadata.name, command)
         except ApiException as e:
             self.__log.error(
-                f"Exception when calling AppsV1Api->delete_namespaced_deployment: {e}\n"
+                f"Exception when calling CoreV1Api->list_namespaced_pod: {e}"
             )
-            return
+
+    # Delete pods by label
+    def delete_pods_by_label(self, label_selector, namespace="default"):
+        try:
+            # Step 1: Query pods with the label "app=flink"
+            pods = self.api_instance.list_namespaced_pod(
+                label_selector=label_selector, namespace=namespace
+            )
+            for pod in pods.items:
+                # Step 2: Delete the pod
+                self.api_instance.delete_namespaced_pod(
+                    pod.metadata.name, pod.metadata.namespace
+                )
+                self.__log.info(f"Pod {pod.metadata.name} deleted")
+        except ApiException as e:
+            self.__log.error(
+                f"Exception when calling CoreV1Api->list_namespaced_pod: {e}"
+            )
+
+
+class DeploymentManager:
+    def __init__(self, log: Logger):
+        self.__log = log
+        self.t: Tools = Tools(self.__log)
+        self.api_instance = client.AppsV1Api()
 
     def rescale_taskmanagers_heterogeneous(self, n_replicas_p, tm_type_p) -> (int, int):
         tm = "flink-taskmanager"
@@ -189,7 +235,7 @@ class KubernetesManager:
         try:
 
             # Create a Kubernetes API client
-            api_instance = Client.CoreV1Api()
+            api_instance = client.CoreV1Api()
 
             # Retrieve all nodes tha match the desired labels
             try:
@@ -219,12 +265,12 @@ class KubernetesManager:
                     if changes_needed == 0:
                         break
                     autoscaling_label = node.metadata.labels.get(
-                        "node-role.kubernetes.io/autoscaling"
+                        "node-role.kubernetes.io/scaling"
                     )
                     if autoscaling_label != "SCHEDULABLE":
                         # The node is either unschedulable or does not have the autoscaling label
                         node.metadata.labels[
-                            "node-role.kubernetes.io/autoscaling"
+                            "node-role.kubernetes.io/scaling"
                         ] = "SCHEDULABLE"
                         api_instance.patch_node(
                             node.metadata.name,
@@ -236,11 +282,11 @@ class KubernetesManager:
                     if changes_needed == 0:
                         break
                     if (
-                        node.metadata.labels.get("node-role.kubernetes.io/autoscaling")
+                        node.metadata.labels.get("node-role.kubernetes.io/scaling")
                         == "SCHEDULABLE"
                     ):
                         node.metadata.labels[
-                            "node-role.kubernetes.io/autoscaling"
+                            "node-role.kubernetes.io/scaling"
                         ] = "UNSCHEDULABLE"
                         api_instance.patch_node(
                             node.metadata.name,
@@ -280,10 +326,76 @@ class KubernetesManager:
             return 2, None
         return 0, new_parallelism
 
-    def get_deployment_replicas(self, deployment_name, namespace):
-        api_instance = Client.AppsV1Api()
+    def create_deployment(self, template_filename, params, namespace="default"):
+        # Load resource definition from file
+        resource_object = self.t.load_resource_definition(template_filename, params)
         try:
-            deployment = api_instance.read_namespaced_deployment(
+            self.api_instance.create_namespaced_deployment(
+                namespace=namespace,
+                body=resource_object,
+            )
+            self.__log.info(
+                f"Deployment {resource_object['metadata']['name']} created."
+            )
+
+        except ApiException as e:
+            self.__log.error(
+                f"Exception when calling AppsV1Api->create_namespaced_deployment: {e}\n"
+            )
+            return
+
+    def delete_deployment(self, template_filename, params):
+        # Load resource definition from file
+        resource_object = self.t.load_resource_definition(template_filename, params)
+        try:
+            self.api_instance.delete_namespaced_deployment(
+                name=resource_object["metadata"]["name"],
+                namespace=resource_object["metadata"]["namespace"],
+                async_req=False,
+            )
+            self.__log.info(
+                f"Deployment {resource_object['metadata']['name']} deleted."
+            )
+        except ApiException as e:
+            self.__log.error(
+                f"Exception when calling AppsV1Api->delete_namespaced_deployment: {e}\n"
+            )
+            return
+
+    # Scale a deployment to a specified number of replicas
+    def scale_deployment(self, deployment_name, replicas=1, namespace="default"):
+        # Fetch the deployment
+        try:
+            deployment = self.api_instance.read_namespaced_deployment(
+                name=deployment_name, namespace=namespace, async_req=False
+            )
+        except ApiException as e:
+            self.__log.error(
+                f"Exception when calling AppsV1Api->read_namespaced_deployment: {e}\n"
+            )
+            return
+
+        # Scale the deployment
+        # deployment.spec.replicas = replicas
+
+        patch = {"spec": {"replicas": int(replicas)}}
+        try:
+            self.api_instance.patch_namespaced_deployment(
+                name=deployment_name,
+                namespace=namespace,
+                body=patch,
+            )
+            self.__log.info(
+                f"Deployment {deployment_name} scaled to {replicas} replica."
+            )
+        except ApiException as e:
+            self.__log.error(
+                f"Exception when calling AppsV1Api->patch_namespaced_deployment: {e}\n"
+            )
+
+    def get_deployment_replicas(self, deployment_name, namespace):
+        try:
+            deployment = self.api_instance.read_namespaced_deployment(
                 name=deployment_name, namespace=namespace, async_req=False
             )
             return int(deployment.spec.replicas)
@@ -293,14 +405,20 @@ class KubernetesManager:
             )
             return
 
+
+class ServiceManager:
+    def __init__(self, log: Logger):
+        self.__log = log
+        self.t: Tools = Tools(self.__log)
+        self.api_instance = client.CoreV1Api()
+
     def create_service(self, template_filename, params, namespace="default"):
         # Load resource definition from file
-        resource_object = self.load_resource_definition(template_filename, params)
-        api_instance = Client.CoreV1Api()
+        resource_object = self.t.load_resource_definition(template_filename, params)
         try:
 
             # Create service
-            api_instance.create_namespaced_service(
+            self.api_instance.create_namespaced_service(
                 namespace=namespace, body=resource_object, async_req=False
             )
             self.__log.info(f"Service {resource_object['metadata']['name']} created.")
@@ -312,10 +430,9 @@ class KubernetesManager:
 
     def delete_service(self, template_filename, params):
         # Load resource definition from file
-        resource_object = self.load_resource_definition(template_filename, params)
-        api_instance = Client.CoreV1Api()
+        resource_object = self.t.load_resource_definition(template_filename, params)
         try:
-            api_instance.delete_namespaced_service(
+            self.api_instance.delete_namespaced_service(
                 name=resource_object["metadata"]["name"],
                 namespace=resource_object["metadata"]["namespace"],
                 async_req=False,
@@ -327,83 +444,45 @@ class KubernetesManager:
             )
             return
 
-    def execute_command_on_pods_by_label(
-        self, label_selector, command, namespace="default"
-    ):
-        core_v1 = core_v1_api.CoreV1Api()
-        try:
-            # Step 1: Query pods with the label "app=flink"
-            pods = core_v1.list_namespaced_pod(
-                label_selector=label_selector, namespace=namespace
-            )
-            for pod in pods.items:
-                self.__log.info(f"Running command {command} on pod {pod.metadata.name}")
-                # Step 2: Execute command on the pod
-                self.execute_command_on_pod(pod.metadata.name, command)
-        except ApiException as e:
-            self.__log.error(
-                f"Exception when calling CoreV1Api->list_namespaced_pod: {e}"
-            )
 
-        # Delete job by name
+class JobManager:
+    def __init__(self, log: Logger):
+        self.__log = log
+        self.api_instance = client.BatchV1Api()
 
-    def delete_job(self, job_name):
+    def delete_job(self, job_name, namespace="default"):
         # Create a Kubernetes API client
-        api_instance = Client.BatchV1Api()
 
         # Delete the job
         try:
-            api_instance.delete_namespaced_job(name=job_name, namespace="default")
+            self.api_instance.delete_namespaced_job(name=job_name, namespace=namespace)
             self.__log.info(f"Job {job_name} deleted.")
-        except Client.ApiException as e:
+        except client.ApiException as e:
             self.__log.error(
                 f"Exception when calling BatchV1Api->delete_namespaced_job: {e}"
             )
 
-        # Retrieve job status
-
-    def get_job_status(self, job_name):
-        # Create a Kubernetes API client
-        api_instance = Client.BatchV1Api()
+    # Retrieve job status
+    def get_job_status(self, job_name, namespace="default"):
 
         # Get the job
         try:
-            state = api_instance.read_namespaced_job_status(
-                name=job_name, namespace="default"
+            state = self.api_instance.read_namespaced_job_status(
+                name=job_name, namespace=namespace
             )
             return state.status.conditions
-        except Client.ApiException as e:
+        except client.ApiException as e:
             return e
 
-        # Retrieve content of a configmap
-
-    def get_configmap(self, configmap_name, namespace="default"):
-        # Create a Kubernetes API client
-        api_instance = Client.CoreV1Api()
-
-        # Get the configmap
-        try:
-            configmap = api_instance.read_namespaced_config_map(
-                name=configmap_name, namespace=namespace
-            )
-            return configmap.data
-        except Client.ApiException as e:
-            self.__log.error(
-                f"Exception when calling CoreV1Api->read_namespaced_config_map: {e}"
-            )
-
-        # Deploy a job from a yaml resource definition
-
+    # Deploy a job from a yaml resource definition
     def create_job(self, resource_definition):
         try:
-            api_instance = Client.BatchV1Api()
-
             resource_obj = yaml.safe_load(resource_definition)
             resource_type = resource_obj["kind"]
             resource_name = resource_obj["metadata"]["name"]
             namespace = resource_obj["metadata"]["namespace"]
 
-            api_instance.create_namespaced_job(namespace, resource_obj)
+            self.api_instance.create_namespaced_job(namespace, resource_obj)
             self.__log.info(
                 f"{resource_type} {resource_name} created in namespace {namespace}."
             )
@@ -426,70 +505,108 @@ class KubernetesManager:
             else:
                 self.__log.error(f"No pods found for Job {job_name}.")
                 return ""
-
         except ApiException as e:
             self.__log.error(f"Exception when getting Job logs: {e}")
+            return ""
 
-    def monitor_injection_thread(self, experiment_params):
-        deployment_name = "flink-taskmanager"
-        reset_thread = threading.Thread(
-            target=self.__reset_latency, args=(deployment_name, experiment_params)
-        )
-        reset_thread.start()
 
-        # Workaround to reset the latency experiment on rescale as the NetworkChaos resource does not support dynamic updates on target pods
+class NodeManager:
+    node_types = ["grid5000", "vm_grid5000", "pico"]
+    vm_types = ["small", "medium"]
 
-    def __reset_latency(self, deployment_name, experiment_params):
-        # Definition of the NetworkChaos resource on Flink
-        resource_object = self.load_resource_definition(
-            "/app/templates/flink-latency.yaml.j2", experiment_params
-        )
-        # Create API instances
-        apps_v1 = Client.AppsV1Api()
-        custom_api = Client.CustomObjectsApi()
+    def __init__(self, log: Logger):
+        self.__log = log
+        self.api_instance = client.CoreV1Api()
 
-        # Watch for changes in the deployment
-        stream = watch.Watch().stream(
-            apps_v1.list_namespaced_deployment, namespace="default"
-        )
-        old_replica_count = None
-        for event in stream:
-            deployment = event["object"]
-            if deployment.metadata.name == deployment_name:
-                if event["type"] == "DELETED":
-                    self.__log.info("Deployment has been deleted. Exiting...")
-                    break
-                new_replica_count = deployment.spec.replicas
-                if new_replica_count != old_replica_count:
-                    self.__log.info(
-                        "Detected replica change. Triggering latency experiment reset."
-                    )
-                    # Delete the NetworkChaos resource
-                    custom_api.delete_namespaced_custom_object(
-                        group="chaos-mesh.org",
-                        version="v1alpha1",
-                        namespace="default",
-                        plural="networkchaos",
-                        name="flink-latency",
-                    )
-                    sleep(3)
-
-                    # Recreate the NetworkChaos resource
-                    custom_api.create_namespaced_custom_object(
-                        group="chaos-mesh.org",
-                        version="v1alpha1",
-                        namespace="default",
-                        plural="networkchaos",
-                        body=resource_object,
-                    )
-                    old_replica_count = new_replica_count
-
-        # Get node by pod name
-
-    def get_node_by_pod_name(self, pod_name, namespace="default"):
-        v1 = Client.CoreV1Api()
+    def get_nodes_by_label(self, label_selector):
         try:
-            pod = v1.read_namespaced_pod(pod_name, namespace)
+            nodes = self.api_instance.list_node(label_selector=label_selector)
+            return nodes.items
+        except ApiException as e:
+            self.__log.error(f"Exception when calling CoreV1Api->list_node: {e}\n")
+            return
+
+    def get_available_worker_nodes(self):
+        label_keys = ["node-role.kubernetes.io/worker=consumer"]
+        for node_type in self.node_types:
+            label_keys.append(f"node-role.kubernetes.io/tnode={node_type}")
+
+        for vm_type in self.vm_types:
+            label_keys.append(f"node-role.kubernetes.io/vm_grid5000={vm_type}")
+
+        nodes = self.get_nodes_by_label(",".join(label_keys))
+        nodes_count = {}
+        for node in nodes:
+            for label in node.metadata.labels:
+                if label in label_keys:
+                    if label in nodes_count:
+                        nodes_count[label] += 1
+                    else:
+                        nodes_count[label] = 1
+        return nodes_count
+
+    def get_next_node(self, node_type, vm_type=None):
+        label_keys = [
+            "node-role.kubernetes.io/worker=consumer",
+            f"node-role.kubernetes.io/tnode={node_type}",
+        ]
+
+        if vm_type:
+            label_keys.append(f"node-role.kubernetes.io/vm_grid5000={vm_type}")
+
+        nodes = self.get_nodes_by_label(",".join(label_keys))
+        if nodes:
+
+            # Return a node that is not yet used => it doesn't the node-role.kubernetes.io/scaling label with value SCHEDULABLE
+            for node in nodes:
+                if (
+                    node.metadata.labels.get("node-role.kubernetes.io/scaling")
+                    != "SCHEDULABLE"
+                ):
+                    return node.metadata.name
+        else:
+            return None
+
+    def mark_node_as_schedulable(self, node_name):
+        try:
+            node = self.api_instance.read_node(node_name)
+            node.metadata.labels["node-role.kubernetes.io/scaling"] = "SCHEDULABLE"
+            body = {"metadata": {"labels": node.metadata.labels}}
+            self.api_instance.patch_node(node_name, body=body)
+        except ApiException as e:
+            self.__log.error(f"Exception when calling CoreV1Api->list_node: {e}\n")
+            return None
+
+    def get_schedulable_nodes(self):
+        try:
+            nodes = self.api_instance.list_node(
+                label_selector="node-role.kubernetes.io/scaling=SCHEDULABLE"
+            )
+            return nodes.items
+        except ApiException as e:
+            self.__log.error(f"Exception when calling CoreV1Api->list_node: {e}\n")
+            return None
+
+    def reset_scaling_labels(self):
+        # Remove the scaling label from all nodes
+        try:
+            nodes = self.api_instance.list_node(
+                label_selector="node-role.kubernetes.io/scaling=SCHEDULABLE"
+            )
+            for node in nodes.items:
+                node.metadata.labels[
+                    "node-role.kubernetes.io/scaling"
+                ] = "UNSCHEDULABLE"
+                body = {"metadata": {"labels": node.metadata.labels}}
+                self.api_instance.patch_node(node.metadata.name, body=body)
+        except ApiException as e:
+            self.__log.error(f"Exception when calling CoreV1Api->list_node: {e}\n")
+            return None
+
+    # Get node by pod name
+    def get_node_by_pod_name(self, pod_name, namespace="default"):
+        try:
+            pod = self.api_instance.read_namespaced_pod(pod_name, namespace)
             return pod.spec.node_name
         except ApiException as e:
             self.__log.error(
@@ -497,89 +614,26 @@ class KubernetesManager:
             )
             return None
 
-        # Get names of nodes. If label_selector is specified, only return nodes with label
-
-    def get_nodes(self, label_selector):
-        v1 = Client.CoreV1Api()
-        try:
-            nodes = v1.list_node(label_selector=label_selector)
-
-            nodes_list = []
-            for node in nodes.items:
-                nodes_list.append(node.metadata.name)
-            return nodes_list
-        except ApiException as e:
-            self.__log.error(f"Exception when calling CoreV1Api->list_node: {e}\n")
-            return None
-
-        # Delete pods by label
-
-    def delete_pods_by_label(self, label_selector, namespace="default"):
-        v1 = Client.CoreV1Api()
-        try:
-            # Step 1: Query pods with the label "app=flink"
-            pods = v1.list_namespaced_pod(
-                label_selector=label_selector, namespace=namespace
-            )
-            for pod in pods.items:
-                # Step 2: Delete the pod
-                v1.delete_namespaced_pod(pod.metadata.name, pod.metadata.namespace)
-                self.__log.info(f"Pod {pod.metadata.name} deleted")
-        except ApiException as e:
-            self.__log.error(
-                f"Exception when calling CoreV1Api->list_namespaced_pod: {e}"
-            )
-
-        # Reset the autoscaling labels so that flink runs first on worker nodes not impacted by chaos
-
-    def reset_autoscaling_labels(self):
-        v1 = Client.CoreV1Api()
-        try:
-            # Query nodes with the label "node-role.kubernetes.io/worker=consumer"
-            worker_label_selector = f"node-role.kubernetes.io/worker=consumer"
-            worker_nodes = v1.list_node(label_selector=worker_label_selector)
-            self.__log.info(f"Found {len(worker_nodes.items)} worker nodes.")
-
-            # Query nodes with the label chaos=true
-            chaos_label_selector = f"chaos=true"
-            chaos_nodes = v1.list_node(label_selector=chaos_label_selector)
-            self.__log.info(f"Found {len(chaos_nodes.items)} chaos nodes.")
-
-            # Setup schedulability tag
-            unschedulable_label = {
-                "node-role.kubernetes.io/autoscaling": "UNSCHEDULABLE"
-            }
-            schedulable_label = {"node-role.kubernetes.io/autoscaling": "SCHEDULABLE"}
-
-            self.__log.info(f"Marking some worker nodes as schedulable")
-            # Choas nodes are a subset of worker nodes;
-            # Mark chaos nodes as unschedulable
-            # Mark other worker nodes as schedulable
-            for node in worker_nodes.items:
-                if node.metadata.name in [
-                    node2.metadata.name for node2 in chaos_nodes.items
-                ]:
-                    v1.patch_node(
-                        node.metadata.name,
-                        {"metadata": {"labels": unschedulable_label}},
-                    )
-                else:
-                    v1.patch_node(
-                        node.metadata.name, {"metadata": {"labels": schedulable_label}}
-                    )
-        except ApiException as e:
-            self.__log.error("Error when resetting autoscaling labels.")
+    # Get names of nodes. If label_selector is specified, only return nodes with label
+    # def get_nodes(self, label_selector):
+    #     try:
+    #         nodes = self.api_instance.list_node(label_selector=label_selector)
+    #
+    #         nodes_list = []
+    #         for node in nodes.items:
+    #             nodes_list.append(node.metadata.name)
+    #         return nodes_list
+    #     except ApiException as e:
+    #         self.__log.error(f"Exception when calling CoreV1Api->list_node: {e}\n")
+    #         return None
 
     def add_label_to_nodes(self, nodes: list, label: str):
         if not nodes or not label:
             self.__log.error("Nodes or label is empty")
-        # Create a Kubernetes API client
-        api_instance = Client.CoreV1Api()
-
         try:
             for node in nodes:
                 # Retrieve node object
-                node_object = api_instance.read_node(node)
+                node_object = self.api_instance.read_node(node)
 
                 node_labels = node_object.metadata.labels.copy()
                 # Get label from str format to dict format and add label to node
@@ -591,19 +645,58 @@ class KubernetesManager:
                     node_labels[label] = ""
                 body = {"metadata": {"labels": node_labels}}
                 # Patch node with new label
-                api_instance.patch_node(node_object.metadata.name, body=body)
+                self.api_instance.patch_node(node_object.metadata.name, body=body)
         except ApiException as e:
             self.__log.error(f"Exception when calling CoreV1Api->list_node: {e}\n")
+
+    # # Reset the autoscaling labels so that flink runs first on worker nodes not impacted by chaos
+    # def reset_scaling_labels(self):
+    #     try:
+    #         # Query nodes with the label "node-role.kubernetes.io/worker=consumer"
+    #         worker_label_selector = f"node-role.kubernetes.io/worker=consumer"
+    #         worker_nodes = self.api_instance.list_node(
+    #             label_selector=worker_label_selector
+    #         )
+    #         self.__log.info(f"Found {len(worker_nodes.items)} worker nodes.")
+    #
+    #         # Query nodes with the label chaos=true
+    #         chaos_label_selector = f"chaos=true"
+    #         chaos_nodes = self.api_instance.list_node(
+    #             label_selector=chaos_label_selector
+    #         )
+    #         self.__log.info(f"Found {len(chaos_nodes.items)} chaos nodes.")
+    #
+    #         # Setup schedulability tag
+    #         unschedulable_label = {"node-role.kubernetes.io/scaling": "UNSCHEDULABLE"}
+    #         schedulable_label = {"node-role.kubernetes.io/scaling": "SCHEDULABLE"}
+    #
+    #         self.__log.info(f"Marking some worker nodes as schedulable")
+    #         # Choas nodes are a subset of worker nodes;
+    #         # Mark chaos nodes as unschedulable
+    #         # Mark other worker nodes as schedulable
+    #         for node in worker_nodes.items:
+    #             if node.metadata.name in [
+    #                 node2.metadata.name for node2 in chaos_nodes.items
+    #             ]:
+    #                 self.api_instance.patch_node(
+    #                     node.metadata.name,
+    #                     {"metadata": {"labels": unschedulable_label}},
+    #                 )
+    #             else:
+    #                 self.api_instance.patch_node(
+    #                     node.metadata.name, {"metadata": {"labels": schedulable_label}}
+    #                 )
+    #     except ApiException as e:
+    #         self.__log.error("Error when resetting autoscaling labels.")
 
     def remove_label_from_nodes(self, nodes: list, label: str):
         if not nodes or not label:
             self.__log.error("Nodes or label is empty")
         # Create a Kubernetes API client
-        api_instance = Client.CoreV1Api()
         try:
             for node in nodes:
                 # Retrieve node object
-                node_object = api_instance.read_node(node)
+                node_object = self.api_instance.read_node(node)
 
                 node_labels = node_object.metadata.labels.copy()
                 # Check if label is key=value format or just key format, and remove label from node by setting value to None
@@ -620,16 +713,103 @@ class KubernetesManager:
                         node_labels[label] = None
                 body = {"metadata": {"labels": node_labels}}
                 # Patch node with new label
-                api_instance.patch_node(node_object.metadata.name, body=body)
+                self.api_instance.patch_node(node_object.metadata.name, body=body)
         except ApiException as e:
             self.__log.error(f"Exception when calling CoreV1Api->list_node: {e}\n")
 
-        # Delete all networkchaos resources
 
+class ChaosManager:
+    def __init__(self, log: Logger):
+        self.__log = log
+        self.t: Tools = Tools(self.__log)
+        self.node_manager = NodeManager(log)
+        self.api_instance = client.CustomObjectsApi()
+
+    def deploy_networkchaos(self, experiment_params):
+        # Remove label 'chaos=true' from all nodes. This is a cleanup step.
+        chaos_label = "chaos=true"
+        worker_nodes = self.node_manager.get_nodes_by_label(
+            "node-role.kubernetes.io/worker=consumer"
+        )
+        self.node_manager.remove_label_from_nodes(worker_nodes, chaos_label)
+
+        # Deploy chaos resources
+        self.create_networkchaos(self.consul_chaos_template, experiment_params)
+
+        # Wait for chaos on consul pods to be ready
+        sleep(3)
+        # Label nodes hosting an impacted consul pod with 'chaos=true'
+        impacted_nodes = self.get_impacted_nodes()
+        self.node_manager.add_label_to_nodes(impacted_nodes, chaos_label)
+
+        # Deploy chaos resources on Flink and Storage instances running on chaos nodes
+        self.create_networkchaos(self.flink_chaos_template, experiment_params)
+        # self.create_networkchaos(self.storage_chaos_template, experiment_params)
+
+        # Wait for chaos resources to be ready
+        sleep(3)
+        # Start thread to monitor and reset chaos injection on rescaled flink
+        self.monitor_injection_thread(experiment_params)
+
+    def monitor_injection_thread(self, experiment_params):
+        deployment_name = "flink-taskmanager"
+        # Start chaos injection reset thread
+        self.__log.info(
+            "Starting monitoring thread on scaling events. Reset chaos injection on rescale."
+        )
+        reset_thread = threading.Thread(
+            target=self.__reset_latency, args=(deployment_name, experiment_params)
+        )
+        reset_thread.start()
+
+    # Workaround to reset the latency experiment on rescale as the NetworkChaos resource does not support dynamic updates on target pods
+    def __reset_latency(self, deployment_name, experiment_params):
+        # Definition of the NetworkChaos resource on Flink
+        resource_object = self.t.load_resource_definition(
+            "/app/templates/flink-latency.yaml.j2", experiment_params
+        )
+        # Create API instances
+        apps_v1 = client.AppsV1Api()
+        # Watch for changes in the deployment
+        deployment_stream = watch.Watch().stream(
+            apps_v1.list_namespaced_deployment, namespace="flink"
+        )
+        old_replica_count = None
+        for event in deployment_stream:
+            deployment = event["object"]
+            if deployment.metadata.name == deployment_name:
+                if event["type"] == "DELETED":
+                    self.__log.info("Deployment has been deleted. Exiting...")
+                    break
+                new_replica_count = deployment.spec.replicas
+                if new_replica_count != old_replica_count:
+                    self.__log.info(
+                        "Detected replica change. Triggering latency experiment reset."
+                    )
+                    # Delete the NetworkChaos resource
+                    self.api_instance.delete_namespaced_custom_object(
+                        group="chaos-mesh.org",
+                        version="v1alpha1",
+                        namespace="default",
+                        plural="networkchaos",
+                        name="flink-latency",
+                    )
+                    sleep(3)
+
+                    # Recreate the NetworkChaos resource
+                    self.api_instance.create_namespaced_custom_object(
+                        group="chaos-mesh.org",
+                        version="v1alpha1",
+                        namespace="default",
+                        plural="networkchaos",
+                        body=resource_object,
+                    )
+                    old_replica_count = new_replica_count
+
+    # Delete all networkchaos resources
     def delete_networkchaos(self):
-        custom_api = Client.CustomObjectsApi()
         try:
-            custom_api.delete_collection_namespaced_custom_object(
+            self.api_instance.delete_collection_namespaced_custom_object(
                 group="chaos-mesh.org",
                 version="v1alpha1",
                 namespace="default",
@@ -642,31 +822,14 @@ class KubernetesManager:
             return
         self.__log.info("NetworkChaos resources deleted.")
 
-        # Load resource definition template from file and fill in the parameters
-
-    def load_resource_definition(self, resource_filename, experiment_params):
-        try:
-            with open(resource_filename, "r") as f:
-                resource_template = f.read()
-                resource_definition = jinja2.Template(resource_template).render(
-                    experiment_params
-                )
-            resource_object = yaml.safe_load(resource_definition)
-            return resource_object
-        except FileNotFoundError as e:
-            self.__log.error(f"File not found: {resource_filename}")
-            return
-
-        # Deploy a networkchaos resource
-
+    # Load resource definition template from file and fill in the parameters
     def create_networkchaos(self, template_filename, experiment_params):
         # Load resource definition from file
-        resource_object = self.load_resource_definition(
+        resource_object = self.t.load_resource_definition(
             template_filename, experiment_params
         )
-        custom_api = Client.CustomObjectsApi()
         try:
-            custom_api.create_namespaced_custom_object(
+            self.api_instance.create_namespaced_custom_object(
                 group="chaos-mesh.org",
                 version="v1alpha1",
                 namespace="default",
@@ -680,12 +843,10 @@ class KubernetesManager:
             return
         self.__log.info("NetworkChaos resource created.")
 
-        # Get pods impacted by networkchaos
-
+    # Get pods impacted by networkchaos
     def get_networkchaos_instances(self):
-        custom_api = Client.CustomObjectsApi()
         try:
-            network_chaos_object = custom_api.get_namespaced_custom_object(
+            network_chaos_object = self.api_instance.get_namespaced_custom_object(
                 group="chaos-mesh.org",
                 version="v1alpha1",
                 namespace="default",
@@ -704,65 +865,74 @@ class KubernetesManager:
             )
             return
 
-        # Get node names of impacted consul pods
-
+    # Get node names of impacted consul pods
     def get_impacted_nodes(self):
 
         instances = self.get_networkchaos_instances()
         node_names = []
 
         for instance in instances:
-            node_names.append(self.get_node_by_pod_name(instance, "consul"))
+            node_names.append(
+                self.node_manager.get_node_by_pod_name(instance, "consul")
+            )
 
         return node_names
 
-    def execute_command_on_pod(self, deployment_name, command):
 
-        core_v1 = core_v1_api.CoreV1Api()
+class StatefulSetManager:
+    def __init__(self, log: Logger):
+        self.__log = log
+        self.t: Tools = Tools(self.__log)
+        self.api_instance = client.AppsV1Api()
 
-        pod_list = core_v1.list_pod_for_all_namespaces(watch=False)
-        target_pod = None
-        for pod in pod_list.items:
-            if pod.metadata.name.startswith(deployment_name):
-                target_pod = pod
-                break
+        self.taskmanager_types = ["s", "m", "l", "xl", "xxl"]
 
-        if not target_pod:
-            self.__log.error(f"No running pods found for deployment {deployment_name}")
-            return
-
-        pod_name = target_pod.metadata.name
-
+    # Scale a statefulset to a specified number of replicas
+    def scale_statefulset(self, statefulset_name, replicas=1, namespace="default"):
+        # Fetch the statefulset
         try:
-            exec_command = ["/bin/sh", "-c", command]
-            self.__log.info(f"Running command {exec_command} on pod {pod_name}")
-            resp = stream(
-                core_v1.connect_get_namespaced_pod_exec,
-                name=pod_name,
-                namespace=target_pod.metadata.namespace,
-                command=exec_command,
-                stderr=True,
-                stdin=False,
-                stdout=True,
-                tty=False,
+            statefulset = self.api_instance.read_namespaced_stateful_set(
+                name=statefulset_name, namespace=namespace, async_req=False
             )
-            return resp  # Return the captured output
-        except ApiException as e:
-            self.__log.error(f"Error executing command on pod {pod_name}: {e}")
-
-    # get_token(secret_name, namespace)
-    def get_token(self, secret_name, namespace):
-        import base64
-
-        try:
-            core_v1 = core_v1_api.CoreV1Api()
-            secret = core_v1.read_namespaced_secret(secret_name, namespace)
-            token = secret.data["token"]
         except ApiException as e:
             self.__log.error(
-                f"Exception when calling CoreV1Api->read_namespaced_secret: {e}"
+                f"Exception when calling AppsV1Api->read_namespaced_stateful_set: {e}\n"
             )
             return
 
-        # decode token from base64
-        return base64.b64decode(token).decode("utf-8")
+        # Scale the statefulset
+        patch = {"spec": {"replicas": int(replicas)}}
+        try:
+            self.api_instance.patch_namespaced_stateful_set(
+                name=statefulset_name,
+                namespace=namespace,
+                body=patch,
+            )
+            self.__log.info(
+                f"StatefulSet {statefulset_name} scaled to {replicas} replica."
+            )
+        except ApiException as e:
+            self.__log.error(
+                f"Exception when calling AppsV1Api->patch_namespaced_stateful_set: {e}\n"
+            )
+            return
+
+    def get_statefulset_replicas(self, statefulset_name, namespace):
+        try:
+            statefulset = self.api_instance.read_namespaced_stateful_set(
+                name=statefulset_name, namespace=namespace, async_req=False
+            )
+            return int(statefulset.spec.replicas)
+        except ApiException as e:
+            self.__log.error(
+                f"Exception when calling AppsV1Api->read_namespaced_stateful_set: {e}\n"
+            )
+            return
+
+    def get_count_of_taskmanagers(self) -> dict:
+        replicas = {}
+        for type in self.taskmanager_types:
+            replicas[type] = self.get_statefulset_replicas(
+                f"flink-taskmanager-{type}", "flink"
+            )
+        return replicas

@@ -3,12 +3,16 @@ FROM python:3.12-slim
 # Install dependencies
 RUN --mount=type=bind,source=setup/monitor/requirements.txt,target=requirements.txt pip install -r requirements.txt
 
-RUN mkdir -p /app /app/conf /app/scripts
+RUN mkdir -p /app /app/conf /app/scripts /app/templates /app/playbooks
 
 # Copy source code
-ADD scripts/monitor/experiment-monitor.py /app/scripts/experiment-monitor.py
-ADD scripts/monitor/templates /app/templates
+ADD scripts/monitor/ /app/scripts/
 ADD scripts/utils /app/scripts/utils
+ADD playbooks/ /app/playbooks/
+
+# Add templates
+ADD playbooks/application/roles/load_generators/templates/* /app/templates/
+ADD playbooks/application/roles/chaos/templates/* /app/templates/
 
 # Create __init__.py file to make the directory a package
 RUN touch /app/scripts/__init__.py

@@ -138,20 +138,20 @@
       loop: "{{ groups['pico'] }}"
       when: pico_exists
 
-    ### Init the first node to be schedulable
-    - name: first_node is the name of the group, retrieve a node from the group
-      set_fact:
-        node: "{{ groups[first_node][0] }}"
-      when: shub_config['first_node'] is defined
-
-    - name: If first_node is defined, apply SCHEDULABLE label to allow deployment of flink. Otherwise apply over a random consumer node
-      kubernetes.core.k8s:
-          kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
-          name: "{{ node | default(groups['consumers'][0]) }}"
-          api_version: v1
-          kind: Node
-          definition:
-            metadata:
-              labels:
-                  node-role.kubernetes.io/autoscaling: "SCHEDULABLE"
-          state: present
+#    ### Init the first node to be schedulable
+#    - name: first_node is the name of the group, retrieve a node from the group
+#      set_fact:
+#        node: "{{ groups[first_node][0] }}"
+#      when: shub_config['first_node'] is defined
+#
+#    - name: If first_node is defined, apply SCHEDULABLE label to allow deployment of flink. Otherwise apply over a random consumer node
+#      kubernetes.core.k8s:
+#          kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
+#          name: "{{ node | default(groups['consumers'][0]) }}"
+#          api_version: v1
+#          kind: Node
+#          definition:
+#            metadata:
+#              labels:
+#                  node-role.kubernetes.io/scaling: "SCHEDULABLE"
+#          state: present

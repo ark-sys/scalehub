@@ -8,9 +8,6 @@ class StandaloneExperiment(Experiment):
     def start(self):
         pass
 
-    def monitor(self):
-        pass
-
     def stop(self):
         pass
 

@@ -9,7 +9,7 @@ from time import sleep
 from ansible.inventory.manager import InventoryManager
 from ansible.parsing.dataloader import DataLoader
 
-from scripts.src.Client import Client, Playbooks
+from scripts.src.Client import Client
 from scripts.src.FIT import FIT
 from scripts.src.G5k import G5k, G5k_VM
 from scripts.src.Platform import Platform, merge_inventories
@@ -20,7 +20,7 @@ from scripts.utils.DataExporter import DataExporter
 from scripts.utils.Defaults import DefaultKeys as Key
 from scripts.utils.KubernetesManager import KubernetesManager
 from scripts.utils.Logger import Logger
-from scripts.utils.Tools import Tools
+from scripts.utils.Tools import Tools, Playbooks
 
 
 # Build cluster and install dependencies
@@ -260,7 +260,7 @@ def run(action, attr, type, config: Config, export_dir):
 
     match action:
         case "job":
-            return k.execute_command_on_pod(
+            return k.pod_manager.execute_command_on_pod(
                 deployment_name="flink-jobmanager",
                 command=f"flink run -d -j /tmp/jobs/{config.get_str(Key.Experiment.job_file)}",
             )
@@ -289,7 +289,7 @@ def run(action, attr, type, config: Config, export_dir):
                     par_map.append(f"{operator}:1")
 
             # Run job with option --parmap
-            return k.execute_command_on_pod(
+            return k.pod_manager.execute_command_on_pod(
                 deployment_name="flink-jobmanager",
                 command=f"flink run -d -s {savepoint_path} -j /tmp/jobs/{job_file} --parmap '{';'.join(par_map)}'",
             )
@@ -318,7 +318,9 @@ def run(action, attr, type, config: Config, export_dir):
             type_of_node = type
             tm_full_name = f"flink-taskmanager-{type_of_node}"
 
-            k.scale_deployment(tm_full_name, int(num_replicas), "flink")
+            k.deployment_manager.scale_deployment(
+                tm_full_name, int(num_replicas), "flink"
+            )
 
             par_map = []
 
@@ -335,7 +337,7 @@ def run(action, attr, type, config: Config, export_dir):
                     par_map.append(f"{operator}:1")
 
             # Run job with option --parmap
-            return k.execute_command_on_pod(
+            return k.pod_manager.execute_command_on_pod(
                 deployment_name="flink-jobmanager",
                 command=f"flink run -d -s {savepoint_path} -j /tmp/jobs/{job_file} --parmap '{';'.join(par_map)}'",
             )
@@ -384,7 +386,7 @@ def run(action, attr, type, config: Config, export_dir):
                     par_map.append(f"{operator}:1")
 
             # Run job with option --parmap
-            return k.execute_command_on_pod(
+            return k.pod_manager.execute_command_on_pod(
                 deployment_name="flink-jobmanager",
                 command=f"flink run -d -s {savepoint_path} -j /tmp/jobs/{job_file} --parmap '{';'.join(par_map)}'",
             )

@@ -27,7 +27,7 @@ spec:
       #                  component: taskmanager
       nodeSelector:
         node-role.kubernetes.io/worker: consumer
-        node-role.kubernetes.io/autoscaling: SCHEDULABLE
+        node-role.kubernetes.io/scaling: SCHEDULABLE
         node-role.kubernetes.io/tnode: grid5000
       terminationGracePeriodSeconds: 0
       imagePullSecrets:
@@ -99,7 +99,7 @@ spec:
       #                  component: taskmanager
       nodeSelector:
         node-role.kubernetes.io/worker: consumer
-        node-role.kubernetes.io/autoscaling: SCHEDULABLE
+        node-role.kubernetes.io/scaling: SCHEDULABLE
       #        node-role.kubernetes.io/tnode: vm_grid5000
       #        node-role.kubernetes.io/vm_grid5000: small
       terminationGracePeriodSeconds: 0
@@ -172,7 +172,7 @@ spec:
       #                  component: taskmanager
       nodeSelector:
         node-role.kubernetes.io/worker: consumer
-        node-role.kubernetes.io/autoscaling: SCHEDULABLE
+        node-role.kubernetes.io/scaling: SCHEDULABLE
       #        node-role.kubernetes.io/tnode: vm_grid5000
       #        node-role.kubernetes.io/vm_grid5000: medium
       terminationGracePeriodSeconds: 0
@@ -244,7 +244,7 @@ spec:
                   component: taskmanager
       nodeSelector:
         node-role.kubernetes.io/worker: consumer
-        node-role.kubernetes.io/autoscaling: SCHEDULABLE
+        node-role.kubernetes.io/scaling: SCHEDULABLE
         node-role.kubernetes.io/tnode: pico
       terminationGracePeriodSeconds: 0
       imagePullSecrets:

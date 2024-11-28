@@ -3,6 +3,8 @@ import json
 import os.path
 from inspect import getmembers, isclass
 
+import yaml
+
 from scripts.utils.Defaults import (
     DefaultKeys as Key,
 )
@@ -289,7 +291,12 @@ class Config:
         # Validate subclasses of Experiment
         for name, cls in getmembers(Key.Experiment, isclass):
             # Skip private attributes, the Generators class in this step
-            if name.startswith("__") and name.endswith("__") or name == "Generators":
+            if (
+                name.startswith("__")
+                and name.endswith("__")
+                or name == "Generators"
+                or name == "Scaling"
+            ):
                 continue
             section = f"{section_base}.{name.lower()}"
             if not self.cp.has_section(section):
@@ -312,6 +319,13 @@ class Config:
                             f"[CONF] Key [{key}] is missing in section [{section}] in configuration file {conf_path}"
                         )
                         exit(1)
+        # Validate the Scaling class
+        section = f"{section_base}.scaling"
+        if not self.cp.has_section(section):
+            self.__log.error(
+                f"[CONF] Section [{section}] is missing in configuration file {conf_path}"
+            )
+            exit(1)
         # Validate the Generators class
         section = f"{section_base}.generators"
         if not self.cp.has_section(section):
@@ -418,30 +432,6 @@ class Config:
                         )
                         exit(1)
 
-    # def validate(self, conf_path: str):
-    #     # Check that the configuration file exists
-    #     if not exists(conf_path):
-    #         self.__log.error(f"[CONF] Config file [{conf_path}] does not exist.")
-    #         exit(1)
-    #     else:
-    #         self.__log.debugg(f"[CONF] Config file [{conf_path}] found.")
-    #
-    #         # Read the configuration file
-    #         self.cp.read(conf_path)
-    #
-    #         # Check that the main sections are defined
-    #         for name, cls in getmembers(Key, isclass):
-    #             if name.startswith("__") and name.endswith("__"):
-    #                 continue
-    #             section = name.lower()
-    #             if not self.cp.has_section(section):
-    #                 self.__log.error(
-    #                     f"[CONF] Section [{section}] is missing in configuration file {conf_path}"
-    #                 )
-    #                 exit(1)
-    #         # Validate subclasses of Experiment
-    #         self.__validate_experiment(conf_path)
-
     def __read_platform_config(self, conf_path: str):
         # Read the configuration file
         self.cp.read(conf_path)
@@ -466,7 +456,29 @@ class Config:
             Key.Experiment.Generators.generators
         ] = self.__parse_load_generators()
 
+        # Parse the scaling strategy
+        self.__config[Key.Experiment.Scaling.steps] = self.__parse_scaling_strategy()
+        self.__config[Key.Experiment.Scaling.interval_scaling_s] = self.get_int(
+            Key.Experiment.Scaling.interval_scaling_s
+        )
+        self.__config[Key.Experiment.Scaling.max_parallelism] = self.get_int(
+            Key.Experiment.Scaling.max_parallelism
+        )
+        # self.__config[Key.Experiment.Scaling.duration_s] = self.get_int(
+        #     Key.Experiment.Scaling.duration_s
+        # )
+
     # Serialize the configuration to a JSON string
+    def __parse_scaling_strategy(self):
+        # Get scaling strategy path, this is a yaml file
+        strategy_path = self.get_str(Key.Experiment.Scaling.strategy_path)
+
+        # Read the yaml file
+        with open(strategy_path, "r") as file:
+            strategy = yaml.safe_load(file)
+
+        return strategy
+
     def to_json(self):
         return json.dumps(self.__config, indent=4)
 

@@ -6,8 +6,9 @@ import paho.mqtt.client as mqtt
 from paho.mqtt.enums import CallbackAPIVersion
 from transitions import Machine
 
-from scripts.monitor.experiments.AutoscalingExperiment import AutoscalingExperiment
+from scripts.monitor.experiments.MultipleRunExperiment import MultipleRunExperiment
 from scripts.monitor.experiments.StandaloneExperiment import StandaloneExperiment
+from scripts.monitor.experiments.TransscaleExperiment import TransscaleExperiment
 from scripts.utils.Config import Config
 from scripts.utils.Defaults import DefaultKeys as Key
 from scripts.utils.Logger import Logger
@@ -42,14 +43,17 @@ class ExperimentFSM:
         )
 
     def set_config(self, config):
+        self.__log.info("Setting config.")
         self.config = config
 
     def create_experiment_instance(self, experiment_type):
         match experiment_type:
             case "standalone":
                 return StandaloneExperiment(self.__log, self.config)
-            case "autoscaling":
-                return AutoscalingExperiment(self.__log, self.config)
+            case "transscale":
+                return TransscaleExperiment(self.__log, self.config)
+            case "multiplerun":
+                return MultipleRunExperiment(self.__log, self.config)
             case _:
                 raise ValueError(f"Invalid experiment type: {experiment_type}")
 
@@ -246,5 +250,20 @@ def main():
     client.run()
 
 
+def test_fsm():
+    log = Logger()
+    path = "/app/conf/experiment/multiple_run.ini"
+    config = Config(log, path)
+    fsm = ExperimentFSM(log)
+    fsm.set_config(config)
+
+    fsm.start()
+    # fsm.run()
+    # fsm.finish()
+    # fsm.clean()
+
+
 if __name__ == "__main__":
     main()
+
+    # test_fsm()
