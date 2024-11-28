@@ -6,7 +6,7 @@ RUN --mount=type=bind,source=setup/monitor/requirements.txt,target=requirements.
 RUN mkdir -p /app /app/conf /app/scripts /app/templates /app/playbooks
 
 # Copy source code
-ADD scripts/monitor/ /app/scripts/
+ADD scripts/monitor/ /app/scripts/monitor/
 ADD scripts/utils /app/scripts/utils
 ADD playbooks/ /app/playbooks/
 
@@ -33,7 +33,7 @@ ENV PYTHONPATH="/app"
 ENV PYTHONUNBUFFERED=1
 
 ## Run the application
-ENTRYPOINT ["python3", "/app/scripts/experiment-monitor.py"]
+ENTRYPOINT ["python3", "/app/scripts/monitor/experiment-monitor.py"]
 
 ## DEBUG: Hang the entrypoint so the container doesn't exit
 #CMD ["tail", "-f", "/dev/null"]

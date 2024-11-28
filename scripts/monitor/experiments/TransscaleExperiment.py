@@ -9,7 +9,7 @@ from scripts.utils.Defaults import DefaultKeys as Key
 
 
 # This class needs to be fixed
-@NotImplemented
+@DeprecationWarning
 class TransscaleExperiment(Experiment):
     def __init__(self, log, config):
         super().__init__(log, config)
