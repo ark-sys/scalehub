@@ -28,7 +28,7 @@ spec:
       #                  component: taskmanager
       nodeSelector:
         node-role.kubernetes.io/worker: consumer
-        node-role.kubernetes.io/autoscaling: SCHEDULABLE
+        node-role.kubernetes.io/scaling: SCHEDULABLE
       #        node-role.kubernetes.io/tnode: grid5000
       imagePullSecrets:
         - name: gitlab-scalehub
@@ -102,7 +102,7 @@ spec:
       #                  component: taskmanager
       nodeSelector:
         node-role.kubernetes.io/worker: consumer
-        node-role.kubernetes.io/autoscaling: SCHEDULABLE
+        node-role.kubernetes.io/scaling: SCHEDULABLE
       #        node-role.kubernetes.io/tnode: grid5000
       imagePullSecrets:
         - name: gitlab-scalehub
@@ -175,7 +175,7 @@ spec:
       #                  component: taskmanager
       nodeSelector:
         node-role.kubernetes.io/worker: consumer
-        node-role.kubernetes.io/autoscaling: SCHEDULABLE
+        node-role.kubernetes.io/scaling: SCHEDULABLE
       #        node-role.kubernetes.io/tnode: grid5000
       imagePullSecrets:
         - name: gitlab-scalehub
@@ -184,7 +184,7 @@ spec:
           image: "{{image}}:{{tag}}"
           resources:
             limits:
-              memory: 64Gi
+              memory: 32Gi
               cpu: 4000m
           args: [ "taskmanager" ]
           ports:
@@ -248,7 +248,7 @@ spec:
       #                  component: taskmanager
       nodeSelector:
         node-role.kubernetes.io/worker: consumer
-        node-role.kubernetes.io/autoscaling: SCHEDULABLE
+        node-role.kubernetes.io/scaling: SCHEDULABLE
       #        node-role.kubernetes.io/tnode: grid5000
       imagePullSecrets:
         - name: gitlab-scalehub
@@ -321,7 +321,7 @@ spec:
       #                  component: taskmanager
       nodeSelector:
         node-role.kubernetes.io/worker: consumer
-        node-role.kubernetes.io/autoscaling: SCHEDULABLE
+        node-role.kubernetes.io/scaling: SCHEDULABLE
       #        node-role.kubernetes.io/tnode: grid5000
       imagePullSecrets:
         - name: gitlab-scalehub

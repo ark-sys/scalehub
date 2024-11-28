@@ -1,5 +1,11 @@
 import os
 
+import ansible_runner
+import jinja2
+import yaml
+
+from scripts.utils.Config import Config
+from scripts.utils.Defaults import DefaultKeys as Key
 from scripts.utils.Logger import Logger
 
 
@@ -40,3 +46,55 @@ class Tools:
         start_ts = lines[0].split(":")[1].strip()
         end_ts = lines[-1].split(":")[1].strip()
         return start_ts, end_ts
+
+    def load_resource_definition(self, resource_filename, experiment_params):
+        try:
+            with open(resource_filename, "r") as f:
+                resource_template = f.read()
+                resource_definition = jinja2.Template(resource_template).render(
+                    experiment_params
+                )
+            resource_object = yaml.safe_load(resource_definition)
+            return resource_object
+        except FileNotFoundError as e:
+            self.__log.error(f"File not found: {resource_filename}")
+            return
+
+
+class Playbooks:
+    def __init__(self, log: Logger):
+        self.__log = log
+
+    def run(self, playbook, config: Config, tag=None, extra_vars=None):
+        if extra_vars is None:
+            extra_vars = {}
+        inventory = config.get_str(Key.Scalehub.inventory)
+        playbook_filename = f"{config.get_str(Key.Scalehub.playbook)}/{playbook}.yaml"
+        if not os.path.exists(playbook_filename):
+            # Raise an error with the file path
+            raise FileNotFoundError(f"The file doesn't exist: {playbook_filename}")
+
+        playbook_vars = {
+            "shub_config": config.to_json(),
+        }
+        playbook_vars.update(extra_vars)
+
+        tags = tag if tag else ""
+
+        # Run the playbook with additional tags and extra vars
+        try:
+            r = ansible_runner.run(
+                private_data_dir="/tmp/ansible",
+                playbook=playbook_filename,
+                inventory=inventory,
+                extravars=playbook_vars,
+                tags=tags,
+            )
+            if r.rc != 0:
+                self.__log.error(f"Failed to run playbook: {playbook_filename}")
+                return r.rc
+            else:
+                self.__log.info(f"Playbook {playbook_filename} executed successfully.")
+        except Exception as e:
+            self.__log.error(e.__str__())
+            return e

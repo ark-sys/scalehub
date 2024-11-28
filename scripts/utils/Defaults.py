@@ -65,6 +65,14 @@ class DefaultKeys:
         first_node = "experiment.first_node"
         unchained_tasks = "experiment.unchained_tasks"
         type = "experiment.type"
+        runs = "experiment.runs"
+
+        class Scaling:
+            strategy_path = "experiment.scaling.strategy_path"
+            interval_scaling_s = "experiment.scaling.interval_scaling_s"
+            max_parallelism = "experiment.scaling.max_parallelism"
+            duration_s = "experiment.scaling.duration_s"
+            steps = "experiment.scaling.steps"
 
         class Generators:
             generators = "experiment.generators"
@@ -149,6 +157,21 @@ class DefaultValues:
         first_node = "grid5000"
         unchained_tasks = False
         type = "standalone"
+        runs = 1
+
+        class Scaling:
+            strategy_path = "scaling-strategies/strategy1.yaml"
+            interval_scaling_s = 60
+            max_parallelism = 10
+            duration_s = 600
+            steps = [
+                {
+                    "node": "grid5000",
+                    "taskmanager": [
+                        {"number": 10, "type": "taskmanager-s"},
+                    ],
+                }
+            ]
 
         class Generators:
             generators = ["generator1"]

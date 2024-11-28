@@ -9,10 +9,10 @@ spec:
     namespaces:
       - default
     labelSelectors:
-        app: flink
-        component: taskmanager
+      app: flink
+      component: taskmanager
     nodeSelectors:
-        chaos: 'true'
+      chaos: 'true'
   # All values are described here
   # https://chaos-mesh.org/docs/simulate-network-chaos-on-kubernetes/#field-description
   mode: all
@@ -21,4 +21,8 @@ spec:
     latency: "{{ latency }}ms"
     jitter: "{{ jitter }}ms"
     correlation: "{{ correlation }}"
+  bandwidth:
+    rate: "{{ rate }}mbps"
+    limit: { { limit } }
+    buffer: { { buffer } }
   direction: to

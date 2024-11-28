@@ -22,15 +22,15 @@ sequenceDiagram
     MQTTClient ->> ExperimentFSM: fsm.start()
     ExperimentFSM ->> ExperimentFSM: start_experiment()
     ExperimentFSM ->> ExperimentFSM: create_experiment_instance()
-    ExperimentFSM ->> StandaloneExperiment: Create StandaloneExperiment instance
-    ExperimentFSM ->> StandaloneExperiment: current_experiment.start()
+    ExperimentFSM ->> Experiment: Create Experiment instance
+    ExperimentFSM ->> Experiment: current_experiment.start()
     ExperimentFSM ->> ExperimentFSM: run()
     ExperimentFSM ->> ExperimentFSM: run_experiment()
     ExperimentFSM ->> ExperimentFSM: thread_wrapper()
-    ExperimentFSM ->> StandaloneExperiment: current_experiment.running()
+    ExperimentFSM ->> Experiment: current_experiment.running()
     ExperimentFSM ->> ExperimentFSM: finish()
     ExperimentFSM ->> ExperimentFSM: end_experiment()
-    ExperimentFSM ->> StandaloneExperiment: current_experiment.stop()
-    ExperimentFSM ->> StandaloneExperiment: current_experiment.cleanup()
+    ExperimentFSM ->> Experiment: current_experiment.stop()
+    ExperimentFSM ->> Experiment: current_experiment.cleanup()
     ExperimentFSM ->> ExperimentFSM: clean()
 ```
