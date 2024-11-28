@@ -17,5 +17,5 @@ spec:
             backend:
               service:
                 name: flink-jobmanager-webui
-                  port:
-                    number: 8081
+                port:
+                  number: 8081
