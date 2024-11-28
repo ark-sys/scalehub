@@ -50,7 +50,7 @@ class MultipleRunExperiment(Experiment):
                 exp_path=exp_path, start_ts=start_ts, end_ts=end_ts
             )
             # Export experiment data
-            data_exp: DataExporter = DataExporter(log=self.__log, exp_path=exp_path)
+            data_exp: DataExporter = DataExporter(log=self.log, exp_path=exp_path)
 
             # Export data from victoriametrics
             data_exp.export()
@@ -70,9 +70,9 @@ class MultipleRunExperiment(Experiment):
         self.k.node_manager.reset_scaling_labels()
 
         # Reload data-stream-apps
-        self.p.run("data-stream-apps", config=self.config, tag="delete")
+        self.p.run("application/data-stream-apps", config=self.config, tag="delete")
         sleep(5)
-        self.p.run("data-stream-apps", config=self.config, tag="deploy")
+        self.p.run("application/data-stream-apps", config=self.config, tag="deploy")
 
         # delete load generators
         self.delete_load_generators()

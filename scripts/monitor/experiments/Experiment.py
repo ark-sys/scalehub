@@ -141,12 +141,18 @@ class Experiment:
                 "lg_replicas": int(generator["replicas"]),
                 "lg_value": int(generator["value"]),
             }
-            self.k.service_manager.create_service(
-                self.load_generator_service_template, load_generator_params
+            self.p.run(
+                "application/load_generators",
+                config=self.config,
+                tag="create",
+                extra_vars=load_generator_params,
             )
-            self.k.deployment_manager.create_deployment(
-                self.load_generator_deployment_template, load_generator_params
-            )
+            # self.k.service_manager.create_service(
+            #     self.load_generator_service_template, load_generator_params
+            # )
+            # self.k.deployment_manager.create_deployment(
+            #     self.load_generator_deployment_template, load_generator_params
+            # )
 
     def delete_load_generators(self):
         # Delete load generators
@@ -159,12 +165,18 @@ class Experiment:
                 "lg_replicas": int(generator["replicas"]),
                 "lg_value": int(generator["value"]),
             }
-            self.k.service_manager.delete_service(
-                self.load_generator_service_template, load_generator_params
+            self.p.run(
+                "application/load_generators",
+                config=self.config,
+                tag="delete",
+                extra_vars=load_generator_params,
             )
-            self.k.deployment_manager.delete_deployment(
-                self.load_generator_deployment_template, load_generator_params
-            )
+            # self.k.service_manager.delete_service(
+            #     self.load_generator_service_template, load_generator_params
+            # )
+            # self.k.deployment_manager.delete_deployment(
+            #     self.load_generator_deployment_template, load_generator_params
+            # )
 
     def is_chaos_enabled(self):
         return self.config.get_bool("chaos.enabled")
