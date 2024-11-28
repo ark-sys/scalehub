@@ -130,9 +130,11 @@ class MultipleRunExperiment(Experiment):
         # Get the name of the stateful set to scale
         tm_name = f"flink-taskmanager-{taskmanager_type}"
 
+        self.log.debug(f"Scaling up {tm_name} to 1")
+
         # Scale up stateful set
         self.k.statefulset_manager.scale_statefulset(
-            statefulset_name=tm_name, replicas=1
+            statefulset_name=tm_name, replicas=1, namespace="flink"
         )
         # Deploy load generators
         self.run_load_generators()
@@ -174,6 +176,7 @@ class MultipleRunExperiment(Experiment):
                     self.k.statefulset_manager.scale_statefulset(
                         statefulset_name=tm_name,
                         replicas=taskmanagers_count_dict[tm_type],
+                        namespace="flink",
                     )
 
                     # Stop job with savepoint
