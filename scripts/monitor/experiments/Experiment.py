@@ -134,6 +134,8 @@ class Experiment:
         # Create load generators
         for generator in self.config.get(Key.Experiment.Generators.generators):
             load_generator_params = {
+                "theodolite_lg_image": "registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/workload-generator",
+                "thedolite_lg_tag": "latest",
                 "lg_name": generator["name"],
                 "lg_topic": generator["topic"],
                 "lg_numsensors": int(generator["num_sensors"]),
@@ -158,6 +160,8 @@ class Experiment:
         # Delete load generators
         for generator in self.config.get(Key.Experiment.Generators.generators):
             load_generator_params = {
+                "theodolite_lg_image": "registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/workload-generator",
+                "thedolite_lg_tag": "latest",
                 "lg_name": generator["name"],
                 "lg_topic": generator["topic"],
                 "lg_numsensors": int(generator["num_sensors"]),
@@ -165,12 +169,12 @@ class Experiment:
                 "lg_replicas": int(generator["replicas"]),
                 "lg_value": int(generator["value"]),
             }
-            self.p.run(
-                "application/load_generators",
-                config=self.config,
-                tag="delete",
-                extra_vars=load_generator_params,
-            )
+            # self.p.run(
+            #     "application/load_generators",
+            #     config=self.config,
+            #     tag="delete",
+            #     extra_vars=load_generator_params,
+            # )
             self.k.service_manager.delete_service(
                 self.load_generator_service_template, load_generator_params
             )

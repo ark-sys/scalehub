@@ -69,10 +69,17 @@ class MultipleRunExperiment(Experiment):
         # Remove SCHEDULABLE label from all nodes
         self.k.node_manager.reset_scaling_labels()
 
+        self.k.statefulset_manager.scale_statefulset("kafka", 0, "kafka")
+
+        self.k.statefulset_manager.reset_taskmanagers()
+        # lapebs are app=flink, component=jobmanager
+        jobmanager_labels = {"app": "flink", "component": "jobmanager"}
+        self.k.pod_manager.delete_pods_by_label(jobmanager_labels, "flink")
+
         # Reload data-stream-apps
-        self.p.run("application/data-stream-apps", config=self.config, tag="delete")
         sleep(5)
-        self.p.run("application/data-stream-apps", config=self.config, tag="deploy")
+
+        self.k.statefulset_manager.scale_statefulset("kafka", 3, "kafka")
 
         # delete load generators
         self.delete_load_generators()
