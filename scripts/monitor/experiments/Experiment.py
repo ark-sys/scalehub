@@ -86,8 +86,9 @@ class Experiment:
             )
             operator_names.append(operator_name)
 
-        retries = 5
+        retries = 10
         savepoint_path = None
+        sleep_time = 3
         while retries > 0 and savepoint_path is None:
             resp = self.k.pod_manager.execute_command_on_pod(
                 deployment_name="flink-jobmanager",
@@ -99,7 +100,9 @@ class Experiment:
                     self.__log.info(f"Savepoint path: {savepoint_path}")
                     break
             retries -= 1
-            sleep(2)
+            # At each iteration increase sleep time
+            sleep_time += 1
+            sleep(sleep_time)
         if savepoint_path is None:
             self.__log.error("Savepoint failed.")
             return None, None, None
