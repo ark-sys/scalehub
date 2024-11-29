@@ -79,7 +79,7 @@ class SimpleExperiment(Experiment):
         # Remove SCHEDULABLE label from all nodes
         self.k.node_manager.reset_scaling_labels()
 
-        self.k.statefulset_manager.scale_statefulset("kafka", 0, "kafka")
+        # self.k.statefulset_manager.scale_statefulset("kafka", 0, "kafka")
 
         self.k.statefulset_manager.reset_taskmanagers()
         # lapebs are app=flink, component=jobmanager
@@ -90,7 +90,7 @@ class SimpleExperiment(Experiment):
         # Reload data-stream-apps
         sleep(5)
 
-        self.k.statefulset_manager.scale_statefulset("kafka", 3, "kafka")
+        # self.k.statefulset_manager.scale_statefulset("kafka", 3, "kafka")
 
         # delete load generators
         self.delete_load_generators()
@@ -173,18 +173,17 @@ class SimpleExperiment(Experiment):
 
             # For each taskmanager to deploy, scale up stateful set, stop job with savepoint, rescale job from savepoint and sleep interval_s
             for i in range(tm_number):
+                self.log.info(
+                    f"Waiting for {self.config.get_int(Key.Experiment.Scaling.interval_scaling_s)} seconds"
+                )
+                # Wait interval_scaling_s
+                sleep(
+                    self.config.get_int(Key.Experiment.Scaling.interval_scaling_s)
+                )
                 # if we are at the first step and first taskmanager, we don't need to scale up, just wait
                 if step == 0 and i == 0 and indexOf(taskmanagers, taskmanager) == 0:
                     continue
                 else:
-                    self.log.info(
-                        f"Waiting for {self.config.get_int(Key.Experiment.Scaling.interval_scaling_s)} seconds"
-                    )
-                    # Wait interval_scaling_s
-                    sleep(
-                        self.config.get_int(Key.Experiment.Scaling.interval_scaling_s)
-                    )
-
                     # Get current number of taskmanagers
                     taskmanagers_count_dict = (
                         self.k.statefulset_manager.get_count_of_taskmanagers()
@@ -242,4 +241,4 @@ class SimpleExperiment(Experiment):
             self.scale_operator(taskmanagers, step)
 
             step += 1
-            sleep(3)
+            sleep(5)
