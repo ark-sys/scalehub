@@ -7,7 +7,7 @@ from scripts.utils.DataExporter import DataExporter
 from scripts.utils.Defaults import DefaultKeys as Key
 
 
-class MultipleRunExperiment(Experiment):
+class SimpleExperiment(Experiment):
     def __init__(self, log, config):
         super().__init__(log, config)
         self.log = log
@@ -49,6 +49,13 @@ class MultipleRunExperiment(Experiment):
             log_file = self.create_log_file(
                 exp_path=exp_path, start_ts=start_ts, end_ts=end_ts
             )
+
+            # Add experiment run as header of log file
+            with open(log_file, "r+") as f:
+                content = f.read()
+                f.seek(0, 0)
+                f.write(f"Experiment run {run + 1}\n\n" + content)
+
             # Export experiment data
             data_exp: DataExporter = DataExporter(log=self.log, exp_path=exp_path)
 
