@@ -55,7 +55,7 @@ class SimpleExperiment(Experiment):
                 content = f.read()
                 f.seek(0, 0)
                 f.write(
-                    f"Experiment run {indexOf(tuple, self.timestamps) + 1}\n\n"
+                    f"Experiment run {indexOf(self.timestamps, tuple) + 1}\n\n"
                     + content
                 )
 
