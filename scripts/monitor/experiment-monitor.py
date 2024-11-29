@@ -6,7 +6,7 @@ import paho.mqtt.client as mqtt
 from paho.mqtt.enums import CallbackAPIVersion
 from transitions import Machine
 
-from scripts.monitor.experiments.MultipleRunExperiment import MultipleRunExperiment
+from scripts.monitor.experiments.SimpleExperiment import SimpleExperiment
 from scripts.monitor.experiments.StandaloneExperiment import StandaloneExperiment
 from scripts.monitor.experiments.TransscaleExperiment import TransscaleExperiment
 from scripts.utils.Config import Config
@@ -52,8 +52,8 @@ class ExperimentFSM:
                 return StandaloneExperiment(self.__log, self.config)
             case "transscale":
                 return TransscaleExperiment(self.__log, self.config)
-            case "multiplerun":
-                return MultipleRunExperiment(self.__log, self.config)
+            case "simple":
+                return SimpleExperiment(self.__log, self.config)
             case _:
                 raise ValueError(f"Invalid experiment type: {experiment_type}")
 
