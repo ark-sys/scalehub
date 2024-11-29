@@ -36,9 +36,9 @@ class SimpleExperiment(Experiment):
 
     def stop(self):
 
-        for run in range(self.runs):
+        for tuple in self.timestamps:
             # Iterate over the timestamps list and export data for each run
-            start_ts, end_ts = self.timestamps[run]
+            start_ts, end_ts = tuple
             # Create experiment folder for results, ordered by date (YYYY-MM-DD)
             exp_path = self.t.create_exp_folder(
                 self.EXPERIMENTS_BASE_PATH,
@@ -54,7 +54,10 @@ class SimpleExperiment(Experiment):
             with open(log_file, "r+") as f:
                 content = f.read()
                 f.seek(0, 0)
-                f.write(f"Experiment run {run + 1}\n\n" + content)
+                f.write(
+                    f"Experiment run {indexOf(tuple, self.timestamps) + 1}\n\n"
+                    + content
+                )
 
             # Export experiment data
             data_exp: DataExporter = DataExporter(log=self.log, exp_path=exp_path)
@@ -80,7 +83,8 @@ class SimpleExperiment(Experiment):
 
         self.k.statefulset_manager.reset_taskmanagers()
         # lapebs are app=flink, component=jobmanager
-        jobmanager_labels = {"app": "flink", "component": "jobmanager"}
+        # jobmanager_labels = {"app": "flink", "component": "jobmanager"}
+        jobmanager_labels = "app=flink,component=jobmanager"
         self.k.pod_manager.delete_pods_by_label(jobmanager_labels, "flink")
 
         # Reload data-stream-apps
