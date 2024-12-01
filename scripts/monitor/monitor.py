@@ -90,15 +90,14 @@ class ExperimentFSM:
                 self.current_experiment.running()
             finally:
                 # Trigger finish transition
-                self.stop_experiment.set()
+                self.current_experiment_thread.join()
+
                 if self.is_RUNNING():
                     self.finish()
 
         # Create thread, to run experiment in background
         self.current_experiment_thread = threading.Thread(target=thread_wrapper)
         self.current_experiment_thread.start()
-
-        self.current_experiment_thread.join()
 
     def end_experiment(self):
         # End execution of thread

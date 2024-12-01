@@ -16,6 +16,7 @@ from scripts.utils.Tools import Tools
 class KubernetesManager:
     def __init__(self, log: Logger):
         self.__log = log
+        self.__log.class_name = "K8S_MGR"
         self.kubeconfig = kubeconfig.load_kube_config(os.environ["KUBECONFIG"])
 
         self.pod_manager = PodManager(log)
@@ -200,6 +201,7 @@ class PodManager:
 class DeploymentManager:
     def __init__(self, log: Logger):
         self.__log = log
+        self.__log.class_name = "DEP_MGR"
         self.t: Tools = Tools(self.__log)
         self.api_instance = client.AppsV1Api()
 
@@ -907,6 +909,7 @@ class ChaosManager:
 class StatefulSetManager:
     def __init__(self, log: Logger):
         self.__log = log
+        self.__log.class_name = "STS_MGR"
         self.t: Tools = Tools(self.__log)
         self.api_instance = client.AppsV1Api()
 
