@@ -29,7 +29,7 @@ data:
 
     state.backend.latency-track.keyed-state-enabled: true
     state.backend.type: rocksdb
-    state.backend.incremental: true
+    #state.backend.incremental: true
 
     state.backend.rocksdb.metrics.estimate-num-keys: true
     state.backend.rocksdb.memory.managed: true
@@ -50,9 +50,11 @@ data:
     execution.checkpointing.aligned-checkpoint-timeout: 10 s
     execution.checkpointing.checkpoints-after-tasks-finish.enabled: true
     cluster.fine-grained-resource-management.enabled: true
+
   flink-conf-taskmanager-xl.yaml: |+
     akka.framesize: 104857600b
     blob.server.port: 6124
+    rest.profiling.enabled: true
     
     jobmanager.rpc.address: flink-jobmanager
     jobmanager.rpc.port: 6123
@@ -70,10 +72,17 @@ data:
     metrics.reporter.prom.port: 9249
     metrics.fetcher.update-interval: 5000
     metrics.latency.granularity: subtask
+    state.checkpoints.dir: s3://flink-bucket/checkpoints
+    state.savepoints.dir: s3://flink-bucket/savepoints
+    s3.path.style.access: true
+    s3.endpoint: http://minio.minio-operator.svc.cluster.local
+    s3.access-key: minio
+    s3.secret-key: minio123
 
   flink-conf-taskmanager-l.yaml: |+
     akka.framesize: 104857600b
     blob.server.port: 6124
+    rest.profiling.enabled: true
     
     jobmanager.rpc.address: flink-jobmanager
     jobmanager.rpc.port: 6123
@@ -91,9 +100,17 @@ data:
     metrics.reporter.prom.port: 9249
     metrics.fetcher.update-interval: 5000
     metrics.latency.granularity: subtask
+    state.checkpoints.dir: s3://flink-bucket/checkpoints
+    state.savepoints.dir: s3://flink-bucket/savepoints
+    s3.path.style.access: true
+    s3.endpoint: http://minio.minio-operator.svc.cluster.local
+    s3.access-key: minio
+    s3.secret-key: minio123
+
   flink-conf-taskmanager-s.yaml: |+
     akka.framesize: 104857600b
     blob.server.port: 6124
+    rest.profiling.enabled: true
     
     jobmanager.rpc.address: flink-jobmanager
     jobmanager.rpc.port: 6123
@@ -111,10 +128,17 @@ data:
     metrics.reporter.prom.port: 9249
     metrics.fetcher.update-interval: 5000
     metrics.latency.granularity: subtask
+    state.checkpoints.dir: s3://flink-bucket/checkpoints
+    state.savepoints.dir: s3://flink-bucket/savepoints
+    s3.path.style.access: true
+    s3.endpoint: http://minio.minio-operator.svc.cluster.local
+    s3.access-key: minio
+    s3.secret-key: minio123
 
   flink-conf-taskmanager-m.yaml: |+
     akka.framesize: 104857600b
     blob.server.port: 6124
+    rest.profiling.enabled: true
     
     jobmanager.rpc.address: flink-jobmanager
     jobmanager.rpc.port: 6123
@@ -132,6 +156,12 @@ data:
     metrics.reporter.prom.port: 9249
     metrics.fetcher.update-interval: 5000
     metrics.latency.granularity: subtask
+    state.checkpoints.dir: s3://flink-bucket/checkpoints
+    state.savepoints.dir: s3://flink-bucket/savepoints
+    s3.path.style.access: true
+    s3.endpoint: http://minio.minio-operator.svc.cluster.local
+    s3.access-key: minio
+    s3.secret-key: minio123
   #  flink-conf-pico.yaml: |+
   #    #scheduler-mode: reactive
   #    web.upload.dir: /tmp

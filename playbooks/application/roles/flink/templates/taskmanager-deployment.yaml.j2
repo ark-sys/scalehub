@@ -2,10 +2,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: flink-taskmanager-bm
+  name: flink-taskmanager-xxl
   namespace: flink
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       app: flink
@@ -15,6 +15,7 @@ spec:
       labels:
         app: flink
         component: taskmanager
+        size: xxl
     spec:
 #     Force scheduling of one taskmanager per node
       #      affinity:
@@ -62,7 +63,7 @@ spec:
           configMap:
             name: flink-config
             items:
-              - key: flink-conf-taskmanager-l.yaml
+              - key: flink-conf-taskmanager-xl.yaml
                 path: flink-conf.yaml
               - key: log4j-console.properties
                 path: log4j-console.properties
@@ -74,7 +75,7 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: flink-taskmanager-vm-small
+  name: flink-taskmanager-s
   namespace: flink
 spec:
   replicas: 1
@@ -87,6 +88,7 @@ spec:
       labels:
         app: flink
         component: taskmanager
+        size: s
     spec:
 #     Force scheduling of one taskmanager per node
       #      affinity:
@@ -147,19 +149,21 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: flink-taskmanager-vm-medium
+  name: flink-taskmanager-m
   namespace: flink
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       app: flink
       component: taskmanager
+      size: m
   template:
     metadata:
       labels:
         app: flink
         component: taskmanager
+        size: m
     spec:
 #     Force scheduling of one taskmanager per node
       #      affinity:
@@ -209,77 +213,6 @@ spec:
             name: flink-config
             items:
               - key: flink-conf-taskmanager-m.yaml
-                path: flink-conf.yaml
-              - key: log4j-console.properties
-                path: log4j-console.properties
-        - name: data-volume
-          hostPath:
-            path: /tmp/experiment-data
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: flink-taskmanager-pico
-  namespace: flink
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: flink
-      component: taskmanager
-  template:
-    metadata:
-      labels:
-        app: flink
-        component: taskmanager
-    spec:
-      #     Force scheduling of one taskmanager per node
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            - topologyKey: kubernetes.io/hostname
-              labelSelector:
-                matchLabels:
-                  app: flink
-                  component: taskmanager
-      nodeSelector:
-        node-role.kubernetes.io/worker: consumer
-        node-role.kubernetes.io/scaling: SCHEDULABLE
-        node-role.kubernetes.io/tnode: pico
-      terminationGracePeriodSeconds: 0
-      imagePullSecrets:
-        - name: gitlab-scalehub
-      containers:
-        - name: taskmanager
-          image: "{{image}}:{{tag}}"
-          resources:
-            limits:
-              memory: 4Gi
-              cpu: 2000m
-          args: [ "taskmanager" ]
-          ports:
-            - containerPort: 6122
-              name: rpc
-            - containerPort: 6125
-              name: query-state
-            - containerPort: 9249
-              name: metrics
-          #          livenessProbe:
-          #            tcpSocket:
-          #              port: 6122
-          #            initialDelaySeconds: 30
-          #            periodSeconds: 60
-          volumeMounts:
-            - name: flink-config-volume
-              mountPath: /opt/flink/conf/
-            - name: data-volume
-              mountPath: /mnt/data
-      volumes:
-        - name: flink-config-volume
-          configMap:
-            name: flink-config
-            items:
-              - key: flink-conf-pico.yaml
                 path: flink-conf.yaml
               - key: log4j-console.properties
                 path: log4j-console.properties
