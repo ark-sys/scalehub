@@ -133,14 +133,18 @@ class PodManager:
                 break
 
         if not target_pod:
-            self.__log.error(f"No running pods found for deployment {deployment_name}")
+            self.__log.error(
+                f"[POD_MGR] No running pods found for deployment {deployment_name}"
+            )
             return
 
         pod_name = target_pod.metadata.name
 
         try:
             exec_command = ["/bin/sh", "-c", command]
-            self.__log.info(f"Running command {exec_command} on pod {pod_name}")
+            self.__log.info(
+                f"[POD_MGR] Running command {exec_command} on pod {pod_name}"
+            )
             resp = stream(
                 self.api_instance.connect_get_namespaced_pod_exec,
                 name=pod_name,
@@ -153,7 +157,9 @@ class PodManager:
             )
             return resp  # Return the captured output
         except ApiException as e:
-            self.__log.error(f"Error executing command on pod {pod_name}: {e}")
+            self.__log.error(
+                f"[POD_MGR] Error executing command on pod {pod_name}: {e}"
+            )
 
     def execute_command_on_pods_by_label(
         self, label_selector, command, namespace="default"
