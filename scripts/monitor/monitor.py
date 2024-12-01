@@ -90,7 +90,7 @@ class ExperimentFSM:
                 self.current_experiment.running()
             finally:
                 # Trigger finish transition
-                self.current_experiment_thread.join()
+                # self.current_experiment_thread.join()
 
                 if self.is_RUNNING():
                     self.finish()
