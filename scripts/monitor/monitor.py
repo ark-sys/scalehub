@@ -23,7 +23,8 @@ class ExperimentFSM:
 
         # This holds the current experiment instance
         self.current_experiment = None
-        self.experiment_event = threading.Event()
+        self.current_experiment_thread = None
+        self.stop_experiment = threading.Event()
 
         # Initialize state machine
         self.machine = Machine(model=self, states=ExperimentFSM.states, initial="IDLE")
@@ -64,6 +65,8 @@ class ExperimentFSM:
         self.__log.info(f"State is {self.state}")
 
         try:
+            # Clear stop event
+            self.stop_experiment.clear()
             # Create experiment instance with current config
             self.current_experiment = self.create_experiment_instance(experiment_type)
             self.current_experiment.start()
@@ -83,24 +86,31 @@ class ExperimentFSM:
                 self.current_experiment.running()
             finally:
                 # Trigger finish transition
-                self.experiment_event.set()
+                self.stop_experiment.set()
                 if self.is_RUNNING():
                     self.finish()
 
         # Create thread, to run experiment in background
-        experiment_thread = threading.Thread(target=thread_wrapper)
-        experiment_thread.start()
+        self.current_experiment_thread = threading.Thread(target=thread_wrapper)
+        self.current_experiment_thread.start()
 
     def end_experiment(self):
-        self.__log.info("Experiment finished or stopped.")
+        # End execution of thread
+        self.stop_experiment.set()
         if self.current_experiment:
+            self.current_experiment_thread.join()
+            self.__log.info("Experiment finished or stopped.")
             self.current_experiment.stop()
             self.clean()
 
     def clean_experiment(self):
         # Clean flink jobs
         self.__log.info("Cleaning experiment.")
-        self.current_experiment.cleanup()
+        if self.current_experiment:
+            self.current_experiment.cleanup()
+            self.current_experiment = None
+            self.current_experiment_thread = None
+            self.stop_experiment.clear()
         self.__log.info(f"Returning to state IDLE")
 
 
@@ -250,20 +260,5 @@ def main():
     client.run()
 
 
-def test_fsm():
-    log = Logger()
-    path = "/app/conf/experiment/multiple_run.ini"
-    config = Config(log, path)
-    fsm = ExperimentFSM(log)
-    fsm.set_config(config)
-
-    fsm.start()
-    # fsm.run()
-    # fsm.finish()
-    # fsm.clean()
-
-
 if __name__ == "__main__":
     main()
-
-    # test_fsm()

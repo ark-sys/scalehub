@@ -3,8 +3,8 @@ from datetime import datetime
 from time import sleep
 
 from scripts.monitor.experiments.Experiment import Experiment
-from scripts.utils.DataEval import DataEval
-from scripts.utils.DataExporter import DataExporter
+from scripts.src.data.DataEval import DataEval
+from scripts.src.data.DataExporter import DataExporter
 from scripts.utils.Defaults import DefaultKeys as Key
 
 
@@ -75,7 +75,7 @@ class TransscaleExperiment(Experiment):
         self.run_load_generators()
 
         # Deploy flink job
-        self.run_job()
+        self.f.run_job()
         # # Resume execution of load generators
         # self.k.pod_manager.execute_command_on_pods_by_label(
         #     "type=load-generator", command="touch /start_generation"

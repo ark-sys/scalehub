@@ -8,7 +8,7 @@ RUN mkdir -p /app /app/conf /app/scripts /app/templates /app/playbooks /tmp/ansi
 # Copy source code
 ADD scripts/monitor/ /app/scripts/monitor/
 ADD scripts/utils /app/scripts/utils
-ADD playbooks/ /app/playbooks/
+ADD scripts/src /app/scripts/src
 
 # Add templates
 ADD playbooks/application/roles/load_generators/templates/* /app/templates/
@@ -33,7 +33,7 @@ ENV PYTHONPATH="/app"
 ENV PYTHONUNBUFFERED=1
 
 ## Run the application
-ENTRYPOINT ["python3", "/app/scripts/monitor/experiment-monitor.py"]
+ENTRYPOINT ["python3", "/app/scripts/monitor/monitor.py"]
 
 ## DEBUG: Hang the entrypoint so the container doesn't exit
 #CMD ["tail", "-f", "/dev/null"]

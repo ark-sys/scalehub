@@ -3,7 +3,7 @@ from operator import indexOf
 from time import sleep
 
 from scripts.monitor.experiments.Experiment import Experiment
-from scripts.utils.DataExporter import DataExporter
+from scripts.src.data.DataExporter import DataExporter
 from scripts.utils.Defaults import DefaultKeys as Key
 
 
@@ -25,220 +25,96 @@ class SimpleExperiment(Experiment):
 
         self.log.info("Starting experiment.")
 
-        # # #FOR TESTING Get current number of taskmanagers
-        # taskmanagers_count_dict = {
-        #     "flink-taskmanager-xxl": 0,
-        #     "flink-taskmanager-xl": 0,
-        #     "flink-taskmanager-l": 0,
-        #     "flink-taskmanager-m": 0,
-        #     "flink-taskmanager-s": 1,
-        # }
+        self.init_cluster()
 
     def stop(self):
-
         for tuple in self.timestamps:
-            # Iterate over the timestamps list and export data for each run
-            start_ts, end_ts = tuple
-            # Create experiment folder for results, ordered by date (YYYY-MM-DD)
-            exp_path = self.t.create_exp_folder(
-                self.EXPERIMENTS_BASE_PATH,
-                datetime.fromtimestamp(start_ts).strftime("%Y-%m-%d"),
-            )
+            try:
+                # Iterate over the timestamps list and export data for each run
+                start_ts, end_ts = tuple
 
-            # Create log file with start timestamp
-            log_file = self.create_log_file(
-                exp_path=exp_path, start_ts=start_ts, end_ts=end_ts
-            )
+                if start_ts is not None and end_ts is not None and end_ts > start_ts:
+                    # Create experiment folder for results, ordered by date (YYYY-MM-DD)
+                    exp_path = self.t.create_exp_folder(
+                        self.EXPERIMENTS_BASE_PATH,
+                        datetime.fromtimestamp(start_ts).strftime("%Y-%m-%d"),
+                    )
 
-            # Add experiment run as header of log file
-            with open(log_file, "r+") as f:
-                content = f.read()
-                f.seek(0, 0)
-                f.write(
-                    f"Experiment run {indexOf(self.timestamps, tuple) + 1}\n\n"
-                    + content
-                )
+                    # Create log file with start timestamp
+                    log_file = self.create_log_file(
+                        exp_path=exp_path, start_ts=start_ts, end_ts=end_ts
+                    )
 
-            # Export experiment data
-            data_exp: DataExporter = DataExporter(log=self.log, exp_path=exp_path)
+                    # Add experiment run as header of log file
+                    with open(log_file, "r+") as f:
+                        content = f.read()
+                        f.seek(0, 0)
+                        f.write(
+                            f"Experiment run {indexOf(self.timestamps, tuple) + 1}\n\n"
+                            + content
+                        )
 
-            # Export data from victoriametrics
-            data_exp.export()
+                    # Export experiment data
+                    data_exp: DataExporter = DataExporter(
+                        log=self.log, exp_path=exp_path
+                    )
 
-            # if self.config.get_bool(Key.Experiment.output_stats):
-            #     data_eval = DataEval(log=self.__log, exp_path=self.exp_path)
-            #     # If output_stats is enabled, evaluate mean throughput and extract predictions from transscale-job logs in stats.csv file
-            #     data_eval.eval_mean_stderr()
-            #     # If output_plot is enabled, evaluate plot from stats.csv file
-            #     if self.config.get_bool(Key.Experiment.output_plot):
-            #         data_eval.eval_summary_plot()
-            #         data_eval.eval_experiment_plot()
-            #         data_eval.eval_plot_with_checkpoints()
+                    # Export data from victoriametrics
+                    data_exp.export()
+                else:
+                    self.log.error("Invalid timestamps. Skipping export.")
+
+            except Exception as e:
+                self.log.error(f"Error exporting data: {e}")
 
     def cleanup(self):
-        # Remove SCHEDULABLE label from all nodes
-        self.k.node_manager.reset_scaling_labels()
+        try:
+            # Remove SCHEDULABLE label from all nodes
+            self.k.node_manager.reset_scaling_labels()
 
-        # self.k.statefulset_manager.scale_statefulset("kafka", 0, "kafka")
+            self.k.statefulset_manager.reset_taskmanagers()
 
-        self.k.statefulset_manager.reset_taskmanagers()
-        # lapebs are app=flink, component=jobmanager
-        # jobmanager_labels = {"app": "flink", "component": "jobmanager"}
-        jobmanager_labels = "app=flink,component=jobmanager"
-        self.k.pod_manager.delete_pods_by_label(jobmanager_labels, "flink")
+            jobmanager_labels = "app=flink,component=jobmanager"
+            self.k.pod_manager.delete_pods_by_label(jobmanager_labels, "flink")
 
-        # Reload data-stream-apps
-        sleep(5)
-
-        # self.k.statefulset_manager.scale_statefulset("kafka", 3, "kafka")
-
-        # delete load generators
-        self.delete_load_generators()
+            # delete load generators
+            self.delete_load_generators()
+        except Exception as e:
+            self.log.error(f"Error cleaning up: {e}")
 
     def running(self):
         run = 0
         while run < self.runs:
-            self.log.info(f"Starting run {run}")
-            start_ts = int(datetime.now().timestamp())
+            self.log.info(f"Starting run {run + 1}")
+            try:
+                start_ts = int(datetime.now().timestamp())
 
-            self.single_run()
-            end_ts = int(datetime.now().timestamp())
-            # Save timestamps
-            self.timestamps.append((start_ts, end_ts))
-            sleep(5)
+                self.single_run()
+                end_ts = int(datetime.now().timestamp())
+                # Save timestamps
+                self.timestamps.append((start_ts, end_ts))
+                sleep(5)
 
-            # Cleanup after each run
-            self.cleanup()
+                # Cleanup after each run
+                self.cleanup()
 
-            self.log.info(
-                f"Run {self.runs} completed. Start: {start_ts}, End: {end_ts}"
-            )
+                self.log.info(
+                    f"Run {self.runs} completed. Start: {start_ts}, End: {end_ts}"
+                )
+            except Exception as e:
+                self.log.error(f"Error during run: {e}")
+                self.cleanup()
 
             run += 1
 
-    def initialize_cluster(self):
-        # Check list of schedulable node, we should have 0
-        schedulable_nodes = self.k.node_manager.get_schedulable_nodes()
-        self.log.info(f"Schedulable nodes: {len(schedulable_nodes)}")
-        # Check that we have the correct node labeled
-        if len(schedulable_nodes) != 0:
-            self.log.warning(f"Resetting scaling labels.")
-            # Reset scaling labels, clean start.
-            self.k.node_manager.reset_scaling_labels()
-
-        # Reset all taskmanagers to 0 replicas
-        self.k.statefulset_manager.reset_taskmanagers()
-
-        # Get the first node to scale based on what's defined in the strategy file
-        node_type = self.steps[0]["node"]
-        if node_type == "vm_grid5000":
-            vm_type = self.steps[0]["type"]
-            first_node = self.k.node_manager.get_next_node(node_type, vm_type)
-        else:
-            first_node = self.k.node_manager.get_next_node(node_type)
-
-        self.log.info(f"First node: {first_node}")
-
-        # Mark this node with schedulable
-        self.k.node_manager.mark_node_as_schedulable(first_node)
-
-        # Get first taskmanager to deploy
-        taskmanager_type = self.steps[0]["taskmanager"][0]["type"]
-
-        # Get the name of the stateful set to scale
-        tm_name = f"flink-taskmanager-{taskmanager_type}"
-
-        self.log.debug(f"Scaling up {tm_name} to 1")
-
-        # Scale up stateful set
-        self.k.statefulset_manager.scale_statefulset(
-            statefulset_name=tm_name, replicas=1, namespace="flink"
-        )
-        # Deploy load generators
-        self.run_load_generators()
-        # Deploy job
-        self.run_job()
-
-    def scale_operator(self, taskmanagers, step):
-        for taskmanager in taskmanagers:
-            self.log.info(
-                f"Deploying {taskmanager['number']} taskmanagers of type {taskmanager['type']}"
-            )
-            # Get the number of taskmanagers to deploy
-            tm_number = taskmanager["number"]
-            # Get the type of taskmanager to deploy
-            tm_type = taskmanager["type"]
-            # Get the name of the stateful set to scale
-            tm_name = f"flink-taskmanager-{tm_type}"
-
-            # For each taskmanager to deploy, scale up stateful set, stop job with savepoint, rescale job from savepoint and sleep interval_s
-            for i in range(tm_number):
-                self.log.info(
-                    f"Waiting for {self.config.get_int(Key.Experiment.Scaling.interval_scaling_s)} seconds"
-                )
-                # Wait interval_scaling_s
-                sleep(
-                    self.config.get_int(Key.Experiment.Scaling.interval_scaling_s)
-                )
-                # if we are at the first step and first taskmanager, we don't need to scale up, just wait
-                if step == 0 and i == 0 and indexOf(taskmanagers, taskmanager) == 0:
-                    continue
-                else:
-                    # Get current number of taskmanagers
-                    taskmanagers_count_dict = (
-                        self.k.statefulset_manager.get_count_of_taskmanagers()
-                    )
-                    self.log.info(
-                        f"Current number of taskmanagers: {taskmanagers_count_dict}"
-                    )
-
-                    # Scale up stateful set
-                    taskmanagers_count_dict[tm_type] += 1
-                    self.log.info(
-                        f"Scaling up {tm_name} to {taskmanagers_count_dict[tm_type]}"
-                    )
-                    self.k.statefulset_manager.scale_statefulset(
-                        statefulset_name=tm_name,
-                        replicas=taskmanagers_count_dict[tm_type],
-                        namespace="flink",
-                    )
-
-                    # Stop job with savepoint
-                    job_id, operator_names, savepoint_path = self.stop_job()
-
-                    if savepoint_path is None:
-                        self.log.error("Savepoint failed.")
-                        return
-                    # Wait some time
-                    sleep(5)
-
-                    # Get new parallelism level as the sum of all taskmanagers
-                    new_parallelism = sum(taskmanagers_count_dict.values())
-
-                    # Rescale job from savepoint
-                    self.rescale_job_from_savepoint(
-                        operator_names, savepoint_path, new_parallelism
-                    )
-                    self.log.info(
-                        f"Updated number of taskmanagers: {taskmanagers_count_dict}"
-                    )
-
     def single_run(self):
-        steps = self.steps
-        step = 0
-
-        self.initialize_cluster()
-
-        while step < len(steps):
-            self.log.info(
-                f"================================== Running step {step} =================================="
-            )
-            self.log.info(f"Step: {steps[step]}")
-
-            # Get the number of taskmanagers to deploy at this step
-            taskmanagers = steps[step]["taskmanager"]
-
-            self.scale_operator(taskmanagers, step)
-
-            step += 1
-            sleep(5)
+        try:
+            # Deploy load generators
+            self.run_load_generators()
+            # Deploy job
+            self.f.run_job()
+            # Run scaling steps on job
+            self.s.run()
+        except Exception as e:
+            self.log.error(f"Error during single run: {e}")
+            self.cleanup()

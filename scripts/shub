@@ -10,15 +10,15 @@ from ansible.inventory.manager import InventoryManager
 from ansible.parsing.dataloader import DataLoader
 
 from scripts.src.Client import Client
-from scripts.src.FIT import FIT
-from scripts.src.G5k import G5k, G5k_VM
 from scripts.src.Platform import Platform, merge_inventories
-from scripts.src.RaspberryPi import RaspberryPi
+from scripts.src.data.DataEval import DataEval
+from scripts.src.data.DataExporter import DataExporter
+from scripts.src.platforms.FIT import FIT
+from scripts.src.platforms.G5k import G5k, G5k_VM
+from scripts.src.platforms.RaspberryPi import RaspberryPi
+from scripts.src.resources.KubernetesManager import KubernetesManager
 from scripts.utils.Config import Config
-from scripts.utils.DataEval import DataEval
-from scripts.utils.DataExporter import DataExporter
 from scripts.utils.Defaults import DefaultKeys as Key
-from scripts.utils.KubernetesManager import KubernetesManager
 from scripts.utils.Logger import Logger
 from scripts.utils.Tools import Tools, Playbooks
 
