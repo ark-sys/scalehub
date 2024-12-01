@@ -11,8 +11,13 @@ class SimpleExperiment(Experiment):
     def __init__(self, log, config):
         super().__init__(log, config)
         self.log = log
+
         self.runs = self.config.get_int(Key.Experiment.runs)
         self.steps = self.config.get(Key.Experiment.Scaling.steps)
+        self.log.info(
+            f"[SIMPLE_E] SimpleExperiment initialized with runs: {self.runs}, steps: {self.steps}"
+        )
+
         # Hold timestamps of all runs as a list of tuples (start, end)
         self.timestamps = []
 
@@ -23,7 +28,7 @@ class SimpleExperiment(Experiment):
                 "Chaos injection enabled. Deploying chaos resources on Consul and Flink."
             )
 
-        self.log.info("Starting experiment.")
+        self.log.info("[SIMPLE_E] Starting experiment.")
 
         self.init_cluster()
 
@@ -62,10 +67,10 @@ class SimpleExperiment(Experiment):
                     # Export data from victoriametrics
                     data_exp.export()
                 else:
-                    self.log.error("Invalid timestamps. Skipping export.")
+                    self.log.error("[SIMPLE_E] Invalid timestamps. Skipping export.")
 
             except Exception as e:
-                self.log.error(f"Error exporting data: {e}")
+                self.log.error(f"[SIMPLE_E] Error exporting data: {e}")
 
     def cleanup(self):
         try:
@@ -79,13 +84,14 @@ class SimpleExperiment(Experiment):
 
             # delete load generators
             self.delete_load_generators()
+
         except Exception as e:
-            self.log.error(f"Error cleaning up: {e}")
+            self.log.error(f"[SIMPLE_E] Error cleaning up: {e}")
 
     def running(self):
         run = 0
         while run < self.runs:
-            self.log.info(f"Starting run {run + 1}")
+            self.log.info(f"[SIMPLE_E] Starting run {run + 1}")
             try:
                 start_ts = int(datetime.now().timestamp())
 
@@ -93,16 +99,15 @@ class SimpleExperiment(Experiment):
                 end_ts = int(datetime.now().timestamp())
                 # Save timestamps
                 self.timestamps.append((start_ts, end_ts))
-                sleep(5)
-
                 # Cleanup after each run
                 self.cleanup()
-
+                self.log.info("[SIMPLE_E] Sleeping for 10 seconds before next run.")
+                sleep(10)
                 self.log.info(
-                    f"Run {self.runs} completed. Start: {start_ts}, End: {end_ts}"
+                    f"[SIMPLE_E] Run {self.runs} completed. Start: {start_ts}, End: {end_ts}"
                 )
             except Exception as e:
-                self.log.error(f"Error during run: {e}")
+                self.log.error(f"[SIMPLE_E] Error during run: {e}")
                 self.cleanup()
 
             run += 1
@@ -116,5 +121,5 @@ class SimpleExperiment(Experiment):
             # Run scaling steps on job
             self.s.run()
         except Exception as e:
-            self.log.error(f"Error during single run: {e}")
+            self.log.error(f"[SIMPLE_E] Error during single run: {e}")
             self.cleanup()

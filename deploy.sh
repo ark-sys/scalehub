@@ -61,6 +61,13 @@ function generate_secret() {
 
 }
 
+function restart_service_ss(){
+  service_name="$1"
+
+  docker-compose -p scalehub -f $SCALEHUB_BASEDIR/setup/shub/docker-compose.yaml up --build --no-deps -d --force-recreate $service_name
+
+}
+
 function restart_service(){
     if is_service_running; then
         remove_service
@@ -121,6 +128,9 @@ case "$1" in
         ;;
     restart)
         restart_service
+        ;;
+    restart_ss)
+        restart_service_ss "$2"
         ;;
     shell)
         get_shell

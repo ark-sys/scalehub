@@ -36,11 +36,14 @@ class Color:
 
 
 class Logger:
-    def __init__(self):
+    def __init__(self, class_name: str = ""):
+        self.info_color = Color.dull_white
         self.warning_color = Color.yellow
         self.error_color = Color.pure_red
         self.debug_color = Color.light_cyan
         self.reset_color = Color.reset_color
+
+        self.class_name = class_name
 
         self.debug_level = 0
 
@@ -48,29 +51,40 @@ class Logger:
         print()
 
     def info(self, message: str, **kwargs) -> None:
-        print(self.reset_color + message, **kwargs)
+        print(self.reset_color + f"[{self.class_name}] {message}", **kwargs)
 
     def debug(self, message: str, **kwargs) -> None:
         if self.debug_level > 0:
-            print(f"{self.debug_color}[DEBUG] + {message} {self.reset_color}", **kwargs)
+            print(
+                f"{self.debug_color}[DEBUG]{self.class_name} + {message} {self.reset_color}",
+                **kwargs,
+            )
 
     def debugg(self, message: str, **kwargs) -> None:
         if self.debug_level > 1:
             print(
-                f"{self.debug_color}[DEBUG] ++ {message} {self.reset_color} ", **kwargs
+                f"{self.debug_color}[DEBUG]{self.class_name} ++ {message} {self.reset_color} ",
+                **kwargs,
             )
 
     def debuggg(self, message: str, **kwargs) -> None:
         if self.debug_level > 2:
             print(
-                f"{self.debug_color}[DEBUG] +++ {message} {self.reset_color} ", **kwargs
+                f"{self.debug_color}[DEBUG]{self.class_name} +++ {message} {self.reset_color} ",
+                **kwargs,
             )
 
     def warning(self, message: str, **kwargs) -> None:
-        print(f"{self.warning_color}[WARNING] {message}{self.reset_color}", **kwargs)
+        print(
+            f"{self.warning_color}[WARNING]{self.class_name} {message}{self.reset_color}",
+            **kwargs,
+        )
 
     def error(self, message: str, **kwargs) -> None:
-        print(f"{self.error_color}[ERROR] {message}{self.reset_color}", **kwargs)
+        print(
+            f"{self.error_color}[ERROR]{self.class_name} {message}{self.reset_color}",
+            **kwargs,
+        )
 
     def set_debug_level(self, new_level):
         self.debug_level = new_level

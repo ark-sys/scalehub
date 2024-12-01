@@ -6,6 +6,7 @@ import paho.mqtt.client as mqtt
 from paho.mqtt.enums import CallbackAPIVersion
 from transitions import Machine
 
+from scripts.monitor.experiments.Experiment import Experiment
 from scripts.monitor.experiments.SimpleExperiment import SimpleExperiment
 from scripts.monitor.experiments.StandaloneExperiment import StandaloneExperiment
 from scripts.monitor.experiments.TransscaleExperiment import TransscaleExperiment
@@ -22,9 +23,9 @@ class ExperimentFSM:
         self.__log = log
 
         # This holds the current experiment instance
-        self.current_experiment = None
+        self.current_experiment: Experiment = None
         self.current_experiment_thread = None
-        self.stop_experiment = threading.Event()
+        # self.stop_experiment = threading.Event()
 
         # Initialize state machine
         self.machine = Machine(model=self, states=ExperimentFSM.states, initial="IDLE")
@@ -47,7 +48,10 @@ class ExperimentFSM:
         self.__log.info("Setting config.")
         self.config = config
 
-    def create_experiment_instance(self, experiment_type):
+    def create_experiment_instance(self, experiment_type) -> Experiment:
+        self.__log.info(
+            f"[FSM] Creating experiment instance of type: {experiment_type}"
+        )
         match experiment_type:
             case "standalone":
                 return StandaloneExperiment(self.__log, self.config)
@@ -56,30 +60,30 @@ class ExperimentFSM:
             case "simple":
                 return SimpleExperiment(self.__log, self.config)
             case _:
-                raise ValueError(f"Invalid experiment type: {experiment_type}")
+                raise ValueError(f"[FSM] Invalid experiment type: {experiment_type}")
 
     def start_experiment(self):
         experiment_type = self.config.get_str(Key.Experiment.type)
-        self.__log.info(f"Starting experiment: {experiment_type}")
+        self.__log.info(f"[FSM] Starting experiment: {experiment_type}")
 
-        self.__log.info(f"State is {self.state}")
+        self.__log.info(f"[FSM] State is {self.state}")
 
         try:
             # Clear stop event
-            self.stop_experiment.clear()
+            # self.stop_experiment.clear()
             # Create experiment instance with current config
             self.current_experiment = self.create_experiment_instance(experiment_type)
             self.current_experiment.start()
-            self.__log.info("Experiment started.")
+            self.__log.info("[FSM] Experiment started.")
             # Trigger run transition
             self.run()
         except Exception as e:
-            self.__log.error(f"Error while starting experiment: {e}")
-            self.__log.error(f"Cleaning experiment.")
+            self.__log.error(f"[FSM] Error while starting experiment: {e}")
+            self.__log.error(f"[FSM] Cleaning experiment.")
             self.clean()
 
     def run_experiment(self):
-        self.__log.info("Running experiment.")
+        self.__log.info("[FSM] Running experiment.")
 
         def thread_wrapper():
             try:
@@ -94,24 +98,26 @@ class ExperimentFSM:
         self.current_experiment_thread = threading.Thread(target=thread_wrapper)
         self.current_experiment_thread.start()
 
+        self.current_experiment_thread.join()
+
     def end_experiment(self):
         # End execution of thread
-        self.stop_experiment.set()
+        self.current_experiment_thread._stop()
+
         if self.current_experiment:
-            self.current_experiment_thread.join()
-            self.__log.info("Experiment finished or stopped.")
+            self.__log.info("[FSM] Experiment finished or stopped.")
             self.current_experiment.stop()
             self.clean()
 
     def clean_experiment(self):
         # Clean flink jobs
-        self.__log.info("Cleaning experiment.")
+        self.__log.info("[FSM] Cleaning experiment.")
         if self.current_experiment:
             self.current_experiment.cleanup()
             self.current_experiment = None
             self.current_experiment_thread = None
-            self.stop_experiment.clear()
-        self.__log.info(f"Returning to state IDLE")
+            # self.stop_experiment.clear()
+        self.__log.info(f"[FSM] Returning to state IDLE")
 
 
 class MQTTClient:
@@ -126,7 +132,7 @@ class MQTTClient:
         self.client.on_message = self.on_message
 
     def on_connect(self, client, userdata, connect_flags, reason_code, properties):
-        self.__log.info(f"Connected with result code {connect_flags}")
+        self.__log.info(f"[CLIENT] Connected with result code {connect_flags}")
 
         # Subscribe to experiment command topic
         self.client.subscribe("experiment/command", qos=2)
@@ -144,7 +150,7 @@ class MQTTClient:
     def on_message(self, client, userdata, msg):
         if msg.topic == "experiment/command":
             # Check if payload is in json format
-            self.__log.info(f"Received payload {msg.payload}.")
+            self.__log.info(f"[CLIENT] Received payload {msg.payload}.")
             if self.is_json(msg.payload.decode("utf-8")):
                 payload = json.loads(msg.payload.decode("utf-8"))
                 command = payload.get("command")
@@ -174,7 +180,7 @@ class MQTTClient:
                     )
 
                     config = payload.get("config")
-                    self.__log.info(f"Received config: {config}")
+                    self.__log.info(f"[CLIENT] Received config: {config}")
 
                     # Format config as json
                     config = Config(self.__log, json.loads(config))
@@ -219,9 +225,11 @@ class MQTTClient:
             elif msg.payload == b"":
                 pass
             else:
-                self.__log.warning(f"Received non-command payload: {msg.payload}.")
+                self.__log.warning(
+                    f"[CLIENT] Received non-command payload: {msg.payload}."
+                )
         else:
-            self.__log.warning(f"Received invalid topic {msg.topic}.")
+            self.__log.warning(f"[CLIENT] Received invalid topic {msg.topic}.")
 
     def update_state(self, state):
         # Send state message
@@ -255,7 +263,7 @@ def main():
     # Create client
     client = MQTTClient(log)
 
-    log.info("Starting experiment manager")
+    log.info("[MONITOR] Starting experiment manager")
     # Manage experiments
     client.run()
 
