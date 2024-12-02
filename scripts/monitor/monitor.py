@@ -1,6 +1,5 @@
 import json
 import os
-import threading
 
 import paho.mqtt.client as mqtt
 from paho.mqtt.enums import CallbackAPIVersion
@@ -13,6 +12,7 @@ from scripts.monitor.experiments.TransscaleExperiment import TransscaleExperimen
 from scripts.utils.Config import Config
 from scripts.utils.Defaults import DefaultKeys as Key
 from scripts.utils.Logger import Logger
+from scripts.utils.Tools import StoppableThread
 
 
 class ExperimentFSM:
@@ -96,13 +96,16 @@ class ExperimentFSM:
                     self.finish()
 
         # Create thread, to run experiment in background
-        self.current_experiment_thread = threading.Thread(target=thread_wrapper)
+        self.current_experiment_thread = StoppableThread(target=thread_wrapper)
         self.current_experiment_thread.start()
 
     def end_experiment(self):
 
         if self.current_experiment:
             self.__log.info("[FSM] Experiment finished or stopped.")
+            if self.current_experiment_thread:
+                self.current_experiment_thread.stop()
+                self.current_experiment_thread.join()
             self.current_experiment.stop()
             self.clean()
 

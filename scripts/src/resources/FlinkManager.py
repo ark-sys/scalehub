@@ -18,10 +18,10 @@ class FlinkManager:
                 deployment_name="flink-jobmanager",
                 command="flink list -r 2>/dev/null | grep RUNNING | awk '{print $4}'",
             ).strip()
-            self.__log.info(f"Job id: {job_id}")
+            self.__log.info(f"[FLK_MGR] Job id: {job_id}")
             return job_id
         except Exception as e:
-            self.__log.error(f"Error while getting job id: {e}")
+            self.__log.error(f"[FLK_MGR] Error while getting job id: {e}")
             return None
 
     def get_job_plan(self, job_id):
@@ -31,10 +31,10 @@ class FlinkManager:
             r = requests.get(
                 f"http://flink-jobmanager.flink.svc.cluster.local:8081/jobs/{job_id}/plan"
             )
-            self.__log.info(f"Job plan response: {r.text}")
+            self.__log.info(f"[FLK_MGR] Job plan response: {r.text}")
             return r.json()
         except Exception as e:
-            self.__log.error(f"Error while getting job plan: {e}")
+            self.__log.error(f"[FLK_MGR] Error while getting job plan: {e}")
             return None
 
     def get_operator_names(self, job_plan):
@@ -51,7 +51,7 @@ class FlinkManager:
                 operator_names.append(operator_name)
             return operator_names
         except Exception as e:
-            self.__log.error(f"Error while getting operator names: {e}")
+            self.__log.error(f"[FLK_MGR] Error while getting operator names: {e}")
             return None
 
     def get_operator_parallelism(self, job_plan):
@@ -68,7 +68,7 @@ class FlinkManager:
                 operator_parallelism[operator_name] = node["parallelism"]
             return operator_parallelism
         except Exception as e:
-            self.__log.error(f"Error while getting operator parallelism: {e}")
+            self.__log.error(f"[FLK_MGR] Error while getting operator parallelism: {e}")
             return None
 
     def stop_job(self):
@@ -87,19 +87,19 @@ class FlinkManager:
                 for line in resp.split("\n"):
                     if "Savepoint completed." in line:
                         savepoint_path = line.split("Path:")[1].strip()
-                        self.__log.info(f"Savepoint path: {savepoint_path}")
+                        self.__log.info(f"[FLK_MGR] Savepoint path: {savepoint_path}")
                         break
                 retries -= 1
                 # At each iteration increase sleep time
                 sleep_time += 1
                 sleep(sleep_time)
             if savepoint_path is None:
-                self.__log.error("Savepoint failed.")
+                self.__log.error("[FLK_MGR] Savepoint failed.")
                 return None, None, None
             sleep(5)
             return job_id, operator_names, savepoint_path
         except Exception as e:
-            self.__log.error(f"Error while stopping job: {e}")
+            self.__log.error(f"[FLK_MGR] Error while stopping job: {e}")
             return None, None, None
 
     def run_job(self):
@@ -111,7 +111,7 @@ class FlinkManager:
                 command=f"flink run -d -j /tmp/jobs/{job_file}",
             )
         except Exception as e:
-            self.__log.error(f"Error while running job: {e}")
+            self.__log.error(f"[FLK_MGR] Error while running job: {e}")
 
     def scale_job_with_savepoint(self, operator_names, savepoint_path, new_parallelism):
         try:
@@ -135,17 +135,17 @@ class FlinkManager:
                 command=f"flink run -d -s {savepoint_path} -j /tmp/jobs/{job_file} --parmap '{';'.join(par_map)}'",
             )
         except Exception as e:
-            self.__log.error(f"Error while rescaling job: {e}")
+            self.__log.error(f"[FLK_MGR] Error while rescaling job: {e}")
 
     def rescale_job(self, new_parallelism):
         try:
             job_id, operator_names, savepoint_path = self.stop_job()
             if savepoint_path is None:
-                self.__log.error("Savepoint failed.")
+                self.__log.error("[FLK_MGR] Savepoint failed.")
                 return
             sleep(10)
             return self.scale_job_with_savepoint(
                 operator_names, savepoint_path, new_parallelism
             )
         except Exception as e:
-            self.__log.error(f"Error while rescaling job: {e}")
+            self.__log.error(f"[FLK_MGR] Error while rescaling job: {e}")
