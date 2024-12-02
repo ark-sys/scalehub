@@ -359,14 +359,24 @@ class DeploymentManager:
         # Load resource definition from file
         resource_object = self.t.load_resource_definition(template_filename, params)
         try:
-            self.api_instance.delete_namespaced_deployment(
+            # Check if the deployment already exists
+            check_deployment = self.api_instance.read_namespaced_deployment(
                 name=resource_object["metadata"]["name"],
                 namespace=resource_object["metadata"]["namespace"],
-                async_req=False,
             )
-            self.__log.info(
-                f"[DEP_MGR] Deployment {resource_object['metadata']['name']} deleted."
-            )
+
+            if check_deployment:
+                self.api_instance.delete_namespaced_deployment(
+                    name=resource_object["metadata"]["name"],
+                    namespace=resource_object["metadata"]["namespace"],
+                )
+                self.__log.info(
+                    f"[DEP_MGR] Deployment {resource_object['metadata']['name']} deleted."
+                )
+            else:
+                self.__log.info(
+                    f"[DEP_MGR] Deployment {resource_object['metadata']['name']} does not exist."
+                )
         except ApiException as e:
             self.__log.error(
                 f"[DEP_MGR] Exception when calling AppsV1Api->delete_namespaced_deployment: {e}\n"
@@ -461,12 +471,26 @@ class ServiceManager:
         # Load resource definition from file
         resource_object = self.t.load_resource_definition(template_filename, params)
         try:
-            self.api_instance.delete_namespaced_service(
+            # Check if the service already exists
+            check_service = self.api_instance.read_namespaced_service(
                 name=resource_object["metadata"]["name"],
                 namespace=resource_object["metadata"]["namespace"],
-                async_req=False,
             )
-            self.__log.info(f"Service {resource_object['metadata']['name']} deleted.")
+
+            if check_service:
+                self.api_instance.delete_namespaced_service(
+                    name=resource_object["metadata"]["name"],
+                    namespace=resource_object["metadata"]["namespace"],
+                    async_req=False,
+                )
+                self.__log.info(
+                    f"Service {resource_object['metadata']['name']} deleted."
+                )
+            else:
+                self.__log.info(
+                    f"Service {resource_object['metadata']['name']} does not exist."
+                )
+
         except ApiException as e:
             self.__log.error(
                 f"Exception when calling CoreV1Api->delete_namespaced_service: {e}\n"
