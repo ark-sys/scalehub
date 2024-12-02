@@ -120,13 +120,8 @@ class Scaling:
         for taskmanager in taskmanagers:
             self.scale_op(taskmanager)
 
-        self.__log.info(
-            f"[SCALING] Scaling step on node {node} finished. Marking node as full."
-        )
-        self.k.node_manager.mark_node_as_full(node)
-
     def run(self):
-        self.setup_run()
+        node_name = self.setup_run()
 
         self.__log.info("[SCALING] First taskmanager, just waiting")
         sleep(self.interval_scaling_s)
@@ -146,7 +141,8 @@ class Scaling:
                     if next_node:
                         self.__log.info(f"[SCALING] Next node: {next_node}")
                         # Mark this node with schedulable
-                        self.k.node_manager.mark_node_as_schedulable(next_node)
+                        node_name = next_node
+                        self.k.node_manager.mark_node_as_schedulable(node_name)
                     else:
                         self.__log.error("[SCALING] No more nodes available.")
                         break
@@ -156,6 +152,10 @@ class Scaling:
 
             # Scale step
             self.scale_step(i)
+            self.__log.info(
+                f"[SCALING] Scaling step on node {node_name} finished. Marking node as full."
+            )
+            self.k.node_manager.mark_node_as_full(node_name)
             sleep(5)
         self.__log.info("[SCALING] Scaling finished.")
 
@@ -200,3 +200,5 @@ class Scaling:
             self.__log.info("[SCALING] First node scaled, removing from strategy.")
         if len(self.steps) == 0:
             self.__log.info("[SCALING] No more steps to scale.")
+
+        return first_node

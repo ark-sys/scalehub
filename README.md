@@ -93,6 +93,7 @@ Options:
   create            Create the Docker container
   remove            Remove the Docker container
   restart           Restart the Docker container
+  restart_ss <service_name> Restart a specific service
   shell             Spawn an interactive shell in the container
   push <registry>   Push the Docker image to a private registry
   help              Display this help message
@@ -254,6 +255,11 @@ At this point the cluster is ready for experiments. You may want to:
 3. Deploy a chaos experiment
 4. Monitor the resources
 
+### Running an experiment
+
+#### Scaling strategy
+
+#### Starting an experiment
 For a more expedite execution mode, you can start an experiment, based on what is defined in the scalehub.conf, with (this is my scripted shortcut to run a job, transscale and retrieve data and logs when the experiment ends):
 ```shell
     shub experiment start

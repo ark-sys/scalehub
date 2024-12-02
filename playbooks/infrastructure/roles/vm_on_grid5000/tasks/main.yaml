@@ -35,7 +35,6 @@
       set_fact:
         host_ipv6_dict: "{{ host_ipv6_dict | default({}) | combine({item.item: item.stdout}) }}"
       with_items: "{{ host_ipv6.results }}"
-
 # Disable all firewall rules for IPv6 on each node hosting VMs (https://www.grid5000.fr/w/Reconfigurable_Firewall)
 - name: Disable all firewall rules
   run_once: true
@@ -83,21 +82,28 @@
 - name: Generate and set unique IPv6 addresses for VMs
   tags: [ create ]
   block:
-    - name: Retrieve IPv6 address from host_ipv6_dict[grid_node]. The last field of the IPv6 address is randomized based on the hash of the inventory_hostname
+    - name: Get scope link IPv6 of node, keep only address part
+      shell: ip -6 -br addr show dev ens3 scope link | awk '{print $3}' | cut -d'/' -f1
+      register: vm_ipv6
+      changed_when: false
+
+    - name: Generate IPv6 for each VM
       set_fact:
-        vm_ipv6: "{{ host_ipv6_dict[grid_node].split('/')[0] | regex_replace('(?<=:)[0-9a-fA-F]+$', ( inventory_hostname | hash('md5') | int('0', 16) % 1000) | string) }}"
-      vars:
-        grid_node: "{{ hostvars[inventory_hostname].grid_node }}"
-      delegate_to: "{{ inventory_hostname }}"
+        vm_ipv6_address: >-
+          {{
+            host_ipv6_dict[hostvars[inventory_hostname].grid_node].split(':')[:5] | join(':')
+            + ':' +
+            vm_ipv6.stdout.split(':')[-3:] | join(':')
+          }}
       changed_when: false
 
     - name: Check if IPv6 address exists on ens3 interface
-      shell: ip -6 addr show dev ens3 | grep -q '{{ vm_ipv6 }}'
+      shell: ip -6 addr show dev ens3 | grep -q '{{ vm_ipv6_address }}'
       register: ipv6_check
       ignore_errors: true
       changed_when: false
 
     - name: Set IPv6 address to ens3 interface
-      shell: ip -6 addr add {{ vm_ipv6 }} dev ens3
+      shell: ip -6 addr add {{ vm_ipv6_address }}/128 dev ens3
       when: ipv6_check.rc != 0
       changed_when: true
