@@ -38,7 +38,6 @@ class SimpleExperiment(Experiment):
         self.log.info("[SIMPLE_E] Stopping experiment.")
         if self.current_experiment_thread:
             self.current_experiment_thread.stop()
-            self.current_experiment_thread.join()
         for tuple in self.timestamps:
             try:
                 # Iterate over the timestamps list and export data for each run
@@ -99,6 +98,8 @@ class SimpleExperiment(Experiment):
         self.current_experiment_thread = StoppableThread(target=self._run_experiment)
         self.s.set_stopped_callback(self.current_experiment_thread.stopped)
         self.current_experiment_thread.start()
+        # Wait for the thread to finish
+        self.current_experiment_thread.join()
 
     def _run_experiment(self):
         run = 0
@@ -109,7 +110,7 @@ class SimpleExperiment(Experiment):
                 start_ts = int(datetime.now().timestamp())
                 ret = self.single_run()
                 if ret == 1:
-                    self.log.info("[SIMPLE_E] Stopping experiment.")
+                    self.log.info(f"[SIMPLE_E] Exiting run {run + 1}")
                     return
                 end_ts = int(datetime.now().timestamp())
 
