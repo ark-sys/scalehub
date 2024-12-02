@@ -100,8 +100,6 @@ class ExperimentFSM:
         self.current_experiment_thread.start()
 
     def end_experiment(self):
-        # End execution of thread
-        self.current_experiment_thread._stop()
 
         if self.current_experiment:
             self.__log.info("[FSM] Experiment finished or stopped.")
