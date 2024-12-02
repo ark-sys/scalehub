@@ -341,10 +341,16 @@ class DeploymentManager:
         # Load resource definition from file
         resource_object = self.t.load_resource_definition(template_filename, params)
         try:
-            self.api_instance.create_namespaced_deployment(
+            # Patch the existing deployment
+            self.api_instance.patch_namespaced_deployment(
+                name=resource_object["metadata"]["name"],
                 namespace=namespace,
                 body=resource_object,
             )
+            self.__log.info(
+                f"[DEP_MGR] Deployment {resource_object['metadata']['name']} patched."
+            )
+
             self.__log.info(
                 f"[DEP_MGR] Deployment {resource_object['metadata']['name']} created."
             )
@@ -439,14 +445,6 @@ class ServiceManager:
         service_name = resource_object["metadata"]["name"]
 
         try:
-            # Check if the service already exists
-            existing_service = self.api_instance.read_namespaced_service(
-                name=service_name, namespace=namespace
-            )
-            self.__log.info(
-                f"[SVC_MGR] Service {service_name} already exists. Patching the service."
-            )
-
             # Patch the existing service
             self.api_instance.patch_namespaced_service(
                 name=service_name,
@@ -484,16 +482,16 @@ class ServiceManager:
                     async_req=False,
                 )
                 self.__log.info(
-                    f"Service {resource_object['metadata']['name']} deleted."
+                    f"[SVC_MGR] Service {resource_object['metadata']['name']} deleted."
                 )
             else:
                 self.__log.info(
-                    f"Service {resource_object['metadata']['name']} does not exist."
+                    f"[SVC_MGR] Service {resource_object['metadata']['name']} does not exist."
                 )
 
         except ApiException as e:
             self.__log.error(
-                f"Exception when calling CoreV1Api->delete_namespaced_service: {e}\n"
+                f"[SVC_MGR] Exception when calling CoreV1Api->delete_namespaced_service: {e}\n"
             )
             return
 
