@@ -79,12 +79,7 @@ class ExperimentFSM:
 
     def run_experiment(self):
         self.__log.info("[FSM] Running experiment.")
-        try:
-            self.current_experiment.running()
-        finally:
-            self.__log.info("[FSM] Experiment finished running.")
-            if self.is_RUNNING():
-                self.finish()
+        self.current_experiment.running()
 
     def end_experiment(self):
         if self.current_experiment:

@@ -341,19 +341,29 @@ class DeploymentManager:
         # Load resource definition from file
         resource_object = self.t.load_resource_definition(template_filename, params)
         try:
-            # Patch the existing deployment
-            self.api_instance.patch_namespaced_deployment(
-                name=resource_object["metadata"]["name"],
-                namespace=namespace,
-                body=resource_object,
-            )
-            self.__log.info(
-                f"[DEP_MGR] Deployment {resource_object['metadata']['name']} patched."
+            # Check if the deployment already exists
+            check_deployment = self.api_instance.read_namespaced_deployment(
+                name=resource_object["metadata"]["name"], namespace=namespace
             )
 
-            self.__log.info(
-                f"[DEP_MGR] Deployment {resource_object['metadata']['name']} created."
-            )
+            if check_deployment:
+                # Patch the existing deployment
+                self.api_instance.patch_namespaced_deployment(
+                    name=resource_object["metadata"]["name"],
+                    namespace=namespace,
+                    body=resource_object,
+                )
+                self.__log.info(
+                    f"[DEP_MGR] Deployment {resource_object['metadata']['name']} patched."
+                )
+            else:
+                # Deployment does not exist, create it
+                self.api_instance.create_namespaced_deployment(
+                    namespace=namespace, body=resource_object, async_req=False
+                )
+                self.__log.info(
+                    f"[DEP_MGR] Deployment {resource_object['metadata']['name']} created."
+                )
 
         except ApiException as e:
             self.__log.error(
