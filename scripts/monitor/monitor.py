@@ -12,7 +12,6 @@ from scripts.monitor.experiments.TransscaleExperiment import TransscaleExperimen
 from scripts.utils.Config import Config
 from scripts.utils.Defaults import DefaultKeys as Key
 from scripts.utils.Logger import Logger
-from scripts.utils.Tools import StoppableThread
 
 
 class ExperimentFSM:
@@ -84,20 +83,20 @@ class ExperimentFSM:
 
     def run_experiment(self):
         self.__log.info("[FSM] Running experiment.")
-
-        def thread_wrapper():
-            try:
-                self.current_experiment.running()
-            finally:
-                # Trigger finish transition
-                # self.current_experiment_thread.join()
-
-                if self.is_RUNNING():
-                    self.finish()
-
-        # Create thread, to run experiment in background
-        self.current_experiment_thread = StoppableThread(target=thread_wrapper)
-        self.current_experiment_thread.start()
+        self.current_experiment.running()
+        # def thread_wrapper():
+        #     try:
+        #         self.current_experiment.running()
+        #     finally:
+        #         # Trigger finish transition
+        #         # self.current_experiment_thread.join()
+        #
+        #         if self.is_RUNNING():
+        #             self.finish()
+        #
+        # # Create thread, to run experiment in background
+        # self.current_experiment_thread = StoppableThread(target=thread_wrapper)
+        # self.current_experiment_thread.start()
 
     def end_experiment(self):
 
