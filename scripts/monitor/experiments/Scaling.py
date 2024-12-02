@@ -14,7 +14,8 @@ class Scaling:
         self.k = KubernetesManager(log)
         self.f = FlinkManager(log, config)
         # Load strategy from configuration
-        self.steps = self.config.get(Key.Experiment.Scaling.steps)
+        self.strategy = self.config.get(Key.Experiment.Scaling.steps)
+        self.steps = self.strategy
         self.interval_scaling_s = self.config.get_int(
             Key.Experiment.Scaling.interval_scaling_s
         )
@@ -176,6 +177,30 @@ class Scaling:
                         else:
                             self.__log.error("[SCALING] No more nodes available.")
                             break
+                    elif i == 0:
+                        if len(self.steps[i]["taskmanager"]) == 1:
+                            if self.steps[i]["taskmanager"][0]["number"] == 1:
+                                self.__log.info(
+                                    "[SCALING] First node and first taskmanager already scaled."
+                                )
+                                self.k.node_manager.mark_node_as_full(node_name)
+                                continue
+                            else:
+                                # reduce the number of taskmanagers
+                                self.steps[i]["taskmanager"][0]["number"] -= 1
+                        else:
+                            if self.steps[i]["taskmanager"][0]["number"] == 1:
+                                self.__log.info(
+                                    "[SCALING] First node and first taskmanager already scaled."
+                                )
+                                # Remove the first taskmanager
+                                self.steps[i]["taskmanager"].pop(0)
+
+                    else:
+                        self.__log.warning(
+                            "[SCALING] What is happening? i can't be less than 0. Continuing."
+                        )
+                        continue
                 except Exception as e:
                     self.__log.error(f"[SCALING] Error while getting next node: {e}")
                     break
@@ -212,6 +237,8 @@ class Scaling:
 
     def setup_run(self):
         self.__log.info("[SCALING] Setting up experiment.")
+        # Initialize the strategy
+        self.steps = self.strategy
         # Get the first node to scale based on what's defined in the strategy file
         node_type = self.steps[0]["node"]
         if node_type == "vm_grid5000":
@@ -240,16 +267,16 @@ class Scaling:
 
         # Decrement the number of taskmanagers from strategy
         # TODO: find a better way to do this
-        self.steps[0]["taskmanager"][0]["number"] -= 1
-        if self.steps[0]["taskmanager"][0]["number"] == 0:
-            self.steps[0]["taskmanager"].pop(0)
-            self.__log.info(
-                "[SCALING] First taskmanager scaled, removing from strategy."
-            )
-        if len(self.steps[0]["taskmanager"]) == 0:
-            self.steps.pop(0)
-            self.__log.info("[SCALING] First node scaled, removing from strategy.")
-        if len(self.steps) == 0:
-            self.__log.info("[SCALING] No more steps to scale.")
+        # self.steps[0]["taskmanager"][0]["number"] -= 1
+        # if self.steps[0]["taskmanager"][0]["number"] == 0:
+        #     self.steps[0]["taskmanager"].pop(0)
+        #     self.__log.info(
+        #         "[SCALING] First taskmanager scaled, removing from strategy."
+        #     )
+        # if len(self.steps[0]["taskmanager"]) == 0:
+        #     self.steps.pop(0)
+        #     self.__log.info("[SCALING] First node scaled, removing from strategy.")
+        # if len(self.steps) == 0:
+        #     self.__log.info("[SCALING] No more steps to scale.")
 
         return first_node

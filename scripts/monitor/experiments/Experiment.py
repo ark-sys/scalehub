@@ -49,7 +49,7 @@ class Experiment:
                 file.write(f"Experiment end at : {end_ts}\n")
             return log_file_path
         except Exception as e:
-            self.__log.error(f"Error creating log file: {e}")
+            self.__log.error(f"[EXP] Error creating log file: {e}")
 
     def run_load_generators(self):
         # Create load generators
@@ -72,7 +72,7 @@ class Experiment:
                     self.load_generator_deployment_template, load_generator_params
                 )
             except Exception as e:
-                self.__log.error(f"Error creating load generator: {e}")
+                self.__log.error(f"[EXP] Error creating load generator: {e}")
 
     def delete_load_generators(self):
         # Delete load generators
@@ -95,7 +95,7 @@ class Experiment:
                     self.load_generator_deployment_template, load_generator_params
                 )
             except Exception as e:
-                self.__log.error(f"Error deleting load generator: {e}")
+                self.__log.error(f"[EXP] Error deleting load generator: {e}")
 
     def init_cluster(self):
         try:
@@ -103,13 +103,13 @@ class Experiment:
             schedulable_nodes = self.k.node_manager.get_schedulable_nodes()
             # Reset scaling labels, clean start.
             self.k.node_manager.reset_scaling_labels()
-            self.__log.info(f"Schedulable nodes: {len(schedulable_nodes)}")
+            self.__log.info(f"[EXP] Schedulable nodes: {len(schedulable_nodes)}")
             # Reset state labels
             self.k.node_manager.reset_state_labels()
             # Reset all taskmanagers to 0 replicas
             self.k.statefulset_manager.reset_taskmanagers()
         except Exception as e:
-            self.__log.error(f"Error initializing cluster: {e}")
+            self.__log.error(f"[EXP] Error initializing cluster: {e}")
 
     def is_chaos_enabled(self):
         return self.config.get_bool("chaos.enabled")
