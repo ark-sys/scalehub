@@ -151,60 +151,63 @@ class Scaling:
         node_name = self.setup_run()
 
         self.__log.info("[SCALING] First taskmanager, just waiting")
-        self._wait_interval()
-        self.__log.info("[SCALING] Scaling started.")
-        for i in range(len(self.steps)):
-            try:
-                if i > 0:
-                    # Find a new node
-                    node_type = self.steps[i]["node"]
-                    if node_type == "vm_grid5000":
-                        vm_type = self.steps[i]["type"]
-                        next_node = self.k.node_manager.get_next_node(
-                            node_type, vm_type
-                        )
-                    else:
-                        next_node = self.k.node_manager.get_next_node(node_type)
-                    if next_node:
-                        self.__log.info(f"[SCALING] Next node: {next_node}")
-                        # Mark this node with schedulable
-                        node_name = next_node
-                        self.k.node_manager.mark_node_as_schedulable(node_name)
-                    else:
-                        self.__log.error("[SCALING] No more nodes available.")
-                        break
-            except Exception as e:
-                self.__log.error(f"[SCALING] Error while getting next node: {e}")
-                break
-            current_state_taskmanagers = (
-                self.k.statefulset_manager.get_count_of_taskmanagers()
-            )
-            self.__log.info(
-                f"[SCALING] Current statefulset taskmanagers: {current_state_taskmanagers}"
-            )
-            # Expected state at the end of step
-            expected_state_taskmanagers = self.steps[i]["taskmanager"]
-            self.__log.info(
-                f"[SCALING] Expected statefulset taskmanagers: {expected_state_taskmanagers}"
-            )
+        ret = self._wait_interval()
+        if ret == 1:
+            return 1
+        else:
+            self.__log.info("[SCALING] Scaling started.")
+            for i in range(len(self.steps)):
+                try:
+                    if i > 0:
+                        # Find a new node
+                        node_type = self.steps[i]["node"]
+                        if node_type == "vm_grid5000":
+                            vm_type = self.steps[i]["type"]
+                            next_node = self.k.node_manager.get_next_node(
+                                node_type, vm_type
+                            )
+                        else:
+                            next_node = self.k.node_manager.get_next_node(node_type)
+                        if next_node:
+                            self.__log.info(f"[SCALING] Next node: {next_node}")
+                            # Mark this node with schedulable
+                            node_name = next_node
+                            self.k.node_manager.mark_node_as_schedulable(node_name)
+                        else:
+                            self.__log.error("[SCALING] No more nodes available.")
+                            break
+                except Exception as e:
+                    self.__log.error(f"[SCALING] Error while getting next node: {e}")
+                    break
+                current_state_taskmanagers = (
+                    self.k.statefulset_manager.get_count_of_taskmanagers()
+                )
+                self.__log.info(
+                    f"[SCALING] Current statefulset taskmanagers: {current_state_taskmanagers}"
+                )
+                # Expected state at the end of step
+                expected_state_taskmanagers = self.steps[i]["taskmanager"]
+                self.__log.info(
+                    f"[SCALING] Expected statefulset taskmanagers: {expected_state_taskmanagers}"
+                )
 
-            # Scale step
-            ret = self.scale_step(i)
-            if ret == 1:
-                self.__log.info("[SCALING] Scaling is finishing due to stop event.")
-                return 1
-            self.__log.info(
-                f"[SCALING] Scaling step on node {node_name} finished. Marking node as full."
-            )
-            self.k.node_manager.mark_node_as_full(node_name)
+                # Scale step
+                ret = self.scale_step(i)
+                if ret == 1:
+                    self.__log.info("[SCALING] Scaling is finishing due to stop event.")
+                    return 1
+                self.__log.info(
+                    f"[SCALING] Scaling step on node {node_name} finished. Marking node as full."
+                )
+                self.k.node_manager.mark_node_as_full(node_name)
 
-            current_state_taskmanagers = (
-                self.k.statefulset_manager.get_count_of_taskmanagers()
-            )
-            self.__log.info(
-                f"[SCALING] Current statefulset taskmanagers: {current_state_taskmanagers}"
-            )
-            sleep(5)
+                current_state_taskmanagers = (
+                    self.k.statefulset_manager.get_count_of_taskmanagers()
+                )
+                self.__log.info(
+                    f"[SCALING] Current statefulset taskmanagers: {current_state_taskmanagers}"
+                )
+                sleep(5)
         self.__log.info("[SCALING] Scaling finished.")
 
     def setup_run(self):
