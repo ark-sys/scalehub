@@ -27,6 +27,7 @@ class KubernetesManager:
         self.statefulset_manager = StatefulSetManager(log)
 
     # Prepare scaling when manually initiated
+    @DeprecationWarning
     def prepare_scaling(self, config, monitored_task, job_file):
         # Get current job id
         job_id = self.pod_manager.execute_command_on_pod(
@@ -337,41 +338,33 @@ class DeploymentManager:
             return 2, None
         return 0, new_parallelism
 
-    def create_deployment(self, template_filename, params, namespace="default"):
+    def create_deployment_from_template(
+        self, template_filename, params, namespace="default"
+    ):
         # Load resource definition from file
         resource_object = self.t.load_resource_definition(template_filename, params)
         try:
-            # Check if the deployment already exists
-            check_deployment = self.api_instance.read_namespaced_deployment(
-                name=resource_object["metadata"]["name"], namespace=namespace
+            # Patch the existing deployment
+            self.api_instance.patch_namespaced_deployment(
+                name=resource_object["metadata"]["name"],
+                namespace=resource_object["metadata"]["namespace"],
+                body=resource_object,
             )
 
-            if check_deployment:
-                # Patch the existing deployment
-                self.api_instance.patch_namespaced_deployment(
-                    name=resource_object["metadata"]["name"],
-                    namespace=namespace,
-                    body=resource_object,
-                )
-                self.__log.info(
-                    f"[DEP_MGR] Deployment {resource_object['metadata']['name']} patched."
-                )
-            else:
+        except ApiException as e:
+            if e.status == 404:
                 # Deployment does not exist, create it
                 self.api_instance.create_namespaced_deployment(
-                    namespace=namespace, body=resource_object, async_req=False
+                    namespace=resource_object["metadata"]["namespace"],
+                    body=resource_object,
+                    async_req=False,
                 )
                 self.__log.info(
                     f"[DEP_MGR] Deployment {resource_object['metadata']['name']} created."
                 )
-
-        except ApiException as e:
-            self.__log.error(
-                f"[DEP_MGR] Exception when calling AppsV1Api->create_namespaced_deployment: {e}\n"
-            )
             return
 
-    def delete_deployment(self, template_filename, params):
+    def delete_deployment_from_template(self, template_filename, params):
         # Load resource definition from file
         resource_object = self.t.load_resource_definition(template_filename, params)
         try:
@@ -385,6 +378,7 @@ class DeploymentManager:
                 self.api_instance.delete_namespaced_deployment(
                     name=resource_object["metadata"]["name"],
                     namespace=resource_object["metadata"]["namespace"],
+                    async_req=False,
                 )
                 self.__log.info(
                     f"[DEP_MGR] Deployment {resource_object['metadata']['name']} deleted."
@@ -449,7 +443,9 @@ class ServiceManager:
         self.t: Tools = Tools(self.__log)
         self.api_instance = client.CoreV1Api()
 
-    def create_service(self, template_filename, params, namespace="default"):
+    def create_service_from_template(
+        self, template_filename, params, namespace="default"
+    ):
         # Load resource definition from file
         resource_object = self.t.load_resource_definition(template_filename, params)
         service_name = resource_object["metadata"]["name"]
@@ -475,7 +471,7 @@ class ServiceManager:
                 )
                 return
 
-    def delete_service(self, template_filename, params):
+    def delete_service_from_template(self, template_filename, params):
         # Load resource definition from file
         resource_object = self.t.load_resource_definition(template_filename, params)
         try:
