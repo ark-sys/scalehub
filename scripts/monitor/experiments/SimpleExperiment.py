@@ -5,6 +5,7 @@ from time import sleep
 from scripts.monitor.experiments.Experiment import Experiment
 from scripts.src.data.DataExporter import DataExporter
 from scripts.utils.Defaults import DefaultKeys as Key
+from scripts.utils.Tools import StoppableThread
 
 
 class SimpleExperiment(Experiment):
@@ -20,6 +21,7 @@ class SimpleExperiment(Experiment):
 
         # Hold timestamps of all runs as a list of tuples (start, end)
         self.timestamps = []
+        self.current_experiment_thread = None
 
     def start(self):
         # Check if chaos is enabled
@@ -33,6 +35,10 @@ class SimpleExperiment(Experiment):
         self.init_cluster()
 
     def stop(self):
+        self.log.info("[SIMPLE_E] Stopping experiment.")
+        if self.current_experiment_thread:
+            self.current_experiment_thread.stop()
+            self.current_experiment_thread.join()
         for tuple in self.timestamps:
             try:
                 # Iterate over the timestamps list and export data for each run
@@ -90,18 +96,28 @@ class SimpleExperiment(Experiment):
             self.log.error(f"[SIMPLE_E] Error cleaning up: {e}")
 
     def running(self):
+        self.current_experiment_thread = StoppableThread(target=self._run_experiment)
+        self.s.set_stopped_callback(self.current_experiment_thread.stopped())
+        self.current_experiment_thread.start()
+
+    def _run_experiment(self):
         run = 0
         while run < self.runs:
             self.log.info(f"[SIMPLE_E] Starting run {run + 1}")
             try:
-                start_ts = int(datetime.now().timestamp())
 
-                self.single_run()
+                start_ts = int(datetime.now().timestamp())
+                ret = self.single_run()
+                if ret == 1:
+                    self.log.info("[SIMPLE_E] Stopping experiment.")
+                    return
                 end_ts = int(datetime.now().timestamp())
+
                 # Save timestamps
                 self.timestamps.append((start_ts, end_ts))
                 # Cleanup after each run
                 self.cleanup()
+
                 self.log.info("[SIMPLE_E] Sleeping for 10 seconds before next run.")
                 sleep(10)
                 self.log.info(
@@ -120,7 +136,9 @@ class SimpleExperiment(Experiment):
             # Deploy job
             self.f.run_job()
             # Run scaling steps on job
-            self.s.run()
+            ret = self.s.run()
+            if ret == 1:
+                return 1
         except Exception as e:
             self.log.error(f"[SIMPLE_E] Error during single run: {e}")
             self.cleanup()

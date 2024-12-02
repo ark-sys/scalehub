@@ -22,6 +22,13 @@ class Scaling:
             Key.Experiment.Scaling.max_parallelism
         )
 
+        # Stop event
+        self.stopped = None
+
+    # Set callback for stop event
+    def set_stopped_callback(self, stopped):
+        self.stopped = stopped
+
     def scale_and_wait(self, tm_name, replicas):
         self.__log.info(
             f"[SCALING] ************ Scaling up {tm_name} to {replicas} ************"
@@ -31,7 +38,13 @@ class Scaling:
         )
         self.f.rescale_job(replicas)
         self.__log.info(f"[SCALING] Waiting for {self.interval_scaling_s} seconds")
-        sleep(self.interval_scaling_s)
+        # sleep(self.interval_scaling_s)
+        # sleep unless stopped
+        for i in range(self.interval_scaling_s):
+            if self.stopped is not None and self.stopped():
+                self.__log.info("[SCALING] Scaling stopped.")
+                return 1
+            sleep(1)
 
     # Add replicas linearly
     def scale_operator_linear(self, number, tm_type):
@@ -46,7 +59,9 @@ class Scaling:
         for i in range(number):
             # Scale up stateful set
             taskmanagers_count_dict[tm_type] += 1
-            self.scale_and_wait(tm_name, taskmanagers_count_dict[tm_type])
+            ret = self.scale_and_wait(tm_name, taskmanagers_count_dict[tm_type])
+            if ret == 1:
+                return 1
 
     # Add replicas exponentially
     def scale_operator_exponential(self, number, tm_type):
@@ -75,7 +90,9 @@ class Scaling:
         for i in scaline_sequence:
             # Scale up stateful set
             taskmanagers_count_dict[tm_type] += i
-            self.scale_and_wait(tm_name, taskmanagers_count_dict[tm_type])
+            ret = self.scale_and_wait(tm_name, taskmanagers_count_dict[tm_type])
+            if ret == 1:
+                return 1
 
     # Add _number_ replicas at once
     def scale_operator_block(self, number, tm_type):
@@ -89,7 +106,9 @@ class Scaling:
         )
         # Scale up stateful set
         taskmanagers_count_dict[tm_type] += number
-        self.scale_and_wait(tm_name, taskmanagers_count_dict[tm_type])
+        ret = self.scale_and_wait(tm_name, taskmanagers_count_dict[tm_type])
+        if ret == 1:
+            return 1
 
     def scale_op(self, taskmanager):
         number = taskmanager["number"]
@@ -98,16 +117,18 @@ class Scaling:
 
         match scaling_method:
             case "linear":
-                self.scale_operator_linear(number, tm_type)
+                ret = self.scale_operator_linear(number, tm_type)
             case "exponential":
-                self.scale_operator_exponential(number, tm_type)
+                ret = self.scale_operator_exponential(number, tm_type)
             case "block":
-                self.scale_operator_block(number, tm_type)
+                ret = self.scale_operator_block(number, tm_type)
             case _:
                 self.__log.warning(
                     f"[SCALING] Scaling method {scaling_method} not supported. Defaulting to linear."
                 )
-                self.scale_operator_linear(number, tm_type)
+                ret = self.scale_operator_linear(number, tm_type)
+        if ret == 1:
+            return 1
 
     def scale_step(self, step):
         self.__log.info(
@@ -118,7 +139,9 @@ class Scaling:
 
         taskmanagers = self.steps[step]["taskmanager"]
         for taskmanager in taskmanagers:
-            self.scale_op(taskmanager)
+            ret = self.scale_op(taskmanager)
+            if ret == 1:
+                return 1
 
     def run(self):
         node_name = self.setup_run()
@@ -162,7 +185,10 @@ class Scaling:
             )
 
             # Scale step
-            self.scale_step(i)
+            ret = self.scale_step(i)
+            if ret == 1:
+                self.__log.info("[SCALING] Scaling is finishing due to stop event.")
+                return 1
             self.__log.info(
                 f"[SCALING] Scaling step on node {node_name} finished. Marking node as full."
             )
