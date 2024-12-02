@@ -29,14 +29,7 @@ class Scaling:
     def set_stopped_callback(self, stopped):
         self.stopped = stopped
 
-    def scale_and_wait(self, tm_name, replicas):
-        self.__log.info(
-            f"[SCALING] ************ Scaling up {tm_name} to {replicas} ************"
-        )
-        self.k.statefulset_manager.scale_statefulset(
-            statefulset_name=tm_name, replicas=replicas, namespace="flink"
-        )
-        self.f.rescale_job(replicas)
+    def _wait_interval(self):
         self.__log.info(f"[SCALING] Waiting for {self.interval_scaling_s} seconds")
         # sleep(self.interval_scaling_s)
         # sleep unless stopped
@@ -45,6 +38,16 @@ class Scaling:
                 self.__log.info("[SCALING] Scaling stopped.")
                 return 1
             sleep(1)
+
+    def scale_and_wait(self, tm_name, replicas):
+        self.__log.info(
+            f"[SCALING] ************ Scaling up {tm_name} to {replicas} ************"
+        )
+        self.k.statefulset_manager.scale_statefulset(
+            statefulset_name=tm_name, replicas=replicas, namespace="flink"
+        )
+        self.f.rescale_job(replicas)
+        self._wait_interval()
 
     # Add replicas linearly
     def scale_operator_linear(self, number, tm_type):
@@ -147,7 +150,7 @@ class Scaling:
         node_name = self.setup_run()
 
         self.__log.info("[SCALING] First taskmanager, just waiting")
-        sleep(self.interval_scaling_s)
+        self._wait_interval()
         self.__log.info("[SCALING] Scaling started.")
         for i in range(len(self.steps)):
             try:
