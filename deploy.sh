@@ -26,6 +26,7 @@ function display_help() {
     echo "  create            Create the Docker container"
     echo "  remove            Remove the Docker container"
     echo "  restart           Restart the Docker container"
+    echo "  restart_ss <service_name>       Restart a specific service"
     echo "  shell             Spawn an interactive shell in the container"
     echo "  push <registry>   Push the Docker image to a private registry"
     echo "  help              Display this help message"
