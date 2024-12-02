@@ -1,4 +1,5 @@
 import os
+import threading
 
 import ansible_runner
 import jinja2
@@ -7,6 +8,23 @@ import yaml
 from scripts.utils.Config import Config
 from scripts.utils.Defaults import DefaultKeys as Key
 from scripts.utils.Logger import Logger
+
+
+class StoppableThread(threading.Thread):
+    def __init__(self, target=None, *args, **kwargs):
+        super(StoppableThread, self).__init__(*args, **kwargs)
+        self.stop_event = threading.Event()
+        self.target = target
+
+    def stop(self):
+        self.stop_event.set()
+
+    def stopped(self):
+        return self.stop_event.is_set()
+
+    def run(self):
+        if self.target:
+            self.target()
 
 
 class Tools:
