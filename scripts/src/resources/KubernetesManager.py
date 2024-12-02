@@ -170,12 +170,14 @@ class PodManager:
                 label_selector=label_selector, namespace=namespace
             )
             for pod in pods.items:
-                self.__log.info(f"Running command {command} on pod {pod.metadata.name}")
+                self.__log.info(
+                    f"[POD_MGR] Running command {command} on pod {pod.metadata.name}"
+                )
                 # Step 2: Execute command on the pod
                 self.execute_command_on_pod(pod.metadata.name, command)
         except ApiException as e:
             self.__log.error(
-                f"Exception when calling CoreV1Api->list_namespaced_pod: {e}"
+                f"[POD_MGR] Exception when calling CoreV1Api->list_namespaced_pod: {e}"
             )
 
     # Delete pods by label
@@ -190,10 +192,10 @@ class PodManager:
                 self.api_instance.delete_namespaced_pod(
                     pod.metadata.name, pod.metadata.namespace
                 )
-                self.__log.info(f"Pod {pod.metadata.name} deleted")
+                self.__log.info(f"[POD_MGR] Pod {pod.metadata.name} deleted")
         except ApiException as e:
             self.__log.error(
-                f"Exception when calling CoreV1Api->list_namespaced_pod: {e}"
+                f"[POD_MGR] Exception when calling CoreV1Api->list_namespaced_pod: {e}"
             )
 
 
@@ -221,14 +223,14 @@ class DeploymentManager:
             case "pico":
                 __labels.append("node-role.kubernetes.io/tnode=pico")
             case _:
-                self.__log.error(f"Invalid taskmanager type: {tm_type_p}")
+                self.__log.error(f"[DEP_MGR] Invalid taskmanager type: {tm_type_p}")
 
         # Gather current number of running replicas for each node type
         replicas = {}
         for type in tm_types:
             replicas[type] = self.get_deployment_replicas(f"{tm}-{type}", "flink")
 
-        self.__log.info(f"Current replicas: {replicas}")
+        self.__log.info(f"[DEP_MGR] Current replicas: {replicas}")
 
         # Current level of parallelism is the sum of all replicas
         current_parallelism = sum(replicas.values())
@@ -236,7 +238,7 @@ class DeploymentManager:
         # Check if the number of replicas is already the desired one
         if replicas[tm_type_p] == n_replicas_p:
             self.__log.warning(
-                f"Number of replicas for {tm_type_p} is already {n_replicas_p}."
+                f"[DEP_MGR] Number of replicas for {tm_type_p} is already {n_replicas_p}."
             )
             return 1, None
         try:
@@ -249,13 +251,15 @@ class DeploymentManager:
                 labels = ",".join(__labels)
                 nodes = api_instance.list_node(label_selector=labels)
             except ApiException as e:
-                self.__log.error(f"Exception when calling CoreV1Api->list_node: {e}\n")
+                self.__log.error(
+                    f"[DEP_MGR] Exception when calling CoreV1Api->list_node: {e}\n"
+                )
                 return 2, None
 
-            self.__log.info(f"Available nodes: {len(nodes.items)}")
+            self.__log.info(f"[DEP_MGR] Available nodes: {len(nodes.items)}")
             # Check if there are enough nodes to scale the desired node type
             if len(nodes.items) < n_replicas_p:
-                self.__log.error("Not enough available nodes to scale.")
+                self.__log.error("[DEP_MGR] Not enough available nodes to scale.")
                 return 2, None
 
             # Relabel nodes with auta-scaling labels to ensure that the flink taskmanagers are scheduled on the correct nodes
@@ -264,7 +268,7 @@ class DeploymentManager:
             changes_needed = abs(n_replicas_p - current_replicas)
 
             self.__log.info(
-                f"Scaling {tm_type_p} from {current_replicas} to {n_replicas_p} replicas."
+                f"[DEP_MGR] Scaling {tm_type_p} from {current_replicas} to {n_replicas_p} replicas."
             )
 
             if scale_direction == "up":
@@ -303,7 +307,7 @@ class DeploymentManager:
 
             # Check if changes_needed is 0
             if changes_needed != 0:
-                self.__log.error("Failed to correctly relabel nodes.")
+                self.__log.error("[DEP_MGR] Failed to correctly relabel nodes.")
                 return 2, None
 
             # Scale every node type to 0
@@ -326,10 +330,10 @@ class DeploymentManager:
                     for type in tm_types
                 ]
             )
-            self.__log.info(f"New parallelism: {new_parallelism}")
+            self.__log.info(f"[DEP_MGR] New parallelism: {new_parallelism}")
 
         except Exception as e:
-            self.__log.error(f"Error during rescale: {e}")
+            self.__log.error(f"[DEP_MGR] Error during rescale: {e}.")
             return 2, None
         return 0, new_parallelism
 
@@ -342,12 +346,12 @@ class DeploymentManager:
                 body=resource_object,
             )
             self.__log.info(
-                f"Deployment {resource_object['metadata']['name']} created."
+                f"[DEP_MGR] Deployment {resource_object['metadata']['name']} created."
             )
 
         except ApiException as e:
             self.__log.error(
-                f"Exception when calling AppsV1Api->create_namespaced_deployment: {e}\n"
+                f"[DEP_MGR] Exception when calling AppsV1Api->create_namespaced_deployment: {e}\n"
             )
             return
 
@@ -361,11 +365,11 @@ class DeploymentManager:
                 async_req=False,
             )
             self.__log.info(
-                f"Deployment {resource_object['metadata']['name']} deleted."
+                f"[DEP_MGR] Deployment {resource_object['metadata']['name']} deleted."
             )
         except ApiException as e:
             self.__log.error(
-                f"Exception when calling AppsV1Api->delete_namespaced_deployment: {e}\n"
+                f"[DEP_MGR] Exception when calling AppsV1Api->delete_namespaced_deployment: {e}\n"
             )
             return
 
@@ -378,7 +382,7 @@ class DeploymentManager:
             )
         except ApiException as e:
             self.__log.error(
-                f"Exception when calling AppsV1Api->read_namespaced_deployment: {e}\n"
+                f"[DEP_MGR] Exception when calling AppsV1Api->read_namespaced_deployment: {e}\n"
             )
             return
 
@@ -393,11 +397,11 @@ class DeploymentManager:
                 body=patch,
             )
             self.__log.info(
-                f"Deployment {deployment_name} scaled to {replicas} replica."
+                f"[DEP_MGR] Deployment {deployment_name} scaled to {replicas} replica."
             )
         except ApiException as e:
             self.__log.error(
-                f"Exception when calling AppsV1Api->patch_namespaced_deployment: {e}\n"
+                f"[DEP_MGR] Exception when calling AppsV1Api->patch_namespaced_deployment: {e}\n"
             )
 
     def get_deployment_replicas(self, deployment_name, namespace):
@@ -408,7 +412,7 @@ class DeploymentManager:
             return int(deployment.spec.replicas)
         except ApiException as e:
             self.__log.error(
-                f"Exception when calling AppsV1Api->read_namespaced_deployment: {e}\n"
+                f"[DEP_MGR] Exception when calling AppsV1Api->read_namespaced_deployment: {e}\n"
             )
             return
 
@@ -430,7 +434,7 @@ class ServiceManager:
                 name=service_name, namespace=namespace
             )
             self.__log.info(
-                f"Service {service_name} already exists. Patching the service."
+                f"[SVC_MGR] Service {service_name} already exists. Patching the service."
             )
 
             # Patch the existing service
@@ -439,17 +443,17 @@ class ServiceManager:
                 namespace=namespace,
                 body=resource_object,
             )
-            self.__log.info(f"Service {service_name} patched.")
+            self.__log.info(f"[SVC_MGR] Service {service_name} patched.")
         except ApiException as e:
             if e.status == 404:
                 # Service does not exist, create it
                 self.api_instance.create_namespaced_service(
                     namespace=namespace, body=resource_object, async_req=False
                 )
-                self.__log.info(f"Service {service_name} created.")
+                self.__log.info(f"[SVC_MGR] Service {service_name} created.")
             else:
                 self.__log.error(
-                    f"Exception when calling CoreV1Api->create_namespaced_service: {e}\n"
+                    f"[SVC_MGR] Exception when calling CoreV1Api->create_namespaced_service: {e}\n"
                 )
                 return
 
@@ -548,7 +552,9 @@ class NodeManager:
             nodes = self.api_instance.list_node(label_selector=label_selector)
             return nodes.items
         except ApiException as e:
-            self.__log.error(f"Exception when calling CoreV1Api->list_node: {e}\n")
+            self.__log.error(
+                f"[NODE_MGR] Exception when calling CoreV1Api->list_node: {e}\n"
+            )
             return
 
     def get_available_worker_nodes(self):
@@ -599,7 +605,9 @@ class NodeManager:
             body = {"metadata": {"labels": node.metadata.labels}}
             self.api_instance.patch_node(node_name, body=body)
         except ApiException as e:
-            self.__log.error(f"Exception when calling CoreV1Api->list_node: {e}\n")
+            self.__log.error(
+                f"[NODE_MGR] Exception when calling CoreV1Api->list_node: {e}\n"
+            )
             return None
 
     def get_schedulable_nodes(self):
@@ -609,7 +617,9 @@ class NodeManager:
             )
             return nodes.items
         except ApiException as e:
-            self.__log.error(f"Exception when calling CoreV1Api->list_node: {e}\n")
+            self.__log.error(
+                f"[NODE_MGR] Exception when calling CoreV1Api->list_node: {e}\n"
+            )
             return None
 
     def reset_scaling_labels(self):
@@ -625,7 +635,9 @@ class NodeManager:
                 body = {"metadata": {"labels": node.metadata.labels}}
                 self.api_instance.patch_node(node.metadata.name, body=body)
         except ApiException as e:
-            self.__log.error(f"Exception when calling CoreV1Api->list_node: {e}\n")
+            self.__log.error(
+                f"[NODE_MGR] Exception when calling CoreV1Api->list_node: {e}\n"
+            )
             return None
 
     # Get node by pod name
@@ -635,7 +647,7 @@ class NodeManager:
             return pod.spec.node_name
         except ApiException as e:
             self.__log.error(
-                f"Exception when calling CoreV1Api->read_namespaced_pod: {e}\n"
+                f"[NODE_MGR] Exception when calling CoreV1Api->read_namespaced_pod: {e}\n"
             )
             return None
 
@@ -654,7 +666,7 @@ class NodeManager:
 
     def add_label_to_nodes(self, nodes: list, label: str):
         if not nodes or not label:
-            self.__log.error("Nodes or label is empty")
+            self.__log.error("[NODE_MGR] Nodes or label is empty.")
         try:
             for node in nodes:
                 # Retrieve node object
@@ -672,7 +684,9 @@ class NodeManager:
                 # Patch node with new label
                 self.api_instance.patch_node(node_object.metadata.name, body=body)
         except ApiException as e:
-            self.__log.error(f"Exception when calling CoreV1Api->list_node: {e}\n")
+            self.__log.error(
+                f"[NODE_MGR] Exception when calling CoreV1Api->list_node: {e}\n"
+            )
 
     # # Reset the autoscaling labels so that flink runs first on worker nodes not impacted by chaos
     # def reset_scaling_labels(self):
@@ -716,7 +730,7 @@ class NodeManager:
 
     def remove_label_from_nodes(self, nodes: list, label: str):
         if not nodes or not label:
-            self.__log.error("Nodes or label is empty")
+            self.__log.error("[NODE_MGR] Nodes or label is empty.")
         # Create a Kubernetes API client
         try:
             for node in nodes:
@@ -740,7 +754,9 @@ class NodeManager:
                 # Patch node with new label
                 self.api_instance.patch_node(node_object.metadata.name, body=body)
         except ApiException as e:
-            self.__log.error(f"Exception when calling CoreV1Api->list_node: {e}\n")
+            self.__log.error(
+                f"[NODE_MGR] Exception when calling CoreV1Api->list_node: {e}\n"
+            )
 
 
 class ChaosManager:
@@ -921,7 +937,7 @@ class StatefulSetManager:
             )
         except ApiException as e:
             self.__log.error(
-                f"Exception when calling AppsV1Api->read_namespaced_stateful_set: {e}\n"
+                f"[STS_MGR] Exception when calling AppsV1Api->read_namespaced_stateful_set: {e}\n"
             )
             return
 
@@ -934,11 +950,11 @@ class StatefulSetManager:
                 body=patch,
             )
             self.__log.info(
-                f"StatefulSet {statefulset_name} scaled to {replicas} replica."
+                f"[STS_MGR] StatefulSet {statefulset_name} scaled to {replicas} replica."
             )
         except ApiException as e:
             self.__log.error(
-                f"Exception when calling AppsV1Api->patch_namespaced_stateful_set: {e}\n"
+                f"[STS_MGR] Exception when calling AppsV1Api->patch_namespaced_stateful_set: {e}\n"
             )
             return
 
@@ -950,7 +966,7 @@ class StatefulSetManager:
             return int(statefulset.spec.replicas)
         except ApiException as e:
             self.__log.error(
-                f"Exception when calling AppsV1Api->read_namespaced_stateful_set: {e}\n"
+                f"[STS_MGR] Exception when calling AppsV1Api->read_namespaced_stateful_set: {e}\n"
             )
             return
 
@@ -970,7 +986,7 @@ class StatefulSetManager:
             return statefulsets.items
         except ApiException as e:
             self.__log.error(
-                f"Exception when calling AppsV1Api->list_namespaced_stateful_set: {e}\n"
+                f"[STS_MGR] Exception when calling AppsV1Api->list_namespaced_stateful_set: {e}\n"
             )
             return None
 
@@ -982,4 +998,4 @@ class StatefulSetManager:
         # Get current count of taskmanagers
         replicas = self.get_count_of_taskmanagers()
 
-        self.__log.info(f"Current TaskManager replicas: {replicas}")
+        self.__log.info(f"[STS_MGR] Current TaskManager replicas: {replicas}")
