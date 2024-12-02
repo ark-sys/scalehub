@@ -101,12 +101,11 @@ class Experiment:
         try:
             # Check list of schedulable node, we should have 0
             schedulable_nodes = self.k.node_manager.get_schedulable_nodes()
+            # Reset scaling labels, clean start.
+            self.k.node_manager.reset_scaling_labels()
             self.__log.info(f"Schedulable nodes: {len(schedulable_nodes)}")
-            # Check that we have the correct node labeled
-            if len(schedulable_nodes) != 0:
-                self.__log.warning(f"Resetting scaling labels.")
-                # Reset scaling labels, clean start.
-                self.k.node_manager.reset_scaling_labels()
+            # Reset state labels
+            self.k.node_manager.reset_state_labels()
             # Reset all taskmanagers to 0 replicas
             self.k.statefulset_manager.reset_taskmanagers()
         except Exception as e:

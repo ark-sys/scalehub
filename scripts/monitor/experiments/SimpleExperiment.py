@@ -76,6 +76,7 @@ class SimpleExperiment(Experiment):
         try:
             # Remove SCHEDULABLE label from all nodes
             self.k.node_manager.reset_scaling_labels()
+            self.k.node_manager.reset_state_labels()
 
             self.k.statefulset_manager.reset_taskmanagers()
 

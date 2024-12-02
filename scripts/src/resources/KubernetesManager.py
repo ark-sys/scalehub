@@ -589,10 +589,13 @@ class NodeManager:
         if nodes:
 
             # Return a node that is not yet used => it doesn't the node-role.kubernetes.io/scaling label with value SCHEDULABLE
+            # And that is not full => it doesn't have the node-role.kubernetes.io/state label with value FULL
             for node in nodes:
                 if (
                     node.metadata.labels.get("node-role.kubernetes.io/scaling")
                     != "SCHEDULABLE"
+                    and node.metadata.labels.get("node-role.kubernetes.io/state")
+                    != "FULL"
                 ):
                     return node.metadata.name
         else:
@@ -602,6 +605,30 @@ class NodeManager:
         try:
             node = self.api_instance.read_node(node_name)
             node.metadata.labels["node-role.kubernetes.io/scaling"] = "SCHEDULABLE"
+            body = {"metadata": {"labels": node.metadata.labels}}
+            self.api_instance.patch_node(node_name, body=body)
+        except ApiException as e:
+            self.__log.error(
+                f"[NODE_MGR] Exception when calling CoreV1Api->list_node: {e}\n"
+            )
+            return None
+
+    def mark_node_as_unschedulable(self, node_name):
+        try:
+            node = self.api_instance.read_node(node_name)
+            node.metadata.labels["node-role.kubernetes.io/scaling"] = "UNSCHEDULABLE"
+            body = {"metadata": {"labels": node.metadata.labels}}
+            self.api_instance.patch_node(node_name, body=body)
+        except ApiException as e:
+            self.__log.error(
+                f"[NODE_MGR] Exception when calling CoreV1Api->list_node: {e}\n"
+            )
+            return None
+
+    def mark_node_as_full(self, node_name):
+        try:
+            node = self.api_instance.read_node(node_name)
+            node.metadata.labels["node-role.kubernetes.io/state"] = "FULL"
             body = {"metadata": {"labels": node.metadata.labels}}
             self.api_instance.patch_node(node_name, body=body)
         except ApiException as e:
@@ -621,6 +648,21 @@ class NodeManager:
                 f"[NODE_MGR] Exception when calling CoreV1Api->list_node: {e}\n"
             )
             return None
+
+    def reset_state_labels(self):
+        # Remove the state label from all nodes
+        try:
+            nodes = self.api_instance.list_node(
+                label_selector="node-role.kubernetes.io/state=FULL"
+            )
+            for node in nodes.items:
+                node.metadata.labels["node-role.kubernetes.io/state"] = "EMPTY"
+                body = {"metadata": {"labels": node.metadata.labels}}
+                self.api_instance.patch_node(node.metadata.name, body=body)
+        except ApiException as e:
+            self.__log.error(
+                f"[NODE_MGR] Exception when calling CoreV1Api->list_node: {e}\n"
+            )
 
     def reset_scaling_labels(self):
         # Remove the scaling label from all nodes

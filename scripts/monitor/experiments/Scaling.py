@@ -120,6 +120,11 @@ class Scaling:
         for taskmanager in taskmanagers:
             self.scale_op(taskmanager)
 
+        self.__log.info(
+            f"[SCALING] Scaling step on node {node} finished. Marking node as full."
+        )
+        self.k.node_manager.mark_node_as_full(node)
+
     def run(self):
         self.setup_run()
 
