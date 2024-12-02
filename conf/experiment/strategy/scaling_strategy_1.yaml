@@ -9,3 +9,9 @@
     - number: 1
       type: s
       method: linear
+- node: vm_grid5000
+  type: small
+  taskmanager:
+    - number: 1
+      type: s
+      method: linear

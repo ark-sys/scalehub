@@ -10,8 +10,44 @@ from scripts.utils.Logger import Logger
 
 
 class Tools:
+    ANSIBLE_CFG_PATH = "/app/conf/ansible.cfg"
+
     def __init__(self, log: Logger):
         self.__log = log
+
+    def uncomment_ansible_cfg(self):
+        # Check if we have "strategy_plugins" and "strategy" in the ansible.cfg file
+        # If they are commented, uncomment them
+        try:
+            with open(self.ANSIBLE_CFG_PATH, "w") as f:
+                lines = f.readlines()
+                for line in lines:
+                    if "strategy_plugins" in line:
+                        f.write(line.replace("#", ""))
+                    elif "strategy" in line:
+                        f.write(line.replace("#", ""))
+                    else:
+                        f.write(line)
+        except Exception as e:
+            self.__log.error(f"Error while uncommenting ansible.cfg: {e}")
+            raise e
+
+    def comment_ansible_cfg(self):
+        # Check if we have "strategy_plugins" and "strategy" in the ansible.cfg file
+        # If they are not commented, comment them
+        try:
+            with open(self.ANSIBLE_CFG_PATH, "w") as f:
+                lines = f.readlines()
+                for line in lines:
+                    if "strategy_plugins" in line and "#" not in line:
+                        f.write("#" + line)
+                    elif "strategy" in line and "#" not in line:
+                        f.write("#" + line)
+                    else:
+                        continue
+        except Exception as e:
+            self.__log.error(f"Error while commenting ansible.cfg: {e}")
+            raise e
 
     def create_exp_folder(self, base_path: str, date):
         # Create the base folder path

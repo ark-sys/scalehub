@@ -25,6 +25,8 @@ from scripts.utils.Tools import Tools, Playbooks
 
 # Build cluster and install dependencies
 def provision(config: Config):
+    t: Tools = Tools(log)
+
     def __setup_platform(platform_info):
         platform_type = platform_info["type"]
         log.info(
@@ -55,6 +57,8 @@ def provision(config: Config):
     if platforms is not None:
         log.info(f"Found {len(platforms)} platforms to provision.")
 
+        # Comment plugin lines in ansible.cfg to not make enoslib crash
+        t.comment_ansible_cfg()
         # Deploy platforms iteratively
         for platform_info in platforms:
             i: InventoryManager = __setup_platform(platform_info)
@@ -81,12 +85,20 @@ def provision(config: Config):
 
         log.info(f"Inventory file written to {final_inventory_path}")
 
+        # We can safely uncomment the plugin lines in ansible.cfg
+        t.uncomment_ansible_cfg()
         # Setup Kubernetes
         p: Playbooks = Playbooks(log)
 
         # Run infrastructure playbook
         try:
             p.run("infrastructure/setup", tag="create", config=config)
+            if config.get_bool(Key.Platforms.auto_setup):
+                # Run kubernetes setup playbook
+                p.run("orchestration/setup", tag="create", config=config)
+
+                # Run application setup playbook
+                p.run("application/setup", tag="create", config=config)
         except Exception as e:
             log.error(f"Error during infrastructure setup: {e}")
             exit(1)

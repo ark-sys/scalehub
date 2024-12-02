@@ -33,6 +33,7 @@ class DefaultKeys:
 
     class Platforms:
         platforms = "platforms"
+        auto_setup = "platforms.auto_setup"
 
         class Platform:
             name = "platforms.name"
@@ -125,6 +126,7 @@ class DefaultValues:
 
     class Platforms:
         platforms = ["grid5000"]
+        autosetuo = False
 
         class Platform:
             type = "Grid5000"
