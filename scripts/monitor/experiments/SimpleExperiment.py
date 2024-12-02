@@ -97,7 +97,7 @@ class SimpleExperiment(Experiment):
 
     def running(self):
         self.current_experiment_thread = StoppableThread(target=self._run_experiment)
-        self.s.set_stopped_callback(self.current_experiment_thread.stopped())
+        self.s.set_stopped_callback(self.current_experiment_thread.stopped)
         self.current_experiment_thread.start()
 
     def _run_experiment(self):
