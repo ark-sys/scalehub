@@ -26,10 +26,18 @@ spec:
       #                matchLabels:
       #                  app: flink
       #                  component: taskmanager
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/state
+                    operator: NotIn
+                    values:
+                      - FULL
       nodeSelector:
         node-role.kubernetes.io/worker: consumer
         node-role.kubernetes.io/scaling: SCHEDULABLE
-      #        node-role.kubernetes.io/tnode: grid5000
       imagePullSecrets:
         - name: gitlab-scalehub
       containers:
@@ -100,6 +108,15 @@ spec:
       #                matchLabels:
       #                  app: flink
       #                  component: taskmanager
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/state
+                    operator: NotIn
+                    values:
+                      - FULL
       nodeSelector:
         node-role.kubernetes.io/worker: consumer
         node-role.kubernetes.io/scaling: SCHEDULABLE
@@ -173,6 +190,15 @@ spec:
       #                matchLabels:
       #                  app: flink
       #                  component: taskmanager
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/state
+                    operator: NotIn
+                    values:
+                      - FULL
       nodeSelector:
         node-role.kubernetes.io/worker: consumer
         node-role.kubernetes.io/scaling: SCHEDULABLE
@@ -246,6 +272,15 @@ spec:
       #                matchLabels:
       #                  app: flink
       #                  component: taskmanager
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/state
+                    operator: NotIn
+                    values:
+                      - FULL
       nodeSelector:
         node-role.kubernetes.io/worker: consumer
         node-role.kubernetes.io/scaling: SCHEDULABLE
@@ -310,6 +345,15 @@ spec:
         component: taskmanager
         size: s
     spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/state
+                    operator: NotIn
+                    values:
+                      - FULL
       #     Force scheduling of one taskmanager per node
       #      affinity:
       #        podAntiAffinity:
