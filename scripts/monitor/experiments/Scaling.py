@@ -38,6 +38,7 @@ class Scaling:
                 self.__log.info("[SCALING] Scaling stopped.")
                 return 1
             sleep(1)
+        return 0
 
     def scale_and_wait(self, tm_name, replicas):
         self.__log.info(
@@ -47,7 +48,7 @@ class Scaling:
             statefulset_name=tm_name, replicas=replicas, namespace="flink"
         )
         self.f.rescale_job(replicas)
-        self._wait_interval()
+        return self._wait_interval()
 
     # Add replicas linearly
     def scale_operator_linear(self, number, tm_type):
