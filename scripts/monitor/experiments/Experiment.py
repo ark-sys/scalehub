@@ -65,10 +65,10 @@ class Experiment:
                     "lg_replicas": int(generator["replicas"]),
                     "lg_value": int(generator["value"]),
                 }
-                self.k.service_manager.create_service(
+                self.k.service_manager.create_service_from_template(
                     self.load_generator_service_template, load_generator_params
                 )
-                self.k.deployment_manager.create_deployment(
+                self.k.deployment_manager.create_deployment_from_template(
                     self.load_generator_deployment_template, load_generator_params
                 )
             except Exception as e:
@@ -88,10 +88,10 @@ class Experiment:
                     "lg_replicas": int(generator["replicas"]),
                     "lg_value": int(generator["value"]),
                 }
-                self.k.service_manager.delete_service(
+                self.k.service_manager.delete_service_from_template(
                     self.load_generator_service_template, load_generator_params
                 )
-                self.k.deployment_manager.delete_deployment(
+                self.k.deployment_manager.delete_deployment_from_template(
                     self.load_generator_deployment_template, load_generator_params
                 )
             except Exception as e:
