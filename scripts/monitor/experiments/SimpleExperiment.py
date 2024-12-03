@@ -26,60 +26,69 @@ class SimpleExperiment(Experiment):
         self.current_experiment_thread = None
 
     def start(self):
+        self.log.info("[SIMPLE_E] Starting experiment.")
         # Check if chaos is enabled
         if self.is_chaos_enabled():
             self.log.info(
                 "Chaos injection enabled. Deploying chaos resources on Consul and Flink."
             )
 
-        self.log.info("[SIMPLE_E] Starting experiment.")
-
         self.init_cluster()
 
+        self.log.info("[SIMPLE_E] Experiment started.")
+
     def stop(self):
-        self.log.info("[SIMPLE_E] Stopping experiment.")
+        self.log.info("[SIMPLE_E] Finishing experiment.")
         if self.current_experiment_thread:
             self.current_experiment_thread.stop()
-        for tuple in self.timestamps:
-            try:
-                # Iterate over the timestamps list and export data for each run
-                start_ts, end_ts = tuple
+            for tuple in self.timestamps:
+                try:
+                    # Iterate over the timestamps list and export data for each run
+                    start_ts, end_ts = tuple
 
-                if start_ts is not None and end_ts is not None and end_ts > start_ts:
-                    # Create experiment folder for results, ordered by date (YYYY-MM-DD)
-                    exp_path = self.t.create_exp_folder(
-                        self.EXPERIMENTS_BASE_PATH,
-                        datetime.fromtimestamp(start_ts).strftime("%Y-%m-%d"),
-                    )
-
-                    # Create log file with start timestamp
-                    log_file = self.create_log_file(
-                        exp_path=exp_path, start_ts=start_ts, end_ts=end_ts
-                    )
-
-                    # Add experiment run as header of log file
-                    with open(log_file, "r+") as f:
-                        content = f.read()
-                        f.seek(0, 0)
-                        f.write(
-                            f"Experiment run {indexOf(self.timestamps, tuple) + 1}\n\n"
-                            + content
+                    if (
+                        start_ts is not None
+                        and end_ts is not None
+                        and end_ts > start_ts
+                    ):
+                        # Create experiment folder for results, ordered by date (YYYY-MM-DD)
+                        exp_path = self.t.create_exp_folder(
+                            self.EXPERIMENTS_BASE_PATH,
+                            datetime.fromtimestamp(start_ts).strftime("%Y-%m-%d"),
                         )
 
-                    # Export experiment data
-                    data_exp: DataExporter = DataExporter(
-                        log=self.log, exp_path=exp_path
-                    )
+                        # Create log file with start timestamp
+                        log_file = self.create_log_file(
+                            exp_path=exp_path, start_ts=start_ts, end_ts=end_ts
+                        )
 
-                    # Export data from victoriametrics
-                    data_exp.export()
-                else:
-                    self.log.error("[SIMPLE_E] Invalid timestamps. Skipping export.")
+                        # Add experiment run as header of log file
+                        with open(log_file, "r+") as f:
+                            content = f.read()
+                            f.seek(0, 0)
+                            f.write(
+                                f"Experiment run {indexOf(self.timestamps, tuple) + 1}\n\n"
+                                + content
+                            )
 
-            except Exception as e:
-                self.log.error(f"[SIMPLE_E] Error exporting data: {e}")
+                        # Export experiment data
+                        data_exp: DataExporter = DataExporter(
+                            log=self.log, exp_path=exp_path
+                        )
+
+                        # Export data from victoriametrics
+                        data_exp.export()
+                    else:
+                        self.log.error(
+                            "[SIMPLE_E] Invalid timestamps. Skipping export."
+                        )
+
+                except Exception as e:
+                    self.log.error(f"[SIMPLE_E] Error exporting data: {e}")
+            self.log.info("[SIMPLE_E] Experiment finished.")
 
     def cleanup(self):
+        self.log.info("[SIMPLE_E] Cleaning up experiment.")
         try:
             # Remove SCHEDULABLE label from all nodes
             self.k.node_manager.reset_scaling_labels()
@@ -93,15 +102,18 @@ class SimpleExperiment(Experiment):
             # delete load generators
             self.delete_load_generators()
 
+            self.log.info("[SIMPLE_E] Experiment cleaned up.")
         except Exception as e:
             self.log.error(f"[SIMPLE_E] Error cleaning up: {e}")
 
     def running(self):
+        self.log.info("[SIMPLE_E] Running experiment.")
         self.current_experiment_thread = StoppableThread(target=self._run_experiment)
         self.s.set_stopped_callback(self.current_experiment_thread.stopped)
         self.current_experiment_thread.start()
         # Wait for the thread to finish
         self.current_experiment_thread.join()
+        self.log.info("[SIMPLE_E] Experiment run finished.")
 
     def _run_experiment(self):
         run = 0
