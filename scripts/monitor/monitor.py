@@ -41,9 +41,14 @@ class ExperimentFSM:
             trigger="clean", source="*", dest="IDLE", after="clean_experiment"
         )
 
-    def set_config(self, config):
+        self.update_state_callback = None
+
+    def _set_config(self, config):
         self.__log.info("[FSM] Setting config.")
         self.config = config
+
+    def _set_update_state_callback(self, callback):
+        self.update_state_callback = callback
 
     def create_experiment_instance(self, experiment_type) -> Experiment:
         self.__log.info(
@@ -78,6 +83,10 @@ class ExperimentFSM:
 
     def run_experiment(self):
         self.__log.info("[FSM] Running experiment.")
+
+        # Update state to running
+        self.update_state_callback(self.state)
+
         self.current_experiment.running()
 
         self.finish()
@@ -106,6 +115,8 @@ class MQTTClient:
 
         # Create state machine
         self.fsm = ExperimentFSM(log)
+
+        self.fsm.update_state_callback = self.update_state
 
         self.client = mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION2)
         self.client.on_connect = self.on_connect
@@ -164,7 +175,7 @@ class MQTTClient:
 
                     # Format config as json
                     config = Config(self.__log, json.loads(config))
-                    self.fsm.set_config(config)
+                    self.fsm._set_config(config)
 
                     # Trigger start transition
                     self.fsm.start()
