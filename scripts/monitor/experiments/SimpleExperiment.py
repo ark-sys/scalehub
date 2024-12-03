@@ -3,6 +3,7 @@ from operator import indexOf
 from time import sleep
 
 from scripts.monitor.experiments.Experiment import Experiment
+from scripts.monitor.experiments.Scaling import Scaling
 from scripts.src.data.DataExporter import DataExporter
 from scripts.utils.Defaults import DefaultKeys as Key
 from scripts.utils.Tools import StoppableThread
@@ -15,6 +16,7 @@ class SimpleExperiment(Experiment):
 
         self.runs = self.config.get_int(Key.Experiment.runs)
         self.steps = self.config.get(Key.Experiment.Scaling.steps)
+        self.s: Scaling = Scaling(log, config)
         self.log.info(
             f"[SIMPLE_E] SimpleExperiment initialized with runs: {self.runs}, steps: {self.steps}"
         )

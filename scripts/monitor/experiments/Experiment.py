@@ -1,6 +1,5 @@
 import os
 
-from scripts.monitor.experiments.Scaling import Scaling
 from scripts.src.resources.FlinkManager import FlinkManager
 from scripts.src.resources.KubernetesManager import KubernetesManager
 from scripts.utils.Config import Config
@@ -19,7 +18,6 @@ class Experiment:
         self.k: KubernetesManager = KubernetesManager(log)
         self.t: Tools = Tools(log)
         self.f: FlinkManager = FlinkManager(log, config)
-        self.s: Scaling = Scaling(log, config)
 
         # Chaos resources templates
         self.consul_chaos_template = (
