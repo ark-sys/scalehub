@@ -199,6 +199,21 @@ class PodManager:
                 f"[POD_MGR] Exception when calling CoreV1Api->list_namespaced_pod: {e}"
             )
 
+    # Check if pod is running and ready
+    def is_pod_ready(self, pod_name, namespace="default"):
+        try:
+            pod = self.api_instance.read_namespaced_pod_status(pod_name, namespace)
+            if pod.status.phase == "Running":
+                for condition in pod.status.conditions:
+                    if condition.type == "Ready" and condition.status == "True":
+                        return True
+            return False
+        except ApiException as e:
+            self.__log.error(
+                f"[POD_MGR] Exception when calling CoreV1Api->read_namespaced_pod_status: {e}"
+            )
+            return False
+
 
 class DeploymentManager:
     def __init__(self, log: Logger):

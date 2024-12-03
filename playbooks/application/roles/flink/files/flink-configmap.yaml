@@ -16,7 +16,7 @@ data:
     akka.framesize: 104857600b
     blob.server.port: 6124
 
-    jobmanager.rpc.address: flink-jobmanager
+    jobmanager.rpc.address: flink-jobmanager.flink.svc.cluster.local
     jobmanager.memory.process.size: 64Gb
     jobmanager.rpc.port: 6123
     queryable-state.proxy.ports: 6125
@@ -56,7 +56,7 @@ data:
     blob.server.port: 6124
     rest.profiling.enabled: true
     
-    jobmanager.rpc.address: flink-jobmanager
+    jobmanager.rpc.address: flink-jobmanager.flink.svc.cluster.local
     jobmanager.rpc.port: 6123
     queryable-state.proxy.ports: 6125
     
@@ -84,7 +84,7 @@ data:
     blob.server.port: 6124
     rest.profiling.enabled: true
     
-    jobmanager.rpc.address: flink-jobmanager
+    jobmanager.rpc.address: flink-jobmanager.flink.svc.cluster.local
     jobmanager.rpc.port: 6123
     queryable-state.proxy.ports: 6125
     
@@ -112,7 +112,7 @@ data:
     blob.server.port: 6124
     rest.profiling.enabled: true
     
-    jobmanager.rpc.address: flink-jobmanager
+    jobmanager.rpc.address: flink-jobmanager.flink.svc.cluster.local
     jobmanager.rpc.port: 6123
     queryable-state.proxy.ports: 6125
     
@@ -140,7 +140,7 @@ data:
     blob.server.port: 6124
     rest.profiling.enabled: true
     
-    jobmanager.rpc.address: flink-jobmanager
+    jobmanager.rpc.address: flink-jobmanager.flink.svc.cluster.local
     jobmanager.rpc.port: 6123
     queryable-state.proxy.ports: 6125
     

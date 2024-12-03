@@ -10,7 +10,7 @@ spec:
   type: ClusterIP
   ipFamilyPolicy: SingleStack
   ipFamilies:
-    - IPv4
+    - IPv6
   ports:
     - name: webui
       port: 8081

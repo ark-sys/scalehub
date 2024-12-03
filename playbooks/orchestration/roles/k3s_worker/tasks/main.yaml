@@ -82,6 +82,8 @@
       when: "inventory_hostname not in groups['control']"
       register: install_k3s_result
       failed_when: install_k3s_result.rc != 0
+      retries: 3
+      delay: 10
   rescue:
     # In ipv6 mode routes disappear for g5k and vms, which leads to a failed installation. This helps fix the issue.
     - name: Set IPv6 default route to the default interface
