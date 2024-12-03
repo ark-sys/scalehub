@@ -114,3 +114,6 @@ RUN mkdir -p /app/conf/runtime
 # Install additional Ansible collections
 RUN ansible-galaxy collection install bitwarden.secrets kubernetes.core
 
+# Copy history file from /app/conf to initialize some command history autocomplete
+ADD --chown=$UID:$GID fish/fish_history /home/$USER/.local/share/fish/
+
