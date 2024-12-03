@@ -70,12 +70,11 @@ class ExperimentFSM:
             self.current_experiment = self.create_experiment_instance(experiment_type)
             self.current_experiment.start()
             self.__log.info("[FSM] Experiment started.")
+            self.run()
         except Exception as e:
             self.__log.error(f"[FSM] Error while starting experiment: {e}")
             self.__log.error(f"[FSM] Cleaning experiment.")
             self.clean()
-
-        # self.run()
 
     def run_experiment(self):
         self.__log.info("[FSM] Running experiment.")

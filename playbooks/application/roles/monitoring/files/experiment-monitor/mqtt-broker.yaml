@@ -8,6 +8,10 @@ metadata:
     app: mqtt-broker
 spec:
   type: NodePort
+  ipFamilyPolicy: PreferDualStack
+  ipFamilies:
+    - IPv4
+    - IPv6
   ports:
       - port: 1883
         targetPort: 1883
