@@ -75,7 +75,7 @@ class ExperimentFSM:
             self.__log.error(f"[FSM] Cleaning experiment.")
             self.clean()
 
-        self.run()
+        # self.run()
 
     def run_experiment(self):
         self.__log.info("[FSM] Running experiment.")
