@@ -1,5 +1,6 @@
 import json
 import time
+from time import sleep
 
 # import enoslib as en
 import paho.mqtt.client as mqtt
@@ -137,4 +138,5 @@ class Client:
 
     # Check last experiment state
     def check(self):
+        sleep(3)
         self.__log.info(f"Current experiment state is {self.state}.")

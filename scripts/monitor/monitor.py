@@ -66,7 +66,7 @@ class ExperimentFSM:
 
     def start_experiment(self):
         experiment_type = self.config.get_str(Key.Experiment.type)
-        self.__log.info(f"[FSM] Starting experiment: {experiment_type}")
+        self.__log.info(f"[FSM] Start phase with experiment: {experiment_type}")
 
         self.__log.info(f"[FSM] State is {self.state}")
 
@@ -74,7 +74,7 @@ class ExperimentFSM:
             # Create experiment instance with current config
             self.current_experiment = self.create_experiment_instance(experiment_type)
             self.current_experiment.start()
-            self.__log.info("[FSM] Experiment started.")
+            self.__log.info("[FSM] FSM startup complete, transitioning to running.")
             self.run()
         except Exception as e:
             self.__log.error(f"[FSM] Error while starting experiment: {e}")
@@ -82,31 +82,34 @@ class ExperimentFSM:
             self.clean()
 
     def run_experiment(self):
-        self.__log.info("[FSM] Running experiment.")
+        self.__log.info("[FSM] Run phase started.")
 
         # Update state to running
         self.update_state_callback(self.state)
 
         self.current_experiment.running()
 
+        self.__log.info("[FSM] Run phase complete, transitioning to finishing.")
+
         self.finish()
 
     def end_experiment(self):
         if self.current_experiment:
             try:
-                self.__log.info("[FSM] Experiment finished or stopped.")
+                self.__log.info("[FSM] Finish phase started.")
                 self.current_experiment.stop()
+                self.__log.info("[FSM] Finish phase complete, transitioning to clean.")
             except Exception as e:
-                self.__log.error(f"[FSM] Error while finishing experiment: {e}")
+                self.__log.error(f"[FSM] Error while executing end phase: {e}")
             self.clean()
 
     def clean_experiment(self):
         # Clean flink jobs
-        self.__log.info("[FSM] Cleaning experiment.")
+        self.__log.info("[FSM] Clean phase started.")
         if self.current_experiment:
             self.current_experiment.cleanup()
             self.current_experiment = None
-        self.__log.info(f"[FSM] Returning to state IDLE")
+        self.__log.info("[FSM] Clean phase complete, transitioning to idle.")
 
 
 class MQTTClient:
