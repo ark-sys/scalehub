@@ -264,159 +264,159 @@ def run(action, attr, type, config: Config, export_dir):
                 deployment_name="flink-jobmanager",
                 command=f"flink run -d -j /tmp/jobs/{config.get_str(Key.Experiment.job_file)}",
             )
-        case "job-scale":
-            # Scale only the job to the specified number of replicas
-            job_file = config.get_str(Key.Experiment.job_file)
-            monitored_task = config.get_str(Key.Experiment.task_name)
-            num_replicas = attr
-
-            # Stop current job and get scaling info
-            job_id, operator_names, savepoint_path = k.prepare_scaling(
-                config, monitored_task, job_file
-            )
-            if savepoint_path is None:
-                return
-
-            # Wait some time
-            sleep(5)
-
-            # Build new operator list with operator_name and new parallelism
-            par_map = []
-            for operator in operator_names:
-                if monitored_task in operator:
-                    par_map.append(f"{operator}:{num_replicas}")
-                else:
-                    par_map.append(f"{operator}:1")
-
-            # Run job with option --parmap
-            return k.pod_manager.execute_command_on_pod(
-                deployment_name="flink-jobmanager",
-                command=f"flink run -d -s {savepoint_path} -j /tmp/jobs/{job_file} --parmap '{';'.join(par_map)}'",
-            )
-        case "scale":
-            try:
-                # Check parameters
-                validate_scale_params(attr, type)
-            except ValueError as e:
-                log.error(str(e))
-                return
-
-            # Simple scale involves scaling up and down taskmanagers and operators
-            # of the running job to the specified number of replicas
-            monitored_task = config.get_str(Key.Experiment.task_name)
-            job_file = config.get_str(Key.Experiment.job_file)
-            num_replicas = attr
-
-            # Stop current job and get scaling info
-            job_id, operator_names, savepoint_path = k.prepare_scaling(
-                config, monitored_task, job_file
-            )
-            if savepoint_path is None:
-                return
-
-            # Rescale taskmanagers
-            type_of_node = type
-            tm_full_name = f"flink-taskmanager-{type_of_node}"
-
-            k.deployment_manager.scale_deployment(
-                tm_full_name, int(num_replicas), "flink"
-            )
-
-            par_map = []
-
-            log.info(
-                f"Scaling operator {monitored_task} to parallelism {num_replicas}."
-            )
-
-            # Build new operator list with operator_name and new parallelism
-
-            for operator in operator_names:
-                if monitored_task in operator:
-                    par_map.append(f"{operator}:{num_replicas}")
-                else:
-                    par_map.append(f"{operator}:1")
-
-            # Run job with option --parmap
-            return k.pod_manager.execute_command_on_pod(
-                deployment_name="flink-jobmanager",
-                command=f"flink run -d -s {savepoint_path} -j /tmp/jobs/{job_file} --parmap '{';'.join(par_map)}'",
-            )
-
-        case "node-scale":
-            # Check parameters
-            type_of_node = type
-
-            # Scale up taskmanagers and the operator of the running job to the specified number of replicas
-            monitored_task = config.get_str(Key.Experiment.task_name)
-            job_file = config.get_str(Key.Experiment.job_file)
-            num_replicas = int(attr)
-
-            try:
-                validate_scale_params(num_replicas, type_of_node)
-            except ValueError as e:
-                log.error(str(e))
-                return
-            # Stop current job and get scaling info
-            job_id, operator_names, savepoint_path = k.prepare_scaling(
-                config, monitored_task, job_file
-            )
-            if savepoint_path is None:
-                return
-
-            # Rescale taskmanagers
-            ret, par = k.rescale_taskmanagers_heterogeneous(num_replicas, type_of_node)
-            match ret:
-                case 0:
-                    log.info("Rescale successful.")
-                case 1:
-                    log.info("Rescale not needed.")
-                case _:
-                    log.error("Rescale failed.")
-                    exit(1)
-
-            par_map = []
-
-            log.info(f"Scaling operator {monitored_task} to parallelism {par}.")
-
-            # Build new operator list with operator_name and new parallelism
-            for operator in operator_names:
-                if monitored_task in operator:
-                    par_map.append(f"{operator}:{par}")
-                else:
-                    par_map.append(f"{operator}:1")
-
-            # Run job with option --parmap
-            return k.pod_manager.execute_command_on_pod(
-                deployment_name="flink-jobmanager",
-                command=f"flink run -d -s {savepoint_path} -j /tmp/jobs/{job_file} --parmap '{';'.join(par_map)}'",
-            )
-
-        case "chaos":
-            # Check if chaos has to be created or deleted
-            match attr:
-                case "create":
-                    experiment = {
-                        "run_experiment": "true",
-                    }
-                    p.run(
-                        "chaos",
-                        config=config,
-                        tag=["experiment"],
-                        extra_vars=experiment,
-                    )
-                case "delete":
-                    experiment = {
-                        "delete_experiment": "true",
-                    }
-                    p.run(
-                        "chaos",
-                        config=config,
-                        tag=["experiment"],
-                        extra_vars=experiment,
-                    )
-                case _:
-                    log.warning(f"default case, nothing happened")
-
+        # case "job-scale":
+        #     # Scale only the job to the specified number of replicas
+        #     job_file = config.get_str(Key.Experiment.job_file)
+        #     monitored_task = config.get_str(Key.Experiment.task_name)
+        #     num_replicas = attr
+        #
+        #     # Stop current job and get scaling info
+        #     job_id, operator_names, savepoint_path = k.prepare_scaling(
+        #         config, monitored_task, job_file
+        #     )
+        #     if savepoint_path is None:
+        #         return
+        #
+        #     # Wait some time
+        #     sleep(5)
+        #
+        #     # Build new operator list with operator_name and new parallelism
+        #     par_map = []
+        #     for operator in operator_names:
+        #         if monitored_task in operator:
+        #             par_map.append(f"{operator}:{num_replicas}")
+        #         else:
+        #             par_map.append(f"{operator}:1")
+        #
+        #     # Run job with option --parmap
+        #     return k.pod_manager.execute_command_on_pod(
+        #         deployment_name="flink-jobmanager",
+        #         command=f"flink run -d -s {savepoint_path} -j /tmp/jobs/{job_file} --parmap '{';'.join(par_map)}'",
+        #     )
+        # case "scale":
+        #     try:
+        #         # Check parameters
+        #         validate_scale_params(attr, type)
+        #     except ValueError as e:
+        #         log.error(str(e))
+        #         return
+        #
+        #     # Simple scale involves scaling up and down taskmanagers and operators
+        #     # of the running job to the specified number of replicas
+        #     monitored_task = config.get_str(Key.Experiment.task_name)
+        #     job_file = config.get_str(Key.Experiment.job_file)
+        #     num_replicas = attr
+        #
+        #     # Stop current job and get scaling info
+        #     job_id, operator_names, savepoint_path = k.prepare_scaling(
+        #         config, monitored_task, job_file
+        #     )
+        #     if savepoint_path is None:
+        #         return
+        #
+        #     # Rescale taskmanagers
+        #     type_of_node = type
+        #     tm_full_name = f"flink-taskmanager-{type_of_node}"
+        #
+        #     k.deployment_manager.scale_deployment(
+        #         tm_full_name, int(num_replicas), "flink"
+        #     )
+        #
+        #     par_map = []
+        #
+        #     log.info(
+        #         f"Scaling operator {monitored_task} to parallelism {num_replicas}."
+        #     )
+        #
+        #     # Build new operator list with operator_name and new parallelism
+        #
+        #     for operator in operator_names:
+        #         if monitored_task in operator:
+        #             par_map.append(f"{operator}:{num_replicas}")
+        #         else:
+        #             par_map.append(f"{operator}:1")
+        #
+        #     # Run job with option --parmap
+        #     return k.pod_manager.execute_command_on_pod(
+        #         deployment_name="flink-jobmanager",
+        #         command=f"flink run -d -s {savepoint_path} -j /tmp/jobs/{job_file} --parmap '{';'.join(par_map)}'",
+        #     )
+        #
+        # case "node-scale":
+        #     # Check parameters
+        #     type_of_node = type
+        #
+        #     # Scale up taskmanagers and the operator of the running job to the specified number of replicas
+        #     monitored_task = config.get_str(Key.Experiment.task_name)
+        #     job_file = config.get_str(Key.Experiment.job_file)
+        #     num_replicas = int(attr)
+        #
+        #     try:
+        #         validate_scale_params(num_replicas, type_of_node)
+        #     except ValueError as e:
+        #         log.error(str(e))
+        #         return
+        #     # Stop current job and get scaling info
+        #     job_id, operator_names, savepoint_path = k.prepare_scaling(
+        #         config, monitored_task, job_file
+        #     )
+        #     if savepoint_path is None:
+        #         return
+        #
+        #     # Rescale taskmanagers
+        #     ret, par = k.rescale_taskmanagers_heterogeneous(num_replicas, type_of_node)
+        #     match ret:
+        #         case 0:
+        #             log.info("Rescale successful.")
+        #         case 1:
+        #             log.info("Rescale not needed.")
+        #         case _:
+        #             log.error("Rescale failed.")
+        #             exit(1)
+        #
+        #     par_map = []
+        #
+        #     log.info(f"Scaling operator {monitored_task} to parallelism {par}.")
+        #
+        #     # Build new operator list with operator_name and new parallelism
+        #     for operator in operator_names:
+        #         if monitored_task in operator:
+        #             par_map.append(f"{operator}:{par}")
+        #         else:
+        #             par_map.append(f"{operator}:1")
+        #
+        #     # Run job with option --parmap
+        #     return k.pod_manager.execute_command_on_pod(
+        #         deployment_name="flink-jobmanager",
+        #         command=f"flink run -d -s {savepoint_path} -j /tmp/jobs/{job_file} --parmap '{';'.join(par_map)}'",
+        #     )
+        #
+        # case "chaos":
+        #     # Check if chaos has to be created or deleted
+        #     match attr:
+        #         case "create":
+        #             experiment = {
+        #                 "run_experiment": "true",
+        #             }
+        #             p.run(
+        #                 "chaos",
+        #                 config=config,
+        #                 tag=["experiment"],
+        #                 extra_vars=experiment,
+        #             )
+        #         case "delete":
+        #             experiment = {
+        #                 "delete_experiment": "true",
+        #             }
+        #             p.run(
+        #                 "chaos",
+        #                 config=config,
+        #                 tag=["experiment"],
+        #                 extra_vars=experiment,
+        #             )
+        #         case _:
+        #             log.warning(f"default case, nothing happened")
+        #
         case "clean":
 
             # Delete load generators
@@ -424,13 +424,12 @@ def run(action, attr, type, config: Config, export_dir):
             # Restart Flink
             reload("flink", config)
             # Remove chaos
-            run("chaos", "delete", None, config)
+            if config.get_bool(Key.Experiment.Chaos.enable):
+                run("chaos", "delete", None, config)
 
         case "test":
             base_path = "/app/experiments-data/2024-11-05/4"
             d: DataEval = DataEval(log, base_path)
-
-            d.eval_special()
 
         case "dump":
             # Dump running configuration
@@ -444,7 +443,7 @@ def run(action, attr, type, config: Config, export_dir):
 
 def sync_experiment_data(config: Config):
     log.info("Syncing experiment data...")
-    p: Platform = G5k(config, log, verbose=False)
+    p: Platform = G5k(log, config, verbose=False)
     p.sync_data()
 
 

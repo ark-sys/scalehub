@@ -12,6 +12,28 @@ class FlinkManager:
         self.config = config
         self.k = KubernetesManager(log)
 
+        self.taskmanager_types = ["s", "m", "l", "xl", "xxl"]
+
+    def reset_taskmanagers(self):
+        for type in self.taskmanager_types:
+            self.k.statefulset_manager.scale_statefulset(
+                f"flink-taskmanager-{type}", 0, "flink"
+            )
+            sleep(1)
+
+        # Get current count of taskmanagers
+        replicas = self.get_count_of_taskmanagers()
+
+        self.__log.info(f"[STS_MGR] Current TaskManager replicas: {replicas}")
+
+    def get_count_of_taskmanagers(self) -> dict:
+        replicas = {}
+        for type in self.taskmanager_types:
+            replicas[type] = self.k.statefulset_manager.get_statefulset_replicas(
+                f"flink-taskmanager-{type}", "flink"
+            )
+        return replicas
+
     def get_job_id(self):
         try:
             retry = 3

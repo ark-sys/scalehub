@@ -86,11 +86,6 @@ class Client:
         if self.ack == "INVALID_COMMAND":
             self.__log.error(f"Command START failed. State is {self.state}")
             exit(1)
-        # Wait for state change
-        self.__log.info("Waiting for state change...")
-        while self.state != "RUNNING":
-            time.sleep(1)
-        self.__log.info(f"Experiment state changed to {self.state}.")
 
     def stop(self):
 
@@ -110,10 +105,6 @@ class Client:
         if self.ack == "INVALID_COMMAND":
             self.__log.error(f"Command STOP failed. State is {self.state}")
             exit(1)
-        self.__log.info("Waiting for state change...")
-        while self.state != "IDLE":
-            time.sleep(1)
-        self.__log.info(f"Experiment state changed to {self.state}.")
 
     def clean(self):
         self.__log.info("Cleaning experiment")
@@ -131,10 +122,6 @@ class Client:
         self.__log.info("Waiting for ack...")
         while self.ack != "ACK_CLEAN":
             time.sleep(1)
-        self.__log.info("Waiting for state change...")
-        while self.state != "IDLE":
-            time.sleep(1)
-        self.__log.info(f"Experiment state changed to {self.state}.")
 
     # Check last experiment state
     def check(self):

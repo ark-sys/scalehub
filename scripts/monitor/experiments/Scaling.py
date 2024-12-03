@@ -31,10 +31,11 @@ class Scaling:
         self.stopped = stopped
 
     def _wait_interval(self, extra_time=0):
-        self.__log.info(f"[SCALING] Waiting for {self.interval_scaling_s} seconds")
+        wait_time = self.interval_scaling_s + extra_time
+        self.__log.info(f"[SCALING] Waiting for {wait_time} seconds")
         # sleep(self.interval_scaling_s)
         # sleep unless stopped
-        for i in range(self.interval_scaling_s + extra_time):
+        for i in range(wait_time):
             if self.stopped is not None and self.stopped():
                 self.__log.info("[SCALING] Scaling stopped.")
                 return 1
@@ -61,7 +62,7 @@ class Scaling:
         tm_name = f"flink-taskmanager-{tm_type}"
 
         # Get current number of taskmanagers
-        taskmanagers_count_dict = self.k.statefulset_manager.get_count_of_taskmanagers()
+        taskmanagers_count_dict = self.f.get_count_of_taskmanagers()
         self.__log.info(
             f"[SCALING] Current number of taskmanagers: {taskmanagers_count_dict}"
         )
@@ -78,7 +79,7 @@ class Scaling:
         tm_name = f"flink-taskmanager-{tm_type}"
 
         # Get current number of taskmanagers
-        taskmanagers_count_dict = self.k.statefulset_manager.get_count_of_taskmanagers()
+        taskmanagers_count_dict = self.f.get_count_of_taskmanagers()
         self.__log.info(
             f"[SCALING] Current number of taskmanagers: {taskmanagers_count_dict}"
         )
@@ -109,7 +110,7 @@ class Scaling:
         tm_name = f"flink-taskmanager-{tm_type}"
 
         # Get current number of taskmanagers
-        taskmanagers_count_dict = self.k.statefulset_manager.get_count_of_taskmanagers()
+        taskmanagers_count_dict = self.f.get_count_of_taskmanagers()
         self.__log.info(
             f"[SCALING] Current number of taskmanagers: {taskmanagers_count_dict}"
         )
@@ -208,9 +209,7 @@ class Scaling:
                 except Exception as e:
                     self.__log.error(f"[SCALING] Error while getting next node: {e}")
                     break
-                current_state_taskmanagers = (
-                    self.k.statefulset_manager.get_count_of_taskmanagers()
-                )
+                current_state_taskmanagers = self.f.get_count_of_taskmanagers()
                 self.__log.info(
                     f"[SCALING] Current statefulset taskmanagers: {current_state_taskmanagers}"
                 )
@@ -230,9 +229,7 @@ class Scaling:
                 )
                 self.k.node_manager.mark_node_as_full(node_name)
 
-                current_state_taskmanagers = (
-                    self.k.statefulset_manager.get_count_of_taskmanagers()
-                )
+                current_state_taskmanagers = self.f.get_count_of_taskmanagers()
                 self.__log.info(
                     f"[SCALING] Current statefulset taskmanagers: {current_state_taskmanagers}"
                 )
@@ -268,19 +265,4 @@ class Scaling:
         self.k.statefulset_manager.scale_statefulset(
             statefulset_name=tm_name, replicas=1, namespace="flink"
         )
-
-        # Decrement the number of taskmanagers from strategy
-        # TODO: find a better way to do this
-        # self.steps[0]["taskmanager"][0]["number"] -= 1
-        # if self.steps[0]["taskmanager"][0]["number"] == 0:
-        #     self.steps[0]["taskmanager"].pop(0)
-        #     self.__log.info(
-        #         "[SCALING] First taskmanager scaled, removing from strategy."
-        #     )
-        # if len(self.steps[0]["taskmanager"]) == 0:
-        #     self.steps.pop(0)
-        #     self.__log.info("[SCALING] First node scaled, removing from strategy.")
-        # if len(self.steps) == 0:
-        #     self.__log.info("[SCALING] No more steps to scale.")
-
         return first_node
