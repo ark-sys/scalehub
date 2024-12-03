@@ -30,11 +30,11 @@ class Scaling:
     def set_stopped_callback(self, stopped):
         self.stopped = stopped
 
-    def _wait_interval(self):
+    def _wait_interval(self, extra_time=0):
         self.__log.info(f"[SCALING] Waiting for {self.interval_scaling_s} seconds")
         # sleep(self.interval_scaling_s)
         # sleep unless stopped
-        for i in range(self.interval_scaling_s):
+        for i in range(self.interval_scaling_s + extra_time):
             if self.stopped is not None and self.stopped():
                 self.__log.info("[SCALING] Scaling stopped.")
                 return 1
@@ -49,7 +49,11 @@ class Scaling:
             statefulset_name=tm_name, replicas=replicas, namespace="flink"
         )
         self.f.rescale_job(replicas)
-        return self._wait_interval()
+        if tm_name == "flink-taskmanager-s":
+            # Small may take some time to fully startup, especially for Flink
+            return self._wait_interval(extra_time=30)
+        else:
+            return self._wait_interval()
 
     # Add replicas linearly
     def scale_operator_linear(self, number, tm_type):
