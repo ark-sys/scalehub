@@ -9,8 +9,9 @@ metadata:
 spec:
   type: ClusterIP
   clusterIP: None
-  ipFamilyPolicy: SingleStack
+  ipFamilyPolicy: PreferDualStack
   ipFamilies:
+    - IPv4
     - IPv6
   ports:
     - name: rpc

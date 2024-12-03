@@ -678,6 +678,7 @@ class NodeManager:
             return None
 
     def reset_state_labels(self):
+        self.__log.info("[NODE_MGR] Resetting state labels.")
         # Remove the state label from all nodes
         try:
             nodes = self.api_instance.list_node(
@@ -693,6 +694,7 @@ class NodeManager:
             )
 
     def reset_scaling_labels(self):
+        self.__log.info("[NODE_MGR] Resetting scaling labels.")
         # Remove the scaling label from all nodes
         try:
             nodes = self.api_instance.list_node(
