@@ -75,6 +75,9 @@ ADD fish/functions/* /usr/share/fish/functions/
 # Copy reverse-proxy config
 ADD nginx/nginx.conf /etc/nginx/conf.d/scalehub.conf
 
+# Copy history file from /app/conf to initialize some command history autocomplete
+ADD --chown=$UID:$GID fish/fish_history /home/$USER/.local/share/fish/
+
 # Install K9s
 RUN wget https://github.com/derailed/k9s/releases/download/$K9S_VERSION/k9s_linux_amd64.deb && apt install ./k9s_linux_amd64.deb && rm k9s_linux_amd64.deb
 
@@ -114,6 +117,16 @@ RUN mkdir -p /app/conf/runtime
 # Install additional Ansible collections
 RUN ansible-galaxy collection install bitwarden.secrets kubernetes.core
 
-# Copy history file from /app/conf to initialize some command history autocomplete
-ADD --chown=$UID:$GID fish/fish_history /home/$USER/.local/share/fish/
+# Install krew plugin for kubectl
+RUN (    set -x; cd "$(mktemp -d)" && \
+              OS="$(uname | tr '[:upper:]' '[:lower:]')" && \
+              ARCH="$(uname -m | sed -e 's/x86_64/amd64/' -e 's/\(arm\)\(64\)\?.*/\1\2/' -e 's/aarch64$/arm64/')" && \
+              KREW="krew-${OS}_${ARCH}" && \
+              curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/latest/download/${KREW}.tar.gz" && \
+              tar zxvf "${KREW}.tar.gz" && \
+              ./"${KREW}" install krew )
+ENV PATH="${PATH}:/home/$USER/.krew/bin"
 
+# Install netshoot plugin for kubectl
+RUN kubectl krew index add netshoot https://github.com/nilic/kubectl-netshoot.git
+RUN kubectl krew install netshoot/netshoot
