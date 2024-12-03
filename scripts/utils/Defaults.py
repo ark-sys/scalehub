@@ -66,6 +66,7 @@ class DefaultKeys:
         unchained_tasks = "experiment.unchained_tasks"
         type = "experiment.type"
         runs = "experiment.runs"
+        comment = "experiment.comment"
 
         class Scaling:
             strategy_path = "experiment.scaling.strategy_path"
@@ -158,6 +159,7 @@ class DefaultValues:
         unchained_tasks = False
         type = "standalone"
         runs = 1
+        comment = "Default experiment"
 
         class Scaling:
             strategy_path = "scaling-strategies/strategy1.yaml"

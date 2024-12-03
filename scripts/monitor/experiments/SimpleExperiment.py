@@ -94,7 +94,7 @@ class SimpleExperiment(Experiment):
             self.k.node_manager.reset_scaling_labels()
             self.k.node_manager.reset_state_labels()
 
-            self.k.statefulset_manager.reset_taskmanagers()
+            self.f.reset_taskmanagers()
 
             jobmanager_labels = "app=flink,component=jobmanager"
             self.k.pod_manager.delete_pods_by_label(jobmanager_labels, "flink")
@@ -138,11 +138,12 @@ class SimpleExperiment(Experiment):
                 self.log.info(
                     f"[SIMPLE_E] Run {self.runs} completed. Start: {start_ts}, End: {end_ts}"
                 )
+
+                run += 1
+
             except Exception as e:
                 self.log.error(f"[SIMPLE_E] Error during run: {e}")
                 self.cleanup()
-
-            run += 1
 
     def single_run(self):
         try:

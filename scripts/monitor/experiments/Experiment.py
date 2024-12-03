@@ -105,7 +105,7 @@ class Experiment:
             # Reset state labels
             self.k.node_manager.reset_state_labels()
             # Reset all taskmanagers to 0 replicas
-            self.k.statefulset_manager.reset_taskmanagers()
+            self.f.reset_taskmanagers()
         except Exception as e:
             self.__log.error(f"[EXP] Error initializing cluster: {e}")
 
