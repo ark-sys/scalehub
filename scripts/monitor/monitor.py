@@ -3,7 +3,7 @@ import os
 
 import paho.mqtt.client as mqtt
 from paho.mqtt.enums import CallbackAPIVersion
-from transitions import Machine
+from transitions.extensions import LockedMachine
 
 from scripts.monitor.experiments.Experiment import Experiment
 from scripts.monitor.experiments.SimpleExperiment import SimpleExperiment
@@ -25,7 +25,7 @@ class ExperimentFSM:
         self.current_experiment: Experiment = None
 
         # Initialize state machine
-        self.machine = Machine(model=self, states=ExperimentFSM.states, initial="IDLE")
+        self.machine = LockedMachine(model=self, states=ExperimentFSM.states, initial="IDLE")
 
         # Add transitions
         self.machine.add_transition(
