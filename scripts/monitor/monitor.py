@@ -79,7 +79,7 @@ class ExperimentFSM:
         except Exception as e:
             self.__log.error(f"[FSM] Error while starting experiment: {e}")
             self.__log.error(f"[FSM] Cleaning experiment.")
-            self.to_CLEAN()
+            self.to_IDLE()
 
     def run_experiment(self):
         self.__log.info("[FSM] Run phase started.")
@@ -101,7 +101,7 @@ class ExperimentFSM:
             except Exception as e:
                 self.__log.error(f"[FSM] Error while executing end phase: {e}")
         # Transitioning to clean
-        self.to_CLEAN()
+        self.to_IDLE()
 
     def clean_experiment(self):
         # Clean flink jobs
