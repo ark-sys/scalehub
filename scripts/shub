@@ -443,8 +443,8 @@ def run(action, attr, type, config: Config, export_dir):
 
 def sync_experiment_data(config: Config):
     log.info("Syncing experiment data...")
-    p: Platform = G5k(log, config, verbose=False)
-    p.sync_data()
+    t: Tools = Tools(log)
+    t.sync_data(config.get_str(Key.Scalehub.experiments))
 
 
 # Export data for a given date
