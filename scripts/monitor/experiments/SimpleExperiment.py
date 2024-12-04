@@ -33,8 +33,6 @@ class SimpleExperiment(Experiment):
                 "Chaos injection enabled. Deploying chaos resources on Consul and Flink."
             )
 
-        self.init_cluster()
-
         self.log.info("[SIMPLE_E] Experiment started.")
 
     def stop(self):
