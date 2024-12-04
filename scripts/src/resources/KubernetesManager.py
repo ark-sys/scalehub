@@ -488,11 +488,11 @@ class NodeManager:
             self.mark_node_as_empty(node.metadata.name)
 
     def reset_scaling_labels(self):
-        self.__log.info("[NODE_MGR] Resetting scaling labels.")
+        self.__log.info("[NODE_MGR] Resetting scaling labels to unschedulable.")
         # Get all nodes and mark them as schedulable
-        nodes = self.node_list("node-role.kubernetes.io/scaling=UNSCHEDULABLE")
+        nodes = self.get_schedulable_nodes()
         for node in nodes:
-            self.mark_node_as_schedulable(node.metadata.name)
+            self.mark_node_as_unschedulable(node.metadata.name)
 
 
 class StatefulSetManager:
@@ -719,6 +719,6 @@ class StatefulSetManager:
 
 if __name__ == "__main__":
     k: KubernetesManager = KubernetesManager(Logger())
-    labels
+
     info = k.node_manager.get_next_node("grid5000")
     print(info)
