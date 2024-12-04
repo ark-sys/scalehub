@@ -13,16 +13,6 @@ spec:
       labels:
         name: prepuller
     spec:
-      #      # Don't schedule on the pico nodes. Workaround for the google container crash.
-      #      affinity:
-      #        nodeAffinity:
-      #          requiredDuringSchedulingIgnoredDuringExecution:
-      #            nodeSelectorTerms:
-      #              - matchExpressions:
-      #                  - key: node-role.kubernetes.io/tnode
-      #                    operator: NotIn
-      #                    values:
-      #                      - pico
       nodeSelector:
         node-role.kubernetes.io/worker: consumer
       imagePullSecrets:
@@ -35,4 +25,5 @@ spec:
       # but doesn't take up resource on the cluster
       containers:
         - name: pause
-          image: gcr.io/google_containers/pause
+          image: portainer/pause
+
