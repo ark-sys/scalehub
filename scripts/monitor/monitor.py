@@ -75,9 +75,11 @@ class ExperimentFSM:
             self.current_experiment = self.create_experiment_instance(experiment_type)
             self.current_experiment.start()
             self.__log.info("[FSM] FSM startup complete, transitioning to running.")
+            self.to_RUNNING()
         except Exception as e:
             self.__log.error(f"[FSM] Error while starting experiment: {e}")
             self.__log.error(f"[FSM] Cleaning experiment.")
+            self.to_CLEAN()
 
     def run_experiment(self):
         self.__log.info("[FSM] Run phase started.")
@@ -88,15 +90,18 @@ class ExperimentFSM:
         self.current_experiment.running()
 
         self.__log.info("[FSM] Run phase complete, transitioning to finishing.")
+        self.to_FINISHING()
 
     def end_experiment(self):
         if self.current_experiment:
             try:
                 self.__log.info("[FSM] Finish phase started.")
                 self.current_experiment.stop()
-                self.__log.info("[FSM] Finish phase complete, transitioning to clean.")
+                self.__log.info("[FSM] Finish phase complete.")
             except Exception as e:
                 self.__log.error(f"[FSM] Error while executing end phase: {e}")
+        # Transitioning to clean
+        self.to_CLEAN()
 
     def clean_experiment(self):
         # Clean flink jobs
@@ -105,6 +110,7 @@ class ExperimentFSM:
             self.current_experiment.cleanup()
             self.current_experiment = None
         self.__log.info("[FSM] Clean phase complete, transitioning to idle.")
+        self.to_IDLE()
 
 
 class MQTTClient:
