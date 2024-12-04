@@ -240,6 +240,12 @@ class Scaling:
         self.__log.info("[SCALING] Setting up experiment.")
         # Initialize the strategy
         self.steps = self.strategy
+
+        # Reset scaling labels, clean start.
+        self.k.node_manager.reset_scaling_labels()
+        # Reset state labels
+        self.k.node_manager.reset_state_labels()
+
         # Get the first node to scale based on what's defined in the strategy file
         node_type = self.steps[0]["node"]
         if node_type == "vm_grid5000":

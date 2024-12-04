@@ -95,20 +95,6 @@ class Experiment:
             except Exception as e:
                 self.__log.error(f"[EXP] Error deleting load generator: {e}")
 
-    def init_cluster(self):
-        try:
-            # Check list of schedulable node, we should have 0
-            schedulable_nodes = self.k.node_manager.get_schedulable_nodes()
-            # Reset scaling labels, clean start.
-            self.k.node_manager.reset_scaling_labels()
-            self.__log.info(f"[EXP] Schedulable nodes: {len(schedulable_nodes)}")
-            # Reset state labels
-            self.k.node_manager.reset_state_labels()
-            # Reset all taskmanagers to 0 replicas
-            self.f.reset_taskmanagers()
-        except Exception as e:
-            self.__log.error(f"[EXP] Error initializing cluster: {e}")
-
     def is_chaos_enabled(self):
         return self.config.get_bool("chaos.enabled")
 
