@@ -75,11 +75,9 @@ class ExperimentFSM:
             self.current_experiment = self.create_experiment_instance(experiment_type)
             self.current_experiment.start()
             self.__log.info("[FSM] FSM startup complete, transitioning to running.")
-            self.run()
         except Exception as e:
             self.__log.error(f"[FSM] Error while starting experiment: {e}")
             self.__log.error(f"[FSM] Cleaning experiment.")
-            self.clean()
 
     def run_experiment(self):
         self.__log.info("[FSM] Run phase started.")
@@ -91,8 +89,6 @@ class ExperimentFSM:
 
         self.__log.info("[FSM] Run phase complete, transitioning to finishing.")
 
-        self.finish()
-
     def end_experiment(self):
         if self.current_experiment:
             try:
@@ -101,7 +97,6 @@ class ExperimentFSM:
                 self.__log.info("[FSM] Finish phase complete, transitioning to clean.")
             except Exception as e:
                 self.__log.error(f"[FSM] Error while executing end phase: {e}")
-            self.clean()
 
     def clean_experiment(self):
         # Clean flink jobs
