@@ -75,7 +75,7 @@ class ExperimentFSM:
             self.current_experiment = self.create_experiment_instance(experiment_type)
             self.current_experiment.start()
             self.__log.info("[FSM] FSM startup complete, transitioning to running.")
-            self.next_state()
+            self.run()
         except Exception as e:
             self.__log.error(f"[FSM] Error while starting experiment: {e}")
             self.__log.error(f"[FSM] Cleaning experiment.")
@@ -83,9 +83,6 @@ class ExperimentFSM:
 
     def run_experiment(self):
         self.__log.info("[FSM] Run phase started.")
-
-        # Update state to running
-        self.update_state_callback(self.state)
 
         self.current_experiment.running()
 
