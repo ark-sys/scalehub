@@ -155,6 +155,8 @@ class Scaling:
 
     def run(self):
         node_name = self.setup_run()
+        if node_name == 1:
+            return 1
 
         self.__log.info("[SCALING] First taskmanager, just waiting")
         ret = self._wait_interval()
@@ -163,52 +165,49 @@ class Scaling:
         else:
             self.__log.info("[SCALING] Scaling started.")
             for i in range(len(self.steps)):
-                try:
-                    if i > 0:
-                        # Find a new node
-                        node_type = self.steps[i]["node"]
-                        if node_type == "vm_grid5000":
-                            vm_type = self.steps[i]["type"]
-                            next_node = self.k.node_manager.get_next_node(
-                                node_type, vm_type
-                            )
-                        else:
-                            next_node = self.k.node_manager.get_next_node(node_type)
-                        if next_node:
-                            self.__log.info(f"[SCALING] Next node: {next_node}")
-                            # Mark this node with schedulable
-                            node_name = next_node
-                            self.k.node_manager.mark_node_as_schedulable(node_name)
-                        else:
-                            self.__log.error("[SCALING] No more nodes available.")
-                            break
-                    elif i == 0:
-                        if len(self.steps[i]["taskmanager"]) == 1:
-                            if self.steps[i]["taskmanager"][0]["number"] == 1:
-                                self.__log.info(
-                                    "[SCALING] First node and first taskmanager already scaled."
-                                )
-                                self.k.node_manager.mark_node_as_full(node_name)
-                                continue
-                            else:
-                                # reduce the number of taskmanagers
-                                self.steps[i]["taskmanager"][0]["number"] -= 1
-                        else:
-                            if self.steps[i]["taskmanager"][0]["number"] == 1:
-                                self.__log.info(
-                                    "[SCALING] First node and first taskmanager already scaled."
-                                )
-                                # Remove the first taskmanager
-                                self.steps[i]["taskmanager"].pop(0)
-
-                    else:
-                        self.__log.warning(
-                            "[SCALING] What is happening? i can't be less than 0. Continuing."
+                if i > 0:
+                    # Find a new node
+                    node_type = self.steps[i]["node"]
+                    if node_type == "vm_grid5000":
+                        vm_type = self.steps[i]["type"]
+                        next_node = self.k.node_manager.get_next_node(
+                            node_type, vm_type
                         )
-                        continue
-                except Exception as e:
-                    self.__log.error(f"[SCALING] Error while getting next node: {e}")
-                    break
+                    else:
+                        next_node = self.k.node_manager.get_next_node(node_type)
+                    if next_node:
+                        self.__log.info(f"[SCALING] Next node: {next_node}")
+                        # Mark this node with schedulable
+                        node_name = next_node
+                        self.k.node_manager.mark_node_as_schedulable(node_name)
+                    else:
+                        self.__log.error("[SCALING] No more nodes available.")
+                        break
+                elif i == 0:
+                    if len(self.steps[i]["taskmanager"]) == 1:
+                        if self.steps[i]["taskmanager"][0]["number"] == 1:
+                            self.__log.info(
+                                "[SCALING] First node and first taskmanager already scaled."
+                            )
+                            self.k.node_manager.mark_node_as_full(node_name)
+                            continue
+                        else:
+                            # reduce the number of taskmanagers
+                            self.steps[i]["taskmanager"][0]["number"] -= 1
+                    else:
+                        if self.steps[i]["taskmanager"][0]["number"] == 1:
+                            self.__log.info(
+                                "[SCALING] First node and first taskmanager already scaled."
+                            )
+                            # Remove the first taskmanager
+                            self.steps[i]["taskmanager"].pop(0)
+
+                else:
+                    self.__log.warning(
+                        "[SCALING] What is happening? i can't be less than 0. Continuing."
+                    )
+                    continue
+
                 current_state_taskmanagers = self.f.get_count_of_taskmanagers()
                 self.__log.info(
                     f"[SCALING] Current statefulset taskmanagers: {current_state_taskmanagers}"
@@ -253,6 +252,9 @@ class Scaling:
             first_node = self.k.node_manager.get_next_node(node_type, vm_type)
         else:
             first_node = self.k.node_manager.get_next_node(node_type)
+        if not first_node:
+            self.__log.error("[SCALING] No node available.")
+            return 1
 
         self.__log.info(f"[SCALING] First node: {first_node}")
 

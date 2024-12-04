@@ -1,6 +1,8 @@
 import os
+import re
 import subprocess
 import threading
+from datetime import datetime
 
 import ansible_runner
 import jinja2
@@ -28,6 +30,78 @@ class StoppableThread(threading.Thread):
             self.target()
 
 
+class FolderManager:
+    def __init__(self, log, base_path):
+        self.__log = log
+        self.base_path = base_path
+        self.date = self._check_date_in_path(self.base_path)
+        self.__log.info(
+            f"FolderManager initialized with base path: {self.base_path}. Date: {self.date}"
+        )
+
+    def _check_date_in_path(self, path):
+        # regex to match date in the path
+        date_regex = r"\d{4}-\d{2}-\d{2}"
+        # If we have a date in the path, return it
+        if re.search(date_regex, path):
+            return re.search(date_regex, path).group()
+        return None
+
+    def create_subfolder(self, base_path):
+        # List all subfolders
+        subfolders = [
+            f
+            for f in os.listdir(base_path)
+            if os.path.isdir(os.path.join(base_path, f))
+        ]
+        # Get the subfolder numbers
+        subfolder_numbers = [int(f) for f in subfolders if f.isdigit()]
+        # Get the next subfolder number
+        next_subfolder_number = max(subfolder_numbers, default=0) + 1
+        # Create the new subfolder path
+        new_folder_path = os.path.join(base_path, str(next_subfolder_number))
+        # Create the new subfolder
+        os.makedirs(new_folder_path)
+        return new_folder_path
+
+    def create_date_folder(self, timestamp: int):
+        # Convert timestamp to date string
+        date_str = datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d")
+
+        # Set date
+        self.date = date_str
+
+        # Date path
+        date_path = os.path.join(self.base_path, date_str)
+
+        # Create the date folder if it doesn't exist
+        try:
+            os.makedirs(date_path)
+            return date_path
+        except FileExistsError:
+            return date_path
+
+    def create_multi_run_folder(self):
+        base_path = os.path.join(self.base_path, self.date)
+        if not os.path.exists(base_path):
+            os.makedirs(base_path)
+
+        multi_run_folders = [
+            f for f in os.listdir(base_path) if f.startswith("multi_run_")
+        ]
+        multi_run_numbers = [
+            int(f.split("_")[-1])
+            for f in multi_run_folders
+            if f.split("_")[-1].isdigit()
+        ]
+        next_multi_run_number = max(multi_run_numbers, default=0) + 1
+        multi_run_folder_path = os.path.join(
+            base_path, f"multi_run_{str(next_multi_run_number)}"
+        )
+        os.makedirs(multi_run_folder_path)
+        return multi_run_folder_path
+
+
 class Tools:
     def __init__(self, log: Logger):
         self.__log = log
@@ -39,29 +113,6 @@ class Tools:
         self.__log.info(f"Syncing data from Grid5000 to {experiments_path}")
         # Execute the command
         subprocess.run(cmd, shell=True)
-
-    def create_exp_folder(self, base_path: str, date):
-        # Create the base folder path
-        base_folder_path = os.path.join(base_path, date)
-        # Find the next available subfolder number
-        subfolder_number = 1
-        while True:
-            subfolder_path = os.path.join(base_folder_path, str(subfolder_number))
-            if not os.path.exists(subfolder_path):
-                break
-            subfolder_number += 1
-        try:
-            # Create the subfolder
-            os.makedirs(subfolder_path)
-        except OSError as e:
-            self.__log.error(
-                f"Error while creating experiment folder {subfolder_path}: {e}"
-            )
-            raise e
-
-        self.__log.info(f"Created experiment folder: {subfolder_path}")
-        # Return the path to the new subfolder
-        return subfolder_path
 
     def get_timestamp_from_log(self, full_exp_path):
         # Get the log file

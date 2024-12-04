@@ -11,7 +11,7 @@ from ansible.parsing.dataloader import DataLoader
 
 from scripts.src.Client import Client
 from scripts.src.Platform import Platform, merge_inventories
-from scripts.src.data.DataEval import DataEval
+from scripts.src.data.DataEval import DataEval, GroupedDataEval
 from scripts.src.data.DataExporter import DataExporter
 from scripts.src.platforms.FIT import FIT
 from scripts.src.platforms.G5k import G5k, G5k_VM
@@ -20,7 +20,7 @@ from scripts.src.resources.KubernetesManager import KubernetesManager
 from scripts.utils.Config import Config
 from scripts.utils.Defaults import DefaultKeys as Key
 from scripts.utils.Logger import Logger
-from scripts.utils.Tools import Tools, Playbooks
+from scripts.utils.Tools import Tools, Playbooks, FolderManager
 
 
 # Build cluster and install dependencies
@@ -244,12 +244,12 @@ def run(action, attr, type, config: Config, export_dir):
     k: KubernetesManager = KubernetesManager(log)
     p: Playbooks = Playbooks(log)
     t: Tools = Tools(log)
+    f: FolderManager = FolderManager(log, config.get_str(Key.Scalehub.experiments))
     if export_dir and action == "job":
         start_ts = int(datetime.now().timestamp())
-        exp_path = t.create_exp_folder(
-            config.get_str(Key.Scalehub.experiments),
-            datetime.fromtimestamp(start_ts).strftime("%Y-%m-%d"),
-        )
+        f.create_date_folder(start_ts)
+        exp_path = f.create_subfolder(start_ts)
+
         log_file = os.path.join(exp_path, "exp_log.txt")
         # Dump running configuration to file
         with open(log_file, "w") as file:
@@ -428,9 +428,15 @@ def run(action, attr, type, config: Config, export_dir):
                 run("chaos", "delete", None, config)
 
         case "test":
-            base_path = "/app/experiments-data/2024-11-05/4"
-            d: DataEval = DataEval(log, base_path)
+            base_path = "/app/experiments-data/2024-12-04/multi_run_1"
+            for dir in os.listdir(base_path):
+                d: DataEval = DataEval(log, os.path.join(base_path, dir))
+                d.eval_mean_stderr()
+                d.eval_summary_plot()
+                d.eval_experiment_plot()
 
+            gde: GroupedDataEval = GroupedDataEval(log, base_path)
+            gde.generate_box_for_means(base_path)
         case "dump":
             # Dump running configuration
             log.info(f"Running configuration : \n{config.to_json()}")
@@ -455,16 +461,30 @@ def export(config: Config, exp_path, action_type):
     #   DD-MM-YYYY is the date of the experiments
     #   N is the number of the experiment
 
-    # Define regular expression patterns for 'YYYY-MM-DD' and 'YYYY-MM-DD/N' formats
-    exact_format_pattern = r"^\d{4}-\d{2}-\d{2}$"
-    with_integer_pattern = r"^\d{4}-\d{2}-\d{2}/(\d+)$"
+    # Define regular expression patterns for 'YYYY-MM-DD' , 'YYYY-MM-DD/N'  and multirun formats
+    date_pattern = r"^\d{4}-\d{2}-\d{2}$"
+    date_w_subfolder_pattern = r"^\d{4}-\d{2}-\d{2}/(\d+)$"
+
+    patterns = {
+        "date": r"^\d{4}-\d{2}-\d{2}$",
+        "date_w_subfolder": r"^\d{4}-\d{2}-\d{2}/(\d+)$",
+        "multi_run": r"^multi_run_\d+$",
+        "date_with_multi_run": r"^\d{4}-\d{2}-\d{2}/multi_run_\d+$",
+        "date_with_multi_run_w_subfolder": r"^\d{4}-\d{2}-\d{2}/multi_run_\d+/\d+$",
+    }
+
+    # Iterate trough pattern and look for match
+    for pattern in patterns:
+        match = re.match(patterns[pattern], exp_path)
+        if match:
+            break
 
     # Try to match the 'DD-MM-YYYY' format
-    exact_match = re.match(exact_format_pattern, exp_path)
+    date_match = re.match(date_pattern, exp_path)
     # If it doesn't match the exact format, try the 'DD-MM-YYYY/N' format
-    with_integer_match = re.match(with_integer_pattern, exp_path)
+    date_w_subfolder_match = re.match(date_w_subfolder_pattern, exp_path)
 
-    if exact_match:
+    if date_match:
         base_exp_path: str = os.path.join(
             config.get_str(Key.Scalehub.experiments), exp_path
         )
@@ -487,7 +507,7 @@ def export(config: Config, exp_path, action_type):
                 case _:
                     # Default option is to retrieve experiment data from DataBase and save it in a joined_output.csv for stats and plot generation
                     data_exp.export()
-    elif with_integer_match:
+    elif date_w_subfolder_match:
         log.info(f"Exporting {exp_path} experiment.")
         full_exp_path = os.path.join(config.get_str(Key.Scalehub.experiments), exp_path)
         # Retrieve timestamps from logs
