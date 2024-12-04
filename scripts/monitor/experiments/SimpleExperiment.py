@@ -1,23 +1,23 @@
 from datetime import datetime
-from operator import indexOf
 from time import sleep
 
 from scripts.monitor.experiments.Experiment import Experiment
 from scripts.monitor.experiments.Scaling import Scaling
+from scripts.src.data.DataEval import GroupedDataEval, DataEval
 from scripts.src.data.DataExporter import DataExporter
 from scripts.utils.Defaults import DefaultKeys as Key
-from scripts.utils.Tools import StoppableThread
+from scripts.utils.Tools import StoppableThread, FolderManager
 
 
 class SimpleExperiment(Experiment):
     def __init__(self, log, config):
         super().__init__(log, config)
-        self.log = log
+        self.__log = log
 
         self.runs = self.config.get_int(Key.Experiment.runs)
         self.steps = self.config.get(Key.Experiment.Scaling.steps)
         self.s: Scaling = Scaling(log, config)
-        self.log.info(
+        self.__log.info(
             f"[SIMPLE_E] SimpleExperiment initialized with runs: {self.runs}, steps: {self.steps}"
         )
 
@@ -26,67 +26,61 @@ class SimpleExperiment(Experiment):
         self.current_experiment_thread = None
 
     def start(self):
-        self.log.info("[SIMPLE_E] Starting experiment.")
+        self.__log.info("[SIMPLE_E] Starting experiment.")
         # Check if chaos is enabled
         if self.is_chaos_enabled():
-            self.log.info(
+            self.__log.info(
                 "Chaos injection enabled. Deploying chaos resources on Consul and Flink."
             )
 
-        self.log.info("[SIMPLE_E] Experiment started.")
+        self.__log.info("[SIMPLE_E] Experiment started.")
 
     def stop(self):
-        self.log.info("[SIMPLE_E] Finishing experiment.")
+        self.__log.info("[SIMPLE_E] Finishing experiment.")
         if self.current_experiment_thread:
             self.current_experiment_thread.stop()
-            for tuple in self.timestamps:
-                try:
-                    # Iterate over the timestamps list and export data for each run
-                    start_ts, end_ts = tuple
 
-                    if (
-                        start_ts is not None
-                        and end_ts is not None
-                        and end_ts > start_ts
-                    ):
-                        # Create experiment folder for results, ordered by date (YYYY-MM-DD)
-                        exp_path = self.t.create_exp_folder(
-                            self.EXPERIMENTS_BASE_PATH,
-                            datetime.fromtimestamp(start_ts).strftime("%Y-%m-%d"),
-                        )
+            exp_paths = []
 
-                        # Create log file with start timestamp
-                        log_file = self.create_log_file(
-                            exp_path=exp_path, start_ts=start_ts, end_ts=end_ts
-                        )
+            f: FolderManager = FolderManager(self.__log, self.EXPERIMENTS_BASE_PATH)
 
-                        # Add experiment run as header of log file
-                        with open(log_file, "r+") as f:
-                            content = f.read()
-                            f.seek(0, 0)
-                            f.write(
-                                f"Experiment run {indexOf(self.timestamps, tuple) + 1}\n\n"
-                                + content
-                            )
+            # Create date folder
+            date_path = f.create_date_folder(self.timestamps[0][0])
 
-                        # Export experiment data
-                        data_exp: DataExporter = DataExporter(
-                            log=self.log, exp_path=exp_path
-                        )
+            # Create experiment folder for results
+            if len(self.timestamps) > 0:
+                if len(self.timestamps) > 1:
+                    multi_run_folder_path = f.create_multi_run_folder()
+                else:
+                    multi_run_folder_path = date_path
 
-                        # Export data from victoriametrics
-                        data_exp.export()
-                    else:
-                        self.log.error(
-                            "[SIMPLE_E] Invalid timestamps. Skipping export."
-                        )
+                for i, (start_ts, end_ts) in enumerate(self.timestamps):
+                    exp_path = f.create_subfolder(multi_run_folder_path)
+                    exp_paths.append(exp_path)
+                    log_file = self.create_log_file(exp_path, start_ts, end_ts)
+                    with open(log_file, "r+") as file:
+                        content = file.read()
+                        file.seek(0, 0)
+                        file.write(f"Experiment run {i + 1}\n\n" + content)
+                    data_exp: DataExporter = DataExporter(
+                        log=self.__log, exp_path=exp_path
+                    )
+                    data_exp.export()
+                    data_eval: DataEval = DataEval(log=self.__log, exp_path=exp_path)
+                    data_eval.eval_mean_stderr()
 
-                except Exception as e:
-                    self.log.error(f"[SIMPLE_E] Error exporting data: {e}")
-            self.log.info("[SIMPLE_E] Experiment finished.")
+                if len(self.timestamps) > 1:
+                    data_eval_g: GroupedDataEval = GroupedDataEval(
+                        log=self.__log, multi_run_path=multi_run_folder_path
+                    )
+                    data_eval_g.generate_box_for_means(multi_run_folder_path)
+            else:
+                self.__log.error("No timestamps found.")
+
+            self.__log.info("[SIMPLE_E] Experiment finished.")
 
     def cleanup(self):
-        self.log.info("[SIMPLE_E] Cleaning up experiment.")
+        self.__log.info("[SIMPLE_E] Cleaning up experiment.")
         try:
             # Remove SCHEDULABLE label from all nodes
             self.k.node_manager.reset_scaling_labels()
@@ -100,30 +94,29 @@ class SimpleExperiment(Experiment):
             # delete load generators
             self.delete_load_generators()
 
-            self.log.info("[SIMPLE_E] Experiment cleaned up.")
+            self.__log.info("[SIMPLE_E] Experiment cleaned up.")
         except Exception as e:
-            self.log.error(f"[SIMPLE_E] Error cleaning up: {e}")
+            self.__log.error(f"[SIMPLE_E] Error cleaning up: {e}")
 
     def running(self):
-        self.log.info("[SIMPLE_E] Running experiment.")
+        self.__log.info("[SIMPLE_E] Running experiment.")
         self.current_experiment_thread = StoppableThread(target=self._run_experiment)
         self.s.set_stopped_callback(self.current_experiment_thread.stopped)
         self.current_experiment_thread.start()
         # Wait for the thread to finish
         self.current_experiment_thread.join()
-        self.log.info("[SIMPLE_E] Experiment run finished.")
+        self.__log.info("[SIMPLE_E] Experiment run finished.")
 
     def _run_experiment(self):
-        run = 0
-        while run < self.runs:
-            self.log.info(f"[SIMPLE_E] Starting run {run + 1}")
+        for run in range(self.runs):
+            self.__log.info(f"[SIMPLE_E] Starting run {run + 1}")
             try:
 
                 start_ts = int(datetime.now().timestamp())
-                ret = self.single_run()
+                ret = self._single_run()
                 if ret == 1:
-                    self.log.info(f"[SIMPLE_E] Exiting run {run + 1}")
-                    return
+                    self.__log.info(f"[SIMPLE_E] Exiting run {run + 1}")
+                    return 1
                 end_ts = int(datetime.now().timestamp())
 
                 # Save timestamps
@@ -131,19 +124,17 @@ class SimpleExperiment(Experiment):
                 # Cleanup after each run
                 self.cleanup()
 
-                self.log.info("[SIMPLE_E] Sleeping for 10 seconds before next run.")
-                sleep(10)
-                self.log.info(
-                    f"[SIMPLE_E] Run {self.runs} completed. Start: {start_ts}, End: {end_ts}"
+                self.__log.info("[SIMPLE_E] Sleeping for 15 seconds before next run.")
+                sleep(15)
+                self.__log.info(
+                    f"[SIMPLE_E] Run {run + 1} completed. Start: {start_ts}, End: {end_ts}"
                 )
 
-                run += 1
-
             except Exception as e:
-                self.log.error(f"[SIMPLE_E] Error during run: {e}")
-                self.cleanup()
+                self.__log.error(f"[SIMPLE_E] Error during run: {e}")
+                break
 
-    def single_run(self):
+    def _single_run(self):
         try:
             # Deploy load generators
             self.run_load_generators()
@@ -154,5 +145,5 @@ class SimpleExperiment(Experiment):
             if ret == 1:
                 return 1
         except Exception as e:
-            self.log.error(f"[SIMPLE_E] Error during single run: {e}")
+            self.__log.error(f"[SIMPLE_E] Error during single run: {e}")
             self.cleanup()

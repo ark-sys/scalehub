@@ -6,6 +6,7 @@ from scripts.monitor.experiments.Experiment import Experiment
 from scripts.src.data.DataEval import DataEval
 from scripts.src.data.DataExporter import DataExporter
 from scripts.utils.Defaults import DefaultKeys as Key
+from scripts.utils.Tools import FolderManager
 
 
 # This class needs to be fixed
@@ -94,10 +95,13 @@ class TransscaleExperiment(Experiment):
     def stop(self):
         self.end_ts = int(datetime.now().timestamp())
         # Create experiment folder for results, ordered by date (YYYY-MM-DD)
-        self.exp_path = self.t.create_exp_folder(
-            self.EXPERIMENTS_BASE_PATH,
-            datetime.fromtimestamp(self.start_ts).strftime("%Y-%m-%d"),
-        )
+        # self.exp_path = self.t.create_exp_folder(
+        #     self.EXPERIMENTS_BASE_PATH,
+        #     datetime.fromtimestamp(self.start_ts).strftime("%Y-%m-%d"),
+        # )
+        f: FolderManager = FolderManager(self.__log, self.EXPERIMENTS_BASE_PATH)
+        data_path = f.create_date_folder(self.start_ts)
+        self.exp_path = f.create_subfolder(data_path)
 
         # Create log file with start timestamp
         self.log_file = self.create_log_file(
