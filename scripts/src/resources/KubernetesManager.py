@@ -715,10 +715,3 @@ class StatefulSetManager:
 #            )
 #
 #        return node_names
-
-
-if __name__ == "__main__":
-    k: KubernetesManager = KubernetesManager(Logger())
-
-    info = k.node_manager.get_next_node("grid5000")
-    print(info)
