@@ -69,6 +69,16 @@ class SimpleExperiment(Experiment):
                     data_eval: DataEval = DataEval(log=self.__log, exp_path=exp_path)
                     data_eval.eval_mean_stderr()
 
+                # Get time diff since first start_ts and now
+                time_diff = int(datetime.now().timestamp()) - self.timestamps[0][0]
+                labels = "app=experiment-monitor"
+                # Save experiment-monitor logs since time_diff seconds ago
+                monitor_logs = self.s.k.pod_manager.get_logs_since(
+                    labels, time_diff, "experiment-monitor"
+                )
+                with open(f"{multi_run_folder_path}/monitor_logs.txt", "w") as file:
+                    file.write(monitor_logs)
+
                 if len(self.timestamps) > 1:
                     data_eval_g: GroupedDataEval = GroupedDataEval(
                         log=self.__log, multi_run_path=multi_run_folder_path

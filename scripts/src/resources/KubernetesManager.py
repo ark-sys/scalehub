@@ -146,6 +146,31 @@ class PodManager:
             )
             return False
 
+    def get_logs_since(self, label_selector, time, namespace="default"):
+        # Time in seconds must be greater than 0
+        if time <= 0:
+            self.__log.error("[POD_MGR] Time must be greater than 0.")
+            return ""
+        else:
+            try:
+                pods = self.api_instance.list_namespaced_pod(
+                    label_selector=label_selector, namespace=namespace
+                )
+                logs = []
+                for pod in pods.items:
+                    logs.append(
+                        self.api_instance.read_namespaced_pod_log(
+                            pod.metadata.name,
+                            namespace,
+                            since_seconds=time,
+                            pretty=True,
+                        )
+                    )
+                return "\n".join(logs)
+            except ApiException as e:
+                self.__log.error(f"[POD_MGR] Exception when getting logs: {e}")
+                return ""
+
 
 class DeploymentManager:
     def __init__(self, log: Logger):

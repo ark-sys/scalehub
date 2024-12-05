@@ -1,3 +1,6 @@
+from datetime import datetime
+
+
 class Color:
     pure_red = "\033[0;31m"
     dark_green = "\033[0;32m"
@@ -36,7 +39,7 @@ class Color:
 
 
 class Logger:
-    def __init__(self, class_name: str = ""):
+    def __init__(self):
         self.info_color = Color.dull_white
         self.warning_color = Color.yellow
         self.error_color = Color.pure_red
@@ -48,39 +51,42 @@ class Logger:
     def new_line(self):
         print()
 
+    def date_time(self) -> str:
+        return "[" + datetime.now().isoformat() + "]"
+
     def info(self, message: str, **kwargs) -> None:
-        print(self.reset_color + f"{message}", **kwargs)
+        print(self.reset_color + f"{self.date_time()} {message}", **kwargs)
 
     def debug(self, message: str, **kwargs) -> None:
         if self.debug_level > 0:
             print(
-                f"{self.debug_color}[DEBUG] + {message} {self.reset_color}",
+                f"{self.debug_color}{self.date_time()} [DEBUG] + {message} {self.reset_color}",
                 **kwargs,
             )
 
     def debugg(self, message: str, **kwargs) -> None:
         if self.debug_level > 1:
             print(
-                f"{self.debug_color}[DEBUG] ++ {message} {self.reset_color} ",
+                f"{self.debug_color}{self.date_time()} [DEBUG] ++ {message} {self.reset_color} ",
                 **kwargs,
             )
 
     def debuggg(self, message: str, **kwargs) -> None:
         if self.debug_level > 2:
             print(
-                f"{self.debug_color}[DEBUG] +++ {message} {self.reset_color} ",
+                f"{self.debug_color}{self.date_time()} [DEBUG] +++ {message} {self.reset_color} ",
                 **kwargs,
             )
 
     def warning(self, message: str, **kwargs) -> None:
         print(
-            f"{self.warning_color}[WARNING] {message}{self.reset_color}",
+            f"{self.warning_color}{self.date_time()} [WARNING] {message}{self.reset_color}",
             **kwargs,
         )
 
     def error(self, message: str, **kwargs) -> None:
         print(
-            f"{self.error_color}[ERROR] {message}{self.reset_color}",
+            f"{self.error_color}{self.date_time()} [ERROR] {message}{self.reset_color}",
             **kwargs,
         )
 
