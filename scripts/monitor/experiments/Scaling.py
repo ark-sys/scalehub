@@ -14,8 +14,7 @@ class Scaling:
         self.k = KubernetesManager(log)
         self.f = FlinkManager(log, config)
         # Load strategy from configuration
-        self.strategy = self.config.get(Key.Experiment.Scaling.steps)
-        self.steps = self.strategy
+        self.steps = self.config.get(Key.Experiment.Scaling.steps)
         self.interval_scaling_s = self.config.get_int(
             Key.Experiment.Scaling.interval_scaling_s
         )
@@ -237,9 +236,6 @@ class Scaling:
 
     def setup_run(self):
         self.__log.info("[SCALING] Setting up experiment.")
-        # Initialize the strategy
-        self.steps = self.strategy
-
         # Reset scaling labels, clean start.
         self.k.node_manager.reset_scaling_labels()
         # Reset state labels
