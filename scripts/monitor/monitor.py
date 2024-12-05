@@ -29,7 +29,7 @@ class MQTTClient:
         self.client.subscribe("experiment/command", qos=2)
 
         # Publish current fsm state
-        self.update_state(self.fsm.state)
+        self.update_state()
 
     def is_json(self, myjson):
         try:
@@ -59,7 +59,7 @@ class MQTTClient:
                     self.fsm.finish()
 
                     # Publish current fsm state
-                    self.update_state(self.fsm.state)
+                    self.update_state()
 
                 elif command == "START" and self.fsm.is_IDLE():
                     # Clean retained messages
@@ -81,7 +81,7 @@ class MQTTClient:
                     self.fsm.start()
 
                     # Publish current fsm state
-                    self.update_state(self.fsm.state)
+                    self.update_state()
 
                 elif command == "CLEAN":
                     # Clean retained messages
@@ -96,7 +96,7 @@ class MQTTClient:
                     self.fsm.clean()
 
                     # Publish current fsm state
-                    self.update_state(self.fsm.state)
+                    self.update_state()
 
                 else:
                     self.__log.warning(
@@ -106,7 +106,7 @@ class MQTTClient:
                     self.client.publish("experiment/command", "", retain=True, qos=2)
 
                     # Publish current fsm state
-                    self.update_state(self.fsm.state)
+                    self.update_state()
 
                     # Send ack message
                     self.client.publish(
@@ -122,9 +122,12 @@ class MQTTClient:
         else:
             self.__log.warning(f"[CLIENT] Received invalid topic {msg.topic}.")
 
-    def update_state(self, state):
+    def update_state(self):
+
         # Send state message
-        self.client.publish("experiment/state", state, retain=True, qos=2)
+        self.client.publish(
+            "experiment/state", str(self.fsm.state.value), retain=True, qos=2
+        )
 
     def start_mqtt_client(self):
         # Get broker info from environment variable
