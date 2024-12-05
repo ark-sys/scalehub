@@ -37,7 +37,7 @@ class ExperimentFSM:
         },
         {
             "trigger": "clean",
-            "source": "*",
+            "source": States.FINISHING,
             "dest": States.IDLE,
         },
     ]

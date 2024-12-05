@@ -184,7 +184,7 @@ class FlinkManager:
             job_id, operator_names, savepoint_path = self.stop_job()
             if savepoint_path is None:
                 self.__log.error("[FLK_MGR] Savepoint failed.")
-                return
+                return None
             sleep(10)
             return self.scale_job_with_savepoint(
                 operator_names, savepoint_path, new_parallelism
