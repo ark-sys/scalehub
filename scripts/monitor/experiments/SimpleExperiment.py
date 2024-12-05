@@ -16,10 +16,6 @@ class SimpleExperiment(Experiment):
 
         self.runs = self.config.get_int(Key.Experiment.runs)
         self.steps = self.config.get(Key.Experiment.Scaling.steps)
-        self.s: Scaling = Scaling(log, config)
-        self.__log.info(
-            f"[SIMPLE_E] SimpleExperiment initialized with runs: {self.runs}, steps: {self.steps}"
-        )
 
         # Hold timestamps of all runs as a list of tuples (start, end)
         self.timestamps = []
@@ -32,6 +28,9 @@ class SimpleExperiment(Experiment):
             self.__log.info(
                 "Chaos injection enabled. Deploying chaos resources on Consul and Flink."
             )
+
+        # Create a new thread for the experiment
+        self.current_experiment_thread = StoppableThread(target=self._run_experiment)
 
         self.__log.info("[SIMPLE_E] Experiment started.")
 
@@ -73,7 +72,7 @@ class SimpleExperiment(Experiment):
                 time_diff = int(datetime.now().timestamp()) - self.timestamps[0][0]
                 labels = "app=experiment-monitor"
                 # Save experiment-monitor logs since time_diff seconds ago
-                monitor_logs = self.s.k.pod_manager.get_logs_since(
+                monitor_logs = self.k.pod_manager.get_logs_since(
                     labels, time_diff, "experiment-monitor"
                 )
                 with open(f"{multi_run_folder_path}/monitor_logs.txt", "w") as file:
@@ -110,8 +109,6 @@ class SimpleExperiment(Experiment):
 
     def running(self):
         self.__log.info("[SIMPLE_E] Running experiment.")
-        self.current_experiment_thread = StoppableThread(target=self._run_experiment)
-        self.s.set_stopped_callback(self.current_experiment_thread.stopped)
         self.current_experiment_thread.start()
         # Wait for the thread to finish
         self.current_experiment_thread.join()
@@ -150,8 +147,14 @@ class SimpleExperiment(Experiment):
             self.run_load_generators()
             # Deploy job
             self.f.run_job()
+
+            # Create scaling object
+            s = Scaling(self.__log, self.config)
+            # Set callback to check if the thread is stopped by STOP command
+            s.set_stopped_callback(self.current_experiment_thread.stopped)
+
             # Run scaling steps on job
-            ret = self.s.run()
+            ret = s.run()
             if ret == 1:
                 return 1
         except Exception as e:
