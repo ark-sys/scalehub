@@ -18,26 +18,27 @@ class ExperimentFSM:
         RUNNING = "RUNNING"
         FINISHING = "FINISHING"
 
+    # Define transitions of the state machine
     transitions = [
         {
             "trigger": "start",
-            "source": "IDLE",
-            "dest": "STARTING",
+            "source": States.IDLE,
+            "dest": States.STARTING,
         },
         {
             "trigger": "run",
-            "source": "STARTING",
-            "dest": "RUNNING",
+            "source": States.STARTING,
+            "dest": States.RUNNING,
         },
         {
             "trigger": "finish",
-            "source": "RUNNING",
-            "dest": "FINISHING",
+            "source": States.RUNNING,
+            "dest": States.FINISHING,
         },
         {
             "trigger": "clean",
             "source": "*",
-            "dest": "IDLE",
+            "dest": States.IDLE,
         },
     ]
 

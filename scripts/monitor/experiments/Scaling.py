@@ -48,12 +48,15 @@ class Scaling:
         self.k.statefulset_manager.scale_statefulset(
             statefulset_name=tm_name, replicas=replicas, namespace="flink"
         )
-        self.f.rescale_job(replicas)
-        if tm_name == "flink-taskmanager-s":
-            # Small may take some time to fully startup, especially for Flink
-            return self._wait_interval(extra_time=30)
+        ret = self.f.rescale_job(replicas)
+        if ret == 1:
+            return 1
         else:
-            return self._wait_interval()
+            if tm_name == "flink-taskmanager-s":
+                # Small may take some time to fully startup, especially for Flink
+                return self._wait_interval(extra_time=30)
+            else:
+                return self._wait_interval()
 
     # Add replicas linearly
     def scale_operator_linear(self, number, tm_type):
