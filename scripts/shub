@@ -11,8 +11,9 @@ from ansible.parsing.dataloader import DataLoader
 
 from scripts.src.Client import Client
 from scripts.src.Platform import Platform, merge_inventories
-from scripts.src.data.DataEval import DataEval, GroupedDataEval
+from scripts.src.data.DataEval import DataEval
 from scripts.src.data.DataExporter import DataExporter
+from scripts.src.data.GroupedDataEval import GroupedDataEval
 from scripts.src.platforms.FIT import FIT
 from scripts.src.platforms.G5k import G5k, G5k_VM
 from scripts.src.platforms.RaspberryPi import RaspberryPi
