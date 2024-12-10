@@ -2,8 +2,8 @@ import json
 import time
 from time import sleep
 
-# import enoslib as en
 import paho.mqtt.client as mqtt
+# noinspection PyUnresolvedReferences
 from paho.mqtt.enums import CallbackAPIVersion
 
 from scripts.utils.Config import Config

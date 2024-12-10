@@ -1341,6 +1341,8 @@ class GroupedDataEval:
         )
 
         ax.yaxis.set_major_formatter(formatter)
+        # ax.xaxis.set_major_locator(ticker.MultipleLocator(1))
+
         ax.set_ylim(0, 120000)
         ax.set_xlabel("Operator Parallelism", fontsize=24)
         ax.set_ylabel("Throughput (records/s)", fontsize=24)
@@ -1362,13 +1364,16 @@ class GroupedDataEval:
         # Add a legend
         ax.legend(loc="lower right", fontsize=22)
 
+        # Save new data df to file
+        final_df.to_csv(os.path.join(exp_path, "final_df.csv"))
+
         # set subtitle
         # fig.suptitle(f"Experiment runs : {num_runs}", fontsize=12)
         # Save the plot
         fig.tight_layout()
         output_path = os.path.join(exp_path, f"boxplot_{num_runs}_runs_mean.png")
         fig.savefig(output_path)
-        fig.show()
+        # fig.show()
 
     # def eval_mean_with_backpressure_multiple(self):
     #     # This dict will contain

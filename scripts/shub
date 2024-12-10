@@ -428,12 +428,15 @@ def run(action, attr, type, config: Config, export_dir):
                 run("chaos", "delete", None, config)
 
         case "test":
-            base_path = "/app/experiments-data/2024-12-04/multi_run_1"
+            base_path = "/app/experiments-data/2024-12-04/multi_run_12"
             for dir in os.listdir(base_path):
-                d: DataEval = DataEval(log, os.path.join(base_path, dir))
-                d.eval_mean_stderr()
-                d.eval_summary_plot()
-                d.eval_experiment_plot()
+                if not os.path.isdir(os.path.join(base_path, dir)):
+                    continue
+                else:
+                    d: DataEval = DataEval(log, os.path.join(base_path, dir))
+                    d.eval_mean_stderr()
+                    d.eval_summary_plot()
+                    d.eval_experiment_plot()
 
             gde: GroupedDataEval = GroupedDataEval(log, base_path)
             gde.generate_box_for_means(base_path)

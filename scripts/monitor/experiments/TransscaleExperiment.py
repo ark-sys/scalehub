@@ -18,7 +18,7 @@ class TransscaleExperiment(Experiment):
         self.start_ts = None
         self.end_ts = None
 
-    def start(self):
+    def starting(self):
         # Get start timestamp
         self.start_ts = int(datetime.now().timestamp())
 
@@ -92,7 +92,7 @@ class TransscaleExperiment(Experiment):
             transscale_resource_definition["transscale-job.yaml"]
         )
 
-    def stop(self):
+    def finishing(self):
         self.end_ts = int(datetime.now().timestamp())
         # Create experiment folder for results, ordered by date (YYYY-MM-DD)
         # self.exp_path = self.t.create_exp_folder(
@@ -131,7 +131,7 @@ class TransscaleExperiment(Experiment):
                 data_eval.eval_experiment_plot()
                 data_eval.eval_plot_with_checkpoints()
 
-    def cleanup(self):
+    def cleaning(self):
         self.k.pod_manager.execute_command_on_pod(
             deployment_name="flink-jobmanager",
             command="for job_id in $(flink list -r | awk -F ' : ' ' {print $2}'); do flink cancel $job_id ;done",

@@ -1,0 +1,11 @@
+- node: grid5000
+  taskmanager:
+    - number: 1
+      type: xl
+      method: block
+- node: vm_grid5000
+  type: small
+  taskmanager:
+    - number: 1
+      type: s
+      method: linear
