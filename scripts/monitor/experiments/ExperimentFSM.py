@@ -131,7 +131,6 @@ class ExperimentFSM(LockedMachine):
         # Clean flink jobs
         self.__log.info("[FSM] Clean phase started.")
         self.update_state(self.state)
-
         self.current_experiment.cleaning()
         self.__log.info("[FSM] Clean phase complete, transitioning to idle.")
 

@@ -3,8 +3,9 @@ from time import sleep
 
 from scripts.monitor.experiments.Experiment import Experiment
 from scripts.monitor.experiments.Scaling import Scaling
-from scripts.src.data.DataEval import GroupedDataEval, DataEval
+from scripts.src.data.DataEval import DataEval
 from scripts.src.data.DataExporter import DataExporter
+from scripts.src.data.GroupedDataEval import GroupedDataEval
 from scripts.utils.Defaults import DefaultKeys as Key
 from scripts.utils.Tools import FolderManager
 
