@@ -1,0 +1,27 @@
+- node: grid5000
+  taskmanager:
+    - number: 1
+      type: s
+      method: block
+- node: vm_grid5000
+  type: small
+  taskmanager:
+    - number: 1
+      type: s
+      method: linear
+- node: vm_grid5000
+  type: small
+  taskmanager:
+    - number: 1
+      type: s
+      method: linear
+- node: pico
+  taskmanager:
+    - number: 1
+      type: s
+      method: block
+- node: pico
+  taskmanager:
+    - number: 1
+      type: s
+      method: block
