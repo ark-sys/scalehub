@@ -1,4 +1,5 @@
 import os
+import threading
 
 from scripts.src.resources.FlinkManager import FlinkManager
 from scripts.src.resources.KubernetesManager import KubernetesManager
@@ -6,6 +7,29 @@ from scripts.utils.Config import Config
 from scripts.utils.Defaults import DefaultKeys as Key
 from scripts.utils.Logger import Logger
 from scripts.utils.Tools import Tools
+
+
+class StoppableThread(threading.Thread):
+    def __init__(self, log, target=None, *args, **kwargs):
+        self.__stop_event = threading.Event()
+        self.__log = log
+        self.target = target
+        super(StoppableThread, self).__init__(*args, **kwargs)
+
+    def stop_thread(self):
+        self.__log.info("[THRD] Stopping thread.")
+        self.__stop_event.set()
+        self.join()
+
+    def stopped(self):
+        return self.__stop_event.is_set()
+
+    def run(self):
+        self.__log.info("[THRD] Starting thread.")
+        self.target()
+
+    def join(self, timeout=None):
+        super(StoppableThread, self).join(timeout)
 
 
 class Experiment:
@@ -18,6 +42,8 @@ class Experiment:
         self.k: KubernetesManager = KubernetesManager(log)
         self.t: Tools = Tools(log)
         self.f: FlinkManager = FlinkManager(log, config)
+
+        self.current_experiment_thread = None
 
         # Chaos resources templates
         self.consul_chaos_template = (
@@ -95,17 +121,26 @@ class Experiment:
             except Exception as e:
                 self.__log.error(f"[EXP] Error deleting load generator: {e}")
 
-    def is_chaos_enabled(self):
-        return self.config.get_bool("chaos.enabled")
+    def start_thread(self, target):
+        self.current_experiment_thread = StoppableThread(log=self.__log, target=target)
+        self.current_experiment_thread.start()
 
-    def start(self):
-        raise NotImplementedError("Start method not implemented.")
+    def stop_thread(self):
+        if self.current_experiment_thread:
+            self.current_experiment_thread.stop_thread()
 
-    def stop(self):
-        raise NotImplementedError("Stop method not implemented.")
+    def join_thread(self):
+        if self.current_experiment_thread:
+            self.current_experiment_thread.join()
 
-    def cleanup(self):
-        raise NotImplementedError("Cleanup method not implemented.")
+    def starting(self):
+        raise NotImplementedError("Starting method not implemented.")
+
+    def finishing(self):
+        raise NotImplementedError("Finishing method not implemented.")
+
+    def cleaning(self):
+        raise NotImplementedError("Cleaning method not implemented.")
 
     def running(self):
         raise NotImplementedError("Running method not implemented.")

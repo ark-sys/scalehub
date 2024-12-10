@@ -1,23 +1,34 @@
 import json
 import os
+import threading
 
 import paho.mqtt.client as mqtt
+
+# noinspection PyUnresolvedReferences
 from paho.mqtt.enums import CallbackAPIVersion
 
-from scripts.monitor.experiments.ExperimentFSM import ExperimentFSM
+from scripts.monitor.experiments.ExperimentFSM import (
+    ExperimentFSM,
+    FSMThreadWrapper,
+    States,
+)
 from scripts.utils.Config import Config
 from scripts.utils.Logger import Logger
 
 
-class MQTTClient:
-    def __init__(self, log: Logger):
+class MQTTClient(threading.Thread):
+    def __init__(self, log: Logger, fsm_thread: FSMThreadWrapper):
+        super().__init__()
         self.__log = log
 
-        # Create state machine
-        self.fsm = ExperimentFSM(log)
+        # FSM instance
+        self.current_fsm_thread = fsm_thread
+        self.current_fsm = fsm_thread.get_fsm()
 
-        self.fsm.update_state_callback = self.update_state
+        # Set update state callback in FSM
+        self.current_fsm.set_update_state_callback(self.update_state)
 
+        # MQTT client setup
         self.client = mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION2)
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
@@ -41,12 +52,18 @@ class MQTTClient:
     def on_message(self, client, userdata, msg):
         if msg.topic == "experiment/command":
             # Check if payload is in json format
-            self.__log.info(f"[CLIENT] Received payload {msg.payload}.")
+            self.__log.info(
+                f"[CLIENT] Received payload {msg.payload}. Current state: {self.current_fsm.state}."
+            )
+
             if self.is_json(msg.payload.decode("utf-8")):
                 payload = json.loads(msg.payload.decode("utf-8"))
                 command = payload.get("command")
 
-                if command == "STOP" and self.fsm.is_RUNNING():
+                if command == "STOP" and (
+                    self.current_fsm.state == States.RUNNING
+                    or self.current_fsm.state == States.STARTING
+                ):
                     # Clean retained messages
                     self.client.publish("experiment/command", "", retain=True, qos=2)
 
@@ -55,13 +72,10 @@ class MQTTClient:
                         "experiment/ack", "ACK_STOP", retain=True, qos=2
                     )
 
-                    # Trigger finish transition
-                    self.fsm.finish()
+                    # Stop running experiment
+                    self.current_fsm.current_experiment.stop_thread()
 
-                    # Publish current fsm state
-                    self.update_state()
-
-                elif command == "START" and self.fsm.is_IDLE():
+                elif command == "START" and self.current_fsm.state == States.IDLE:
                     # Clean retained messages
                     self.client.publish("experiment/command", "", retain=True, qos=2)
 
@@ -75,13 +89,14 @@ class MQTTClient:
 
                     # Format config as json
                     config = Config(self.__log, json.loads(config))
-                    self.fsm._set_config(config)
+                    if not config:
+                        self.__log.error("[CLIENT] Invalid config.")
+                        return
+                    else:
+                        self.current_fsm.set_config(config)
 
                     # Trigger start transition
-                    self.fsm.start()
-
-                    # Publish current fsm state
-                    self.update_state()
+                    self.current_fsm_thread.trigger_start()
 
                 elif command == "CLEAN":
                     # Clean retained messages
@@ -93,20 +108,14 @@ class MQTTClient:
                     )
 
                     # Trigger clean transition
-                    self.fsm.clean()
-
-                    # Publish current fsm state
-                    self.update_state()
+                    self.current_fsm.clean_state()
 
                 else:
                     self.__log.warning(
-                        f"Received invalid command {command} for state {self.fsm.state}."
+                        f"Received invalid command {command} for state {self.current_fsm.state}."
                     )
                     # Clean retained messages
                     self.client.publish("experiment/command", "", retain=True, qos=2)
-
-                    # Publish current fsm state
-                    self.update_state()
 
                     # Send ack message
                     self.client.publish(
@@ -122,12 +131,10 @@ class MQTTClient:
         else:
             self.__log.warning(f"[CLIENT] Received invalid topic {msg.topic}.")
 
-    def update_state(self):
+    def update_state(self, state=None):
 
         # Send state message
-        self.client.publish(
-            "experiment/state", str(self.fsm.state.value), retain=True, qos=2
-        )
+        self.client.publish("experiment/state", state, retain=True, qos=2)
 
     def start_mqtt_client(self):
         # Get broker info from environment variable
@@ -151,15 +158,14 @@ class MQTTClient:
 
 
 def main():
-    # Create logger
     log = Logger()
-
-    # Create client
-    client = MQTTClient(log)
-
     log.info("[MONITOR] Starting experiment manager")
-    # Manage experiments
-    client.run()
+    fsm = ExperimentFSM(log)
+    fsm_thread_wrapper = FSMThreadWrapper(fsm)
+    fsm_thread_wrapper.start()
+
+    client = MQTTClient(log, fsm_thread_wrapper)
+    client.start()
 
 
 if __name__ == "__main__":

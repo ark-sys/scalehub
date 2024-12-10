@@ -6,7 +6,7 @@ from scripts.monitor.experiments.Scaling import Scaling
 from scripts.src.data.DataEval import GroupedDataEval, DataEval
 from scripts.src.data.DataExporter import DataExporter
 from scripts.utils.Defaults import DefaultKeys as Key
-from scripts.utils.Tools import StoppableThread, FolderManager
+from scripts.utils.Tools import FolderManager
 
 
 class SimpleExperiment(Experiment):
@@ -19,76 +19,71 @@ class SimpleExperiment(Experiment):
 
         # Hold timestamps of all runs as a list of tuples (start, end)
         self.timestamps = []
-        self.current_experiment_thread = None
 
-    def start(self):
+    def starting(self):
         self.__log.info("[SIMPLE_E] Starting experiment.")
         # Check if chaos is enabled
-        if self.is_chaos_enabled():
+        if self.config.get_bool("chaos.enabled"):
             self.__log.info(
                 "Chaos injection enabled. Deploying chaos resources on Consul and Flink."
             )
 
         # Create a new thread for the experiment
-        self.current_experiment_thread = StoppableThread(target=self._run_experiment)
+        self.start_thread(self._run_experiment)
 
         self.__log.info("[SIMPLE_E] Experiment started.")
 
-    def stop(self):
+    def finishing(self):
         self.__log.info("[SIMPLE_E] Finishing experiment.")
-        if self.current_experiment_thread:
-            self.current_experiment_thread.stop()
 
-            exp_paths = []
+        exp_paths = []
 
-            f: FolderManager = FolderManager(self.__log, self.EXPERIMENTS_BASE_PATH)
+        f: FolderManager = FolderManager(self.__log, self.EXPERIMENTS_BASE_PATH)
 
-            # Create date folder
-            date_path = f.create_date_folder(self.timestamps[0][0])
+        # Create date folder
+        date_path = f.create_date_folder(self.timestamps[0][0])
 
-            # Create experiment folder for results
-            if len(self.timestamps) > 0:
-                if len(self.timestamps) > 1:
-                    multi_run_folder_path = f.create_multi_run_folder()
-                else:
-                    multi_run_folder_path = date_path
-
-                for i, (start_ts, end_ts) in enumerate(self.timestamps):
-                    exp_path = f.create_subfolder(multi_run_folder_path)
-                    exp_paths.append(exp_path)
-                    log_file = self.create_log_file(exp_path, start_ts, end_ts)
-                    with open(log_file, "r+") as file:
-                        content = file.read()
-                        file.seek(0, 0)
-                        file.write(f"Experiment run {i + 1}\n\n" + content)
-                    data_exp: DataExporter = DataExporter(
-                        log=self.__log, exp_path=exp_path
-                    )
-                    data_exp.export()
-                    data_eval: DataEval = DataEval(log=self.__log, exp_path=exp_path)
-                    data_eval.eval_mean_stderr()
-
-                # Get time diff since first start_ts and now
-                time_diff = int(datetime.now().timestamp()) - self.timestamps[0][0]
-                labels = "app=experiment-monitor"
-                # Save experiment-monitor logs since time_diff seconds ago
-                monitor_logs = self.k.pod_manager.get_logs_since(
-                    labels, time_diff, "experiment-monitor"
-                )
-                with open(f"{multi_run_folder_path}/monitor_logs.txt", "w") as file:
-                    file.write(monitor_logs)
-
-                if len(self.timestamps) > 1:
-                    data_eval_g: GroupedDataEval = GroupedDataEval(
-                        log=self.__log, multi_run_path=multi_run_folder_path
-                    )
-                    data_eval_g.generate_box_for_means(multi_run_folder_path)
+        # Create experiment folder for results
+        if len(self.timestamps) > 0:
+            if len(self.timestamps) > 1:
+                multi_run_folder_path = f.create_multi_run_folder()
             else:
-                self.__log.error("No timestamps found.")
+                multi_run_folder_path = date_path
 
-            self.__log.info("[SIMPLE_E] Experiment finished.")
+            for i, (start_ts, end_ts) in enumerate(self.timestamps):
+                exp_path = f.create_subfolder(multi_run_folder_path)
+                exp_paths.append(exp_path)
+                log_file = self.create_log_file(exp_path, start_ts, end_ts)
+                with open(log_file, "r+") as file:
+                    content = file.read()
+                    file.seek(0, 0)
+                    file.write(f"Experiment run {i + 1}\n\n" + content)
+                data_exp: DataExporter = DataExporter(log=self.__log, exp_path=exp_path)
+                data_exp.export()
+                data_eval: DataEval = DataEval(log=self.__log, exp_path=exp_path)
+                data_eval.eval_mean_stderr()
 
-    def cleanup(self):
+            # Get time diff since first start_ts and now
+            time_diff = int(datetime.now().timestamp()) - self.timestamps[0][0]
+            labels = "app=experiment-monitor"
+            # Save experiment-monitor logs since time_diff seconds ago
+            monitor_logs = self.k.pod_manager.get_logs_since(
+                labels, time_diff, "experiment-monitor"
+            )
+            with open(f"{multi_run_folder_path}/monitor_logs.txt", "w") as file:
+                file.write(monitor_logs)
+
+            if len(self.timestamps) > 1:
+                data_eval_g: GroupedDataEval = GroupedDataEval(
+                    log=self.__log, multi_run_path=multi_run_folder_path
+                )
+                data_eval_g.generate_box_for_means(multi_run_folder_path)
+        else:
+            self.__log.error("No timestamps found.")
+
+        self.__log.info("[SIMPLE_E] Experiment finished.")
+
+    def cleaning(self):
         self.__log.info("[SIMPLE_E] Cleaning up experiment.")
         try:
             # Remove SCHEDULABLE label from all nodes
@@ -109,9 +104,7 @@ class SimpleExperiment(Experiment):
 
     def running(self):
         self.__log.info("[SIMPLE_E] Running experiment.")
-        self.current_experiment_thread.start()
-        # Wait for the thread to finish
-        self.current_experiment_thread.join()
+        self.join_thread()
         self.__log.info("[SIMPLE_E] Experiment run finished.")
 
     def _run_experiment(self):
@@ -129,7 +122,7 @@ class SimpleExperiment(Experiment):
                 # Save timestamps
                 self.timestamps.append((start_ts, end_ts))
                 # Cleanup after each run
-                self.cleanup()
+                self.cleaning()
 
                 self.__log.info("[SIMPLE_E] Sleeping for 15 seconds before next run.")
                 sleep(15)
@@ -159,4 +152,4 @@ class SimpleExperiment(Experiment):
                 return 1
         except Exception as e:
             self.__log.error(f"[SIMPLE_E] Error during single run: {e}")
-            self.cleanup()
+            self.cleaning()
