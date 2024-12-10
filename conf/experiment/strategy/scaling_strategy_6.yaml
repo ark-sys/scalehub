@@ -1,0 +1,25 @@
+- node: pico
+  taskmanager:
+    - number: 1
+      type: s
+      method: block
+- node: pico
+  taskmanager:
+    - number: 1
+      type: s
+      method: block
+- node: pico
+  taskmanager:
+    - number: 1
+      type: s
+      method: block
+- node: pico
+  taskmanager:
+    - number: 1
+      type: s
+      method: block
+- node: pico
+  taskmanager:
+    - number: 1
+      type: s
+      method: block
