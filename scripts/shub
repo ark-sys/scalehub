@@ -223,29 +223,29 @@ def main():
             config = Config(log, Config.RUNTIME_PATH)
             destroy(config)
         case "provision":
-            config = Config(log, configs[0])
-            provision(config)
+            if len(configs) > 1:
+                log.warning(
+                    "Multiple configuration files are not supported for 'provision' command. Using the first one."
+                )
+            provision(configs[0])
         case "deploy":
             if len(configs) > 1:
                 log.warning(
                     "Multiple configuration files are not supported for 'deploy' command. Using the first one."
                 )
-            config = Config(log, configs[0])
-            deploy(args.playbook, config)
+            deploy(args.playbook, configs[0])
         case "delete":
             if len(configs) > 1:
                 log.warning(
                     "Multiple configuration files are not supported for 'delete' command. Using the first one."
                 )
-            config = Config(log, configs[0])
-            delete(args.playbook, config)
+            delete(args.playbook, configs[0])
         case "reload":
             if len(configs) > 1:
                 log.warning(
                     "Multiple configuration files are not supported for 'reload' command. Using the first one."
                 )
-            config = Config(log, configs[0])
-            reload(args.playbook, config)
+            reload(args.playbook, configs[0])
         case "experiment":
             experiment(args.action, configs)
         case "tokens":

@@ -164,24 +164,33 @@ class Config:
                     exit(1)
                 type = self.cp[platform_section]["type"]
                 platform = {"name": name, "type": type}
+
                 base_keys = [
+                    "producers",
+                    "consumers",
+                    "control",
+                ]
+                enos_keys = [
                     "reservation_name",
                     "site",
                     "cluster",
-                    "producers",
-                    "consumers",
                     "queue",
                     "walltime",
                     "start_time",
-                    "control",
                 ]
                 match type:
                     case "RaspberryPi":
                         extra_keys = ["kubernetes_type"]
                     case "FIT":
-                        extra_keys = ["archi"]
+                        extra_keys = enos_keys + ["archi"]
                     case "VM_on_Grid5000":
-                        extra_keys = ["core_per_vm", "memory_per_vm", "disk_per_vm"]
+                        extra_keys = enos_keys + [
+                            "core_per_vm",
+                            "memory_per_vm",
+                            "disk_per_vm",
+                        ]
+                    case "Grid5000":
+                        extra_keys = enos_keys
                     case _:
                         extra_keys = ["kubernetes_type"]
                 keys = base_keys + extra_keys
