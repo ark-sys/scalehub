@@ -16,12 +16,12 @@ class FolderManager:
     def __init__(self, log, base_path):
         self.__log = log
         self.base_path = base_path
-        self.date = self._check_date_in_path(self.base_path)
+        self.date = self.__check_date_in_path(self.base_path)
         self.__log.info(
             f"FolderManager initialized with base path: {self.base_path}. Date: {self.date}"
         )
 
-    def _check_date_in_path(self, path):
+    def __check_date_in_path(self, path):
         # regex to match date in the path
         date_regex = r"\d{4}-\d{2}-\d{2}"
         # If we have a date in the path, return it
@@ -117,13 +117,37 @@ class Tools:
             resource_object = yaml.safe_load(resource_definition)
             return resource_object
         except FileNotFoundError as e:
-            self.__log.error(f"File not found: {resource_filename}")
+            self.__log.error(f"File not found: {resource_filename} - {e}")
             return
 
 
 class Playbooks:
     def __init__(self, log: Logger):
         self.__log = log
+        self.load_generators = []
+
+    def load_lg_config(self, config: Config):
+        for lg_config in config.get(Key.Experiment.Generators.generators):
+            load_generator_params = {
+                "lg_name": lg_config["name"],
+                "lg_topic": lg_config["topic"],
+                "lg_type": lg_config["type"],
+                "lg_numsensors": int(lg_config["num_sensors"]),
+                "lg_intervalms": int(lg_config["interval_ms"]),
+                "lg_replicas": int(lg_config["replicas"]),
+                "lg_value": int(lg_config["value"]),
+            }
+            self.load_generators.append(load_generator_params)
+
+    def role_load_generators(self, config: Config, tag=None):
+        self.load_lg_config(config)
+        for lg in self.load_generators:
+            try:
+                self.run(
+                    "application/load_generators", config=config, tag=tag, extra_vars=lg
+                )
+            except Exception as e:
+                self.__log.error(str(e))
 
     def run(self, playbook, config: Config, tag=None, extra_vars=None):
         if extra_vars is None:

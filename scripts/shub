@@ -59,22 +59,7 @@ def deploy(playbook, config: Config):
     tag = "create"
     try:
         if playbook == "application/load_generators":
-            for lg_config in config.get(Key.Experiment.Generators.generators):
-                load_generator_params = {
-                    "lg_name": lg_config["name"],
-                    "lg_topic": lg_config["topic"],
-                    "lg_type": lg_config["type"],
-                    "lg_numsensors": int(lg_config["num_sensors"]),
-                    "lg_intervalms": int(lg_config["interval_ms"]),
-                    "lg_replicas": int(lg_config["replicas"]),
-                    "lg_value": int(lg_config["value"]),
-                }
-                p.run(
-                    playbook,
-                    config=config,
-                    tag=tag,
-                    extra_vars=load_generator_params,
-                )
+            p.role_load_generators(config, tag)
         else:
             p.run(playbook, config=config, tag=tag)
     except Exception as e:
@@ -90,23 +75,7 @@ def delete(playbook, config: Config):
     tag = "delete"
     try:
         if playbook == "application/load_generators":
-            for lg_config in config.get(Key.Experiment.Generators.generators):
-                load_generator_params = {
-                    "lg_name": lg_config["name"],
-                    "lg_topic": lg_config["topic"],
-                    "lg_type": lg_config["type"],
-                    "lg_numsensors": int(lg_config["num_sensors"]),
-                    "lg_intervalms": int(lg_config["interval_ms"]),
-                    "lg_replicas": int(lg_config["replicas"]),
-                    "lg_value": int(lg_config["value"]),
-                }
-                p.run(
-                    playbook,
-                    config=config,
-                    tag=tag,
-                    extra_vars=load_generator_params,
-                )
-
+            p.role_load_generators(config, tag)
         else:
             p.run(playbook, config=config, tag=tag)
     except Exception as e:
@@ -168,7 +137,7 @@ def sync_experiment_data(config: Config):
     t.sync_data(config.get_str(Key.Scalehub.experiments))
 
 
-def main(log: Logger):
+def main():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="command")
 
@@ -271,4 +240,4 @@ def main(log: Logger):
 
 if __name__ == "__main__":
     log = Logger()
-    main(log)
+    main()
