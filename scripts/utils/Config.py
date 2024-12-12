@@ -126,6 +126,11 @@ class Config:
                 dict_key = f"{section}.{key}"
                 self.__config[dict_key] = self.cp[section][key]
 
+        # Load keys for the base experiment section
+        for key in self.cp[section_base]:
+            dict_key = f"{section_base}.{key}"
+            self.__config[dict_key] = self.cp[section_base][key]
+
         extra_sections = ["scaling", "generators"]
         for extra_section in extra_sections:
             section = f"{section_base}.{extra_section}"

@@ -1,7 +1,7 @@
 import threading
 from enum import Enum
+from time import sleep
 
-from anyio import sleep
 from transitions.extensions import LockedMachine
 
 from scripts.monitor.experiments.Experiment import Experiment
