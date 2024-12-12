@@ -16,14 +16,14 @@ from scripts.utils.Tools import Playbooks
 # 2. Connect to MQTT broker
 # 3. Publish "start" or "stop" message on experiment topic
 class Client:
-    def __init__(self, log: Logger, config: Config):
+    def __init__(self, log: Logger, configs: list[Config]):
         self.__log = log
         self.p: Playbooks = Playbooks(log)
 
         self.client = mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION1)
-        self.config = config
-        self.broker_host = config.get_str(Key.Experiment.broker_mqtt_host)
-        self.broker_port = config.get_int(Key.Experiment.broker_mqtt_port)
+        self.configs = configs
+        self.broker_host = configs[0].get_str(Key.Experiment.broker_mqtt_host)
+        self.broker_port = configs[0].get_int(Key.Experiment.broker_mqtt_port)
         self.mqtt_user = "scalehub"
         self.mqtt_pass = "s_password"
         self.ack = None
@@ -67,8 +67,9 @@ class Client:
     def start(self):
         self.__log.info("Starting experiment")
 
-        # Create START payload with experiment config
-        payload = {"command": "START", "config": self.config.to_json()}
+        # Generate payload
+        configs_json = [config.to_json() for config in self.configs]
+        payload = {"command": "START", "configs": configs_json}
         # Get string representation of payload
         payload = json.dumps(payload)
 

@@ -3,7 +3,6 @@ import os
 import threading
 
 import paho.mqtt.client as mqtt
-
 # noinspection PyUnresolvedReferences
 from paho.mqtt.enums import CallbackAPIVersion
 
@@ -84,16 +83,14 @@ class MQTTClient(threading.Thread):
                         "experiment/ack", "ACK_START", retain=True, qos=2
                     )
 
-                    config = payload.get("config")
-                    self.__log.info(f"[CLIENT] Received config: {config}")
+                    configs = payload.get("configs")
+                    self.__log.info(f"[CLIENT] Received config: {configs}")
 
-                    # Format config as json
-                    config = Config(self.__log, json.loads(config))
-                    if not config:
-                        self.__log.error("[CLIENT] Invalid config.")
-                        return
-                    else:
-                        self.current_fsm.set_config(config)
+                    # Load list of configs
+                    configs = [Config(self.__log, config) for config in configs]
+
+                    # Set config in FSM
+                    self.current_fsm.set_configs(configs)
 
                     # Trigger start transition
                     self.current_fsm_thread.trigger_start()

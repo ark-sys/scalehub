@@ -1,6 +1,7 @@
 import threading
 from enum import Enum
 
+from anyio import sleep
 from transitions.extensions import LockedMachine
 
 from scripts.monitor.experiments.Experiment import Experiment
@@ -27,13 +28,13 @@ class ExperimentFSM(LockedMachine):
             "trigger": "start_state",
             "source": States.IDLE,
             "dest": States.STARTING,
+            "conditions": "configs_not_empty",
             "after": "run_state",
         },
         {
             "trigger": "run_state",
             "source": States.STARTING,
             "dest": States.RUNNING,
-            "conditions": "is_configured",
             "after": "finish_state",
         },
         {
@@ -52,7 +53,7 @@ class ExperimentFSM(LockedMachine):
 
     def __init__(self, log: Logger):
         self.__log = log
-        self.config = None
+        self.configs = None
         super().__init__(
             model=self,
             states=States,
@@ -63,12 +64,12 @@ class ExperimentFSM(LockedMachine):
         self.current_experiment = None
         self.update_state_callback = None
 
-    def is_configured(self):
-        return self.config is not None
+    def configs_not_empty(self):
+        return self.configs is not None and len(self.configs) > 0
 
-    def set_config(self, config):
-        self.__log.info("[FSM] Setting config.")
-        self.config = config
+    def set_config(self, configs):
+        self.__log.info("[FSM] Setting configs")
+        self.configs = configs
 
     def set_update_state_callback(self, callback):
         self.update_state_callback = callback
@@ -77,22 +78,26 @@ class ExperimentFSM(LockedMachine):
         if self.update_state_callback:
             self.update_state_callback(state_arg.value)
 
-    def __create_experiment_instance(self, experiment_type) -> Experiment:
+    def __create_experiment_instance(self, config, experiment_type) -> Experiment:
         self.__log.info(
             f"[FSM] Creating experiment instance of type: {experiment_type}"
         )
         match experiment_type:
             case "transscale":
-                return TransscaleExperiment(self.__log, self.config)
+                return TransscaleExperiment(self.__log, config)
             case "simple":
-                return SimpleExperiment(self.__log, self.config)
+                return SimpleExperiment(self.__log, config)
             case "test":
-                return TestExperiment(self.__log, self.config)
+                return TestExperiment(self.__log, config)
             case _:
                 raise ValueError(f"[FSM] Invalid experiment type: {experiment_type}")
 
+    def __get_next_config(self):
+        return self.configs.pop(0)
+
     def on_enter_STARTING(self):
-        experiment_type = self.config.get_str(Key.Experiment.type)
+        config = self.__get_next_config()
+        experiment_type = config.get_str(Key.Experiment.type)
         self.__log.info(f"[FSM] Start phase with experiment: {experiment_type}")
 
         self.__log.info(f"[FSM] State is {self.state}")
@@ -100,7 +105,9 @@ class ExperimentFSM(LockedMachine):
 
         try:
             # Create experiment instance with current config
-            self.current_experiment = self.__create_experiment_instance(experiment_type)
+            self.current_experiment = self.__create_experiment_instance(
+                config, experiment_type
+            )
             self.current_experiment.starting()
             self.__log.info("[FSM] FSM startup complete, transitioning to running.")
         except Exception as e:
@@ -132,6 +139,7 @@ class ExperimentFSM(LockedMachine):
         self.__log.info("[FSM] Clean phase started.")
         self.update_state(self.state)
         self.current_experiment.cleaning()
+        self.current_experiment = None
         self.__log.info("[FSM] Clean phase complete, transitioning to idle.")
 
 
@@ -150,8 +158,10 @@ class FSMThreadWrapper(threading.Thread):
             # An "experiment start" event has been received, start the FSM
             self.__fsm_event.clear()
 
-            if self.__fsm.state == States.IDLE:
-                self.__fsm.start_state()
+            while self.__fsm.configs_not_empty():
+                if self.__fsm.state == States.IDLE:
+                    self.__fsm.start_state()
+                    sleep(10)
 
     def trigger_start(self):
         self.__fsm_event.set()
