@@ -248,14 +248,6 @@ class DataExporter:
         # Add "Timestamp" to the index
         df.index.name = "Timestamp"
 
-        print(pod_names)
-
-        # pod_df = pd.DataFrame.from_dict(pod_names, orient="index", columns=["Pod"])
-        # pod_df.index.name = "SubtaskIndex"
-        # pod_df.reset_index(inplace=True)
-        # pod_df.set_index(["Timestamp", "SubtaskIndex"], inplace=True)
-        # df = df.join(pod_df, on=["Timestamp", "SubtaskIndex"])
-
         # Save dataframe to csv
         df.to_csv(output_file)
         return output_file, df

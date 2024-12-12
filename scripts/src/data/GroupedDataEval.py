@@ -81,7 +81,7 @@ class GroupedDataEval:
         ax.axhline(y=100000, color="r", linestyle="--", label="Workload objective")
 
         # Add a legend
-        ax.legend(loc="lower right", fontsize=22)
+        ax.legend(loc="upper right", fontsize=22)
 
         fig.tight_layout()
         output_path = os.path.join(exp_path, f"boxplot_{num_runs}_runs_mean.png")

@@ -755,5 +755,3 @@ class DataEval:
             "EstimatedTimeCBOp",
             "EstimatedTimeCBOpStdErr",
         ]
-
-        print(df_final)
