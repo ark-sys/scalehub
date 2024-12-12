@@ -113,8 +113,8 @@ class SimpleExperiment(Experiment):
 
                 # Save timestamps
                 self.timestamps.append((start_ts, end_ts))
-                # Cleanup after each run
-                self.cleaning()
+                # # Cleanup after each run
+                # self.cleaning()
 
                 self.__log.info("[SIMPLE_E] Sleeping for 15 seconds before next run.")
                 sleep(15)

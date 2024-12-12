@@ -69,7 +69,11 @@ class Client:
 
         # Generate payload
         configs_json = [config.to_json() for config in self.configs]
-        payload = {"command": "START", "configs": configs_json}
+
+        # Serialize payload
+        ser_payload = json.dumps(configs_json)
+
+        payload = {"command": "START", "configs": ser_payload}
         # Get string representation of payload
         payload = json.dumps(payload)
 
