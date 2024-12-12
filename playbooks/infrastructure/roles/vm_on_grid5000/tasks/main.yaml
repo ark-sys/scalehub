@@ -8,7 +8,7 @@
   block:
     - name: Set grid_node fact
       set_fact:
-        vm_host_inventory: "{{ groups['vm_grid5000'] | map('extract', hostvars) | map(attribute='grid_node') | list | unique }}"
+        vm_host_inventory: "{{ groups['VMonG5k'] | map('extract', hostvars) | map(attribute='grid_node') | list | unique }}"
 
     - name: Enable IPv6 on each host node
       command: dhclient -6 br0

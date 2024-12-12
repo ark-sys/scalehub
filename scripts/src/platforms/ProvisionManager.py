@@ -48,31 +48,30 @@ class ProvisionManager:
 
     def __generate_enos_inventory(self, roles):
         inventory = InventoryManager(loader=DataLoader())
+        groups = [
+            "ungrouped",
+            "all",
+            "control",
+            "producers",
+            "consumers",
+            "G5k",
+            "VMonG5k",
+        ]
+        for group in groups:
+            inventory.add_group(group)
 
-        # Create base groups
-        inventory.add_group("control")
-        inventory.add_group("producers")
-        inventory.add_group("consumers")
-        inventory.add_group("grid5000")
-        inventory.add_group("vm_grid5000")
-        inventory.add_group("ungrouped")
-        inventory.add_group("all")
+        for role in roles:
+            for host in roles[role]:
+                if "virtual" in host.alias:
+                    host_info = f"{host.alias} ansible_ssh_host={host.address} grid_node={host.pm.alias} ansible_ssh_user=root"
+                elif "grid5000" in host.address:
+                    ipv6_alias = f"{host.address.split('.')[0]}-ipv6.{host.address.split('.', 1)[1]}"
+                    host_info = f"{host.address} ipv6_alias={ipv6_alias}"
+                else:
+                    host_info = host.alias
+                inventory.add_host(host_info, group="all")
+                inventory.add_host(host_info, group=role)
 
-        for role, hosts in roles.items():
-            for host in hosts:
-                inventory.add_host(host.alias, group="all")
-                match role:
-                    case "control" | "producers" | "consumers":
-                        inventory.add_host(host.alias, group=role)
-                    case "VMonG5k":
-                        host_info = f"{host.alias} ansible_ssh_host={host.address} grid_node={host.pm.alias}"
-                        inventory.add_host(host_info, group="vm_grid5000")
-                    case "G5k":
-                        ipv6_alias = f"{host.address.split('.')[0]}-ipv6.{host.address.split('.', 1)[1]}"
-                        host_info = f"{host.address} ipv6_alias={ipv6_alias}"
-                        inventory.add_host(host_info, group="grid5000")
-                    case _:
-                        inventory.add_host(host.alias, group="ungrouped")
         return inventory
 
     def provision(self):
