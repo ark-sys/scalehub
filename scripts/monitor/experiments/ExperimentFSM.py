@@ -67,7 +67,7 @@ class ExperimentFSM(LockedMachine):
     def configs_not_empty(self):
         return self.configs is not None and len(self.configs) > 0
 
-    def set_config(self, configs):
+    def set_configs(self, configs):
         self.__log.info("[FSM] Setting configs")
         self.configs = configs
 
