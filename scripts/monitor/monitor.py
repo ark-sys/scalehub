@@ -88,7 +88,8 @@ class MQTTClient(threading.Thread):
 
                     # Deserialize payload
                     configs = [
-                        Config(self.__log, json.loads(config)) for config in configs
+                        Config(self.__log, json.loads(config))
+                        for config in json.loads(configs)
                     ]
 
                     # Set config in FSM
