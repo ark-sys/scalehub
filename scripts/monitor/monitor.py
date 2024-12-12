@@ -87,7 +87,9 @@ class MQTTClient(threading.Thread):
                     self.__log.info(f"[CLIENT] Received config: {configs}")
 
                     # Deserialize payload
-                    configs = [Config(self.__log, config) for config in configs]
+                    configs = [
+                        Config(self.__log, json.loads(config)) for config in configs
+                    ]
 
                     # Set config in FSM
                     self.current_fsm.set_configs(configs)
