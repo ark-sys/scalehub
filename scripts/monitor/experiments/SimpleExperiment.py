@@ -3,9 +3,7 @@ from time import sleep
 
 from scripts.monitor.experiments.Experiment import Experiment
 from scripts.monitor.experiments.Scaling import Scaling
-from scripts.src.data.DataEval import DataEval
-from scripts.src.data.DataExporter import DataExporter
-from scripts.src.data.GroupedDataEval import GroupedDataEval
+from scripts.src.data.DataManager import DataManager
 from scripts.utils.Defaults import DefaultKeys as Key
 from scripts.utils.Tools import FolderManager
 
@@ -59,11 +57,6 @@ class SimpleExperiment(Experiment):
                     content = file.read()
                     file.seek(0, 0)
                     file.write(f"Experiment run {i + 1}\n\n" + content)
-                data_exp: DataExporter = DataExporter(log=self.__log, exp_path=exp_path)
-                data_exp.export()
-                data_eval: DataEval = DataEval(log=self.__log, exp_path=exp_path)
-                data_eval.eval_mean_stderr()
-
             # Get time diff since first start_ts and now
             time_diff = int(datetime.now().timestamp()) - self.timestamps[0][0]
             labels = "app=experiment-monitor"
@@ -74,11 +67,9 @@ class SimpleExperiment(Experiment):
             with open(f"{multi_run_folder_path}/monitor_logs.txt", "w") as file:
                 file.write(monitor_logs)
 
-            if len(self.timestamps) > 1:
-                data_eval_g: GroupedDataEval = GroupedDataEval(
-                    log=self.__log, multi_run_path=multi_run_folder_path
-                )
-                data_eval_g.generate_box_for_means(multi_run_folder_path)
+            # Export data
+            dm: DataManager = DataManager(self.__log, self.config)
+            dm.export(multi_run_folder_path)
         else:
             self.__log.error("No timestamps found.")
 

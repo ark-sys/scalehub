@@ -55,7 +55,7 @@ complete -c shub -n "__fish_seen_subcommand_from deploy delete reload" -a '(__fi
 
 # Autocompletion for 'export' command
 # This function returns the names of the directories in SHUB_EXPERIMENTS_DATA_PATH
-function __fish_shub_export_complete
+    function __fish_shub_export_complete
     for dir in $SHUB_EXPERIMENTS_DATA_PATH/*
         if test -d $dir
             set dirname (basename $dir)
@@ -68,6 +68,9 @@ function __fish_shub_export_complete
                         set subdirname (basename $subdir)
                         # If the subdirectory name is a number, echo it with the parent directory name
                         if string match -q -r '^[0-9]+$' $subdirname
+                            echo $dirname/$subdirname
+                        end
+                        if string match -q -r '^multi_run_[0-9]+$' $subdirname
                             echo $dirname/$subdirname
                         end
                     end

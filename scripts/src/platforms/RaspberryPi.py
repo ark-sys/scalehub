@@ -1,7 +1,7 @@
 from ansible.inventory.manager import InventoryManager
 from ansible.parsing.dataloader import DataLoader
 
-from scripts.src.Platform import Platform
+from scripts.src.platforms.Platform import Platform
 from scripts.utils.Logger import Logger
 
 
