@@ -94,8 +94,8 @@ def reload(playbook, config: Config):
     deploy(playbook, config)
 
 
-def experiment(action, config: Config):
-    c: Client = Client(log, config)
+def experiment(action, configs: list):
+    c: Client = Client(log, configs)
     match action:
         case "start":
             c.start()
@@ -143,11 +143,12 @@ def main():
 
     parser.add_argument(
         "-c",
-        "--conf",
-        dest="conf_file",
+        "--confs",
+        dest="conf_files",
         action="store",
         default=Config.RUNTIME_PATH,
-        help="Specify a custom path for the configuration used for either provisioning or experiment running.",
+        help="Specify a custom path for the configuration used for either provisioning or experiment running.\n"
+        "Separate multiple paths with a comma. e.g. -c /app/conf/experiment/exp1.yaml,/app/conf/experiment/exp2.yaml",
     )
     # Provision command
     subparsers.add_parser(
@@ -203,35 +204,57 @@ def main():
     # Parse command line arguments
     args = parser.parse_args()
 
-    # TODO simplify this
     # Parse configuration file values
-    configuration_file = args.conf_file
-    match args.command:
-        case "destroy":
-            config = Config(log, Config.RUNTIME_PATH)
-        case "export":
-            config = Config(log, Config.DEFAULTS_PATH)
-        case _:
-            config = Config(log, configuration_file)
+    configuration_files = args.conf_files
+
+    # Check if we have one path or multiple paths separated by comma
+    if "," in configuration_files:
+        configuration_files = configuration_files.split(",")
+    else:
+        configuration_files = [configuration_files]
+
+    # Load configs
+    configs = [
+        Config(log, configuration_file) for configuration_file in configuration_files
+    ]
 
     match args.command:
         case "destroy":
+            config = Config(log, Config.RUNTIME_PATH)
             destroy(config)
         case "provision":
+            config = Config(log, configs[0])
             provision(config)
         case "deploy":
+            if len(configs) > 1:
+                log.warning(
+                    "Multiple configuration files are not supported for 'deploy' command. Using the first one."
+                )
+            config = Config(log, configs[0])
             deploy(args.playbook, config)
         case "delete":
+            if len(configs) > 1:
+                log.warning(
+                    "Multiple configuration files are not supported for 'delete' command. Using the first one."
+                )
+            config = Config(log, configs[0])
             delete(args.playbook, config)
         case "reload":
+            if len(configs) > 1:
+                log.warning(
+                    "Multiple configuration files are not supported for 'reload' command. Using the first one."
+                )
+            config = Config(log, configs[0])
             reload(args.playbook, config)
         case "experiment":
-            experiment(args.action, config)
+            experiment(args.action, configs)
         case "tokens":
             tokens()
         case "sync":
+            config = Config(log, Config.DEFAULTS_PATH)
             sync_experiment_data(config)
         case "export":
+            config = Config(log, Config.DEFAULTS_PATH)
             date = args.date
             export(config, date)
         case _:
