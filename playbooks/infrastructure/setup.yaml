@@ -1,7 +1,7 @@
 ---
 # Apply grid5000 specific configuration
 - name: Apply grid5000 specific configuration
-  hosts: grid5000
+  hosts: G5k
   gather_facts: false
   become: true
   roles:
@@ -9,7 +9,7 @@
 
 # Apply vm_on_grid5000 specific configuration
 - name: Apply vm_on_grid5000 specific configuration
-  hosts: vm_grid5000
+  hosts: VMonG5k
   gather_facts: true
   become: true
   roles:

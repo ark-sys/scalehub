@@ -3,8 +3,8 @@
   block:
     - name: Check if all groups are defined in the hosts file
       set_fact:
-        vm_grid5000_exists: "{{ 'vm_grid5000' in groups }}"
-        grid5000_exists: "{{ 'grid5000' in groups }}"
+        vm_grid5000_exists: "{{ 'VMonG5k' in groups }}"
+        grid5000_exists: "{{ 'G5k' in groups }}"
         pico_exists: "{{ 'pico' in groups }}"
 
     - name: Apply consumer role label to consumer nodes
@@ -103,7 +103,7 @@
               node-role.kubernetes.io/grid5000: ""
               node-role.kubernetes.io/tnode: "grid5000"
         state: present
-      loop: "{{ groups['grid5000'] }}"
+      loop: "{{ groups['G5k'] }}"
       when: grid5000_exists
 
 
@@ -119,7 +119,7 @@
               node-role.kubernetes.io/vm_grid5000: "{{ node_info[item].size }}"
               node-role.kubernetes.io/tnode: "vm_grid5000"
         state: present
-      loop: "{{ groups['vm_grid5000'] }}"
+      loop: "{{ groups['VMonG5k'] }}"
       when: vm_grid5000_exists
 
     - name: Apply pico role label to pico nodes2

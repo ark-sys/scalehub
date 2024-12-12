@@ -134,7 +134,10 @@ class EnosPlatform(Platform):
 
     def post_setup(self):
         if self.platform_type == "Grid5000":
-            self.provider.fw_create(proto="all")
+            try:
+                self.provider.fw_create(proto="all")
+            except Exception as e:
+                self.__log.warning(f"Error while creating firewall rules: {e}")
 
     def get_provider(self):
         return self.provider
