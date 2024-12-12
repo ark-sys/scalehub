@@ -82,7 +82,31 @@ class ProvisionManager:
         if self.enos_providers:
             self.__log.info("Found Enos platforms. Provisioning...")
             providers = en.Providers(self.enos_providers)
-            roles, networks = providers.init()
+
+            # Check if start_time is set on any of the platforms, if multiple platforms have start_time set, select the earliest one
+            start_time = min(
+                (
+                    platform.start_time
+                    for platform in self.platforms
+                    if isinstance(platform, EnosPlatform) and platform.start_time
+                ),
+                default=None,
+            )
+
+            import datetime
+
+            if start_time and start_time != "now":
+                now = datetime.datetime.now()
+                start_time = datetime.datetime.strptime(start_time, "%H:%M:%S")
+                start_time = now.replace(
+                    hour=start_time.hour,
+                    minute=start_time.minute,
+                    second=start_time.second,
+                )
+                start_time = int(start_time.timestamp())
+            else:
+                start_time = None
+            roles, networks = providers.init(start_time=start_time)
             self.enos_inventory = self.__generate_enos_inventory(roles)
 
             for platform in self.platforms:
@@ -117,8 +141,8 @@ class ProvisionManager:
         # Save final inventory to a file
         inventory_path = os.path.join(self.__config.get_str(Key.Scalehub.inventory))
 
-        with open(inventory_path, "w") as f:
-            config_parser.write(f)
+        with open(inventory_path, "w") as file:
+            config_parser.write(file)
 
         self.__log.info(f"Inventory file written to {inventory_path}")
 
