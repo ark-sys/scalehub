@@ -65,6 +65,12 @@ class DataManager:
         self.export_experiment(single_run_folder)
         self.evaluate_experiment(single_run_folder)
 
+    def __generate_grouped_data_eval(self, multi_run_folder: str):
+        grouped_data_eval = GroupedDataEval(
+            log=self.__log, multi_run_path=multi_run_folder
+        )
+        grouped_data_eval.generate_box_for_means(multi_run_folder)
+
     def export_experiment(self, exp_path: str):
         data_exp = DataExporter(log=self.__log, exp_path=exp_path)
         data_exp.export()
@@ -74,9 +80,3 @@ class DataManager:
         data_eval.eval_mean_stderr()
         data_eval.eval_summary_plot()
         data_eval.eval_experiment_plot()
-
-    def __generate_grouped_data_eval(self, multi_run_folder: str):
-        grouped_data_eval = GroupedDataEval(
-            log=self.__log, multi_run_path=multi_run_folder
-        )
-        grouped_data_eval.generate_box_for_means(multi_run_folder)
