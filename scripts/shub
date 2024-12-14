@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import os
 from time import sleep
 
 from scripts.src.Client import Client
@@ -212,11 +213,16 @@ def main():
         configuration_files = configuration_files.split(",")
     else:
         configuration_files = [configuration_files]
-
-    # Load configs
-    configs = [
-        Config(log, configuration_file) for configuration_file in configuration_files
-    ]
+    configs = []
+    for conf_path in configuration_files:
+        if os.path.exists(conf_path):
+            try:
+                config = Config(log, conf_path)
+                configs.append(config)
+            except Exception as e:
+                log.error(f"Error while parsing configuration file: {e}")
+        else:
+            log.error(f"Configuration file {conf_path} does not exist.")
 
     match args.command:
         case "destroy":

@@ -10,17 +10,18 @@
       set_fact:
         vm_host_inventory: "{{ groups['VMonG5k'] | map('extract', hostvars) | map(attribute='grid_node') | list | unique }}"
 
-    - name: Enable IPv6 on each host node
-      command: dhclient -6 br0
-      delegate_to: "{{ item }}"
-      with_items: "{{ vm_host_inventory }}"
-
     - name: Enable IPv6 forwarding on each host node
       ansible.posix.sysctl:
         name: net.ipv6.conf.all.forwarding
         value: 1
         sysctl_set: true
         state: present
+      delegate_to: "{{ item }}"
+      with_items: "{{ vm_host_inventory }}"
+
+    - name: Enable IPv6 on each host node
+      command: dhclient -6 br0
+      become: true
       delegate_to: "{{ item }}"
       with_items: "{{ vm_host_inventory }}"
 
@@ -35,6 +36,7 @@
       set_fact:
         host_ipv6_dict: "{{ host_ipv6_dict | default({}) | combine({item.item: item.stdout}) }}"
       with_items: "{{ host_ipv6.results }}"
+
 # Disable all firewall rules for IPv6 on each node hosting VMs (https://www.grid5000.fr/w/Reconfigurable_Firewall)
 - name: Disable all firewall rules
   run_once: true

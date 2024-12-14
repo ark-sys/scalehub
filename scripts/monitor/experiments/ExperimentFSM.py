@@ -68,7 +68,10 @@ class ExperimentFSM(LockedMachine):
         return self.configs is not None and len(self.configs) > 0
 
     def set_configs(self, configs):
-        self.__log.info("[FSM] Setting configs")
+        self.__log.info(
+            f"[FSM] Setting configs. Found {len(configs)} configs in sequence."
+        )
+
         self.configs = configs
 
     def set_update_state_callback(self, callback):

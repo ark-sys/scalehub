@@ -103,19 +103,21 @@ class SimpleExperiment(Experiment):
         for run in range(self.runs):
             self.__log.info(f"[SIMPLE_E] Starting run {run + 1}")
             try:
-
+                # Get start timestamp of this run
                 start_ts = int(datetime.now().timestamp())
+                # Execute single run
                 ret = self._single_run()
+
                 if ret == 1:
+                    # Run was stopped
                     self.__log.info(f"[SIMPLE_E] Exiting run {run + 1}")
                     return 1
+
+                # Get end timestamp of this run
                 end_ts = int(datetime.now().timestamp())
 
                 # Save timestamps
                 self.timestamps.append((start_ts, end_ts))
-                # # Cleanup after each run
-                # self.cleaning()
-
                 self.__log.info("[SIMPLE_E] Sleeping for 15 seconds before next run.")
                 sleep(15)
                 self.__log.info(

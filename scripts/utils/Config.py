@@ -10,12 +10,8 @@ from .Logger import Logger
 
 
 class Config:
-    __config = {}
     RUNTIME_PATH = "/app/conf/runtime/runtime.ini"
     DEFAULTS_PATH = "/app/conf/defaults.ini"
-
-    def __str__(self):
-        return self.to_json()
 
     def get(self, key) -> any:
         return self.__config.get(key)
@@ -38,11 +34,11 @@ class Config:
     def get_list_int(self, key):
         return [int(value) for value in self.get_str(key).split(",")]
 
-    def __init__(self, log: Logger, _param):
+    def __init__(self, log: Logger, _param: str | dict):
+        self.__config = {}
         self.__log = log
-        self.cp = cp.ConfigParser()
+        self.__cp = cp.ConfigParser()
         self.__init_defaults()
-
         if isinstance(_param, dict):
             self.__config = _param
         elif isinstance(_param, str):
@@ -53,8 +49,8 @@ class Config:
                 exit(1)
             else:
                 if _param.endswith(".ini"):
-                    self.cp.read(_param)
-                    sections_in_file = set(self.cp.sections()) - {"scalehub"}
+                    self.__cp.read(_param)
+                    sections_in_file = set(self.__cp.sections()) - {"scalehub"}
                     if any(
                         section.startswith("experiment") for section in sections_in_file
                     ):
@@ -77,24 +73,24 @@ class Config:
             exit(1)
 
     def __init_defaults(self):
-        self.cp.read(self.DEFAULTS_PATH)
-        if self.cp.has_section("scalehub"):
-            for key in self.cp["scalehub"]:
+        self.__cp.read(self.DEFAULTS_PATH)
+        if self.__cp.has_section("scalehub"):
+            for key in self.__cp["scalehub"]:
                 dict_key = f"scalehub.{key}"
-                self.__config[dict_key] = self.cp["scalehub"][key]
+                self.__config[dict_key] = self.__cp["scalehub"][key]
 
     def create_runtime_file(self):
         with open(self.RUNTIME_PATH, "w") as f:
-            self.cp.write(f)
+            self.__cp.write(f)
 
     def delete_runtime_file(self):
         if os.path.exists(self.RUNTIME_PATH):
             os.remove(self.RUNTIME_PATH)
 
     def __validate_and_read_experiment(self, conf_path: str):
-        self.cp.read(conf_path)
+        self.__cp.read(conf_path)
         section_base = "experiment"
-        experiment_type = self.cp.get(section_base, "type", fallback=None)
+        experiment_type = self.__cp.get(section_base, "type", fallback=None)
 
         for name, cls in getmembers(Key.Experiment, isclass):
             if (
@@ -106,7 +102,7 @@ class Config:
             if name == "Transscale" and experiment_type != "transscale":
                 continue
             section = f"{section_base}.{name.lower()}"
-            if not self.cp.has_section(section):
+            if not self.__cp.has_section(section):
                 self.__log.error(
                     f"[CONF] Section [{section}] is missing in configuration file {conf_path}"
                 )
@@ -117,31 +113,31 @@ class Config:
                 if not key.startswith("__") and not key.endswith("__")
             ]
             for key in keys:
-                if not self.cp.has_option(section, key):
+                if not self.__cp.has_option(section, key):
                     self.__log.error(
                         f"[CONF] Key [{key}] is missing in section [{section}] in configuration file {conf_path}"
                     )
                     exit(1)
-            for key in self.cp[section]:
+            for key in self.__cp[section]:
                 dict_key = f"{section}.{key}"
-                self.__config[dict_key] = self.cp[section][key]
+                self.__config[dict_key] = self.__cp[section][key]
 
         # Load keys for the base experiment section
-        for key in self.cp[section_base]:
+        for key in self.__cp[section_base]:
             dict_key = f"{section_base}.{key}"
-            self.__config[dict_key] = self.cp[section_base][key]
+            self.__config[dict_key] = self.__cp[section_base][key]
 
         extra_sections = ["scaling", "generators"]
         for extra_section in extra_sections:
             section = f"{section_base}.{extra_section}"
-            if not self.cp.has_section(section):
+            if not self.__cp.has_section(section):
                 self.__log.error(
                     f"[CONF] Section [{section}] is missing in configuration file {conf_path}"
                 )
                 exit(1)
-            for key in self.cp[section]:
+            for key in self.__cp[section]:
                 dict_key = f"{section}.{key}"
-                self.__config[dict_key] = self.cp[section][key]
+                self.__config[dict_key] = self.__cp[section][key]
 
         self.__config[
             Key.Experiment.Generators.generators
@@ -155,19 +151,19 @@ class Config:
         )
 
     def __validate_and_read_platforms(self, conf_path: str):
-        self.cp.read(conf_path)
-        platform_str = self.cp[Key.Platforms.platforms].values()
+        self.__cp.read(conf_path)
+        platform_str = self.__cp[Key.Platforms.platforms].values()
         platforms = []
         for value in platform_str:
             for platform_name in value.split(","):
                 name = platform_name.strip()
                 platform_section = f"platforms.{name}"
-                if not self.cp.has_section(platform_section):
+                if not self.__cp.has_section(platform_section):
                     self.__log.error(
                         f"[CONF] Section [{platform_section}] is missing in configuration file {conf_path}"
                     )
                     exit(1)
-                type = self.cp[platform_section]["type"]
+                type = self.__cp[platform_section]["type"]
                 platform = {"name": name, "type": type}
 
                 base_keys = [
@@ -200,12 +196,12 @@ class Config:
                         extra_keys = ["kubernetes_type"]
                 keys = base_keys + extra_keys
                 for key in keys:
-                    if not self.cp.has_option(platform_section, key):
+                    if not self.__cp.has_option(platform_section, key):
                         self.__log.error(
                             f"[CONF] Key [{key}] is missing in section [{platform_section}] in configuration file {conf_path}"
                         )
                         exit(1)
-                    platform[key] = self.cp[platform_section][key]
+                    platform[key] = self.__cp[platform_section][key]
                     if key in [
                         "producers",
                         "consumers",
@@ -217,13 +213,13 @@ class Config:
                     elif key == "control":
                         platform[key] = platform[key].lower() == "true"
                 platforms.append(platform)
-                for key in self.cp[platform_section]:
+                for key in self.__cp[platform_section]:
                     dict_key = f"{platform_section}.{key}"
-                    self.__config[dict_key] = self.cp[platform_section][key]
+                    self.__config[dict_key] = self.__cp[platform_section][key]
         self.__config[Key.Platforms.platforms] = platforms
 
     def __parse_load_generators(self):
-        load_generators_str = self.cp[Key.Experiment.Generators.generators].values()
+        load_generators_str = self.__cp[Key.Experiment.Generators.generators].values()
         load_generators = []
         for value in load_generators_str:
             for generator_name in value.split(","):
@@ -231,12 +227,12 @@ class Config:
                 generator_section = f"experiment.generators.{name}"
                 generator = {
                     "name": name,
-                    "type": self.cp[generator_section]["type"],
-                    "topic": self.cp[generator_section]["topic"],
-                    "num_sensors": int(self.cp[generator_section]["num_sensors"]),
-                    "interval_ms": int(self.cp[generator_section]["interval_ms"]),
-                    "replicas": int(self.cp[generator_section]["replicas"]),
-                    "value": int(self.cp[generator_section]["value"]),
+                    "type": self.__cp[generator_section]["type"],
+                    "topic": self.__cp[generator_section]["topic"],
+                    "num_sensors": int(self.__cp[generator_section]["num_sensors"]),
+                    "interval_ms": int(self.__cp[generator_section]["interval_ms"]),
+                    "replicas": int(self.__cp[generator_section]["replicas"]),
+                    "value": int(self.__cp[generator_section]["value"]),
                 }
                 load_generators.append(generator)
         return load_generators
