@@ -7,3 +7,4 @@ transitions
 seaborn
 networkx
 ansible-runner==2.4.0
+ansible

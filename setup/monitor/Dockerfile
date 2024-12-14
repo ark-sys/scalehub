@@ -1,5 +1,8 @@
 FROM python:3.12-slim
 
+# Install ssh client for ansible
+RUN apt-get update && apt-get install -y ssh && apt-get clean && rm -rf /var/lib/apt/lists/*
+
 # Install dependencies
 RUN --mount=type=bind,source=setup/monitor/requirements.txt,target=requirements.txt pip install -r requirements.txt
 
