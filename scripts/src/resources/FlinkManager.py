@@ -14,6 +14,33 @@ class FlinkManager:
 
         self.taskmanager_types = ["s", "m", "l", "xl", "xxl"]
 
+        self.flink_host = "flink-jobmanager.flink.svc.cluster.local"
+        self.flink_port = 8081
+
+    def __get_overview(self):
+        try:
+            import requests
+
+            r = requests.get(f"http://{self.flink_host}:{self.flink_port}/overview")
+            if r.status_code == 200:
+                return r.json()
+            return None
+        except Exception as e:
+            self.__log.error(f"[FLK_MGR] Error while getting overview: {e}")
+            return None
+
+    def get_total_slots(self):
+        overview = self.__get_overview()
+        if overview is not None:
+            return overview["slots-total"]
+        return None
+
+    def get_total_taskmanagers(self):
+        overview = self.__get_overview()
+        if overview is not None:
+            return overview["taskmanagers"]
+        return None
+
     def reset_taskmanagers(self):
         for type in self.taskmanager_types:
             self.k.statefulset_manager.scale_statefulset(
@@ -23,6 +50,11 @@ class FlinkManager:
 
         # Get current count of taskmanagers
         replicas = self.get_count_of_taskmanagers()
+
+        # Wait until all taskmanagers are terminated
+        while sum(replicas.values()) > 0:
+            sleep(5)
+            replicas = self.get_count_of_taskmanagers()
 
         self.__log.info(f"[STS_MGR] Current TaskManager replicas: {replicas}")
 

@@ -17,15 +17,6 @@ spec:
         component: taskmanager
         size: xxl
     spec:
-      #     Force scheduling of one taskmanager per node
-      #      affinity:
-      #        podAntiAffinity:
-      #          requiredDuringSchedulingIgnoredDuringExecution:
-      #            - topologyKey: kubernetes.io/hostname
-      #              labelSelector:
-      #                matchLabels:
-      #                  app: flink
-      #                  component: taskmanager
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -45,8 +36,8 @@ spec:
           image: "{{image}}:{{tag}}"
           resources:
             limits:
-              memory: 64Gi
-              cpu: 31000m
+              memory: 128Gi
+              cpu: 52000m
           args: [ "taskmanager" ]
           ports:
             - containerPort: 6122
@@ -70,7 +61,7 @@ spec:
           configMap:
             name: flink-config
             items:
-              - key: flink-conf-taskmanager-xl.yaml
+              - key: flink-conf-taskmanager-xxl.yaml
                 path: flink-conf.yaml
               - key: log4j-console.properties
                 path: log4j-console.properties
@@ -99,15 +90,6 @@ spec:
         component: taskmanager
         size: xl
     spec:
-      #     Force scheduling of one taskmanager per node
-      #      affinity:
-      #        podAntiAffinity:
-      #          requiredDuringSchedulingIgnoredDuringExecution:
-      #            - topologyKey: kubernetes.io/hostname
-      #              labelSelector:
-      #                matchLabels:
-      #                  app: flink
-      #                  component: taskmanager
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -120,7 +102,6 @@ spec:
       nodeSelector:
         node-role.kubernetes.io/worker: consumer
         node-role.kubernetes.io/scaling: SCHEDULABLE
-      #        node-role.kubernetes.io/tnode: grid5000
       imagePullSecrets:
         - name: gitlab-scalehub
       containers:
@@ -129,7 +110,7 @@ spec:
           resources:
             limits:
               memory: 64Gi
-              cpu: 15000m
+              cpu: 16000m
           args: [ "taskmanager" ]
           ports:
             - containerPort: 6122
@@ -181,15 +162,6 @@ spec:
         component: taskmanager
         size: l
     spec:
-      #     Force scheduling of one taskmanager per node
-      #      affinity:
-      #        podAntiAffinity:
-      #          requiredDuringSchedulingIgnoredDuringExecution:
-      #            - topologyKey: kubernetes.io/hostname
-      #              labelSelector:
-      #                matchLabels:
-      #                  app: flink
-      #                  component: taskmanager
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -202,7 +174,6 @@ spec:
       nodeSelector:
         node-role.kubernetes.io/worker: consumer
         node-role.kubernetes.io/scaling: SCHEDULABLE
-      #        node-role.kubernetes.io/tnode: grid5000
       imagePullSecrets:
         - name: gitlab-scalehub
       containers:
@@ -211,7 +182,7 @@ spec:
           resources:
             limits:
               memory: 32Gi
-              cpu: 4000m
+              cpu: 8000m
           args: [ "taskmanager" ]
           ports:
             - containerPort: 6122
@@ -263,15 +234,6 @@ spec:
         component: taskmanager
         size: m
     spec:
-      #     Force scheduling of one taskmanager per node
-      #      affinity:
-      #        podAntiAffinity:
-      #          requiredDuringSchedulingIgnoredDuringExecution:
-      #            - topologyKey: kubernetes.io/hostname
-      #              labelSelector:
-      #                matchLabels:
-      #                  app: flink
-      #                  component: taskmanager
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -284,7 +246,6 @@ spec:
       nodeSelector:
         node-role.kubernetes.io/worker: consumer
         node-role.kubernetes.io/scaling: SCHEDULABLE
-      #        node-role.kubernetes.io/tnode: grid5000
       imagePullSecrets:
         - name: gitlab-scalehub
       containers:
@@ -292,7 +253,7 @@ spec:
           image: "{{image}}:{{tag}}"
           resources:
             limits:
-              memory: 8Gi
+              memory: 16Gi
               cpu: 2000m
           args: [ "taskmanager" ]
           ports:
@@ -354,19 +315,9 @@ spec:
                     operator: NotIn
                     values:
                       - FULL
-      #     Force scheduling of one taskmanager per node
-      #      affinity:
-      #        podAntiAffinity:
-      #          requiredDuringSchedulingIgnoredDuringExecution:
-      #            - topologyKey: kubernetes.io/hostname
-      #              labelSelector:
-      #                matchLabels:
-      #                  app: flink
-      #                  component: taskmanager
       nodeSelector:
         node-role.kubernetes.io/worker: consumer
         node-role.kubernetes.io/scaling: SCHEDULABLE
-      #        node-role.kubernetes.io/tnode: grid5000
       imagePullSecrets:
         - name: gitlab-scalehub
       containers:
@@ -374,7 +325,7 @@ spec:
           image: "{{image}}:{{tag}}"
           resources:
             limits:
-              memory: 3Gi
+              memory: 4Gi
               cpu: 1000m
           args: [ "taskmanager" ]
           ports:

@@ -50,6 +50,33 @@ data:
     execution.checkpointing.aligned-checkpoint-timeout: 10 s
     execution.checkpointing.checkpoints-after-tasks-finish.enabled: true
     cluster.fine-grained-resource-management.enabled: true
+  flink-conf-taskmanager-xxl.yaml: |+
+    akka.framesize: 104857600b
+    blob.server.port: 6124
+    rest.profiling.enabled: true
+    
+    jobmanager.rpc.address: flink-jobmanager.flink.svc.cluster.local
+    jobmanager.rpc.port: 6123
+    queryable-state.proxy.ports: 6125
+    
+    taskmanager.rpc.port: 6122
+    taskmanager.numberOfTaskSlots: 52
+    taskmanager.memory.process.size: 128Gb
+    taskmanager.memory.managed.fraction: 0.4
+    taskmanager.network.memory.buffer-debloat.enabled: true
+    taskmanager.network.detailed-metrics: true
+    
+    metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
+    metrics.reporter.prom.interval: 5 SECONDS
+    metrics.reporter.prom.port: 9249
+    metrics.fetcher.update-interval: 5000
+    metrics.latency.granularity: subtask
+    state.checkpoints.dir: s3://flink-bucket/checkpoints
+    state.savepoints.dir: s3://flink-bucket/savepoints
+    s3.path.style.access: true
+    s3.endpoint: http://minio.minio-operator.svc.cluster.local
+    s3.access-key: minio
+    s3.secret-key: minio123
 
   flink-conf-taskmanager-xl.yaml: |+
     akka.framesize: 104857600b
@@ -61,7 +88,7 @@ data:
     queryable-state.proxy.ports: 6125
     
     taskmanager.rpc.port: 6122
-    taskmanager.numberOfTaskSlots: 31
+    taskmanager.numberOfTaskSlots: 16
     taskmanager.memory.process.size: 64Gb
     taskmanager.memory.managed.fraction: 0.4
     taskmanager.network.memory.buffer-debloat.enabled: true
@@ -107,7 +134,7 @@ data:
     s3.access-key: minio
     s3.secret-key: minio123
 
-  flink-conf-taskmanager-s.yaml: |+
+  flink-conf-taskmanager-m.yaml: |+
     akka.framesize: 104857600b
     blob.server.port: 6124
     rest.profiling.enabled: true
@@ -118,7 +145,7 @@ data:
     
     taskmanager.rpc.port: 6122
     taskmanager.numberOfTaskSlots: 1
-    taskmanager.memory.process.size: 3Gb
+    taskmanager.memory.process.size: 16Gb
     taskmanager.memory.managed.fraction: 0.4
     taskmanager.network.memory.buffer-debloat.enabled: true
     taskmanager.network.detailed-metrics: true
@@ -135,7 +162,7 @@ data:
     s3.access-key: minio
     s3.secret-key: minio123
 
-  flink-conf-taskmanager-m.yaml: |+
+  flink-conf-taskmanager-s.yaml: |+
     akka.framesize: 104857600b
     blob.server.port: 6124
     rest.profiling.enabled: true
@@ -146,7 +173,7 @@ data:
     
     taskmanager.rpc.port: 6122
     taskmanager.numberOfTaskSlots: 1
-    taskmanager.memory.process.size: 8Gb
+    taskmanager.memory.process.size: 4Gb
     taskmanager.memory.managed.fraction: 0.4
     taskmanager.network.memory.buffer-debloat.enabled: true
     taskmanager.network.detailed-metrics: true
@@ -162,55 +189,6 @@ data:
     s3.endpoint: http://minio.minio-operator.svc.cluster.local
     s3.access-key: minio
     s3.secret-key: minio123
-  #  flink-conf-pico.yaml: |+
-  #    #scheduler-mode: reactive
-  #    web.upload.dir: /tmp
-  #    io.tmp.dirs: /tmp
-  #    rest.profiling.enabled: true
-  #
-  #    akka.framesize: 104857600b
-  #    blob.server.port: 6124
-  #
-  #    jobmanager.rpc.address: flink-jobmanager
-  #    jobmanager.rpc.port: 6123
-  #    queryable-state.proxy.ports: 6125
-  #
-  #    taskmanager.rpc.port: 6122
-  #    taskmanager.numberOfTaskSlots: 1
-  #    taskmanager.memory.process.size: 4Gb
-  #    taskmanager.memory.managed.fraction: 0.4
-  #    taskmanager.network.memory.buffer-debloat.enabled: true
-  #    taskmanager.network.detailed-metrics: true
-  #
-  #    metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
-  #    metrics.reporter.prom.interval: 5 SECONDS
-  #    metrics.reporter.prom.port: 9249
-  #    metrics.fetcher.update-interval: 5000
-  #    metrics.latency.granularity: subtask
-  #
-  #    state.backend.latency-track.keyed-state-enabled: true
-  #    state.backend.type: rocksdb
-  #    #state.backend.incremental: true
-  #
-  #    state.backend.rocksdb.metrics.estimate-num-keys: true
-  #    state.backend.rocksdb.memory.managed: true
-  #    state.backend.rocksdb.async-threads: 4
-  #    state.backend.rocksdb.localdir: /mnt/data/tmp
-  #    state.checkpoint-storage: filesystem
-  #    state.checkpoints.dir: s3://flink-bucket/checkpoints
-  #    state.savepoints.dir: s3://flink-bucket/savepoints
-  #    s3.path.style.access: true
-  #    s3.endpoint: http://minio.minio-operator.svc.cluster.local
-  #    s3.access-key: minio
-  #    s3.secret-key: minio123
-  #
-  #    # gives metrics about inbound/outbound network queue lengths
-  #    table.exec.state.ttl: 10 ms
-  #    execution.checkpointing.mode: EXACTLY_ONCE
-  #    execution.checkpointing.unaligned.enabled: true
-  #    execution.checkpointing.aligned-checkpoint-timeout: 10 s
-  #    execution.checkpointing.checkpoints-after-tasks-finish.enabled: true
-  #    cluster.fine-grained-resource-management.enabled: true
 
   log4j-console.properties: |+
     # This affects logging for both user code and Flink

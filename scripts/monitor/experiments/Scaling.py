@@ -10,17 +10,14 @@ from scripts.utils.Logger import Logger
 class Scaling:
     def __init__(self, log: Logger, config: Config):
         self.__log = log
-        self.config = config
         self.k = KubernetesManager(log)
         self.f = FlinkManager(log, config)
         # Load strategy from configuration
-        self.steps = self.config.get(Key.Experiment.Scaling.steps)
-        self.interval_scaling_s = self.config.get_int(
+        self.steps = config.get(Key.Experiment.Scaling.steps)
+        self.interval_scaling_s = config.get_int(
             Key.Experiment.Scaling.interval_scaling_s
         )
-        self.max_parallelism = self.config.get_int(
-            Key.Experiment.Scaling.max_parallelism
-        )
+        self.max_parallelism = config.get_int(Key.Experiment.Scaling.max_parallelism)
 
         # Stop event
         self.stopped = None
@@ -29,10 +26,9 @@ class Scaling:
     def set_stopped_callback(self, stopped):
         self.stopped = stopped
 
-    def _wait_interval(self, extra_time=0):
+    def __wait_interval(self, extra_time=0):
         wait_time = self.interval_scaling_s + extra_time
         self.__log.info(f"[SCALING] Waiting for {wait_time} seconds")
-        # sleep(self.interval_scaling_s)
         # sleep unless stopped
         for i in range(wait_time):
             if self.stopped is not None and self.stopped():
@@ -41,7 +37,7 @@ class Scaling:
             sleep(1)
         return 0
 
-    def scale_and_wait(self, tm_name, replicas):
+    def __scale_and_wait(self, tm_name, replicas):
         self.__log.info(
             f"[SCALING] ************ Scaling up {tm_name} to {replicas} ************"
         )
@@ -54,12 +50,12 @@ class Scaling:
         else:
             if tm_name == "flink-taskmanager-s":
                 # Small may take some time to fully startup, especially for Flink
-                return self._wait_interval(extra_time=30)
+                return self.__wait_interval(extra_time=30)
             else:
-                return self._wait_interval()
+                return self.__wait_interval()
 
     # Add replicas linearly
-    def scale_operator_linear(self, number, tm_type):
+    def __scale_operator_linear(self, number, tm_type):
         # Get the name of the stateful set to scale
         tm_name = f"flink-taskmanager-{tm_type}"
 
@@ -71,12 +67,12 @@ class Scaling:
         for i in range(number):
             # Scale up stateful set
             taskmanagers_count_dict[tm_type] += 1
-            ret = self.scale_and_wait(tm_name, taskmanagers_count_dict[tm_type])
+            ret = self.__scale_and_wait(tm_name, taskmanagers_count_dict[tm_type])
             if ret == 1:
                 return 1
 
     # Add replicas exponentially
-    def scale_operator_exponential(self, number, tm_type):
+    def __scale_operator_exponential(self, number, tm_type):
         # Get the name of the stateful set to scale
         tm_name = f"flink-taskmanager-{tm_type}"
 
@@ -86,31 +82,30 @@ class Scaling:
             f"[SCALING] Current number of taskmanagers: {taskmanagers_count_dict}"
         )
 
-        def get_scaling_sequence(number):
+        def __get_scaling_sequence(seq_n):
             pascaline_sequence = [1]
             i = 1
-            while sum(pascaline_sequence) < number:
+            while sum(pascaline_sequence) < seq_n:
                 pascaline_sequence.append(2**i)
                 i += 1
-            if sum(pascaline_sequence) > number:
-                pascaline_sequence[-1] = number - sum(pascaline_sequence[:-1])
+            if sum(pascaline_sequence) > seq_n:
+                pascaline_sequence[-1] = seq_n - sum(pascaline_sequence[:-1])
             return pascaline_sequence
 
-        scaline_sequence = get_scaling_sequence(number)
+        scaline_sequence = __get_scaling_sequence(number)
         self.__log.info(f"[SCALING] Scaling sequence: {scaline_sequence}")
 
         for i in scaline_sequence:
             # Scale up stateful set
             taskmanagers_count_dict[tm_type] += i
-            ret = self.scale_and_wait(tm_name, taskmanagers_count_dict[tm_type])
+            ret = self.__scale_and_wait(tm_name, taskmanagers_count_dict[tm_type])
             if ret == 1:
                 return 1
 
     # Add _number_ replicas at once
-    def scale_operator_block(self, number, tm_type):
+    def __scale_operator_block(self, number, tm_type):
         # Get the name of the stateful set to scale
         tm_name = f"flink-taskmanager-{tm_type}"
-
         # Get current number of taskmanagers
         taskmanagers_count_dict = self.f.get_count_of_taskmanagers()
         self.__log.info(
@@ -118,31 +113,31 @@ class Scaling:
         )
         # Scale up stateful set
         taskmanagers_count_dict[tm_type] += number
-        ret = self.scale_and_wait(tm_name, taskmanagers_count_dict[tm_type])
+        ret = self.__scale_and_wait(tm_name, taskmanagers_count_dict[tm_type])
         if ret == 1:
             return 1
 
-    def scale_op(self, taskmanager):
+    def __scale_op(self, taskmanager):
         number = taskmanager["number"]
         tm_type = taskmanager["type"]
         scaling_method = taskmanager["method"]
 
         match scaling_method:
             case "linear":
-                ret = self.scale_operator_linear(number, tm_type)
+                ret = self.__scale_operator_linear(number, tm_type)
             case "exponential":
-                ret = self.scale_operator_exponential(number, tm_type)
+                ret = self.__scale_operator_exponential(number, tm_type)
             case "block":
-                ret = self.scale_operator_block(number, tm_type)
+                ret = self.__scale_operator_block(number, tm_type)
             case _:
                 self.__log.warning(
                     f"[SCALING] Scaling method {scaling_method} not supported. Defaulting to linear."
                 )
-                ret = self.scale_operator_linear(number, tm_type)
+                ret = self.__scale_operator_linear(number, tm_type)
         if ret == 1:
             return 1
 
-    def scale_step(self, step):
+    def __scale_step(self, step):
         self.__log.info(
             f"========================================= Step {step} ========================================="
         )
@@ -151,93 +146,46 @@ class Scaling:
 
         taskmanagers = self.steps[step]["taskmanager"]
         for taskmanager in taskmanagers:
-            ret = self.scale_op(taskmanager)
+            ret = self.__scale_op(taskmanager)
             if ret == 1:
                 return 1
 
-    def run(self):
-        node_name = self.setup_run()
-        if node_name == 1:
-            return 1
-
-        self.__log.info("[SCALING] First taskmanager, just waiting")
-        ret = self._wait_interval()
-        if ret == 1:
-            return 1
-        else:
-            self.__log.info("[SCALING] Scaling started.")
-            for i in range(len(self.steps)):
-                if i > 0:
-                    # Find a new node
-                    node_type = self.steps[i]["node"]
-                    if node_type == "vm_grid5000":
-                        vm_type = self.steps[i]["type"]
-                        next_node = self.k.node_manager.get_next_node(
-                            node_type, vm_type
-                        )
-                    else:
-                        next_node = self.k.node_manager.get_next_node(node_type)
-                    if next_node:
-                        self.__log.info(f"[SCALING] Next node: {next_node}")
-                        # Mark this node with schedulable
-                        node_name = next_node
-                        self.k.node_manager.mark_node_as_schedulable(node_name)
-                    else:
-                        self.__log.error("[SCALING] No more nodes available.")
-                        break
-                elif i == 0:
-                    if len(self.steps[i]["taskmanager"]) == 1:
-                        if self.steps[i]["taskmanager"][0]["number"] == 1:
-                            self.__log.info(
-                                "[SCALING] First node and first taskmanager already scaled."
-                            )
-                            self.k.node_manager.mark_node_as_full(node_name)
-                            continue
-                        else:
-                            # reduce the number of taskmanagers
-                            self.steps[i]["taskmanager"][0]["number"] -= 1
-                    else:
-                        if self.steps[i]["taskmanager"][0]["number"] == 1:
-                            self.__log.info(
-                                "[SCALING] First node and first taskmanager already scaled."
-                            )
-                            # Remove the first taskmanager
-                            self.steps[i]["taskmanager"].pop(0)
-
-                else:
-                    self.__log.warning(
-                        "[SCALING] What is happening? i can't be less than 0. Continuing."
+    def __get_scaling_node(self, step, node_name):
+        if step > 0:
+            node_type = self.steps[step]["node"]
+            vm_type = self.steps[step]["type"] if node_type == "vm_grid5000" else None
+            next_node = self.k.node_manager.get_next_node(node_type, vm_type)
+            if next_node:
+                self.__log.info(f"[SCALING] Next node: {next_node}")
+                self.k.node_manager.mark_node_as_schedulable(next_node)
+                return next_node, "pass"
+            else:
+                self.__log.error("[SCALING] No more nodes available.")
+                return None, "break"
+        elif step == 0:
+            if len(self.steps[step]["taskmanager"]) == 1:
+                if self.steps[step]["taskmanager"][0]["number"] == 1:
+                    self.__log.info(
+                        "[SCALING] First node and first taskmanager already scaled."
                     )
-                    continue
+                    self.k.node_manager.mark_node_as_full(node_name)
+                    return node_name, "continue"
+                else:
+                    self.steps[step]["taskmanager"][0]["number"] -= 1
+            else:
+                if self.steps[step]["taskmanager"][0]["number"] == 1:
+                    self.__log.info(
+                        "[SCALING] First node and first taskmanager already scaled."
+                    )
+                    self.steps[step]["taskmanager"].pop(0)
+            return node_name, "pass"
+        else:
+            self.__log.error(
+                "[SCALING] What is happening? i can't be less than 0. Continuing."
+            )
+            return node_name, "break"
 
-                current_state_taskmanagers = self.f.get_count_of_taskmanagers()
-                self.__log.info(
-                    f"[SCALING] Current statefulset taskmanagers: {current_state_taskmanagers}"
-                )
-                # Expected state at the end of step
-                expected_state_taskmanagers = self.steps[i]["taskmanager"]
-                self.__log.info(
-                    f"[SCALING] Expected statefulset taskmanagers: {expected_state_taskmanagers}"
-                )
-
-                # Scale step
-                ret = self.scale_step(i)
-                if ret == 1:
-                    self.__log.info("[SCALING] Scaling is finishing due to stop event.")
-                    return 1
-                self.__log.info(
-                    f"[SCALING] Scaling step on node {node_name} finished. Marking node as full."
-                )
-                self.k.node_manager.mark_node_as_full(node_name)
-
-                current_state_taskmanagers = self.f.get_count_of_taskmanagers()
-                self.__log.info(
-                    f"[SCALING] Current statefulset taskmanagers: {current_state_taskmanagers}"
-                )
-                sleep(5)
-        self.__log.info("[SCALING] Scaling finished.")
-
-    def setup_run(self):
+    def __setup_run(self):
         self.__log.info("[SCALING] Setting up experiment.")
         # Reset scaling labels, clean start.
         self.k.node_manager.reset_scaling_labels()
@@ -273,3 +221,65 @@ class Scaling:
             statefulset_name=tm_name, replicas=1, namespace="flink"
         )
         return first_node
+
+    def run(self):
+        node_name = self.__setup_run()
+        if node_name == 1:
+            return 1
+
+        self.__log.info("[SCALING] First taskmanager, just waiting")
+        ret = self.__wait_interval()
+        if ret == 1:
+            return 1
+        else:
+            self.__log.info("[SCALING] Scaling started.")
+            # Iterate over each step of the strategy (each step is a node)
+            for step in range(len(self.steps)):
+                node_name, action = self.__get_scaling_node(step, node_name)
+                match action:
+                    case "break":
+                        break
+                    case "continue":
+                        continue
+                    case _:
+                        pass
+                current_state_taskmanagers = self.f.get_count_of_taskmanagers()
+                self.__log.info(
+                    f"[SCALING] Current statefulset taskmanagers: {current_state_taskmanagers}"
+                )
+                current_state_slots = self.f.get_total_slots()
+                self.__log.info(
+                    f"[SCALING] Current registered slots: {current_state_slots}"
+                )
+
+                # Expected state at the end of step
+                expected_state_taskmanagers = self.steps[step]["taskmanager"]
+                self.__log.info(
+                    f"[SCALING] Expected statefulset taskmanagers: {expected_state_taskmanagers}"
+                )
+                expected_state_slots = sum(
+                    [
+                        taskmanager["number"]
+                        for taskmanager in expected_state_taskmanagers
+                    ]
+                )
+                self.__log.info(
+                    f"[SCALING] Expected registered slots: {expected_state_slots}"
+                )
+
+                # Scale step
+                ret = self.__scale_step(step)
+                if ret == 1:
+                    self.__log.info("[SCALING] Scaling is finishing due to stop event.")
+                    return 1
+                self.__log.info(
+                    f"[SCALING] Scaling step on node {node_name} finished. Marking node as full."
+                )
+                self.k.node_manager.mark_node_as_full(node_name)
+
+                current_state_taskmanagers = self.f.get_count_of_taskmanagers()
+                self.__log.info(
+                    f"[SCALING] Current statefulset taskmanagers: {current_state_taskmanagers}"
+                )
+                sleep(5)
+        self.__log.info("[SCALING] Scaling finished.")

@@ -64,9 +64,11 @@ class ProvisionManager:
             for host in roles[role]:
                 if "virtual" in host.alias:
                     host_info = f"{host.alias} ansible_ssh_host={host.address} grid_node={host.pm.alias} ansible_ssh_user=root"
+                    inventory.add_host(host_info, group="VMonG5k")
                 elif "grid5000" in host.address:
                     ipv6_alias = f"{host.address.split('.')[0]}-ipv6.{host.address.split('.', 1)[1]}"
                     host_info = f"{host.address} ipv6_alias={ipv6_alias}"
+                    inventory.add_host(host_info, group="G5k")
                 else:
                     host_info = host.alias
                 inventory.add_host(host_info, group="all")
