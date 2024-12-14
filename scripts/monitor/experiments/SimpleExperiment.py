@@ -90,6 +90,9 @@ class SimpleExperiment(Experiment):
             # delete load generators
             self.delete_load_generators()
 
+            # Reload kafka
+            self.reload_kafka()
+
             self.__log.info("[SIMPLE_E] Experiment cleaned up.")
         except Exception as e:
             self.__log.error(f"[SIMPLE_E] Error cleaning up: {e}")
