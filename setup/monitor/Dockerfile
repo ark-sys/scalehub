@@ -11,6 +11,7 @@ ADD scripts/utils /app/scripts/utils
 ADD scripts/src /app/scripts/src
 
 # Add templates
+ADD playbooks /app/playbooks
 ADD playbooks/application/roles/load_generators/templates/* /app/templates/
 ADD playbooks/application/roles/chaos/templates/* /app/templates/
 

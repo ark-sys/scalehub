@@ -4,9 +4,8 @@ import threading
 from scripts.src.resources.FlinkManager import FlinkManager
 from scripts.src.resources.KubernetesManager import KubernetesManager
 from scripts.utils.Config import Config
-from scripts.utils.Defaults import DefaultKeys as Key
 from scripts.utils.Logger import Logger
-from scripts.utils.Tools import Tools
+from scripts.utils.Tools import Tools, Playbooks
 
 
 class StoppableThread(threading.Thread):
@@ -42,6 +41,7 @@ class Experiment:
         self.k: KubernetesManager = KubernetesManager(log)
         self.t: Tools = Tools(log)
         self.f: FlinkManager = FlinkManager(log, config)
+        self.p: Playbooks = Playbooks(log)
 
         self.current_experiment_thread = None
 
@@ -75,51 +75,16 @@ class Experiment:
         except Exception as e:
             self.__log.error(f"[EXP] Error creating log file: {e}")
 
+    def reload_kafka(self):
+        self.p.reload_playbook("application/kafka", config=self.config)
+
     def run_load_generators(self):
         # Create load generators
-        for generator in self.config.get(Key.Experiment.Generators.generators):
-            try:
-                load_generator_params = {
-                    "theodolite_lg_image": "registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/workload-generator",
-                    "theodolite_lg_tag": "latest",
-                    "lg_name": generator["name"],
-                    "lg_topic": generator["topic"],
-                    "lg_numsensors": int(generator["num_sensors"]),
-                    "lg_intervalms": int(generator["interval_ms"]),
-                    "lg_replicas": int(generator["replicas"]),
-                    "lg_value": int(generator["value"]),
-                }
-                self.k.service_manager.create_service_from_template(
-                    self.load_generator_service_template, load_generator_params
-                )
-                self.k.deployment_manager.create_deployment_from_template(
-                    self.load_generator_deployment_template, load_generator_params
-                )
-            except Exception as e:
-                self.__log.error(f"[EXP] Error creating load generator: {e}")
+        self.p.role_load_generators(self.config, tag="create")
 
     def delete_load_generators(self):
         # Delete load generators
-        for generator in self.config.get(Key.Experiment.Generators.generators):
-            try:
-                load_generator_params = {
-                    "theodolite_lg_image": "registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/workload-generator",
-                    "theodolite_lg_tag": "latest",
-                    "lg_name": generator["name"],
-                    "lg_topic": generator["topic"],
-                    "lg_numsensors": int(generator["num_sensors"]),
-                    "lg_intervalms": int(generator["interval_ms"]),
-                    "lg_replicas": int(generator["replicas"]),
-                    "lg_value": int(generator["value"]),
-                }
-                self.k.service_manager.delete_service_from_template(
-                    self.load_generator_service_template, load_generator_params
-                )
-                self.k.deployment_manager.delete_deployment_from_template(
-                    self.load_generator_deployment_template, load_generator_params
-                )
-            except Exception as e:
-                self.__log.error(f"[EXP] Error deleting load generator: {e}")
+        self.p.role_load_generators(self.config, tag="delete")
 
     def start_thread(self, target):
         self.current_experiment_thread = StoppableThread(log=self.__log, target=target)

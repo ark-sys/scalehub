@@ -3,6 +3,7 @@ import time
 from time import sleep
 
 import paho.mqtt.client as mqtt
+
 # noinspection PyUnresolvedReferences
 from paho.mqtt.enums import CallbackAPIVersion
 

@@ -2,6 +2,7 @@ import os
 import re
 import subprocess
 from datetime import datetime
+from time import sleep
 
 import ansible_runner
 import jinja2
@@ -148,6 +149,20 @@ class Playbooks:
                 )
             except Exception as e:
                 self.__log.error(str(e))
+
+    def reload_playbook(self, playbook, config: Config):
+        try:
+            if "load_generators" in playbook:
+                self.role_load_generators(config, tag="delete")
+            else:
+                self.run(playbook, config=config, tag="delete")
+            sleep(10)
+            if "load_generators" in playbook:
+                self.role_load_generators(config, tag="delete")
+            else:
+                self.run(playbook, config=config, tag="delete")
+        except Exception as e:
+            self.__log.error(str(e))
 
     def run(self, playbook, config: Config, tag=None, extra_vars=None):
         if extra_vars is None:
