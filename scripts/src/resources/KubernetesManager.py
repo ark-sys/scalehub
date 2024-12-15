@@ -13,7 +13,16 @@ from scripts.utils.Tools import Tools
 class KubernetesManager:
     def __init__(self, log: Logger):
         self.__log = log
-        self.kubeconfig = kubeconfig.load_kube_config(os.environ["KUBECONFIG"])
+        try:
+            self.kubeconfig = kubeconfig.load_kube_config(os.environ["KUBECONFIG"])
+        except Exception as e:
+            self.__log.warning(f"Error loading kubeconfig from ENV: {e}")
+            self.__log.warning("Trying incluster config instead.")
+            try:
+                self.kubeconfig = kubeconfig.load_incluster_config()
+            except Exception as e:
+                self.__log.error(f"Error loading incluster kubeconfig: {e}")
+                self.__log.error("Could not find a valid kubeconfig. Exiting.")
 
         self.pod_manager = PodManager(log)
         self.deployment_manager = DeploymentManager(log)
