@@ -10,7 +10,7 @@ kind: ClusterRole
 metadata:
   name: experiment-monitor
 rules:
-  - apiGroups: [ "" ]
+  - apiGroups: [ "*" ]
     resources: [ "*" ]
     verbs: [ "get", "list", "watch", "create", "update", "patch", "delete" ]
 

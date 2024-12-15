@@ -186,6 +186,8 @@ class FlinkManager:
             )
         except Exception as e:
             self.__log.error(f"[FLK_MGR] Error while running job: {e}")
+            return 1
+        return 0
 
     def scale_job_with_savepoint(self, operator_names, savepoint_path, new_parallelism):
         try:

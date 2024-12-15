@@ -149,6 +149,9 @@ class Playbooks:
                 )
             except Exception as e:
                 self.__log.error(str(e))
+                return 1
+
+        return 0
 
     def reload_playbook(self, playbook, config: Config):
         try:
