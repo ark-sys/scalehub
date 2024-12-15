@@ -141,8 +141,8 @@ class SimpleExperiment(Experiment):
             ret = s.run()
             if ret == 1:
                 return 1
-
-            self.reload_kafka()
+            # Cleaup after each run
+            self.cleaning()
 
         except Exception as e:
             self.__log.error(f"[SIMPLE_E] Error during single run: {e}")
