@@ -1,7 +1,6 @@
 import os
 import threading
 
-from scripts.src.resources.FlinkManager import FlinkManager
 from scripts.src.resources.KubernetesManager import KubernetesManager
 from scripts.utils.Config import Config
 from scripts.utils.Logger import Logger
@@ -40,7 +39,6 @@ class Experiment:
         self.config = config
         self.k: KubernetesManager = KubernetesManager(log)
         self.t: Tools = Tools(log)
-        self.f: FlinkManager = FlinkManager(log, config)
         self.p: Playbooks = Playbooks(log)
 
         self.current_experiment_thread = None

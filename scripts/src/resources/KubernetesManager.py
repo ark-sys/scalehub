@@ -1,4 +1,5 @@
 import os
+from time import sleep
 
 import yaml
 from kubernetes import config as kubeconfig, client as client
@@ -534,6 +535,7 @@ class StatefulSetManager:
         self.__log = log
         self.t: Tools = Tools(self.__log)
         self.api_instance = client.AppsV1Api()
+        self.taskmanager_types = ["s", "m", "l", "xl", "xxl"]
 
     # Scale a statefulset to a specified number of replicas
     def scale_statefulset(self, statefulset_name, replicas=1, namespace="default"):
@@ -588,6 +590,29 @@ class StatefulSetManager:
                 f"[STS_MGR] Exception when calling AppsV1Api->list_namespaced_stateful_set: {e}\n"
             )
             return None
+
+    def get_count_of_taskmanagers(self) -> dict:
+        replicas = {}
+        for type in self.taskmanager_types:
+            replicas[type] = self.get_statefulset_replicas(
+                f"flink-taskmanager-{type}", "flink"
+            )
+        return replicas
+
+    def reset_taskmanagers(self):
+        for type in self.taskmanager_types:
+            self.scale_statefulset(f"flink-taskmanager-{type}", 0, "flink")
+            sleep(1)
+
+        # Get current count of taskmanagers
+        replicas = self.get_count_of_taskmanagers()
+
+        # Wait until all taskmanagers are terminated
+        while sum(replicas.values()) > 0:
+            sleep(5)
+            replicas = self.get_count_of_taskmanagers()
+
+        self.__log.info(f"[STS_MGR] Current TaskManager replicas: {replicas}")
 
 
 # class ChaosManager:
