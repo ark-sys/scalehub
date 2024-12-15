@@ -129,7 +129,7 @@ class SimpleExperiment(Experiment):
     def _single_run(self):
         try:
             # Create scaling object
-            s = Scaling(self.__log, self.config)
+            s = Scaling(self.__log, self.config, self.k)
             # Set callback to check if the thread is stopped by STOP command
             s.set_stopped_callback(self.current_experiment_thread.stopped)
 

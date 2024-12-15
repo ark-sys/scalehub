@@ -8,9 +8,9 @@ from scripts.utils.Logger import Logger
 
 
 class Scaling:
-    def __init__(self, log: Logger, config: Config):
+    def __init__(self, log: Logger, config: Config, km: KubernetesManager):
         self.__log = log
-        self.k = KubernetesManager(log)
+        self.k = km
         self.f = FlinkManager(log, config, self.k)
         # Load strategy from configuration
         self.steps = config.get(Key.Experiment.Scaling.steps)
