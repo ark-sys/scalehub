@@ -28,7 +28,7 @@ class SimpleExperiment(Experiment):
             )
 
         # Create a new thread for the experiment
-        self.start_thread(self._run_experiment)
+        self.start_thread(self.__run_experiment)
 
     def finishing(self):
         self.__log.info("[SIMPLE_E] Finishing experiment.")
@@ -97,14 +97,14 @@ class SimpleExperiment(Experiment):
         self.__log.info("[SIMPLE_E] Running experiment.")
         self.join_thread()
 
-    def _run_experiment(self):
+    def __run_experiment(self):
         for run in range(self.runs):
             self.__log.info(f"[SIMPLE_E] Starting run {run + 1}")
             try:
                 # Get start timestamp of this run
                 start_ts = int(datetime.now().timestamp())
                 # Execute single run
-                ret = self._single_run()
+                ret = self.__single_run()
 
                 if ret == 1:
                     # Run was stopped
@@ -126,8 +126,9 @@ class SimpleExperiment(Experiment):
                 self.__log.error(f"[SIMPLE_E] Error during run: {e}")
                 break
 
-    def _single_run(self):
+    def __single_run(self):
         try:
+
             # Create scaling object
             s = Scaling(self.__log, self.config, self.k)
             # Set callback to check if the thread is stopped by STOP command
@@ -140,6 +141,8 @@ class SimpleExperiment(Experiment):
             ret = s.run()
             if ret == 1:
                 return 1
+
+            self.reload_kafka()
 
         except Exception as e:
             self.__log.error(f"[SIMPLE_E] Error during single run: {e}")
