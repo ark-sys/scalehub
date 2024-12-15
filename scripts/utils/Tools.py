@@ -127,7 +127,7 @@ class Playbooks:
         self.__log = log
         self.load_generators = []
 
-    def load_lg_config(self, config: Config):
+    def __load_config(self, config: Config):
         for lg_config in config.get(Key.Experiment.Generators.generators):
             load_generator_params = {
                 "lg_name": lg_config["name"],
@@ -141,7 +141,7 @@ class Playbooks:
             self.load_generators.append(load_generator_params)
 
     def role_load_generators(self, config: Config, tag=None):
-        self.load_lg_config(config)
+        self.__load_config(config)
         for lg in self.load_generators:
             try:
                 self.run(
@@ -150,7 +150,6 @@ class Playbooks:
             except Exception as e:
                 self.__log.error(str(e))
                 return 1
-
         return 0
 
     def reload_playbook(self, playbook, config: Config):

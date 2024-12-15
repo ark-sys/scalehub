@@ -19,6 +19,13 @@ spec:
         node-role.kubernetes.io/worker: producer
       imagePullSecrets:
         - name: gitlab-scalehub
+      initContainers:
+        - name: cleanup
+          image: alpine:3.20
+          command: [ "sh", "-c", "rm -rf /kafka/data/*" ]
+          volumeMounts:
+            - name: data
+              mountPath: /kafka/data
       containers:
         - name: kafka
           image: "{{kafka_image}}:{{kafka_tag}}"
