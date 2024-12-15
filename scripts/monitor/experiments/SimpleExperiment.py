@@ -109,7 +109,7 @@ class SimpleExperiment(Experiment):
                 if ret == 1:
                     # Run was stopped
                     self.__log.info(f"[SIMPLE_E] Exiting run {run + 1}")
-                    return 1
+                    break
 
                 # Get end timestamp of this run
                 end_ts = int(datetime.now().timestamp())
