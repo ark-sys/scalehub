@@ -131,7 +131,7 @@ class SimpleExperiment(Experiment):
             # Create scaling object
             s = Scaling(self.__log, self.config)
             # Set callback to check if the thread is stopped by STOP command
-            s.set_stopped_callback(self.current_experiment_thread.__stopped)
+            s.set_stopped_callback(self.current_experiment_thread.stopped)
 
             # Start load generators
             self.run_load_generators()
