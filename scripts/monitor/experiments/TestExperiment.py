@@ -32,7 +32,7 @@ class TestExperiment(Experiment):
         self.__log.info("[TEST_E] Doing some running.")
         sleep_time = 60
         for i in range(sleep_time):
-            if self.current_experiment_thread.stopped():
+            if self.current_experiment_thread.__stopped():
                 self.__log.info("[TEST_E] Stopped running.")
                 break
             sleep(1)

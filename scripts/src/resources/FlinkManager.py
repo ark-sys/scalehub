@@ -7,13 +7,10 @@ from scripts.utils.Logger import Logger
 
 
 class FlinkManager:
-    def __init__(self, log: Logger, config: Config):
+    def __init__(self, log: Logger, config: Config, km: KubernetesManager):
         self.__log = log
         self.config = config
-        self.k = KubernetesManager(log)
-
-        self.taskmanager_types = ["s", "m", "l", "xl", "xxl"]
-
+        self.k = km
         self.flink_host = "flink-jobmanager.flink.svc.cluster.local"
         self.flink_port = 8081
 
@@ -40,31 +37,6 @@ class FlinkManager:
         if overview is not None:
             return overview["taskmanagers"]
         return None
-
-    def reset_taskmanagers(self):
-        for type in self.taskmanager_types:
-            self.k.statefulset_manager.scale_statefulset(
-                f"flink-taskmanager-{type}", 0, "flink"
-            )
-            sleep(1)
-
-        # Get current count of taskmanagers
-        replicas = self.get_count_of_taskmanagers()
-
-        # Wait until all taskmanagers are terminated
-        while sum(replicas.values()) > 0:
-            sleep(5)
-            replicas = self.get_count_of_taskmanagers()
-
-        self.__log.info(f"[STS_MGR] Current TaskManager replicas: {replicas}")
-
-    def get_count_of_taskmanagers(self) -> dict:
-        replicas = {}
-        for type in self.taskmanager_types:
-            replicas[type] = self.k.statefulset_manager.get_statefulset_replicas(
-                f"flink-taskmanager-{type}", "flink"
-            )
-        return replicas
 
     def get_job_id(self):
         try:

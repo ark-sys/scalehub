@@ -78,7 +78,7 @@ class SimpleExperiment(Experiment):
             self.k.node_manager.reset_scaling_labels()
             self.k.node_manager.reset_state_labels()
 
-            self.f.reset_taskmanagers()
+            self.k.statefulset_manager.reset_taskmanagers()
 
             jobmanager_labels = "app=flink,component=jobmanager"
             self.k.pod_manager.delete_pods_by_label(jobmanager_labels, "flink")
@@ -128,25 +128,19 @@ class SimpleExperiment(Experiment):
 
     def _single_run(self):
         try:
-            # Deploy load generators
-            ret = self.run_load_generators()
-            if ret == 1:
-                return 1
-
-            # Deploy job
-            ret = self.f.run_job()
-            if ret == 1:
-                return 1
-
             # Create scaling object
             s = Scaling(self.__log, self.config)
             # Set callback to check if the thread is stopped by STOP command
-            s.set_stopped_callback(self.current_experiment_thread.stopped)
+            s.set_stopped_callback(self.current_experiment_thread.__stopped)
+
+            # Start load generators
+            self.run_load_generators()
 
             # Run scaling steps on job
             ret = s.run()
             if ret == 1:
                 return 1
+
         except Exception as e:
             self.__log.error(f"[SIMPLE_E] Error during single run: {e}")
             self.cleaning()

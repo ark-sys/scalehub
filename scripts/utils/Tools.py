@@ -161,9 +161,9 @@ class Playbooks:
                 self.run(playbook, config=config, tag="delete")
             sleep(10)
             if "load_generators" in playbook:
-                self.role_load_generators(config, tag="delete")
+                self.role_load_generators(config, tag="create")
             else:
-                self.run(playbook, config=config, tag="delete")
+                self.run(playbook, config=config, tag="create")
         except Exception as e:
             self.__log.error(str(e))
 

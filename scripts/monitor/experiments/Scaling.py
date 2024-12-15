@@ -11,7 +11,7 @@ class Scaling:
     def __init__(self, log: Logger, config: Config):
         self.__log = log
         self.k = KubernetesManager(log)
-        self.f = FlinkManager(log, config)
+        self.f = FlinkManager(log, config, self.k)
         # Load strategy from configuration
         self.steps = config.get(Key.Experiment.Scaling.steps)
         self.interval_scaling_s = config.get_int(
@@ -20,18 +20,18 @@ class Scaling:
         self.max_parallelism = config.get_int(Key.Experiment.Scaling.max_parallelism)
 
         # Stop event
-        self.stopped = None
+        self.__stopped = None
 
     # Set callback for stop event
     def set_stopped_callback(self, stopped):
-        self.stopped = stopped
+        self.__stopped = stopped
 
     def __wait_interval(self, extra_time=0):
         wait_time = self.interval_scaling_s + extra_time
         self.__log.info(f"[SCALING] Waiting for {wait_time} seconds")
         # sleep unless stopped
         for i in range(wait_time):
-            if self.stopped is not None and self.stopped():
+            if self.__stopped is not None and self.__stopped():
                 self.__log.info("[SCALING] Scaling stopped.")
                 return 1
             sleep(1)
@@ -60,7 +60,7 @@ class Scaling:
         tm_name = f"flink-taskmanager-{tm_type}"
 
         # Get current number of taskmanagers
-        taskmanagers_count_dict = self.f.get_count_of_taskmanagers()
+        taskmanagers_count_dict = self.k.statefulset_manager.get_count_of_taskmanagers()
         self.__log.info(
             f"[SCALING] Current number of taskmanagers: {taskmanagers_count_dict}"
         )
@@ -77,7 +77,7 @@ class Scaling:
         tm_name = f"flink-taskmanager-{tm_type}"
 
         # Get current number of taskmanagers
-        taskmanagers_count_dict = self.f.get_count_of_taskmanagers()
+        taskmanagers_count_dict = self.k.statefulset_manager.get_count_of_taskmanagers()
         self.__log.info(
             f"[SCALING] Current number of taskmanagers: {taskmanagers_count_dict}"
         )
@@ -102,12 +102,12 @@ class Scaling:
             if ret == 1:
                 return 1
 
-    # Add _number_ replicas at once
+    # Add replicas at once
     def __scale_operator_block(self, number, tm_type):
         # Get the name of the stateful set to scale
         tm_name = f"flink-taskmanager-{tm_type}"
         # Get current number of taskmanagers
-        taskmanagers_count_dict = self.f.get_count_of_taskmanagers()
+        taskmanagers_count_dict = self.k.statefulset_manager.get_count_of_taskmanagers()
         self.__log.info(
             f"[SCALING] Current number of taskmanagers: {taskmanagers_count_dict}"
         )
@@ -220,6 +220,12 @@ class Scaling:
         self.k.statefulset_manager.scale_statefulset(
             statefulset_name=tm_name, replicas=1, namespace="flink"
         )
+
+        # Start the job
+        ret = self.f.run_job()
+        if ret == 1:
+            return 1
+
         return first_node
 
     def run(self):
@@ -243,7 +249,9 @@ class Scaling:
                         continue
                     case _:
                         pass
-                current_state_taskmanagers = self.f.get_count_of_taskmanagers()
+                current_state_taskmanagers = (
+                    self.k.statefulset_manager.get_count_of_taskmanagers()
+                )
                 self.__log.info(
                     f"[SCALING] Current statefulset taskmanagers: {current_state_taskmanagers}"
                 )
@@ -277,7 +285,9 @@ class Scaling:
                 )
                 self.k.node_manager.mark_node_as_full(node_name)
 
-                current_state_taskmanagers = self.f.get_count_of_taskmanagers()
+                current_state_taskmanagers = (
+                    self.k.statefulset_manager.get_count_of_taskmanagers()
+                )
                 self.__log.info(
                     f"[SCALING] Current statefulset taskmanagers: {current_state_taskmanagers}"
                 )
