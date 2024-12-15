@@ -17,6 +17,7 @@ spec:
       labels:
         app: experiment-monitor
     spec:
+      serviceAccountName: experiment-monitor
       nodeSelector:
         node-role.kubernetes.io/control-plane: "true"
       imagePullSecrets:
@@ -37,9 +38,6 @@ spec:
           volumeMounts:
             - mountPath: /experiment-volume
               name: experiment-volume
-            - mountPath: /app/conf/
-              name: kubeconfig-volume
-              readOnly: true
           ports:
             - containerPort: 1883
               name: mqtt
@@ -52,9 +50,3 @@ spec:
         - name: experiment-volume
           persistentVolumeClaim:
             claimName: experiments-pvc
-        - name: kubeconfig-volume
-          secret:
-            secretName: kube-secret
-            items:
-              - key: kubeconfig
-                path: kubeconfig

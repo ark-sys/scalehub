@@ -25,3 +25,11 @@
         api_version: v1
         kind: Namespace
         state: present
+
+    - name: Create experiment-monitor namespace
+      kubernetes.core.k8s:
+        kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
+        name: experiment-monitor
+        api_version: v1
+        kind: Namespace
+        state: present

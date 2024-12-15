@@ -50,7 +50,7 @@ class Config:
             else:
                 if _param.endswith(".ini"):
                     self.__cp.read(_param)
-                    sections_in_file = set(self.__cp.sections()) - {"scalehub"}
+                    sections_in_file = set(self.__cp.sections())
                     if any(
                         section.startswith("experiment") for section in sections_in_file
                     ):
