@@ -30,8 +30,6 @@ class SimpleExperiment(Experiment):
         # Create a new thread for the experiment
         self.start_thread(self._run_experiment)
 
-        self.__log.info("[SIMPLE_E] Experiment started.")
-
     def finishing(self):
         self.__log.info("[SIMPLE_E] Finishing experiment.")
 
@@ -73,8 +71,6 @@ class SimpleExperiment(Experiment):
         else:
             self.__log.error("No timestamps found.")
 
-        self.__log.info("[SIMPLE_E] Experiment finished.")
-
     def cleaning(self):
         self.__log.info("[SIMPLE_E] Cleaning up experiment.")
         try:
@@ -100,7 +96,6 @@ class SimpleExperiment(Experiment):
     def running(self):
         self.__log.info("[SIMPLE_E] Running experiment.")
         self.join_thread()
-        self.__log.info("[SIMPLE_E] Experiment run finished.")
 
     def _run_experiment(self):
         for run in range(self.runs):
@@ -134,9 +129,14 @@ class SimpleExperiment(Experiment):
     def _single_run(self):
         try:
             # Deploy load generators
-            self.run_load_generators()
+            ret = self.run_load_generators()
+            if ret == 1:
+                return 1
+
             # Deploy job
-            self.f.run_job()
+            ret = self.f.run_job()
+            if ret == 1:
+                return 1
 
             # Create scaling object
             s = Scaling(self.__log, self.config)

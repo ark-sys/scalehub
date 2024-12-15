@@ -80,7 +80,7 @@ class Experiment:
 
     def run_load_generators(self):
         # Create load generators
-        self.p.role_load_generators(self.config, tag="create")
+        return self.p.role_load_generators(self.config, tag="create")
 
     def delete_load_generators(self):
         # Delete load generators
