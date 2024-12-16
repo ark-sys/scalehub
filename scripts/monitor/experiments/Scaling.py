@@ -303,32 +303,6 @@ class Scaling:
                         continue
                     case _:
                         pass
-                current_state_taskmanagers = (
-                    self.k.statefulset_manager.get_count_of_taskmanagers()
-                )
-                self.__log.info(
-                    f"[SCALING] Current statefulset taskmanagers: {current_state_taskmanagers}"
-                )
-                current_state_slots = self.f.get_total_slots()
-                self.__log.info(
-                    f"[SCALING] Current registered slots: {current_state_slots}"
-                )
-
-                # Expected state at the end of step
-                expected_state_taskmanagers = self.steps[step]["taskmanager"]
-                self.__log.info(
-                    f"[SCALING] Expected statefulset taskmanagers: {expected_state_taskmanagers}"
-                )
-                expected_state_slots = sum(
-                    [
-                        taskmanager["number"]
-                        for taskmanager in expected_state_taskmanagers
-                    ]
-                )
-                self.__log.info(
-                    f"[SCALING] Expected registered slots: {expected_state_slots}"
-                )
-
                 # Scale step
                 ret = self.__scale_step(step)
                 if ret == 1:
@@ -338,12 +312,5 @@ class Scaling:
                     f"[SCALING] Scaling step on node {node_name} finished. Marking node as full."
                 )
                 self.k.node_manager.mark_node_as_full(node_name)
-
-                current_state_taskmanagers = (
-                    self.k.statefulset_manager.get_count_of_taskmanagers()
-                )
-                self.__log.info(
-                    f"[SCALING] Current statefulset taskmanagers: {current_state_taskmanagers}"
-                )
                 sleep(5)
         self.__log.info("[SCALING] Scaling finished.")
