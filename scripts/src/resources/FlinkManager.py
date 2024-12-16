@@ -20,7 +20,7 @@ class FlinkManager:
         self.job_file = self.config.get_str(Key.Experiment.job_file)
         self.job_plan = None
         self.job_id = None
-        self.operator_names = None
+        self.operators = {}
         self.monitored_task_parallelism = None
         self.savepoint_path = None
 
@@ -71,9 +71,10 @@ class FlinkManager:
             self.__log.error(f"[FLK_MGR] Error while getting job state: {e}")
             return None
 
-    def __get_operator_names(self):
+    def __get_operators(self):
+        # Build dictionary with operator names as keys and parallelism as values
         try:
-            operator_names = []
+            operator_names = {}
             for node in self.job_plan["plan"]["nodes"]:
                 operator_name = (
                     node["description"]
@@ -82,16 +83,17 @@ class FlinkManager:
                     .replace(":", "_")
                     .replace(" ", "_")
                 )
-                operator_names.append(operator_name)
+                operator_names[operator_name] = node["parallelism"]
             return operator_names
         except Exception as e:
             self.__log.error(f"[FLK_MGR] Error while getting operator names: {e}")
             return None
 
     def __get_monitored_task_parallelism(self):
-        for operator in self.operator_names:
+        self.__log.info(f"[FLK_MGR] Current operator names: {self.operators.keys()}")
+        for operator in self.operators:
             if self.monitored_task in operator:
-                return int(operator.split(":")[1])
+                return self.operators[operator]
 
     def __stop_job(self):
         try:
@@ -128,14 +130,17 @@ class FlinkManager:
             self.__log.error(f"[FLK_MGR] Error while stopping job: {e}")
             return None
 
-    def __build_par_map(self, new_parallelism):
-        par_map = []
-        for operator_name in self.operator_names:
-            if self.monitored_task in operator_name:
-                par_map.append(f"{operator_name}:{new_parallelism}")
-            else:
-                par_map.append(f"{operator_name}:1")
-        return par_map
+    def __build_par_map(self, new_parallelism) -> str:
+
+        for operator in self.operators:
+            if self.monitored_task in operator:
+                self.operators[operator] = new_parallelism
+
+        # Join "operator:parallelism" pairs with ";"
+        operators_list = [
+            f"{operator}:{self.operators[operator]}" for operator in self.operators
+        ]
+        return ";".join(operators_list)
 
     def run_job(self, new_parallelism=None):
         try:
@@ -150,7 +155,7 @@ class FlinkManager:
                 par_map = self.__build_par_map(new_parallelism)
                 res = self.k.pod_manager.execute_command_on_pod(
                     deployment_name="flink-jobmanager",
-                    command=f"flink run -d -s {self.savepoint_path} -j /tmp/jobs/{self.job_file} --parmap '{';'.join(par_map)}'",
+                    command=f"flink run -d -s {self.savepoint_path} -j /tmp/jobs/{self.job_file} --parmap '{par_map}'",
                 )
                 self.__log.info(
                     f"[FLK_MGR] Operator {self.monitored_task} rescaled to {new_parallelism}."
@@ -210,12 +215,14 @@ class FlinkManager:
                 self.__log.error("[FLK_MGR] Job id not found.")
                 return None
             self.job_plan = self.__get_job_plan(self.job_id)
-            self.operator_names = self.__get_operator_names()
+            self.operators = self.__get_operators()
             self.monitored_task_parallelism = self.__get_monitored_task_parallelism()
 
-            if self.operator_names is None:
+            if self.operators is None:
                 self.__log.error("[FLK_MGR] Operator names not found.")
                 return None
+            else:
+                return 0
         except Exception as e:
             self.__log.error(f"[FLK_MGR] Error while getting job info: {e}")
             return None
