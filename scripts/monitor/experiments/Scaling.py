@@ -175,9 +175,9 @@ class Scaling:
 
         match scaling_method:
             case "linear":
-                ret = self.__scale_linear(number, tm_type)
+                ret = self.__scale_linear(number, tm_type, scope)
             case "exponential":
-                ret = self.__scale_exponential(number, tm_type)
+                ret = self.__scale_exponential(number, tm_type, scope)
             case "block":
                 ret = self.__scale_block(number, tm_type, scope)
             case _:
