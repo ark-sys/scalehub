@@ -64,7 +64,7 @@ class FlinkManager:
                 f"http://flink-jobmanager.flink.svc.cluster.local:8081/jobs/{self.job_id}/status"
             )
             if r.status_code == 200:
-                return r.json()["properties"]["status"]
+                return r.json()["status"]
             else:
                 return None
         except Exception as e:
