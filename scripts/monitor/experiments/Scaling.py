@@ -279,6 +279,7 @@ class Scaling:
 
         # Populate job info
         self.f.get_job_info()
+        self.f.check_nominal_job_run()
 
         return first_node
 
