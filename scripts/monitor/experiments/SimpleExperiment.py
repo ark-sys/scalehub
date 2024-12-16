@@ -146,4 +146,4 @@ class SimpleExperiment(Experiment):
 
         except Exception as e:
             self.__log.error(f"[SIMPLE_E] Error during single run: {e}")
-            self.cleaning()
+            return 1
