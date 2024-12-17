@@ -61,21 +61,21 @@ class Scaling:
             f"[SCALING] Current number of taskmanagers: {taskmanagers_count_dict}"
         )
         # Scale up stateful set
-        taskmanagers_count_dict[tm_type] += replicas
+        new_tm_count = taskmanagers_count_dict[tm_type] + replicas
         self.k.statefulset_manager.scale_statefulset(
             statefulset_name=tm_name,
-            replicas=taskmanagers_count_dict[tm_type],
+            replicas=new_tm_count,
             namespace="flink",
         )
         # Wait for the stateful set to be ready
         while True:
-            taskmanagers_count_dict = (
-                self.k.statefulset_manager.get_count_of_taskmanagers()
-            )
             self.__log.info("[SCALING] Waiting for taskmanagers to be ready.")
-            if taskmanagers_count_dict[tm_type] == replicas:
+            if (
+                self.k.statefulset_manager.get_count_of_taskmanagers()[tm_type]
+                == new_tm_count
+            ):
                 break
-            sleep(3)
+            sleep(2)
 
         ret = self.__scale_and_wait(taskmanagers_count_dict[tm_type])
         if ret == 1:
