@@ -69,7 +69,7 @@ class DataManager:
         grouped_data_eval = GroupedDataEval(
             log=self.__log, multi_run_path=multi_run_folder
         )
-        grouped_data_eval.generate_box_for_means(multi_run_folder)
+        grouped_data_eval.generate_box_for_means()
 
     def export_experiment(self, exp_path: str):
         data_exp = DataExporter(log=self.__log, exp_path=exp_path)

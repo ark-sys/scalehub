@@ -5,6 +5,8 @@ from matplotlib import pyplot as plt
 from matplotlib.ticker import FuncFormatter
 
 from scripts.src.data.Plotter import Plotter
+from scripts.utils.Config import Config
+from scripts.utils.Defaults import DefaultKeys as Key
 from scripts.utils.Logger import Logger
 from scripts.utils.Tools import Tools
 
@@ -12,21 +14,21 @@ from scripts.utils.Tools import Tools
 class GroupedDataEval:
     skip = 30
 
-    # experiments = ["Join-kk", "Join-kv", "Map"]
-    # types = ["no_lat", "latency", "latency_jitter"]
-    # high_latency = ["25ms", "50ms"]
-
     def __init__(self, log: Logger, multi_run_path: str):
         self.__log: Logger = log
-
         self.t: Tools = Tools(log)
         self.plotter = Plotter(self.__log, plots_path=multi_run_path)
 
+        self.multi_run_path = multi_run_path
+        # We retrieve the config from the first run
+        exp_path = os.path.join(multi_run_path, "1", "exp_log.txt")
+        self.config: Config = Config(log, exp_path)
+
     # Load the mean_stderr.csv file and generate a boxplot
-    def generate_box_for_means(self, exp_path):
+    def generate_box_for_means(self):
 
         dfs = []
-        for root, dirs, files in os.walk(exp_path):
+        for root, dirs, files in os.walk(self.multi_run_path):
             for file in files:
                 if file == "mean_stderr.csv":
                     file_path = os.path.join(root, file)
@@ -48,7 +50,7 @@ class GroupedDataEval:
         )
 
         # Save new data df to file
-        final_df.to_csv(os.path.join(exp_path, "final_df.csv"), index=False)
+        final_df.to_csv(os.path.join(self.multi_run_path, "final_df.csv"), index=False)
 
         boxplot_data = [
             [
@@ -71,18 +73,38 @@ class GroupedDataEval:
         )
 
         ax.yaxis.set_major_formatter(formatter)
-        ax.set_ylim(0, 120000)
+
         ax.set_xlabel("Operator Parallelism", fontsize=24)
         ax.set_ylabel("Throughput (records/s)", fontsize=24)
         plt.xticks(fontsize=20)
         ax.tick_params(axis="y", labelsize=20)
 
+        # Get Workload objective from logs
+        workload_objective = 0
+        for generator in self.config.get(Key.Experiment.Generators.generators):
+            workload_objective += int(generator["num_sensors"])
+
         # Add straight dotted line at y=100000, This is the target objective for the experiment
-        ax.axhline(y=100000, color="r", linestyle="--", label="Workload objective")
+        ax.axhline(
+            y=workload_objective, color="r", linestyle="--", label="Workload objective"
+        )
+
+        # eval ylim based on max value in the data. Round up to the nearest 100000. ex. 310000 -> 400000
+        ylim_val = (
+            max(final_df["Throughput_max"].max(), workload_objective) // 100000 + 1
+        ) * 100000
+
+        ax.set_ylim(0, ylim_val)
 
         # Add a legend
         ax.legend(loc="upper right", fontsize=22)
 
+        # # Get comment from config
+        # comment = self.config.get(Key.Experiment.comment)
+        # ax.set_title(f"{comment}", fontsize=24)
+
         fig.tight_layout()
-        output_path = os.path.join(exp_path, f"boxplot_{num_runs}_runs_mean.png")
+        output_path = os.path.join(
+            self.multi_run_path, f"boxplot_{num_runs}_runs_mean.png"
+        )
         fig.savefig(output_path)

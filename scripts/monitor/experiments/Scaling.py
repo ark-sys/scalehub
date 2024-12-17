@@ -171,7 +171,7 @@ class Scaling:
         number = taskmanager["number"]
         tm_type = taskmanager["type"]
         scaling_method = taskmanager["method"]
-        scope = taskmanager["scope"]
+        scope = taskmanager["scope"] if "scope" in taskmanager else "taskmanager"
 
         match scaling_method:
             case "linear":
