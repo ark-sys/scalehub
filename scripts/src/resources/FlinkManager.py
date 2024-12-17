@@ -238,7 +238,9 @@ class FlinkManager:
                     return 0
                 retries -= 1
                 sleep(5)
-            return 1
+            if job_state != "RUNNING":
+                self.__log.error("[FLK_MGR] Job did not start.")
+                return 1
         except Exception as e:
             self.__log.error(f"[FLK_MGR] Error while waiting for job to run: {e}")
             return 1
