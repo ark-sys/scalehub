@@ -561,6 +561,13 @@ class StatefulSetManager:
             self.__log.info(
                 f"[STS_MGR] StatefulSet {statefulset_name} scaled to {replicas} replica."
             )
+
+            # Wait until the statefulset is scaled
+            while (
+                self.get_statefulset_replicas(statefulset_name, namespace) != replicas
+            ):
+                sleep(1)
+
         except ApiException as e:
             self.__log.error(
                 f"[STS_MGR] Exception when calling AppsV1Api->patch_namespaced_stateful_set: {e}\n"
@@ -603,16 +610,9 @@ class StatefulSetManager:
         for type in self.taskmanager_types:
             self.scale_statefulset(f"flink-taskmanager-{type}", 0, "flink")
             sleep(1)
-
-        # Get current count of taskmanagers
-        replicas = self.get_count_of_taskmanagers()
-
         # Wait until all taskmanagers are terminated
-        while sum(replicas.values()) > 0:
+        while sum(self.get_count_of_taskmanagers()) > 0:
             sleep(5)
-            replicas = self.get_count_of_taskmanagers()
-
-        self.__log.info(f"[STS_MGR] Current TaskManager replicas: {replicas}")
 
 
 # class ChaosManager:
