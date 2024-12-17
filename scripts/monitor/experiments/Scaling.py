@@ -17,7 +17,6 @@ class Scaling:
         self.interval_scaling_s = config.get_int(
             Key.Experiment.Scaling.interval_scaling_s
         )
-        self.max_parallelism = config.get_int(Key.Experiment.Scaling.max_parallelism)
 
         # Stop event
         self.__stopped = None
@@ -68,6 +67,16 @@ class Scaling:
             replicas=taskmanagers_count_dict[tm_type],
             namespace="flink",
         )
+        # Wait for the stateful set to be ready
+        while True:
+            taskmanagers_count_dict = (
+                self.k.statefulset_manager.get_count_of_taskmanagers()
+            )
+            self.__log.info("[SCALING] Waiting for taskmanagers to be ready.")
+            if taskmanagers_count_dict[tm_type] == replicas:
+                break
+            sleep(3)
+
         ret = self.__scale_and_wait(taskmanagers_count_dict[tm_type])
         if ret == 1:
             return 1

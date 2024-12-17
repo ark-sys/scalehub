@@ -3,24 +3,24 @@
   taskmanager:
     - number: 8
       type: s
-      method: linear
+      method: block
 - node: vm_grid5000
   type: large
   taskmanager:
     - number: 8
       type: s
-      method: linear
+      method: block
 - node: vm_grid5000
   type: large
   taskmanager:
     - number: 8
       type: s
-      method: linear
+      method: block
 - node: vm_grid5000
   type: large
   taskmanager:
     - number: 8
       type: s
-      method: linear
+      method: block
 
 
