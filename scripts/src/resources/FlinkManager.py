@@ -199,6 +199,7 @@ class FlinkManager:
         # Extract job ids from response
         job_ids = re.findall(r"\b\w{16,}\b", res)
         for job_id in job_ids:
+            # Cancel all jobs except the one tracked by self.job_id
             if job_id != self.job_id:
                 self.k.pod_manager.execute_command_on_pod(
                     deployment_name="flink-jobmanager",

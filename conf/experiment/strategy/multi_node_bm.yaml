@@ -2,19 +2,19 @@
   taskmanager:
     - number: 52
       type: s
-      method: exponential
+      method: block
 - node: grid5000
   taskmanager:
     - number: 52
       type: s
-      method: exponential
+      method: block
 - node: grid5000
   taskmanager:
     - number: 52
       type: s
-      method: exponential
+      method: block
 - node: grid5000
   taskmanager:
     - number: 52
       type: s
-      method: exponential
+      method: block
