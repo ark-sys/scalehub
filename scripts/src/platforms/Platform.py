@@ -16,9 +16,6 @@ class Platform:
     def setup(self) -> InventoryManager:
         raise NotImplementedError()
 
-    def get_provider(self):
-        raise NotImplementedError()
-
     def setup_single(self) -> InventoryManager:
         return self.setup()
 

@@ -32,105 +32,192 @@ class EnosPlatform(Platform):
 
         match self.platform_type:
             case "Grid5000":
-                self.__create_g5k()
+                self.conf_dict = self.__create_g5k_conf()
+
             case "VM_on_Grid5000":
-                self.__create_g5k_vm()
+                self.conf_dict = self.__create_g5k_vm_conf()
             case "FIT":
-                self.__create_fit()
+                self.conf_dict = self.__create_fit_conf()
             case _:
                 self.__log.error(f"Unsupported platform type: {self.platform_type}")
                 exit(1)
 
-    def __create_g5k(self):
-        network = en.G5kNetworkConf(type="prod", roles=["my_network"], site=self.site)
-        conf = en.G5kConf.from_settings(
-            job_name=self.reservation_name,
-            queue=self.queue,
-            walltime=self.walltime,
-        ).add_network_conf(network)
+        self.provider = self.get_provider(self.conf_dict)
 
-        if self.control:
-            conf.add_machine(roles=["control"], cluster=self.cluster, nodes=1)
-        if self.producers > 0:
-            conf.add_machine(
-                roles=["producers"], cluster=self.cluster, nodes=self.producers
-            )
-        if self.consumers > 0:
-            conf.add_machine(
-                roles=["consumers"], cluster=self.cluster, nodes=self.consumers
-            )
+    def __create_g5k_conf(self):
 
-        self.conf = conf.finalize()
-        self.provider = en.G5k(self.conf)
+        provider_conf = {
+            "job_name": self.reservation_name,
+            "walltime": self.walltime,
+            "queue": self.queue,
+            "resources": {
+                "machines": [
+                    {
+                        "roles": ["control"],
+                        "cluster": self.cluster,
+                        "nodes": 1,
+                        "primary_network": "default",
+                    }
+                    if self.control
+                    else {},
+                    {
+                        "roles": ["producers"],
+                        "cluster": self.cluster,
+                        "nodes": self.producers,
+                        "primary_network": "default",
+                    }
+                    if self.producers and self.producers > 0
+                    else {},
+                    {
+                        "roles": ["consumers"],
+                        "cluster": self.cluster,
+                        "nodes": self.consumers,
+                        "primary_network": "default",
+                    }
+                    if self.consumers and self.consumers > 0
+                    else {},
+                ],
+                "networks": [
+                    {
+                        "id": "default",
+                        "type": "prod",
+                        "roles": ["my_network"],
+                        "site": self.site,
+                    },
+                ],
+            },
+        }
 
-    def __create_g5k_vm(self):
-        self.core_per_vm = self.config["core_per_vm"]
-        self.memory_per_vm = self.config["memory_per_vm"]
-        self.disk_per_vm = self.config["disk_per_vm"]
+        # Remove empty dictionaries from the list
+        provider_conf["resources"]["machines"] = [
+            machine for machine in provider_conf["resources"]["machines"] if machine
+        ]
 
-        conf = en.VMonG5kConf.from_settings(
-            job_name=self.reservation_name,
-            queue=self.queue,
-            walltime=self.walltime,
-        )
+        return provider_conf
 
-        if self.control:
-            conf.add_machine(
-                roles=["control"],
-                cluster=self.cluster,
-                number=1,
-                vcore_type="core",
-                flavour_desc={"core": self.core_per_vm, "mem": self.memory_per_vm},
-            )
-        if self.producers > 0:
-            conf.add_machine(
-                roles=["producers"],
-                cluster=self.cluster,
-                number=self.producers,
-                vcore_type="core",
-                flavour_desc={"core": self.core_per_vm, "mem": self.memory_per_vm},
-            )
-        if self.consumers > 0:
-            conf.add_machine(
-                roles=["consumers"],
-                cluster=self.cluster,
-                number=self.consumers,
-                vcore_type="core",
-                flavour_desc={"core": self.core_per_vm, "mem": self.memory_per_vm},
-            )
+    def __create_g5k_vm_conf(self):
 
-        self.conf = conf.finalize()
-        self.provider = en.VMonG5k(self.conf)
+        provider_conf = {
+            "job_name": self.reservation_name,
+            "walltime": self.walltime,
+            "queue": self.queue,
+            "resources": {
+                "machines": [
+                    {
+                        "roles": ["control"],
+                        "cluster": self.cluster,
+                        "number": 1,
+                        "vcore_type": "core",
+                        "flavour_desc": {
+                            "core": self.config["core_per_vm"],
+                            "mem": self.config["memory_per_vm"],
+                        },
+                    }
+                    if self.control
+                    else {},
+                    {
+                        "roles": ["producers"],
+                        "cluster": self.cluster,
+                        "number": self.producers,
+                        "vcore_type": "core",
+                        "flavour_desc": {
+                            "core": self.config["core_per_vm"],
+                            "mem": self.config["memory_per_vm"],
+                        },
+                    }
+                    if self.producers and self.producers > 0
+                    else {},
+                    {
+                        "roles": ["consumers"],
+                        "cluster": self.cluster,
+                        "number": self.consumers,
+                        "vcore_type": "core",
+                        "flavour_desc": {
+                            "core": self.config["core_per_vm"],
+                            "mem": self.config["memory_per_vm"],
+                        },
+                    }
+                    if self.consumers and self.consumers > 0
+                    else {},
+                ],
+                "networks": [],
+            },
+        }
 
-    def __create_fit(self):
-        self.archi = self.config["archi"]
+        # Remove empty dictionaries from the list
+        provider_conf["resources"]["machines"] = [
+            machine for machine in provider_conf["resources"]["machines"] if machine
+        ]
 
-        conf = en.IotlabConf.from_settings(
-            job_name=self.reservation_name,
-            walltime=self.walltime,
-        )
+        return provider_conf
 
-        if self.control:
-            conf.add_machine(
-                roles=["control"], archi=self.archi, number=1, site=self.site
-            )
-        if self.producers > 0:
-            conf.add_machine(
-                roles=["producers"],
-                archi=self.archi,
-                number=self.producers,
-                site=self.site,
-            )
-        if self.consumers > 0:
-            conf.add_machine(
-                roles=["consumers"],
-                archi=self.archi,
-                number=self.consumers,
-                site=self.site,
-            )
+    def __create_fit_conf(self):
 
-        self.conf = conf.finalize()
-        self.provider = en.Iotlab(self.conf)
+        provider_conf = {
+            "job_name": self.reservation_name,
+            "walltime": self.walltime,
+            "resources": {
+                "machines": [
+                    {
+                        "roles": ["control"],
+                        "archi": self.config["archi"],
+                        "number": 1,
+                        "site": self.site,
+                    }
+                    if self.control
+                    else {},
+                    {
+                        "roles": ["producers"],
+                        "archi": self.config["archi"],
+                        "number": self.producers,
+                        "site": self.site,
+                    }
+                    if self.producers and self.producers > 0
+                    else {},
+                    {
+                        "roles": ["consumers"],
+                        "archi": self.config["archi"],
+                        "number": self.consumers,
+                        "site": self.site,
+                    }
+                    if self.consumers and self.consumers > 0
+                    else {},
+                ],
+                "networks": [
+                    {
+                        "id": "default",
+                        "type": "prod",
+                        "roles": ["my_network"],
+                        "site": self.site,
+                    },
+                ],
+            },
+        }
+
+        # Remove empty dictionaries from the list
+        provider_conf["resources"]["machines"] = [
+            machine for machine in provider_conf["resources"]["machines"] if machine
+        ]
+
+        return provider_conf
+
+    def get_provider(self, conf_dict):
+        match self.platform_type:
+            case "Grid5000":
+                conf = en.G5kConf.from_dictionary(conf_dict)
+                finalized_conf = conf.finalize()
+                return en.G5k(finalized_conf)
+            case "VM_on_Grid5000":
+                conf = en.VMonG5kConf.from_dictionary(conf_dict)
+                finalized_conf = conf.finalize()
+                return en.VMonG5k(finalized_conf)
+            case "FIT":
+                conf = en.IotlabConf.from_dictionary(conf_dict)
+                finalized_conf = conf.finalize()
+                return en.Iotlab(finalized_conf)
+            case _:
+                self.__log.error(f"Unsupported platform type: {self.platform_type}")
+                exit(1)
 
     def post_setup(self):
         if self.platform_type == "Grid5000":
@@ -138,9 +225,6 @@ class EnosPlatform(Platform):
                 self.provider.fw_create(proto="all")
             except Exception as e:
                 self.__log.warning(f"Error while creating firewall rules: {e}")
-
-    def get_provider(self):
-        return self.provider
 
     def check_credentials_file(self):
         home_directory = os.path.expanduser("~")
