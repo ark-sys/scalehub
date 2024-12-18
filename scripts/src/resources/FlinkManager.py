@@ -166,6 +166,8 @@ class FlinkManager:
                     deployment_name="flink-jobmanager",
                     command=f"flink run -d -j /tmp/jobs/{self.job_file}",
                 )
+
+            self.__log.info(f"[FLK_MGR] Job run response: {res}")
             # Extract job id from response
             self.job_id = re.search(r"JobID ([a-f0-9]+)", res).group(1)
             if self.job_id:
