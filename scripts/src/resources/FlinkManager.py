@@ -231,7 +231,7 @@ class FlinkManager:
     def wait_for_job_running(self):
         job_state = None
         try:
-            retries = 10
+            retries = 25
             while retries > 0 and job_state != "RUNNING":
                 job_state = self.__get_job_state()
                 if job_state == "RUNNING":
