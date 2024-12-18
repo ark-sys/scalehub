@@ -140,11 +140,14 @@ class ProvisionManager:
                 start_time = None
             roles, networks = providers.init(start_time=start_time)
             self.enos_inventory = self.__generate_enos_inventory(roles)
-
-            for platform in self.platforms:
-                if isinstance(platform, EnosPlatform):
-                    platform.post_setup()
-
+            for provider in self.enos_providers:
+                try:
+                    provider.fw_create(proto="all")
+                except Exception as e:
+                    self.__log.warning(
+                        f"Error while creating firewall rules for {provider}: {e}"
+                    )
+                    continue
         # Retrieve pi node "statically"
         if self.raspberry_pis:
             self.__log.info("Found Raspberry Pi platforms. Provisioning...")
@@ -180,6 +183,6 @@ class ProvisionManager:
 
     def destroy(self):
         self.__log.info("Destroying platforms")
-        for platform in self.platforms:
-            platform.destroy()
-        self.__log.info("Platforms destroyed")
+        if self.enos_providers:
+            providers = en.Providers(self.enos_providers)
+            providers.destroy()
