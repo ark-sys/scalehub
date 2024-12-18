@@ -1,5 +1,4 @@
 from datetime import datetime
-from time import sleep
 
 from scripts.monitor.experiments.Experiment import Experiment
 from scripts.monitor.experiments.Scaling import Scaling
@@ -116,11 +115,14 @@ class SimpleExperiment(Experiment):
 
                 # Save timestamps
                 self.timestamps.append((start_ts, end_ts))
-                self.__log.info("[SIMPLE_E] Sleeping for 15 seconds before next run.")
-                sleep(15)
                 self.__log.info(
                     f"[SIMPLE_E] Run {run + 1} completed. Start: {start_ts}, End: {end_ts}"
                 )
+                self.__log.info("[SIMPLE_E] Sleeping for 15 seconds before next run.")
+                ret = self.current_experiment_thread.sleep(15)
+                if ret == 1:
+                    self.__log.info(f"[SIMPLE_E] Exiting run {run + 1}")
+                    break
 
             except Exception as e:
                 self.__log.error(f"[SIMPLE_E] Error during run: {e}")
@@ -131,8 +133,7 @@ class SimpleExperiment(Experiment):
 
             # Create scaling object
             s = Scaling(self.__log, self.config, self.k)
-            # Set callback to check if the thread is stopped by STOP command
-            s.set_stopped_callback(self.current_experiment_thread.stopped)
+            s.set_sleep_command(self.current_experiment_thread.sleep)
 
             # Start load generators
             self.run_load_generators()

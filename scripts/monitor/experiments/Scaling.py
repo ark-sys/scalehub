@@ -1,5 +1,3 @@
-from time import sleep
-
 from scripts.src.resources.FlinkManager import FlinkManager
 from scripts.src.resources.KubernetesManager import KubernetesManager
 from scripts.utils.Config import Config
@@ -18,23 +16,13 @@ class Scaling:
             Key.Experiment.Scaling.interval_scaling_s
         )
 
+        # Set sleep command
+        self.__sleep = None
         # Stop event
         self.__stopped = None
 
-    # Set callback for stop event
-    def set_stopped_callback(self, stopped):
-        self.__stopped = stopped
-
-    def __wait_interval(self):
-        wait_time = self.interval_scaling_s
-        self.__log.info(f"[SCALING] Monitoring interval: for {wait_time} seconds")
-        # sleep unless stopped
-        for i in range(wait_time):
-            if self.__stopped is not None and self.__stopped():
-                self.__log.info("[SCALING] Scaling stopped.")
-                return 1
-            sleep(1)
-        return 0
+    def set_sleep_command(self, sleep):
+        self.__sleep = sleep
 
     def __scale_and_wait(self, replicas):
         self.__log.info(
@@ -50,7 +38,10 @@ class Scaling:
             ret = self.f.wait_for_job_running()
             if ret == 1:
                 return 1
-            return self.__wait_interval()
+            self.__log.info(
+                f"[SCALING] Monitoring interval: for {self.interval_scaling_s} seconds"
+            )
+            return self.__sleep(self.interval_scaling_s)
 
     def __scale_w_tm(self, replicas, tm_type):
         # Get the name of the stateful set to scale
@@ -287,7 +278,7 @@ class Scaling:
             return 1
 
         self.__log.info("[SCALING] First taskmanager, just waiting...")
-        ret = self.__wait_interval()
+        ret = self.__sleep(self.interval_scaling_s)
         if ret == 1:
             return 1
         else:
@@ -311,5 +302,5 @@ class Scaling:
                     f"[SCALING] Scaling step on node {node_name} finished. Marking node as full."
                 )
                 self.k.node_manager.mark_node_as_full(node_name)
-                sleep(5)
+                self.__sleep(5)
         self.__log.info("[SCALING] Scaling finished.")
