@@ -543,9 +543,6 @@ class StatefulSetManager:
             statefulset = self.api_instance.read_namespaced_stateful_set(
                 name=statefulset_name, namespace=namespace, async_req=False
             )
-            self.__log.info(
-                f"[STS_MGR] StatefulSet {statefulset_name} data {statefulset}"
-            )
             num_ready_replicas = (
                 int(statefulset.status.ready_replicas)
                 if statefulset.status.ready_replicas
@@ -590,9 +587,6 @@ class StatefulSetManager:
                     self.__get_statefulset_ready_replicas(statefulset_name, namespace)
                     == replicas
                 ):
-                    self.__log.info(
-                        f"[STS_MGR] StatefulSet {statefulset_name} is ready with {replicas} replicas."
-                    )
                     return
                 self.__log.info(
                     f"[STS_MGR] Waiting for StatefulSet {statefulset_name} to be ready. Retries left: {retry}"
