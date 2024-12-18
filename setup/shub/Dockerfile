@@ -104,7 +104,8 @@ ADD https://files.pythonhosted.org/packages/source/m/mitogen/mitogen-$MITOGEN_VE
 RUN tar -xzf /app/ansible/mitogen-plugin.tar.gz -C /app/ansible && \
     rm /app/ansible/mitogen-plugin.tar.gz && \
     mv /app/ansible/mitogen-$MITOGEN_VERSION /app/ansible/mitogen
-
+ \
+#============================================================================================
 # Image is ready, switch to the user
 USER $USER
 
