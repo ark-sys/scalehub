@@ -537,6 +537,19 @@ class StatefulSetManager:
         self.api_instance = client.AppsV1Api()
         self.taskmanager_types = ["s", "m", "l", "xl", "xxl"]
 
+    def __get_statefulset_ready_replicas(self, statefulset_name, namespace):
+
+        try:
+            statefulset = self.api_instance.read_namespaced_stateful_set(
+                name=statefulset_name, namespace=namespace, async_req=False
+            )
+            return int(statefulset.status.ready_replicas)
+        except ApiException as e:
+            self.__log.error(
+                f"[STS_MGR] Exception when calling AppsV1Api->read_namespaced_stateful_set: {e}\n"
+            )
+            return
+
     # Scale a statefulset to a specified number of replicas
     def scale_statefulset(self, statefulset_name, replicas=1, namespace="default"):
         # Fetch the statefulset
@@ -562,11 +575,22 @@ class StatefulSetManager:
                 f"[STS_MGR] StatefulSet {statefulset_name} scaled to {replicas} replica."
             )
 
-            # Wait until the statefulset is scaled
-            while (
-                self.get_statefulset_replicas(statefulset_name, namespace) != replicas
-            ):
-                sleep(1)
+            retry = 15
+            # Wait until the statefulset is ready
+            while retry > 0:
+                if (
+                    self.__get_statefulset_ready_replicas(statefulset_name, namespace)
+                    == replicas
+                ):
+                    self.__log.info(
+                        f"[STS_MGR] StatefulSet {statefulset_name} is ready with {replicas} replicas."
+                    )
+                    return
+                self.__log.info(
+                    f"[STS_MGR] Waiting for StatefulSet {statefulset_name} to be ready. Retries left: {retry}"
+                )
+                retry -= 1
+                sleep(5)
 
         except ApiException as e:
             self.__log.error(
