@@ -1,5 +1,6 @@
 import os
 import threading
+from time import sleep
 
 from scripts.src.resources.KubernetesManager import KubernetesManager
 from scripts.utils.Config import Config
@@ -28,6 +29,13 @@ class StoppableThread(threading.Thread):
 
     def join(self, timeout=None):
         super(StoppableThread, self).join(timeout)
+
+    def sleep(self, sleep_time):
+        for i in range(sleep_time):
+            if self.__stop_event.is_set():
+                return 1
+            sleep(1)
+        return 0
 
 
 class Experiment:
