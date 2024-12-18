@@ -32,7 +32,7 @@ class StoppableThread(threading.Thread):
 
     def sleep(self, sleep_time):
         for i in range(sleep_time):
-            if self.__stop_event.is_set():
+            if self.stopped():
                 return 1
             sleep(1)
         return 0
