@@ -18,8 +18,6 @@ class Scaling:
 
         # Set sleep command
         self.__sleep = None
-        # Stop event
-        self.__stopped = None
 
     def set_sleep_command(self, sleep):
         self.__sleep = sleep
@@ -96,10 +94,10 @@ class Scaling:
     def __scale_exponential(self, number, tm_type, scope):
         def __get_scaling_sequence(seq_n):
             pascaline_sequence = [1]
-            i = 1
+            val = 1
             while sum(pascaline_sequence) < seq_n:
-                pascaline_sequence.append(2**i)
-                i += 1
+                pascaline_sequence.append(2**val)
+                val += 1
             if sum(pascaline_sequence) > seq_n:
                 pascaline_sequence[-1] = seq_n - sum(pascaline_sequence[:-1])
             return pascaline_sequence
@@ -173,7 +171,7 @@ class Scaling:
                 self.__log.warning(
                     f"[SCALING] Scaling method {scaling_method} not supported. Defaulting to linear."
                 )
-                ret = self.__scale_linear(number, tm_type)
+                ret = self.__scale_linear(number, tm_type, scope)
         if ret == 1:
             return 1
 
