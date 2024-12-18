@@ -543,7 +543,15 @@ class StatefulSetManager:
             statefulset = self.api_instance.read_namespaced_stateful_set(
                 name=statefulset_name, namespace=namespace, async_req=False
             )
-            return int(statefulset.status.ready_replicas)
+            self.__log.info(
+                f"[STS_MGR] StatefulSet {statefulset_name} data {statefulset}"
+            )
+            num_ready_replicas = (
+                int(statefulset.status.ready_replicas)
+                if statefulset.status.ready_replicas
+                else 0
+            )
+            return num_ready_replicas
         except ApiException as e:
             self.__log.error(
                 f"[STS_MGR] Exception when calling AppsV1Api->read_namespaced_stateful_set: {e}\n"

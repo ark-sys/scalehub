@@ -10,7 +10,6 @@ class Scaling:
         self.__log = log
         self.k = km
         self.f = FlinkManager(log, config, self.k)
-        self.__log.info("[SCALING] Scaling experiment initialized.")
         # Load strategy from configuration
         self.steps = config.get(Key.Experiment.Scaling.steps)
         self.interval_scaling_s = config.get_int(
@@ -19,10 +18,6 @@ class Scaling:
 
         # Set sleep command
         self.__sleep = None
-
-        self.__log.info(
-            f"Init complete. Scaling steps: {self.steps} Interval: {self.interval_scaling_s}"
-        )
 
     def set_sleep_command(self, sleep):
         self.__sleep = sleep
