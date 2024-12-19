@@ -31,7 +31,7 @@ def provision(config: Config):
         try:
             p.run("infrastructure/setup", tag="create", config=config)
         except Exception as e:
-            log.error(f"Error during infrastructure setup: {e}")
+            log.error(f"Error during infrastructure setup: {str(e)}")
             exit(1)
     else:
         log.error("No platforms are specified in the configuration file.")
@@ -63,7 +63,7 @@ def deploy(playbook, config: Config):
         else:
             p.run(playbook, config=config, tag=tag)
     except Exception as e:
-        log.error(f"Error during deployment: {e}")
+        log.error(f"Error during deployment: {str(e)}")
         exit(1)
     return
 
@@ -79,7 +79,7 @@ def delete(playbook, config: Config):
         else:
             p.run(playbook, config=config, tag=tag)
     except Exception as e:
-        log.error(f"Error during deletion: {e}")
+        log.error(f"Error during deletion: {str(e)}")
         exit(1)
     return
 
@@ -90,7 +90,7 @@ def reload(playbook, config: Config):
     try:
         p.reload_playbook(playbook, config)
     except Exception as e:
-        log.error(f"Error during reload: {e}")
+        log.error(f"Error during reload: {str(e)}")
         exit(1)
 
 
@@ -219,7 +219,7 @@ def main():
                 config = Config(log, conf_path)
                 configs.append(config)
             except Exception as e:
-                log.error(f"Error while parsing configuration file: {e}")
+                log.error(f"Error while parsing configuration file: {str(e)}")
         else:
             log.error(f"Configuration file {conf_path} does not exist.")
 

@@ -224,7 +224,7 @@ class EnosPlatform(Platform):
             try:
                 self.provider.fw_create(proto="all")
             except Exception as e:
-                self.__log.warning(f"Error while creating firewall rules: {e}")
+                self.__log.warning(f"Error while creating firewall rules: {str(e)}")
 
     def check_credentials_file(self):
         home_directory = os.path.expanduser("~")

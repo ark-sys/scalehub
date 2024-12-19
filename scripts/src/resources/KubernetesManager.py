@@ -17,12 +17,12 @@ class KubernetesManager:
         try:
             self.kubeconfig = kubeconfig.load_kube_config(os.environ["KUBECONFIG"])
         except Exception as e:
-            self.__log.warning(f"Error loading kubeconfig from ENV: {e}")
+            self.__log.warning(f"Error loading kubeconfig from ENV: {str(e)}")
             self.__log.warning("Trying incluster config instead.")
             try:
                 self.kubeconfig = kubeconfig.load_incluster_config()
             except Exception as e:
-                self.__log.error(f"Error loading incluster kubeconfig: {e}")
+                self.__log.error(f"Error loading incluster kubeconfig: {str(e)}")
                 self.__log.error("Could not find a valid kubeconfig. Exiting.")
 
         self.pod_manager = PodManager(log)
@@ -44,7 +44,7 @@ class KubernetesManager:
             )
             return configmap.data
         except ApiException as e:
-            self.__log.error(f"Exception when getting Job logs: {e}")
+            self.__log.error(f"Exception when getting Job logs: {str(e)}")
 
     # get_token(secret_name, namespace)
     def get_token(self, secret_name, namespace):
@@ -56,7 +56,7 @@ class KubernetesManager:
             token = secret.data["token"]
         except ApiException as e:
             self.__log.error(
-                f"Exception when calling CoreV1Api->read_namespaced_secret: {e}"
+                f"Exception when calling CoreV1Api->read_namespaced_secret: {str(e)}"
             )
             return None
 
@@ -103,7 +103,7 @@ class PodManager:
             return resp  # Return the captured output
         except ApiException as e:
             self.__log.error(
-                f"[POD_MGR] Error executing command on pod {pod_name}: {e}"
+                f"[POD_MGR] Error executing command on pod {pod_name}: {str(e)}"
             )
 
     def execute_command_on_pods_by_label(
@@ -121,7 +121,7 @@ class PodManager:
                 self.execute_command_on_pod(pod.metadata.name, command)
         except ApiException as e:
             self.__log.error(
-                f"[POD_MGR] Exception when calling CoreV1Api->list_namespaced_pod: {e}"
+                f"[POD_MGR] Exception when calling CoreV1Api->list_namespaced_pod: {str(e)}"
             )
 
     # Delete pods by label
@@ -130,6 +130,7 @@ class PodManager:
             pods = self.api_instance.list_namespaced_pod(
                 label_selector=label_selector, namespace=namespace
             )
+            self.__log.info(f"[POD_MGR] Deleting pods {pods}.")
             for pod in pods.items:
                 # Step 2: Delete the pod
                 self.api_instance.delete_namespaced_pod(
@@ -138,7 +139,7 @@ class PodManager:
                 self.__log.info(f"[POD_MGR] Pod {pod.metadata.name} deleted")
         except ApiException as e:
             self.__log.error(
-                f"[POD_MGR] Exception when calling CoreV1Api->list_namespaced_pod: {e}"
+                f"[POD_MGR] Exception when calling CoreV1Api->list_namespaced_pod: {str(e)}"
             )
 
     # Check if pod is running and ready
@@ -152,7 +153,7 @@ class PodManager:
             return False
         except ApiException as e:
             self.__log.error(
-                f"[POD_MGR] Exception when calling CoreV1Api->read_namespaced_pod_status: {e}"
+                f"[POD_MGR] Exception when calling CoreV1Api->read_namespaced_pod_status: {str(e)}"
             )
             return False
 
@@ -178,7 +179,7 @@ class PodManager:
                     )
                 return "\n".join(logs)
             except ApiException as e:
-                self.__log.error(f"[POD_MGR] Exception when getting logs: {e}")
+                self.__log.error(f"[POD_MGR] Exception when getting logs: {str(e)}")
                 return ""
 
 
@@ -239,7 +240,7 @@ class DeploymentManager:
                 )
         except ApiException as e:
             self.__log.error(
-                f"[DEP_MGR] Exception when calling AppsV1Api->delete_namespaced_deployment: {e}\n"
+                f"[DEP_MGR] Exception when calling AppsV1Api->delete_namespaced_deployment: {str(e)}\n"
             )
             return None
 
@@ -252,7 +253,7 @@ class DeploymentManager:
             )
         except ApiException as e:
             self.__log.error(
-                f"[DEP_MGR] Exception when calling AppsV1Api->read_namespaced_deployment: {e}\n"
+                f"[DEP_MGR] Exception when calling AppsV1Api->read_namespaced_deployment: {str(e)}\n"
             )
             return None
 
@@ -271,7 +272,7 @@ class DeploymentManager:
             )
         except ApiException as e:
             self.__log.error(
-                f"[DEP_MGR] Exception when calling AppsV1Api->patch_namespaced_deployment: {e}\n"
+                f"[DEP_MGR] Exception when calling AppsV1Api->patch_namespaced_deployment: {str(e)}\n"
             )
 
     def get_deployment_replicas(self, deployment_name, namespace):
@@ -282,7 +283,7 @@ class DeploymentManager:
             return int(deployment.spec.replicas)
         except ApiException as e:
             self.__log.error(
-                f"[DEP_MGR] Exception when calling AppsV1Api->read_namespaced_deployment: {e}\n"
+                f"[DEP_MGR] Exception when calling AppsV1Api->read_namespaced_deployment: {str(e)}\n"
             )
             return None
 
@@ -317,7 +318,7 @@ class ServiceManager:
                 self.__log.info(f"[SVC_MGR] Service {service_name} created.")
             else:
                 self.__log.error(
-                    f"[SVC_MGR] Exception when calling CoreV1Api->create_namespaced_service: {e}\n"
+                    f"[SVC_MGR] Exception when calling CoreV1Api->create_namespaced_service: {str(e)}\n"
                 )
                 return None
 
@@ -347,7 +348,7 @@ class ServiceManager:
 
         except ApiException as e:
             self.__log.error(
-                f"[SVC_MGR] Exception when calling CoreV1Api->delete_namespaced_service: {e}\n"
+                f"[SVC_MGR] Exception when calling CoreV1Api->delete_namespaced_service: {str(e)}\n"
             )
             return None
 
@@ -366,7 +367,7 @@ class JobManager:
             self.__log.info(f"Job {job_name} deleted.")
         except client.ApiException as e:
             self.__log.error(
-                f"Exception when calling BatchV1Api->delete_namespaced_job: {e}"
+                f"Exception when calling BatchV1Api->delete_namespaced_job: {str(e)}"
             )
 
     # Retrieve job status
@@ -394,7 +395,7 @@ class JobManager:
                 f"{resource_type} {resource_name} created in namespace {namespace}."
             )
         except ApiException as e:
-            self.__log.error(f"Exception when operating on resource: {e}")
+            self.__log.error(f"Exception when operating on resource: {str(e)}")
 
     def get_job_logs(self, job_name, namespace):
         try:
@@ -413,7 +414,7 @@ class JobManager:
                 self.__log.error(f"No pods found for Job {job_name}.")
                 return ""
         except ApiException as e:
-            self.__log.error(f"Exception when getting Job logs: {e}")
+            self.__log.error(f"Exception when getting Job logs: {str(e)}")
             return ""
 
 
@@ -431,7 +432,7 @@ class NodeManager:
             return nodes.items
         except ApiException as e:
             self.__log.error(
-                f"[NODE_MGR] Exception when calling CoreV1Api->list_node: {e}\n"
+                f"[NODE_MGR] Exception when calling CoreV1Api->list_node: {str(e)}\n"
             )
             return None
 
@@ -487,7 +488,7 @@ class NodeManager:
             self.api_instance.patch_node(node_name, body=body)
         except ApiException as e:
             self.__log.error(
-                f"[NODE_MGR] Exception when calling CoreV1Api->list_node: {e}\n"
+                f"[NODE_MGR] Exception when calling CoreV1Api->list_node: {str(e)}\n"
             )
             return None
 
@@ -547,7 +548,7 @@ class StatefulSetManager:
             return num_ready_replicas
         except ApiException as e:
             self.__log.error(
-                f"[STS_MGR] Exception when calling AppsV1Api->read_namespaced_stateful_set: {e}\n"
+                f"[STS_MGR] Exception when calling AppsV1Api->read_namespaced_stateful_set: {str(e)}\n"
             )
             return None
 
@@ -560,7 +561,7 @@ class StatefulSetManager:
             )
         except ApiException as e:
             self.__log.error(
-                f"[STS_MGR] Exception when calling AppsV1Api->read_namespaced_stateful_set: {e}\n"
+                f"[STS_MGR] Exception when calling AppsV1Api->read_namespaced_stateful_set: {str(e)}\n"
             )
             return None
 
@@ -589,7 +590,7 @@ class StatefulSetManager:
 
         except ApiException as e:
             self.__log.error(
-                f"[STS_MGR] Exception when calling AppsV1Api->patch_namespaced_stateful_set: {e}\n"
+                f"[STS_MGR] Exception when calling AppsV1Api->patch_namespaced_stateful_set: {str(e)}\n"
             )
             return None
 
@@ -601,7 +602,7 @@ class StatefulSetManager:
             return int(statefulset.spec.replicas)
         except ApiException as e:
             self.__log.error(
-                f"[STS_MGR] Exception when calling AppsV1Api->read_namespaced_stateful_set: {e}\n"
+                f"[STS_MGR] Exception when calling AppsV1Api->read_namespaced_stateful_set: {str(e)}\n"
             )
             return
 
@@ -613,7 +614,7 @@ class StatefulSetManager:
             return statefulsets.items
         except ApiException as e:
             self.__log.error(
-                f"[STS_MGR] Exception when calling AppsV1Api->list_namespaced_stateful_set: {e}\n"
+                f"[STS_MGR] Exception when calling AppsV1Api->list_namespaced_stateful_set: {str(e)}\n"
             )
             return None
 
@@ -733,7 +734,7 @@ class StatefulSetManager:
 #            )
 #        except ApiException as e:
 #            self.__log.error(
-#                f"Exception when calling CustomObjectsApi->delete_collection_namespaced_custom_object: {e}\n"
+#                f"Exception when calling CustomObjectsApi->delete_collection_namespaced_custom_object: {str(e)}\n"
 #            )
 #            return
 #        self.__log.info("NetworkChaos resources deleted.")
@@ -754,7 +755,7 @@ class StatefulSetManager:
 #            )
 #        except ApiException as e:
 #            self.__log.error(
-#                f"Exception when calling CustomObjectsApi->create_namespaced_custom_object: {e}\n"
+#                f"Exception when calling CustomObjectsApi->create_namespaced_custom_object: {str(e)}\n"
 #            )
 #            return
 #        self.__log.info("NetworkChaos resource created.")
@@ -777,7 +778,7 @@ class StatefulSetManager:
 #            return result
 #        except ApiException as e:
 #            self.__log.error(
-#                f"Exception when calling CustomObjectsApi->list_namespaced_custom_object: {e}\n"
+#                f"Exception when calling CustomObjectsApi->list_namespaced_custom_object: {str(e)}\n"
 #            )
 #            return
 #
