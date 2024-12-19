@@ -35,40 +35,52 @@ class SimpleExperiment(Experiment):
         exp_paths = []
 
         f: FolderManager = FolderManager(self.__log, self.EXPERIMENTS_BASE_PATH)
+        try:
+            # Create date folder
+            date_path = f.create_date_folder(self.timestamps[0][0])
+        except Exception as e:
+            self.__log.error(f"[SIMPLE_E] Error creating date folder: {e}")
+            return None
 
-        # Create date folder
-        date_path = f.create_date_folder(self.timestamps[0][0])
+        try:
+            # Create experiment folder for results
+            if len(self.timestamps) > 0:
+                if len(self.timestamps) > 1:
+                    multi_run_folder_path = f.create_multi_run_folder()
+                else:
+                    multi_run_folder_path = date_path
 
-        # Create experiment folder for results
-        if len(self.timestamps) > 0:
-            if len(self.timestamps) > 1:
-                multi_run_folder_path = f.create_multi_run_folder()
-            else:
-                multi_run_folder_path = date_path
-
-            for i, (start_ts, end_ts) in enumerate(self.timestamps):
-                exp_path = f.create_subfolder(multi_run_folder_path)
-                exp_paths.append(exp_path)
-                log_file = self.create_log_file(exp_path, start_ts, end_ts)
-                with open(log_file, "r+") as file:
-                    content = file.read()
-                    file.seek(0, 0)
-                    file.write(f"Experiment run {i + 1}\n\n" + content)
-            # Get time diff since first start_ts and now
-            time_diff = int(datetime.now().timestamp()) - self.timestamps[0][0]
-            labels = "app=experiment-monitor"
-            # Save experiment-monitor logs since time_diff seconds ago
-            monitor_logs = self.k.pod_manager.get_logs_since(
-                labels, time_diff, "experiment-monitor"
-            )
-            with open(f"{multi_run_folder_path}/monitor_logs.txt", "w") as file:
-                file.write(monitor_logs)
-
-            # Export data
-            dm: DataManager = DataManager(self.__log, self.config)
-            dm.export(multi_run_folder_path)
-        else:
-            self.__log.error("No timestamps found.")
+                for i, (start_ts, end_ts) in enumerate(self.timestamps):
+                    exp_path = f.create_subfolder(multi_run_folder_path)
+                    exp_paths.append(exp_path)
+                    log_file = self.create_log_file(exp_path, start_ts, end_ts)
+                    with open(log_file, "r+") as file:
+                        content = file.read()
+                        file.seek(0, 0)
+                        file.write(f"Experiment run {i + 1}\n\n" + content)
+                try:
+                    # Get time diff since first start_ts and now
+                    time_diff = int(datetime.now().timestamp()) - self.timestamps[0][0]
+                    labels = "app=experiment-monitor"
+                    # Save experiment-monitor logs since time_diff seconds ago
+                    monitor_logs = self.k.pod_manager.get_logs_since(
+                        labels, time_diff, "experiment-monitor"
+                    )
+                    with open(f"{multi_run_folder_path}/monitor_logs.txt", "w") as file:
+                        file.write(monitor_logs)
+                    try:
+                        # Export data
+                        dm: DataManager = DataManager(self.__log, self.config)
+                        dm.export(multi_run_folder_path)
+                    except Exception as e:
+                        self.__log.error(f"[SIMPLE_E] Error exporting data: {e}")
+                        return None
+                except Exception as e:
+                    self.__log.error(f"[SIMPLE_E] Error saving monitor logs: {e}")
+                    return None
+        except Exception as e:
+            self.__log.error(f"[SIMPLE_E] Error creating experiment folder: {e}")
+            return None
 
     def cleaning(self):
         self.__log.info("[SIMPLE_E] Cleaning up experiment.")
@@ -76,21 +88,25 @@ class SimpleExperiment(Experiment):
             # Remove SCHEDULABLE label from all nodes
             self.k.node_manager.reset_scaling_labels()
             self.k.node_manager.reset_state_labels()
-
+        except Exception as e:
+            self.__log.error(f"[SIMPLE_E] Error cleaning up - resetting labels : {e}")
+        try:
             self.k.statefulset_manager.reset_taskmanagers()
 
             jobmanager_labels = "app=flink,component=jobmanager"
             self.k.pod_manager.delete_pods_by_label(jobmanager_labels, "flink")
-
-            # delete load generators
-            self.delete_load_generators()
-
-            # Reload kafka
-            self.reload_kafka()
-
-            self.__log.info("[SIMPLE_E] Experiment cleaned up.")
         except Exception as e:
-            self.__log.error(f"[SIMPLE_E] Error cleaning up: {e}")
+            self.__log.error(f"[SIMPLE_E] Error cleaning up - resetting flink: {e}")
+        try:
+            self.delete_load_generators()
+        except Exception as e:
+            self.__log.error(
+                f"[SIMPLE_E] Error cleaning up - deleting load generators: {e}"
+            )
+        try:
+            self.reload_kafka()
+        except Exception as e:
+            self.__log.error(f"[SIMPLE_E] Error cleaning up - reloading kafka: {e}")
 
     def running(self):
         self.__log.info("[SIMPLE_E] Running experiment.")
