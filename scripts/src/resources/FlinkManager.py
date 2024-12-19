@@ -195,11 +195,16 @@ class FlinkManager:
         # List current running jobs. If we multiple jobs running beside self.job_id. Cancel all of them
         res = self.k.pod_manager.execute_command_on_pod(
             deployment_name="flink-jobmanager",
-            command="flink list -r 2>/dev/null'",
+            command="flink list -r 2>/dev/null",
         ).strip()
+
+        self.__log.info(f"[FLK_MGR] Running jobs: {res}")
 
         # Extract job ids from response
         job_ids = re.findall(r"\b\w{16,}\b", res)
+
+        self.__log.info(f"[FLK_MGR] Running jobs: {job_ids}")
+        deletions = 0
         for job_id in job_ids:
             # Cancel all jobs except the one tracked by self.job_id
             if job_id != self.job_id:
@@ -213,7 +218,9 @@ class FlinkManager:
                     self.__log.info(f"[FLK_MGR] Job {job_id} not found.")
                 else:
                     self.__log.info(f"[FLK_MGR] Job {job_id} cancelled.")
+                    deletions += 1
 
+        self.__log.info(f"[FLK_MGR] Total jobs cancelled: {deletions}")
         return 0
 
     def get_job_info(self):
@@ -251,3 +258,14 @@ class FlinkManager:
         except Exception as e:
             self.__log.error(f"[FLK_MGR] Error while waiting for job to run: {str(e)}")
             return 1
+
+
+if __name__ == "__main__":
+    # Test check_nominal_job_run
+    log = Logger()
+    config = Config(log, "/app/conf/experiment/multi_node_bm.ini")
+
+    km = KubernetesManager(log)
+    fm = FlinkManager(log, config, km)
+    fm.job_id = "d3d64e83f000ef5997c2b0a1a4679988"
+    fm.check_nominal_job_run()

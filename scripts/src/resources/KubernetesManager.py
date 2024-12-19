@@ -130,7 +130,6 @@ class PodManager:
             pods = self.api_instance.list_namespaced_pod(
                 label_selector=label_selector, namespace=namespace
             )
-            self.__log.info(f"[POD_MGR] Deleting pods {pods}.")
             for pod in pods.items:
                 # Step 2: Delete the pod
                 self.api_instance.delete_namespaced_pod(
@@ -630,8 +629,9 @@ class StatefulSetManager:
         for type in self.taskmanager_types:
             self.scale_statefulset(f"flink-taskmanager-{type}", 0, "flink")
             sleep(1)
+
         # Wait until all taskmanagers are terminated
-        while sum(self.get_count_of_taskmanagers()) > 0:
+        while sum(self.get_count_of_taskmanagers().values()) > 0:
             sleep(5)
 
 
