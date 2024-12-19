@@ -142,10 +142,15 @@ class Playbooks:
 
     def role_load_generators(self, config: Config, tag=None):
         self.__load_config(config)
+        # set quiet argument
         for lg in self.load_generators:
             try:
                 self.run(
-                    "application/load_generators", config=config, tag=tag, extra_vars=lg
+                    "application/load_generators",
+                    config=config,
+                    tag=tag,
+                    extra_vars=lg,
+                    quiet=True,
                 )
             except Exception as e:
                 self.__log.error(str(e))
@@ -153,20 +158,21 @@ class Playbooks:
         return 0
 
     def reload_playbook(self, playbook, config: Config):
+        self.__log.info(f"Reloading playbook: {playbook}")
         try:
             if "load_generators" in playbook:
                 self.role_load_generators(config, tag="delete")
             else:
-                self.run(playbook, config=config, tag="delete")
+                self.run(playbook, config=config, tag="delete", quiet=True)
             sleep(10)
             if "load_generators" in playbook:
                 self.role_load_generators(config, tag="create")
             else:
-                self.run(playbook, config=config, tag="create")
+                self.run(playbook, config=config, tag="create", quiet=True)
         except Exception as e:
             self.__log.error(str(e))
 
-    def run(self, playbook, config: Config, tag=None, extra_vars=None):
+    def run(self, playbook, config: Config, tag=None, extra_vars=None, quiet=False):
         if extra_vars is None:
             extra_vars = {}
         inventory = config.get_str(Key.Scalehub.inventory)
@@ -195,12 +201,15 @@ class Playbooks:
                 inventory=inventory,
                 extravars=playbook_vars,
                 tags=tags,
+                quiet=quiet,
             )
             if r.rc != 0:
                 self.__log.error(f"Failed to run playbook: {playbook_filename}")
                 return r.rc
             else:
-                self.__log.info(f"Playbook {playbook_filename} executed successfully.")
+                self.__log.info(
+                    f"Playbook {playbook_filename} with tag {tags} executed successfully."
+                )
         except Exception as e:
             self.__log.error(e.__str__())
             return e

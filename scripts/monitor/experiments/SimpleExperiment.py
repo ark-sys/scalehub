@@ -39,7 +39,7 @@ class SimpleExperiment(Experiment):
             # Create date folder
             date_path = f.create_date_folder(self.timestamps[0][0])
         except Exception as e:
-            self.__log.error(f"[SIMPLE_E] Error creating date folder: {e}")
+            self.__log.error(f"[SIMPLE_E] Error creating date folder: {str(e)}")
             return None
 
         try:
@@ -73,13 +73,13 @@ class SimpleExperiment(Experiment):
                         dm: DataManager = DataManager(self.__log, self.config)
                         dm.export(multi_run_folder_path)
                     except Exception as e:
-                        self.__log.error(f"[SIMPLE_E] Error exporting data: {e}")
+                        self.__log.error(f"[SIMPLE_E] Error exporting data: {str(e)}")
                         return None
                 except Exception as e:
-                    self.__log.error(f"[SIMPLE_E] Error saving monitor logs: {e}")
+                    self.__log.error(f"[SIMPLE_E] Error saving monitor logs: {str(e)}")
                     return None
         except Exception as e:
-            self.__log.error(f"[SIMPLE_E] Error creating experiment folder: {e}")
+            self.__log.error(f"[SIMPLE_E] Error creating experiment folder: {str(e)}")
             return None
 
     def cleaning(self):
@@ -89,24 +89,30 @@ class SimpleExperiment(Experiment):
             self.k.node_manager.reset_scaling_labels()
             self.k.node_manager.reset_state_labels()
         except Exception as e:
-            self.__log.error(f"[SIMPLE_E] Error cleaning up - resetting labels : {e}")
+            self.__log.error(
+                f"[SIMPLE_E] Error cleaning up - resetting labels : {str(e)}"
+            )
         try:
             self.k.statefulset_manager.reset_taskmanagers()
 
             jobmanager_labels = "app=flink,component=jobmanager"
             self.k.pod_manager.delete_pods_by_label(jobmanager_labels, "flink")
         except Exception as e:
-            self.__log.error(f"[SIMPLE_E] Error cleaning up - resetting flink: {e}")
+            self.__log.error(
+                f"[SIMPLE_E] Error cleaning up - resetting flink: {str(e)}"
+            )
         try:
             self.delete_load_generators()
         except Exception as e:
             self.__log.error(
-                f"[SIMPLE_E] Error cleaning up - deleting load generators: {e}"
+                f"[SIMPLE_E] Error cleaning up - deleting load generators: {str(e)}"
             )
         try:
             self.reload_kafka()
         except Exception as e:
-            self.__log.error(f"[SIMPLE_E] Error cleaning up - reloading kafka: {e}")
+            self.__log.error(
+                f"[SIMPLE_E] Error cleaning up - reloading kafka: {str(e)}"
+            )
 
     def running(self):
         self.__log.info("[SIMPLE_E] Running experiment.")
@@ -141,7 +147,7 @@ class SimpleExperiment(Experiment):
                     break
 
             except Exception as e:
-                self.__log.error(f"[SIMPLE_E] Error during run: {e}")
+                self.__log.error(f"[SIMPLE_E] Error during run: {str(e)}")
                 break
 
     def __single_run(self):
@@ -162,5 +168,5 @@ class SimpleExperiment(Experiment):
             self.cleaning()
 
         except Exception as e:
-            self.__log.error(f"[SIMPLE_E] Error during single run: {e}")
+            self.__log.error(f"[SIMPLE_E] Error during single run: {str(e)}")
             return 1
