@@ -58,7 +58,7 @@ class KubernetesManager:
             self.__log.error(
                 f"Exception when calling CoreV1Api->read_namespaced_secret: {e}"
             )
-            return
+            return None
 
         # decode token from base64
         return base64.b64decode(token).decode("utf-8")
@@ -81,7 +81,7 @@ class PodManager:
             self.__log.error(
                 f"[POD_MGR] No running pods found for deployment {deployment_name}"
             )
-            return
+            return None
 
         pod_name = target_pod.metadata.name
 
@@ -212,7 +212,7 @@ class DeploymentManager:
                 self.__log.info(
                     f"[DEP_MGR] Deployment {resource_object['metadata']['name']} created."
                 )
-            return
+            return None
 
     def delete_deployment_from_template(self, template_filename, params):
         # Load resource definition from file
@@ -241,7 +241,7 @@ class DeploymentManager:
             self.__log.error(
                 f"[DEP_MGR] Exception when calling AppsV1Api->delete_namespaced_deployment: {e}\n"
             )
-            return
+            return None
 
     # Scale a deployment to a specified number of replicas
     def scale_deployment(self, deployment_name, replicas=1, namespace="default"):
@@ -254,7 +254,7 @@ class DeploymentManager:
             self.__log.error(
                 f"[DEP_MGR] Exception when calling AppsV1Api->read_namespaced_deployment: {e}\n"
             )
-            return
+            return None
 
         # Scale the deployment
         # deployment.spec.replicas = replicas
@@ -284,7 +284,7 @@ class DeploymentManager:
             self.__log.error(
                 f"[DEP_MGR] Exception when calling AppsV1Api->read_namespaced_deployment: {e}\n"
             )
-            return
+            return None
 
 
 class ServiceManager:
@@ -319,7 +319,7 @@ class ServiceManager:
                 self.__log.error(
                     f"[SVC_MGR] Exception when calling CoreV1Api->create_namespaced_service: {e}\n"
                 )
-                return
+                return None
 
     def delete_service_from_template(self, template_filename, params):
         # Load resource definition from file
@@ -349,7 +349,7 @@ class ServiceManager:
             self.__log.error(
                 f"[SVC_MGR] Exception when calling CoreV1Api->delete_namespaced_service: {e}\n"
             )
-            return
+            return None
 
 
 class JobManager:
@@ -433,7 +433,7 @@ class NodeManager:
             self.__log.error(
                 f"[NODE_MGR] Exception when calling CoreV1Api->list_node: {e}\n"
             )
-            return
+            return None
 
     def get_available_worker_nodes(self):
         label_keys = ["node-role.kubernetes.io/worker=consumer"]
@@ -543,17 +543,13 @@ class StatefulSetManager:
             statefulset = self.api_instance.read_namespaced_stateful_set(
                 name=statefulset_name, namespace=namespace, async_req=False
             )
-            num_ready_replicas = (
-                int(statefulset.status.ready_replicas)
-                if statefulset.status.ready_replicas
-                else 0
-            )
+            num_ready_replicas = int(statefulset.status.ready_replicas or 0)
             return num_ready_replicas
         except ApiException as e:
             self.__log.error(
                 f"[STS_MGR] Exception when calling AppsV1Api->read_namespaced_stateful_set: {e}\n"
             )
-            return
+            return None
 
     # Scale a statefulset to a specified number of replicas
     def scale_statefulset(self, statefulset_name, replicas=1, namespace="default"):
@@ -566,7 +562,7 @@ class StatefulSetManager:
             self.__log.error(
                 f"[STS_MGR] Exception when calling AppsV1Api->read_namespaced_stateful_set: {e}\n"
             )
-            return
+            return None
 
         # Scale the statefulset
         patch = {"spec": {"replicas": int(replicas)}}
@@ -577,7 +573,7 @@ class StatefulSetManager:
                 body=patch,
             )
             self.__log.info(
-                f"[STS_MGR] StatefulSet {statefulset_name} scaled to {replicas} replica."
+                f"[STS_MGR] StatefulSet {statefulset_name} scaled to {str(replicas)} replica."
             )
 
             retry = 15
@@ -587,10 +583,7 @@ class StatefulSetManager:
                     self.__get_statefulset_ready_replicas(statefulset_name, namespace)
                     == replicas
                 ):
-                    return
-                self.__log.info(
-                    f"[STS_MGR] Waiting for StatefulSet {statefulset_name} to be ready. Retries left: {retry}"
-                )
+                    return True
                 retry -= 1
                 sleep(5)
 
@@ -598,7 +591,7 @@ class StatefulSetManager:
             self.__log.error(
                 f"[STS_MGR] Exception when calling AppsV1Api->patch_namespaced_stateful_set: {e}\n"
             )
-            return
+            return None
 
     def get_statefulset_replicas(self, statefulset_name, namespace):
         try:
