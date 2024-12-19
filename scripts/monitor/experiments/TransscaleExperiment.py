@@ -187,4 +187,4 @@ class TransscaleExperiment(Experiment):
                     if job_status[0].type == "Complete":
                         break
             except Exception as e:
-                self.__log.warning(f"Error while getting job status: {e}")
+                self.__log.warning(f"Error while getting job status: {str(e)}")

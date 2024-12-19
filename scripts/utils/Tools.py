@@ -118,7 +118,7 @@ class Tools:
             resource_object = yaml.safe_load(resource_definition)
             return resource_object
         except FileNotFoundError as e:
-            self.__log.error(f"File not found: {resource_filename} - {e}")
+            self.__log.error(f"File not found: {resource_filename} - {str(e)}")
             return
 
 
@@ -164,7 +164,7 @@ class Playbooks:
                 self.role_load_generators(config, tag="delete")
             else:
                 self.run(playbook, config=config, tag="delete", quiet=True)
-            sleep(10)
+            sleep(5)
             if "load_generators" in playbook:
                 self.role_load_generators(config, tag="create")
             else:

@@ -33,7 +33,7 @@ class FlinkManager:
                 return r.json()
             return None
         except Exception as e:
-            self.__log.error(f"[FLK_MGR] Error while getting overview: {e}")
+            self.__log.error(f"[FLK_MGR] Error while getting overview: {str(e)}")
             return None
 
     def __get_job_plan(self, job_id):
@@ -52,7 +52,7 @@ class FlinkManager:
                 sleep(5)
             return None
         except Exception as e:
-            self.__log.error(f"[FLK_MGR] Error while getting job plan: {e}")
+            self.__log.error(f"[FLK_MGR] Error while getting job plan: {str(e)}")
             return None
 
     def __get_job_state(self):
@@ -68,7 +68,7 @@ class FlinkManager:
             else:
                 return None
         except Exception as e:
-            self.__log.error(f"[FLK_MGR] Error while getting job state: {e}")
+            self.__log.error(f"[FLK_MGR] Error while getting job state: {str(e)}")
             return None
 
     def __get_operators(self):
@@ -86,7 +86,7 @@ class FlinkManager:
                 operator_names[operator_name] = node["parallelism"]
             return operator_names
         except Exception as e:
-            self.__log.error(f"[FLK_MGR] Error while getting operator names: {e}")
+            self.__log.error(f"[FLK_MGR] Error while getting operator names: {str(e)}")
             return None
 
     def __get_monitored_task_parallelism(self):
@@ -127,7 +127,7 @@ class FlinkManager:
                 sleep(5)
                 return savepoint_path
         except Exception as e:
-            self.__log.error(f"[FLK_MGR] Error while stopping job: {e}")
+            self.__log.error(f"[FLK_MGR] Error while stopping job: {str(e)}")
             return None
 
     def __build_par_map(self, new_parallelism) -> str:
@@ -176,7 +176,7 @@ class FlinkManager:
                 self.__log.error("[FLK_MGR] Job id not found.")
                 return 1
         except Exception as e:
-            self.__log.error(f"[FLK_MGR] Error while running job: {e}")
+            self.__log.error(f"[FLK_MGR] Error while running job: {str(e)}")
             return 1
 
     def get_total_slots(self):
@@ -203,11 +203,16 @@ class FlinkManager:
         for job_id in job_ids:
             # Cancel all jobs except the one tracked by self.job_id
             if job_id != self.job_id:
-                self.k.pod_manager.execute_command_on_pod(
+                res = self.k.pod_manager.execute_command_on_pod(
                     deployment_name="flink-jobmanager",
                     command=f"flink cancel {job_id}",
                 )
-                self.__log.info(f"[FLK_MGR] Job {job_id} cancelled.")
+
+                # Check content of res
+                if "Job not found" in res:
+                    self.__log.info(f"[FLK_MGR] Job {job_id} not found.")
+                else:
+                    self.__log.info(f"[FLK_MGR] Job {job_id} cancelled.")
 
         return 0
 
@@ -227,7 +232,7 @@ class FlinkManager:
             else:
                 return 0
         except Exception as e:
-            self.__log.error(f"[FLK_MGR] Error while getting job info: {e}")
+            self.__log.error(f"[FLK_MGR] Error while getting job info: {str(e)}")
             return None
 
     def wait_for_job_running(self):
@@ -244,5 +249,5 @@ class FlinkManager:
                 self.__log.error("[FLK_MGR] Job did not start.")
                 return 1
         except Exception as e:
-            self.__log.error(f"[FLK_MGR] Error while waiting for job to run: {e}")
+            self.__log.error(f"[FLK_MGR] Error while waiting for job to run: {str(e)}")
             return 1

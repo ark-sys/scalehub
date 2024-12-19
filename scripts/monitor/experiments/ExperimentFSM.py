@@ -114,7 +114,7 @@ class ExperimentFSM(LockedMachine):
             self.current_experiment.starting()
             self.__log.info("[FSM] FSM startup complete, transitioning to running.")
         except Exception as e:
-            self.__log.error(f"[FSM] Error while starting experiment: {e}")
+            self.__log.error(f"[FSM] Error while starting experiment: {str(e)}")
             self.__log.error(f"[FSM] Cleaning experiment.")
 
     def on_enter_RUNNING(self):
@@ -135,7 +135,7 @@ class ExperimentFSM(LockedMachine):
                 self.current_experiment.finishing()
                 self.__log.info("[FSM] Finish phase complete.")
             except Exception as e:
-                self.__log.error(f"[FSM] Error while executing end phase: {e}")
+                self.__log.error(f"[FSM] Error while executing end phase: {str(e)}")
 
     def on_enter_IDLE(self):
         # Clean flink jobs

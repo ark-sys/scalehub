@@ -63,7 +63,7 @@ class DataExporter:
                     res.append(json.loads(line))
             return res
         except Exception as e:
-            self.__log.error(f"Failed to load json file {file_path} due to : {e}")
+            self.__log.error(f"Failed to load json file {file_path} due to : {str(e)}")
 
     def extract_pod_names(self, metrics_content) -> dict:
         pod_names = {}
@@ -100,7 +100,7 @@ class DataExporter:
 
             except requests.exceptions.RequestException as e:
                 self.__log.warning(
-                    f"Failed to connect to VictoriaMetrics at {self.db_url}: {e}"
+                    f"Failed to connect to VictoriaMetrics at {self.db_url}: {str(e)}"
                 )
                 self.__log.info(
                     f"Trying to connect to local VictoriaMetrics at {self.db_url_local}"
@@ -144,7 +144,7 @@ class DataExporter:
                 response.raise_for_status()
             except requests.exceptions.RequestException as e:
                 self.__log.warning(
-                    f"Failed to connect to VictoriaMetrics at {self.db_url}: {e}"
+                    f"Failed to connect to VictoriaMetrics at {self.db_url}: {str(e)}"
                 )
                 self.__log.info(
                     f"Trying to connect to local VictoriaMetrics at {self.db_url_local}"
@@ -192,7 +192,7 @@ class DataExporter:
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
             self.__log.warning(
-                f"Failed to connect to VictoriaMetrics at {self.db_url}: {e}"
+                f"Failed to connect to VictoriaMetrics at {self.db_url}: {str(e)}"
             )
             self.__log.info(
                 f"Trying to connect to local VictoriaMetrics at {self.db_url_local}"

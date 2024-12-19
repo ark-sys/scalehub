@@ -145,7 +145,7 @@ class ProvisionManager:
                     provider.fw_create(proto="all")
                 except Exception as e:
                     self.__log.warning(
-                        f"Error while creating firewall rules for {provider}: {e}"
+                        f"Error while creating firewall rules for {provider}: {str(e)}"
                     )
                     continue
         # Retrieve pi node "statically"

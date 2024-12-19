@@ -79,7 +79,7 @@ class Experiment:
                 file.write(f"Experiment end at : {end_ts}\n")
             return log_file_path
         except Exception as e:
-            self.__log.error(f"[EXP] Error creating log file: {e}")
+            self.__log.error(f"[EXP] Error creating log file: {str(e)}")
 
     def reload_kafka(self):
         self.p.reload_playbook("application/kafka", config=self.config)

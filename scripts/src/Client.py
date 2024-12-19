@@ -3,7 +3,6 @@ import time
 from time import sleep
 
 import paho.mqtt.client as mqtt
-
 # noinspection PyUnresolvedReferences
 from paho.mqtt.enums import CallbackAPIVersion
 
@@ -61,7 +60,7 @@ class Client:
                 60,
             )
         except ConnectionRefusedError as e:
-            self.__log.error(f"MQTT connection failed: {e}")
+            self.__log.error(f"MQTT connection failed: {str(e)}")
             exit(1)
         self.client.loop_start()
 
