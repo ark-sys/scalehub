@@ -34,17 +34,17 @@ class SimpleExperiment(Experiment):
 
         exp_paths = []
 
-        f: FolderManager = FolderManager(self.__log, self.EXPERIMENTS_BASE_PATH)
-        try:
-            # Create date folder
-            date_path = f.create_date_folder(self.timestamps[0][0])
-        except Exception as e:
-            self.__log.error(f"[SIMPLE_E] Error creating date folder: {str(e)}")
-            return None
+        # Create experiment folder for results
+        if len(self.timestamps) > 0:
+            f: FolderManager = FolderManager(self.__log, self.EXPERIMENTS_BASE_PATH)
+            try:
+                # Create date folder
+                date_path = f.create_date_folder(self.timestamps[0][0])
+            except Exception as e:
+                self.__log.error(f"[SIMPLE_E] Error creating date folder: {str(e)}")
+                return None
 
-        try:
-            # Create experiment folder for results
-            if len(self.timestamps) > 0:
+            try:
                 if len(self.timestamps) > 1:
                     multi_run_folder_path = f.create_multi_run_folder()
                 else:
@@ -78,9 +78,15 @@ class SimpleExperiment(Experiment):
                 except Exception as e:
                     self.__log.error(f"[SIMPLE_E] Error saving monitor logs: {str(e)}")
                     return None
-        except Exception as e:
-            self.__log.error(f"[SIMPLE_E] Error creating experiment folder: {str(e)}")
-            return None
+            except Exception as e:
+                self.__log.error(
+                    f"[SIMPLE_E] Error creating experiment folder: {str(e)}"
+                )
+                return None
+        else:
+            self.__log.warning(
+                "[SIMPLE_E] No timestamps found. Skipping results creation."
+            )
 
     def cleaning(self):
         self.__log.info("[SIMPLE_E] Cleaning up experiment.")
