@@ -1,0 +1,22 @@
+- node: grid5000
+  taskmanager:
+    - number: 52
+      type: s
+      method: block
+- node: grid5000
+  taskmanager:
+    - number: 52
+      type: s
+      method: block
+- node: vm_grid5000
+  type: large
+  taskmanager:
+    - number: 8
+      type: s
+      method: block
+- node: vm_grid5000
+  type: large
+  taskmanager:
+    - number: 8
+      type: s
+      method: block
