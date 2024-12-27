@@ -6,6 +6,7 @@ metadata:
   namespace: flink
 spec:
   replicas: 0
+  podManagementPolicy: Parallel
   selector:
     matchLabels:
       app: flink
@@ -79,6 +80,7 @@ metadata:
   namespace: flink
 spec:
   replicas: 0
+  podManagementPolicy: Parallel
   selector:
     matchLabels:
       app: flink
@@ -151,6 +153,7 @@ metadata:
   namespace: flink
 spec:
   replicas: 0
+  podManagementPolicy: Parallel
   selector:
     matchLabels:
       app: flink
@@ -223,6 +226,7 @@ metadata:
   namespace: flink
 spec:
   replicas: 0
+  podManagementPolicy: Parallel
   selector:
     matchLabels:
       app: flink
@@ -295,6 +299,7 @@ metadata:
   namespace: flink
 spec:
   replicas: 0
+  podManagementPolicy: Parallel
   selector:
     matchLabels:
       app: flink
@@ -325,7 +330,7 @@ spec:
           image: "{{image}}:{{tag}}"
           resources:
             limits:
-              memory: 3900Mi
+              memory: 3500Mi
               cpu: 1000m
           args: [ "taskmanager" ]
           ports:

@@ -43,6 +43,7 @@
       kubernetes.core.k8s:
         state: present
         definition: "{{ lookup('ansible.builtin.template', 'kafka/kafka-deployment.yaml.j2' ) | from_yaml }}"
+        wait: yes
 
     - name: Deploy Redis service
       kubernetes.core.k8s:
