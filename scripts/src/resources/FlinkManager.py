@@ -258,14 +258,3 @@ class FlinkManager:
         except Exception as e:
             self.__log.error(f"[FLK_MGR] Error while waiting for job to run: {str(e)}")
             return 1
-
-
-if __name__ == "__main__":
-    # Test check_nominal_job_run
-    log = Logger()
-    config = Config(log, "/app/conf/experiment/multi_node_bm.ini")
-
-    km = KubernetesManager(log)
-    fm = FlinkManager(log, config, km)
-    fm.job_id = "d3d64e83f000ef5997c2b0a1a4679988"
-    fm.check_nominal_job_run()
