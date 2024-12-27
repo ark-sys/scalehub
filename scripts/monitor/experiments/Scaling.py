@@ -24,7 +24,7 @@ class Scaling:
 
     def __scale_and_wait(self, replicas):
         self.__log.info(
-            f"[SCALING] ************ Adding {replicas} replicas ************"
+            f"[SCALING] ************************************ Adding {replicas} replicas ************************************"
         )
         ret = self.f.run_job(replicas)
         if ret == 1:
@@ -177,7 +177,7 @@ class Scaling:
 
     def __scale_step(self, step):
         self.__log.info(
-            f"========================================= Step {step} ========================================="
+            f"=========================================================== Step {step} ==========================================================="
         )
         node = self.steps[step]["node"]
         self.__log.info(f"[SCALING] Scaling on node : {node}")
@@ -194,17 +194,17 @@ class Scaling:
             vm_type = self.steps[step]["type"] if node_type == "vm_grid5000" else None
             next_node = self.k.node_manager.get_next_node(node_type, vm_type)
             if next_node:
-                self.__log.info(f"[SCALING] Next node: {next_node}")
+                self.__log.info(f"[SCALING] Next node: {next_node}\n")
                 self.k.node_manager.mark_node_as_schedulable(next_node)
                 return next_node, "pass"
             else:
-                self.__log.error("[SCALING] No more nodes available.")
+                self.__log.error("[SCALING] No more nodes available.\n")
                 return None, "break"
         elif step == 0:
             if len(self.steps[step]["taskmanager"]) == 1:
                 if self.steps[step]["taskmanager"][0]["number"] == 1:
                     self.__log.info(
-                        "[SCALING] First node and first taskmanager already scaled."
+                        "[SCALING] First node and first taskmanager already scaled.\n"
                     )
                     self.k.node_manager.mark_node_as_full(node_name)
                     return node_name, "continue"
@@ -213,18 +213,18 @@ class Scaling:
             else:
                 if self.steps[step]["taskmanager"][0]["number"] == 1:
                     self.__log.info(
-                        "[SCALING] First node and first taskmanager already scaled."
+                        "[SCALING] First node and first taskmanager already scaled.\n"
                     )
                     self.steps[step]["taskmanager"].pop(0)
             return node_name, "pass"
         else:
             self.__log.error(
-                "[SCALING] What is happening? i can't be less than 0. Continuing."
+                "[SCALING] What is happening? i can't be less than 0. Continuing.\n"
             )
             return node_name, "break"
 
     def __setup_run(self):
-        self.__log.info("[SCALING] Setting up experiment.")
+        self.__log.info("[SCALING] Setting up experiment.\n\n")
         # Reset scaling labels, clean start.
         self.k.node_manager.reset_scaling_labels()
         # Reset state labels
@@ -241,7 +241,7 @@ class Scaling:
             self.__log.error("[SCALING] No node available.")
             return 1
 
-        self.__log.info(f"[SCALING] First node: {first_node}")
+        self.__log.info(f"[SCALING] First node: {first_node}\n")
 
         # Mark this node with schedulable
         self.k.node_manager.mark_node_as_schedulable(first_node)
