@@ -156,6 +156,7 @@ class EnosPlatform(Platform):
         provider_conf = {
             "job_name": self.reservation_name,
             "walltime": self.walltime,
+            "queue": self.queue,
             "resources": {
                 "machines": [
                     {

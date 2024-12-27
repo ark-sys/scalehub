@@ -50,6 +50,8 @@ data:
     execution.checkpointing.aligned-checkpoint-timeout: 10 s
     execution.checkpointing.checkpoints-after-tasks-finish.enabled: true
     cluster.fine-grained-resource-management.enabled: true
+    
+    pipeline.max-parallelism: 256
   flink-conf-taskmanager-xxl.yaml: |+
     akka.framesize: 104857600b
     blob.server.port: 6124
@@ -77,6 +79,8 @@ data:
     s3.endpoint: http://minio.minio-operator.svc.cluster.local
     s3.access-key: minio
     s3.secret-key: minio123
+
+    pipeline.max-parallelism: 256
 
   flink-conf-taskmanager-xl.yaml: |+
     akka.framesize: 104857600b
@@ -106,6 +110,8 @@ data:
     s3.access-key: minio
     s3.secret-key: minio123
 
+    pipeline.max-parallelism: 256
+
   flink-conf-taskmanager-l.yaml: |+
     akka.framesize: 104857600b
     blob.server.port: 6124
@@ -133,6 +139,8 @@ data:
     s3.endpoint: http://minio.minio-operator.svc.cluster.local
     s3.access-key: minio
     s3.secret-key: minio123
+
+    pipeline.max-parallelism: 256
 
   flink-conf-taskmanager-m.yaml: |+
     akka.framesize: 104857600b
@@ -162,6 +170,8 @@ data:
     s3.access-key: minio
     s3.secret-key: minio123
 
+    pipeline.max-parallelism: 256
+
   flink-conf-taskmanager-s.yaml: |+
     akka.framesize: 104857600b
     blob.server.port: 6124
@@ -173,7 +183,7 @@ data:
     
     taskmanager.rpc.port: 6122
     taskmanager.numberOfTaskSlots: 1
-    taskmanager.memory.process.size: 3900Mb
+    taskmanager.memory.process.size: 3Gb
     taskmanager.memory.managed.fraction: 0.4
     taskmanager.network.memory.buffer-debloat.enabled: true
     taskmanager.network.detailed-metrics: true
@@ -189,6 +199,8 @@ data:
     s3.endpoint: http://minio.minio-operator.svc.cluster.local
     s3.access-key: minio
     s3.secret-key: minio123
+    
+    pipeline.max-parallelism: 256
 
   log4j-console.properties: |+
     # This affects logging for both user code and Flink

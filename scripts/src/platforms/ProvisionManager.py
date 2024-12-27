@@ -24,43 +24,64 @@ class ProvisionManager:
             if self.__get_platforms(platform) is not None
         ]
 
+        self.enos_platforms = [
+            platform
+            for platform in self.platforms
+            if isinstance(platform, EnosPlatform)
+        ]
+
         # If we have multiple enos platforms of the same type. let's merge their dicts
-        enos_platforms = {}
-        for platform in self.platforms:
-            if isinstance(platform, EnosPlatform):
-                if platform.platform_type not in enos_platforms:
-                    enos_platforms[platform.platform_type] = platform.conf_dict
-                else:
-                    conf = enos_platforms[platform.platform_type]
+        enos_platforms_confs = {}
+        for platform in self.enos_platforms:
+            if platform.platform_type not in enos_platforms_confs:
+                enos_platforms_confs[platform.platform_type] = platform.conf_dict
+            else:
+                conf = enos_platforms_confs[platform.platform_type]
 
-                    conf["resources"]["machines"] += platform.conf_dict["resources"][
-                        "machines"
-                    ]
+                conf["resources"]["machines"] += platform.conf_dict["resources"][
+                    "machines"
+                ]
 
-                    enos_platforms[platform.platform_type] = conf
+                enos_platforms_confs[platform.platform_type] = conf
 
         # Create provider
         self.enos_providers = []
 
-        # Create providers for specific platform types
-        platform_types = ["Grid5000", "VM_on_Grid5000", "FIT"]
-        for platform_type in platform_types:
-            if platform_type not in enos_platforms:
-                continue
-            reservation_name = (
-                "baremetal" if platform_type == "Grid5000" else "virtualmachines"
-            )
-            enos_platforms[platform_type]["job_name"] = f"scalehub_{reservation_name}"
+        # TODO Think of a better way to do this
+        for platform_type in enos_platforms_confs:
+            # Here we take the first platform available in enos_platforms to generate a provider with the newly compacted config
+            for platform in self.enos_platforms:
+                if platform.platform_type == platform_type:
+                    reservation_time = platform.start_time
+                    time_tag = ""
+                    if reservation_time != "now":
+                        # Get hour format and check if after 19:00
+                        if len(reservation_time.split(":")) != 3:
+                            self.__log.error(
+                                f"Invalid start_time format for {platform_type}. Expected format: HH:MM:SS"
+                            )
+                            pass
+                        else:
+                            if int(reservation_time.split(":")[0]) >= 19:
+                                time_tag = "_late"
+                            else:
+                                time_tag = "_day"
+                    reservation_name = (
+                        "baremetal"
+                        if platform_type == "Grid5000"
+                        else "virtualmachines"
+                    )
 
-            for platform in self.platforms:
-                if (
-                    isinstance(platform, EnosPlatform)
-                    and platform.platform_type == platform_type
-                ):
+                    enos_platforms_confs[platform_type][
+                        "job_name"
+                    ] = f"scalehub_{reservation_name}{time_tag if time_tag else ''}"
                     self.enos_providers.append(
-                        platform.get_provider(enos_platforms[platform.platform_type])
+                        platform.get_provider(
+                            enos_platforms_confs[platform.platform_type]
+                        )
                     )
                     break
+
         self.raspberry_pis = [
             platform for platform in self.platforms if isinstance(platform, RaspberryPi)
         ]

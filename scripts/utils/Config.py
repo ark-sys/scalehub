@@ -1,6 +1,7 @@
 import configparser as cp
 import json
 import os.path
+from dataclasses import dataclass
 from inspect import getmembers, isclass
 
 import yaml
@@ -9,6 +10,7 @@ from scripts.utils.Defaults import DefaultKeys as Key
 from .Logger import Logger
 
 
+@dataclass
 class Config:
     RUNTIME_PATH = "/app/conf/runtime/runtime.ini"
     DEFAULTS_PATH = "/app/conf/defaults.ini"

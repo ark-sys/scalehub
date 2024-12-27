@@ -131,3 +131,6 @@ ENV PATH="${PATH}:/home/$USER/.krew/bin"
 # Install netshoot plugin for kubectl
 RUN kubectl krew index add netshoot https://github.com/nilic/kubectl-netshoot.git
 RUN kubectl krew install netshoot/netshoot
+
+# Install auto-completion for kubectl netshoot
+ADD fish/netshoot.fish /usr/share/fish/vendor_completions.d/kubectl_netshoot.fish
