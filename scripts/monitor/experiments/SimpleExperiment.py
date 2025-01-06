@@ -158,9 +158,11 @@ class SimpleExperiment(Experiment):
 
     def __single_run(self):
         try:
+            # Get current config
+            config = self.config
 
             # Create scaling object
-            s = Scaling(self.__log, self.config, self.k)
+            s = Scaling(self.__log, config, self.k)
             s.set_sleep_command(self.current_experiment_thread.sleep)
 
             # Start load generators

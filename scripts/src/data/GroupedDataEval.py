@@ -12,8 +12,6 @@ from scripts.utils.Tools import Tools
 
 
 class GroupedDataEval:
-    skip = 30
-
     def __init__(self, log: Logger, multi_run_path: str):
         self.__log: Logger = log
         self.t: Tools = Tools(log)
@@ -33,7 +31,6 @@ class GroupedDataEval:
                 if file == "mean_stderr.csv":
                     file_path = os.path.join(root, file)
                     df = pd.read_csv(file_path)
-                    # df = df.drop(0)
                     dfs.append(df)
 
         num_runs = len(dfs)

@@ -142,7 +142,7 @@ class FlinkManager:
         ]
         return ";".join(operators_list)
 
-    def run_job(self, new_parallelism=None):
+    def run_job(self, new_parallelism=None, start_par=None):
         try:
             self.__log.info("[FLK_MGR] Running job.")
             if new_parallelism is not None:
@@ -159,6 +159,12 @@ class FlinkManager:
                 )
                 self.__log.info(
                     f"[FLK_MGR] Operator {self.monitored_task} rescaled to {new_parallelism}."
+                )
+            elif start_par is not None:
+                self.__log.info(f"[FLK_MGR] Starting job with {start_par} parallelism.")
+                res = self.k.pod_manager.execute_command_on_pod(
+                    deployment_name="flink-jobmanager",
+                    command=f"flink run -d -j /tmp/jobs/{self.job_file} --start_par {start_par}",
                 )
             else:
                 # Simply run the job

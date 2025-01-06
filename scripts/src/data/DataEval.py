@@ -44,7 +44,7 @@ class DataEval:
         self.conf: Config = Config(log, self.log_file)
 
         # Time to skip in seconds at the beginning and the end of a parallelism region
-        self.start_skip = 30
+        self.start_skip = self.conf.get_int(Key.Experiment.output_skip_s)
         self.end_skip = 30
 
         if not hasattr(self, "final_df"):
