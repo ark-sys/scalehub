@@ -26,7 +26,7 @@ class Scaling:
         self.__log.info(
             f"[SCALING] ************************************ Adding {replicas} replicas ************************************"
         )
-        ret = self.f.run_job(replicas)
+        ret = self.f.run_job(new_parallelism=replicas)
         if ret == 1:
             return 1
         else:
@@ -189,6 +189,7 @@ class Scaling:
                 return 1
 
     def __get_scaling_node(self, step, node_name):
+
         if step > 0:
             node_type = self.steps[step]["node"]
             vm_type = self.steps[step]["type"] if node_type == "vm_grid5000" else None
@@ -200,36 +201,49 @@ class Scaling:
             else:
                 self.__log.error("[SCALING] No more nodes available.\n")
                 return None, "break"
+        # Handle first step case
         elif step == 0:
+            # If there is only one taskmanager in the list, check count is 1 or method is block
             if len(self.steps[step]["taskmanager"]) == 1:
-                if self.steps[step]["taskmanager"][0]["number"] == 1:
+                # Check count and method
+                if (
+                    self.steps[step]["taskmanager"][0]["number"] == 1
+                    or self.steps[step]["taskmanager"][0]["method"] == "block"
+                ):
                     self.__log.info(
-                        "[SCALING] First node and first taskmanager already scaled.\n"
+                        "[SCALING] First node and first taskmanager already scaled, mark node as full. Continue to next step.\n"
                     )
                     self.k.node_manager.mark_node_as_full(node_name)
                     return node_name, "continue"
                 else:
+                    # If count is more than 1 and method is not block, decrement count as one taskmanager is already scaled during setup
                     self.steps[step]["taskmanager"][0]["number"] -= 1
+            # If there are more than one taskmanagers in the list, check if count is 1 or method is block and remove the first taskmanager
             else:
-                if self.steps[step]["taskmanager"][0]["number"] == 1:
+                if (
+                    self.steps[step]["taskmanager"][0]["number"] == 1
+                    or self.steps[step]["taskmanager"][0]["method"] == "block"
+                ):
                     self.__log.info(
-                        "[SCALING] First node and first taskmanager already scaled.\n"
+                        "[SCALING] First taskmanager already scaled. Removing from list and resuming current iteration.\n"
                     )
                     self.steps[step]["taskmanager"].pop(0)
             return node_name, "pass"
         else:
             self.__log.error(
-                "[SCALING] What is happening? i can't be less than 0. Continuing.\n"
+                "[SCALING] What is happening? i can't be less than 0. Breaking.\n"
             )
             return node_name, "break"
 
     def __setup_run(self):
         self.__log.info("[SCALING] Setting up experiment.\n\n")
+        ######################################## Prepare cluster for scaling ########################################
         # Reset scaling labels, clean start.
         self.k.node_manager.reset_scaling_labels()
         # Reset state labels
         self.k.node_manager.reset_state_labels()
 
+        ######################################## Mark first node as schedulable ########################################
         # Get the first node to scale based on what's defined in the strategy file
         node_type = self.steps[0]["node"]
         if node_type == "vm_grid5000":
@@ -246,21 +260,40 @@ class Scaling:
         # Mark this node with schedulable
         self.k.node_manager.mark_node_as_schedulable(first_node)
 
+        ######################################## Scale first taskmanager ########################################
         # Get first taskmanager to deploy
         taskmanager_type = self.steps[0]["taskmanager"][0]["type"]
-
-        # Get the name of the stateful set to scale
+        taskmanager_method = self.steps[0]["taskmanager"][0]["method"]
+        taskmanager_number = self.steps[0]["taskmanager"][0]["number"]
+        taskmanager_scope = (
+            self.steps[0]["taskmanager"][0]["scope"]
+            if "scope" in self.steps[0]["taskmanager"][0]
+            else "taskmanager"
+        )
         tm_name = f"flink-taskmanager-{taskmanager_type}"
 
-        self.__log.debug(f"[SCALING] Scaling up {tm_name} to 1")
+        # If method is block, scale up taskmanagers at once
+        if taskmanager_method == "block" and taskmanager_scope == "taskmanager":
+            self.__log.debug(
+                f"[SCALING] Block method on taskmanagers detected. Scaling {taskmanager_number} taskmanagers at once"
+            )
+            # Scale up stateful set
+            self.k.statefulset_manager.scale_statefulset(
+                statefulset_name=tm_name, replicas=taskmanager_number, namespace="flink"
+            )
 
-        # Scale up stateful set
-        self.k.statefulset_manager.scale_statefulset(
-            statefulset_name=tm_name, replicas=1, namespace="flink"
-        )
+            # Start the job
+            ret = self.f.run_job(start_par=taskmanager_number)
+        else:
+            self.__log.debug(f"[SCALING] Scaling up {tm_name} to 1")
 
-        # Start the job
-        ret = self.f.run_job()
+            # Scale up stateful set
+            self.k.statefulset_manager.scale_statefulset(
+                statefulset_name=tm_name, replicas=1, namespace="flink"
+            )
+            # Start the job
+            ret = self.f.run_job()
+
         if ret == 1:
             return 1
 
@@ -275,7 +308,7 @@ class Scaling:
         if node_name == 1:
             return 1
 
-        self.__log.info("[SCALING] First taskmanager, just waiting...")
+        self.__log.info("[SCALING] First iteration after setup, just waiting...")
         ret = self.__sleep(self.interval_scaling_s)
         if ret == 1:
             return 1
