@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from scripts.src.resources.FlinkManager import FlinkManager
 from scripts.src.resources.KubernetesManager import KubernetesManager
 from scripts.utils.Config import Config
@@ -11,7 +13,7 @@ class Scaling:
         self.k = km
         self.f = FlinkManager(log, config, self.k)
         # Load strategy from configuration
-        self.steps = config.get(Key.Experiment.Scaling.steps)
+        self.steps = deepcopy(config.get(Key.Experiment.Scaling.steps))
         self.interval_scaling_s = config.get_int(
             Key.Experiment.Scaling.interval_scaling_s
         )
