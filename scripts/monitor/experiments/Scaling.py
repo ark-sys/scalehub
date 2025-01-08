@@ -17,7 +17,6 @@ class Scaling:
         self.interval_scaling_s = config.get_int(
             Key.Experiment.Scaling.interval_scaling_s
         )
-
         # Set sleep command
         self.__sleep = None
 
@@ -43,10 +42,29 @@ class Scaling:
             )
             return self.__sleep(self.interval_scaling_s)
 
+    def __get_tm_name(self, tm_type):
+        tm_labels = {
+            "app": "flink",
+            "component": "taskmanager",
+            "size": tm_type,
+        }
+
+        string_labels = ",".join([f"{k}={v}" for k, v in tm_labels.items()])
+
+        try:
+            tm_name = self.k.statefulset_manager.get_statefulset_name(
+                string_labels, "flink"
+            )
+        except Exception as e:
+            self.__log.error(f"[SCALING] Error getting statefulset name: {str(e)}")
+            return None
+        return tm_name
+
     def __scale_w_tm(self, replicas, tm_type):
         # Get the name of the stateful set to scale
-        tm_name = f"flink-taskmanager-{tm_type}"
-
+        tm_name = self.__get_tm_name(tm_type)
+        if not tm_name:
+            return 1
         # Get current number of taskmanagers
         taskmanagers_count_dict = self.k.statefulset_manager.get_count_of_taskmanagers()
         # Scale up stateful set
@@ -272,7 +290,11 @@ class Scaling:
             if "scope" in self.steps[0]["taskmanager"][0]
             else "taskmanager"
         )
-        tm_name = f"flink-taskmanager-{taskmanager_type}"
+
+        # Get the name of the stateful set to scale
+        tm_name = self.__get_tm_name(taskmanager_type)
+        if not tm_name:
+            return 1
 
         # If method is block, scale up taskmanagers at once
         if taskmanager_method == "block" and taskmanager_scope == "taskmanager":

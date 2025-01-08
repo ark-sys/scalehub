@@ -157,18 +157,30 @@ class Playbooks:
                 return 1
         return 0
 
-    def reload_playbook(self, playbook, config: Config):
+    def reload_playbook(self, playbook, config: Config, extra_vars=None):
         self.__log.info(f"Reloading playbook: {playbook}")
         try:
             if "load_generators" in playbook:
                 self.role_load_generators(config, tag="delete")
             else:
-                self.run(playbook, config=config, tag="delete", quiet=True)
+                self.run(
+                    playbook,
+                    config=config,
+                    tag="delete",
+                    quiet=True,
+                    extra_vars=extra_vars,
+                )
             sleep(5)
             if "load_generators" in playbook:
                 self.role_load_generators(config, tag="create")
             else:
-                self.run(playbook, config=config, tag="create", quiet=True)
+                self.run(
+                    playbook,
+                    config=config,
+                    tag="create",
+                    quiet=True,
+                    extra_vars=extra_vars,
+                )
         except Exception as e:
             self.__log.error(str(e))
 

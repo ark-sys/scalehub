@@ -1,0 +1,5 @@
+- node: grid5000
+  taskmanager:
+    - number: 4
+      type: template
+      method: linear

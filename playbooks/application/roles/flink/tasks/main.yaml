@@ -35,13 +35,32 @@
     - name: Deploy jobmanager
       kubernetes.core.k8s:
         state: present
-        definition: "{{ lookup('ansible.builtin.template', 'jobmanager-deployment.yaml.j2') | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.template', 'jobmanager-deployment.yaml.j2') | from_yaml_all }}"
         wait: yes
-
-    - name: Deploy taskmanager
+    - name: Deploy taskmanager-s
       kubernetes.core.k8s:
         state: present
-        definition: "{{ lookup('ansible.builtin.template', 'taskmanager-statefulset.yaml.j2') | from_yaml_all }}"
+        definition: "{{ lookup('ansible.builtin.template', 'taskmanager-s-statefulset.yaml.j2') | from_yaml_all }}"
+        wait: yes
+    - name: Deploy taskmanager-m
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('ansible.builtin.template', 'taskmanager-m-statefulset.yaml.j2') | from_yaml_all }}"
+        wait: yes
+    - name: Deploy taskmanager-l
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('ansible.builtin.template', 'taskmanager-l-statefulset.yaml.j2') | from_yaml_all }}"
+        wait: yes
+    - name: Deploy taskmanager-xl
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('ansible.builtin.template', 'taskmanager-xl-statefulset.yaml.j2') | from_yaml_all }}"
+        wait: yes
+    - name: Deploy taskmanager-xxl
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('ansible.builtin.template', 'taskmanager-xxl-statefulset.yaml.j2') | from_yaml_all }}"
         wait: yes
 
 - name: Delete Flink
@@ -57,12 +76,28 @@
     - name: Delete jobmanager
       kubernetes.core.k8s:
         state: absent
-        definition: "{{ lookup('ansible.builtin.template', 'jobmanager-deployment.yaml.j2') | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.template', 'jobmanager-deployment.yaml.j2') | from_yaml_all}}"
 
-    - name: Delete taskmanager
+    - name: Delete taskmanager-s
       kubernetes.core.k8s:
         state: absent
-        definition: "{{ lookup('ansible.builtin.template', 'taskmanager-statefulset.yaml.j2') | from_yaml_all }}"
+        definition: "{{ lookup('ansible.builtin.template', 'taskmanager-s-statefulset.yaml.j2') | from_yaml_all }}"
+    - name: Delete taskmanager-m
+      kubernetes.core.k8s:
+        state: absent
+        definition: "{{ lookup('ansible.builtin.template', 'taskmanager-m-statefulset.yaml.j2') | from_yaml_all }}"
+    - name: Delete taskmanager-l
+      kubernetes.core.k8s:
+        state: absent
+        definition: "{{ lookup('ansible.builtin.template', 'taskmanager-l-statefulset.yaml.j2') | from_yaml_all }}"
+    - name: Delete taskmanager-xl
+      kubernetes.core.k8s:
+        state: absent
+        definition: "{{ lookup('ansible.builtin.template', 'taskmanager-xl-statefulset.yaml.j2') | from_yaml_all }}"
+    - name: Delete taskmanager-xxl
+      kubernetes.core.k8s:
+        state: absent
+        definition: "{{ lookup('ansible.builtin.template', 'taskmanager-xxl-statefulset.yaml.j2') | from_yaml_all }}"
 
     - name: Delete pre-pull daemon-set
       kubernetes.core.k8s:
