@@ -3,9 +3,14 @@
   hosts: localhost
   gather_facts: false
   roles:
-    - flink
-  when: not template_deployment | default(false)
+    - role: flink
+      when: not template_deployment | default(false)
 
 - name: Deploy template Flink job
-  include_tasks: tasks/template.yaml
-  when: template_deployment
+  hosts: localhost
+  tasks:
+    - import_tasks: roles/flink/tasks/template.yaml
+      when: template_deployment
+  vars:
+    image: registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/flink
+    tag: 1.20-java11-presto

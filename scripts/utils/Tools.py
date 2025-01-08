@@ -216,12 +216,14 @@ class Playbooks:
                 quiet=quiet,
             )
             if r.rc != 0:
-                self.__log.error(f"Failed to run playbook: {playbook_filename}")
-                return r.rc
+                self.__log.error(
+                    f"Failed to run playbook: {playbook_filename}: {r.status}"
+                )
+                self.__log.error(r.stdout.read())
+                return
             else:
                 self.__log.info(
                     f"Playbook {playbook_filename} with tag {tags} executed successfully."
                 )
         except Exception as e:
             self.__log.error(e.__str__())
-            return e
