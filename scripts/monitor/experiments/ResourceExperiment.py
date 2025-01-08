@@ -9,7 +9,7 @@ from scripts.utils.Tools import FolderManager
 
 class ResourceExperiment(Experiment):
     memory_values = [1024, 2048, 4096, 8192, 16384, 32768]
-    cores_values = ["1000m", "2000m", "4000m", "8000m", "16000m", "32000m"]
+    cpu_milli = ["1000m", "2000m", "4000m", "8000m", "16000m", "32000m"]
 
     def __init__(self, log, config):
         super().__init__(log, config)
@@ -120,14 +120,14 @@ class ResourceExperiment(Experiment):
         self.join_thread()
 
     def __run_experiment(self):
-        for core in self.cores_values:
+        for c_val in self.cpu_milli:
             for memory in self.memory_values:
                 self.__log.info(
-                    f"[RESOURCE_E] Running experiment with {core} cores and {memory} memory."
+                    f"[RESOURCE_E] Running experiment with {c_val} cores and {memory} memory."
                 )
                 config_dict = {
-                    "tm_name": f"flink-{core}-{memory}",
-                    "core": core,
+                    "tm_name": f"flink-{c_val}-{memory}",
+                    "cpu_milli": c_val,
                     "memory": memory,
                     "slots": 1,
                     "template_deployment": True,
