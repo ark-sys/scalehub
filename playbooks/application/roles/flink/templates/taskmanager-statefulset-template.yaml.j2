@@ -120,7 +120,7 @@ spec:
           resources:
             limits:
               memory: "{{memory}}Mi"
-              cpu: "{{core}}"
+              cpu: "{{cpu_milli}}"
           args: [ "taskmanager" ]
           ports:
             - containerPort: 6122
