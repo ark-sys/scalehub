@@ -130,6 +130,7 @@ class ResourceExperiment(Experiment):
                     "core": core,
                     "memory": memory,
                     "slots": 1,
+                    "template_deployment": True,
                 }
 
                 self.p.reload_playbook(
