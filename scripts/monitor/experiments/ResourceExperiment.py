@@ -126,7 +126,7 @@ class ResourceExperiment(Experiment):
                     f"[RESOURCE_E] Running experiment with {core} cores and {memory} memory."
                 )
                 config_dict = {
-                    "name": f"flink-{core}-{memory}",
+                    "tm_name": f"flink-{core}-{memory}",
                     "core": core,
                     "memory": memory,
                     "slots": 1,
@@ -148,7 +148,7 @@ class ResourceExperiment(Experiment):
                         if ret == 1:
                             # Run was stopped
                             self.__log.info(f"[RESOURCE_E] Exiting run {run + 1}")
-                            break
+                            return 1
 
                         # Get end timestamp of this run
                         end_ts = int(datetime.now().timestamp())
@@ -164,11 +164,11 @@ class ResourceExperiment(Experiment):
                         ret = self.current_experiment_thread.sleep(15)
                         if ret == 1:
                             self.__log.info(f"[RESOURCE_E] Exiting run {run + 1}")
-                            break
+                            return 1
 
                     except Exception as e:
                         self.__log.error(f"[RESOURCE_E] Error during run: {str(e)}")
-                        break
+                        return 1
 
     def __single_run(self):
         try:

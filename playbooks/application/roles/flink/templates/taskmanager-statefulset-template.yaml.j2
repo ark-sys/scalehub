@@ -18,8 +18,8 @@ data:
     queryable-state.proxy.ports: 6125
     
     taskmanager.rpc.port: 6122
-    taskmanager.numberOfTaskSlots: "{{slots}}"
-    taskmanager.memory.process.size: "{{memory}}"
+    taskmanager.numberOfTaskSlots: {{slots}}
+    taskmanager.memory.process.size: {{memory}}mb
     taskmanager.memory.managed.fraction: 0.4
     taskmanager.network.memory.buffer-debloat.enabled: true
     taskmanager.network.detailed-metrics: true
@@ -83,7 +83,7 @@ data:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: "{{name}}"
+  name: "{{tm_name}}"
   namespace: flink
 spec:
   replicas: 0
@@ -119,8 +119,8 @@ spec:
           image: "{{image}}:{{tag}}"
           resources:
             limits:
-              memory: "{{memory}}"
-              cpu: "{{cpu}}"
+              memory: "{{memory}}Mi"
+              cpu: "{{core}}"
           args: [ "taskmanager" ]
           ports:
             - containerPort: 6122

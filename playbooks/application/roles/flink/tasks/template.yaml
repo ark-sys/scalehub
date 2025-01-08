@@ -6,7 +6,7 @@
     - name: Create taskmanager statefulset
       k8s:
         state: present
-        definition: "{{ lookup('template', 'taskmanager-statefulset-template.yaml.j2') | from_yaml_all }}"
+        definition: "{{ lookup('template', 'roles/flink/templates/taskmanager-statefulset-template.yaml.j2') | from_yaml_all }}"
         wait: yes
 
 - name: Delete templated taskmanager statefulset
@@ -15,5 +15,5 @@
     - name: Delete taskmanager statefulset
       k8s:
         state: absent
-        definition: "{{ lookup('template', 'taskmanager-statefulset-template.yaml.j2') | from_yaml_all }}"
+        definition: "{{ lookup('template', 'roles/flink/templates/taskmanager-statefulset-template.yaml.j2') | from_yaml_all }}"
 
