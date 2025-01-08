@@ -535,7 +535,7 @@ class StatefulSetManager:
         self.__log = log
         self.t: Tools = Tools(self.__log)
         self.api_instance = client.AppsV1Api()
-        self.taskmanager_types = ["s", "m", "l", "xl", "xxl"]
+        self.taskmanager_types = ["s", "m", "l", "xl", "xxl", "template"]
 
     def __get_statefulset_ready_replicas(self, statefulset_name, namespace):
 

@@ -52,9 +52,15 @@ class Scaling:
         string_labels = ",".join([f"{k}={v}" for k, v in tm_labels.items()])
 
         try:
-            tm_name = self.k.statefulset_manager.get_statefulset_name(
+            statefulsets = self.k.statefulset_manager.get_statefulset_by_label(
                 string_labels, "flink"
             )
+            if not statefulsets:
+                self.__log.error(
+                    f"[SCALING] Error getting statefulset name. No statefulset found with labels: {string_labels}"
+                )
+                return None
+            tm_name = statefulsets[0].metadata.name
         except Exception as e:
             self.__log.error(f"[SCALING] Error getting statefulset name: {str(e)}")
             return None
