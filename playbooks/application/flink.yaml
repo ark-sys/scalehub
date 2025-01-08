@@ -4,3 +4,8 @@
   gather_facts: false
   roles:
     - flink
+  when: flink_deployment
+
+- name: Deploy template Flink job
+  include_tasks: tasks/template.yaml
+  when: template_deployment

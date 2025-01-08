@@ -1,0 +1,19 @@
+---
+
+- name: Deploy templated taskmanager statefulset
+  tags: [ create ]
+  block:
+    - name: Create taskmanager statefulset
+      k8s:
+        state: present
+        definition: "{{ lookup('template', 'taskmanager-statefulset-template.yaml.j2') | from_yaml_all }}"
+        wait: yes
+
+- name: Delete templated taskmanager statefulset
+  tags: [ delete ]
+  block:
+    - name: Delete taskmanager statefulset
+      k8s:
+        state: absent
+        definition: "{{ lookup('template', 'taskmanager-statefulset-template.yaml.j2') | from_yaml_all }}"
+
