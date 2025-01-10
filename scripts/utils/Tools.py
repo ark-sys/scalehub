@@ -125,9 +125,9 @@ class Tools:
 class Playbooks:
     def __init__(self, log: Logger):
         self.__log = log
-        self.load_generators = []
 
     def __load_config(self, config: Config):
+        load_generators = []
         for lg_config in config.get(Key.Experiment.Generators.generators):
             load_generator_params = {
                 "lg_name": lg_config["name"],
@@ -138,12 +138,14 @@ class Playbooks:
                 "lg_replicas": int(lg_config["replicas"]),
                 "lg_value": int(lg_config["value"]),
             }
-            self.load_generators.append(load_generator_params)
+            load_generators.append(load_generator_params)
+
+        return load_generators
 
     def role_load_generators(self, config: Config, tag=None):
-        self.__load_config(config)
+        lg_confs = self.__load_config(config)
         # set quiet argument
-        for lg in self.load_generators:
+        for lg in lg_confs:
             try:
                 self.run(
                     "application/load_generators",
