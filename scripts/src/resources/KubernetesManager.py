@@ -535,7 +535,6 @@ class StatefulSetManager:
         self.__log = log
         self.t: Tools = Tools(self.__log)
         self.api_instance = client.AppsV1Api()
-        self.taskmanager_types = ["s", "m", "l", "xl", "xxl", "template"]
 
     def __get_statefulset_ready_replicas(self, statefulset_name, namespace):
 
@@ -619,20 +618,22 @@ class StatefulSetManager:
 
     def get_count_of_taskmanagers(self) -> dict:
         replicas = {}
-        for type in self.taskmanager_types:
-            replicas[type] = self.get_statefulset_replicas(
-                f"flink-taskmanager-{type}", "flink"
-            )
+        tm_labels = "app=flink,component=taskmanager"
+
+        statefulsets = self.get_statefulset_by_label(tm_labels, "flink")
+
+        for statefulset in statefulsets.items:
+            replicas[statefulset.metadata.name] = statefulset.spec.replicas
         return replicas
 
     def reset_taskmanagers(self):
-        for type in self.taskmanager_types:
-            self.scale_statefulset(f"flink-taskmanager-{type}", 0, "flink")
-            sleep(1)
+        self.__log.info("[STS_MGR] Resetting taskmanagers.")
 
-        # Wait until all taskmanagers are terminated
-        while sum(self.get_count_of_taskmanagers().values()) > 0:
-            sleep(5)
+        tm_labels = "app=flink,component=taskmanager"
+        statefulsets = self.get_statefulset_by_label(tm_labels, "flink")
+
+        for statefulset in statefulsets.items:
+            self.scale_statefulset(statefulset.metadata.name, 0, "flink")
 
 
 # class ChaosManager:
