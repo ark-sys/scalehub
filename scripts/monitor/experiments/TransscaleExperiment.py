@@ -1,12 +1,8 @@
-import os
 from datetime import datetime
 from time import sleep
 
 from scripts.monitor.experiments.Experiment import Experiment
-from scripts.src.data.DataEval import DataEval
-from scripts.src.data.DataExporter import DataExporter
 from scripts.utils.Defaults import DefaultKeys as Key
-from scripts.utils.Tools import FolderManager
 
 
 # This class needs to be fixed
@@ -73,7 +69,7 @@ class TransscaleExperiment(Experiment):
         )
 
         # Deploy load generators
-        self.run_load_generators()
+        # self.run_load_generators()
 
         # Deploy flink job
         self.f.run_job()
@@ -92,44 +88,44 @@ class TransscaleExperiment(Experiment):
             transscale_resource_definition["transscale-job.yaml"]
         )
 
-    def finishing(self):
-        self.end_ts = int(datetime.now().timestamp())
-        # Create experiment folder for results, ordered by date (YYYY-MM-DD)
-        # self.exp_path = self.t.create_exp_folder(
-        #     self.EXPERIMENTS_BASE_PATH,
-        #     datetime.fromtimestamp(self.start_ts).strftime("%Y-%m-%d"),
-        # )
-        f: FolderManager = FolderManager(self.__log, self.EXPERIMENTS_BASE_PATH)
-        data_path = f.create_date_folder(self.start_ts)
-        self.exp_path = f.create_subfolder(data_path)
-
-        # Create log file with start timestamp
-        self.log_file = self.create_log_file(
-            exp_path=self.exp_path, start_ts=self.start_ts, end_ts=self.end_ts
-        )
-
-        # Get logs from transscale-job
-        transscale_logs = self.k.job_manager.get_job_logs("transscale-job", "default")
-
-        # Save transscale-job logs
-        with open(os.path.join(self.exp_path, "transscale_log.txt"), "w") as file:
-            file.write(transscale_logs)
-
-        # Export experiment data
-        data_exp: DataExporter = DataExporter(log=self.__log, exp_path=self.exp_path)
-
-        # Export data from victoriametrics
-        data_exp.export()
-
-        if self.config.get_bool(Key.Experiment.output_stats):
-            data_eval = DataEval(log=self.__log, exp_path=self.exp_path)
-            # If output_stats is enabled, evaluate mean throughput and extract predictions from transscale-job logs in stats.csv file
-            data_eval.eval_mean_stderr()
-            # If output_plot is enabled, evaluate plot from stats.csv file
-            if self.config.get_bool(Key.Experiment.output_plot):
-                data_eval.eval_summary_plot()
-                data_eval.eval_experiment_plot()
-                data_eval.eval_plot_with_checkpoints()
+    # def finishing(self):
+    # self.end_ts = int(datetime.now().timestamp())
+    # # Create experiment folder for results, ordered by date (YYYY-MM-DD)
+    # # self.exp_path = self.t.create_exp_folder(
+    # #     self.EXPERIMENTS_BASE_PATH,
+    # #     datetime.fromtimestamp(self.start_ts).strftime("%Y-%m-%d"),
+    # # )
+    # f: FolderManager = FolderManager(self.__log, self.EXPERIMENTS_BASE_PATH)
+    # data_path = f.create_date_folder(self.start_ts)
+    # self.exp_path = f.create_subfolder(data_path)
+    #
+    # # Create log file with start timestamp
+    # self.log_file = self.create_log_file(
+    #     exp_path=self.exp_path, start_ts=self.start_ts, end_ts=self.end_ts
+    # )
+    #
+    # # Get logs from transscale-job
+    # transscale_logs = self.k.job_manager.get_job_logs("transscale-job", "default")
+    #
+    # # Save transscale-job logs
+    # with open(os.path.join(self.exp_path, "transscale_log.txt"), "w") as file:
+    #     file.write(transscale_logs)
+    #
+    # # Export experiment data
+    # data_exp: DataExporter = DataExporter(log=self.__log, exp_path=self.exp_path)
+    #
+    # # Export data from victoriametrics
+    # data_exp.export()
+    #
+    # if self.config.get_bool(Key.Experiment.output_stats):
+    #     data_eval = DataEval(log=self.__log, exp_path=self.exp_path)
+    #     # If output_stats is enabled, evaluate mean throughput and extract predictions from transscale-job logs in stats.csv file
+    #     data_eval.eval_mean_stderr()
+    #     # If output_plot is enabled, evaluate plot from stats.csv file
+    #     if self.config.get_bool(Key.Experiment.output_plot):
+    #         data_eval.eval_summary_plot()
+    #         data_eval.eval_experiment_plot()
+    #         data_eval.eval_plot_with_checkpoints()
 
     def cleaning(self):
         self.k.pod_manager.execute_command_on_pod(

@@ -1,11 +1,14 @@
 import os
 import threading
+from datetime import datetime
 from time import sleep
 
+from scripts.monitor.experiments.Scaling import Scaling
+from scripts.src.data.DataManager import DataManager
 from scripts.src.resources.KubernetesManager import KubernetesManager
 from scripts.utils.Config import Config
 from scripts.utils.Logger import Logger
-from scripts.utils.Tools import Tools, Playbooks
+from scripts.utils.Tools import Tools, Playbooks, FolderManager
 
 
 class StoppableThread(threading.Thread):
@@ -51,6 +54,9 @@ class Experiment:
 
         self.current_experiment_thread = None
 
+        # Experiment data
+        self.timestamps = []
+
         # Chaos resources templates
         self.consul_chaos_template = (
             f"{self.TEMPLATES_BASE_PATH}/consul-latency.yaml.j2"
@@ -65,32 +71,6 @@ class Experiment:
         self.load_generator_service_template = (
             f"{self.TEMPLATES_BASE_PATH}/load-generator-service.yaml.j2"
         )
-
-    def create_log_file(self, exp_path, start_ts, end_ts):
-        # Create log file
-        log_file_path = os.path.join(exp_path, "exp_log.txt")
-        try:
-            # Dump experiment information to log file
-            with open(log_file_path, "w") as file:
-                file.write(f"[CONFIG]\n")
-                file.write(f"{self.config.to_json()}\n\n")
-                file.write(f"[TIMESTAMPS]\n")
-                file.write(f"Experiment start at : {start_ts}\n")
-                file.write(f"Experiment end at : {end_ts}\n")
-            return log_file_path
-        except Exception as e:
-            self.__log.error(f"[EXP] Error creating log file: {str(e)}")
-
-    def reload_kafka(self):
-        self.p.reload_playbook("application/kafka", config=self.config)
-
-    def run_load_generators(self):
-        # Create load generators
-        return self.p.role_load_generators(self.config, tag="create")
-
-    def delete_load_generators(self):
-        # Delete load generators
-        self.p.role_load_generators(self.config, tag="delete")
 
     def start_thread(self, target):
         self.current_experiment_thread = StoppableThread(log=self.__log, target=target)
@@ -107,11 +87,128 @@ class Experiment:
     def starting(self):
         raise NotImplementedError("Starting method not implemented.")
 
+    def running(self):
+        self.__log.info("[EXPERIMENT] Running experiment.")
+        self.join_thread()
+
     def finishing(self):
-        raise NotImplementedError("Finishing method not implemented.")
+        exp_paths = []
+
+        # Create experiment folder for results
+        if len(self.timestamps) > 0:
+            f: FolderManager = FolderManager(self.__log, self.EXPERIMENTS_BASE_PATH)
+            try:
+                # Create date folder
+                date_path = f.create_date_folder(self.timestamps[0][0])
+            except Exception as e:
+                self.__log.error(f"[EXPERIMENT] Error creating date folder: {str(e)}")
+                return None
+
+            try:
+                if len(self.timestamps) > 1:
+                    multi_run_folder_path = f.create_multi_run_folder()
+                else:
+                    multi_run_folder_path = date_path
+
+                for i, (start_ts, end_ts) in enumerate(self.timestamps):
+                    exp_path = f.create_subfolder(multi_run_folder_path)
+                    exp_paths.append(exp_path)
+                    # Create log file
+                    log_file_path = os.path.join(exp_path, "exp_log.txt")
+                    try:
+                        # Dump experiment information to log file
+                        with open(log_file_path, "w") as file:
+                            file.write(f"Experiment run {i + 1}\n\n")
+                            file.write(f"[CONFIG]\n")
+                            file.write(f"{self.config.to_json()}\n\n")
+                            file.write(f"[TIMESTAMPS]\n")
+                            file.write(f"Experiment start at : {start_ts}\n")
+                            file.write(f"Experiment end at : {end_ts}\n")
+                        return log_file_path
+                    except Exception as e:
+                        self.__log.error(f"[EXP] Error creating log file: {str(e)}")
+                try:
+                    # Get time diff since first start_ts and now
+                    time_diff = int(datetime.now().timestamp()) - self.timestamps[0][0]
+                    labels = "app=experiment-monitor"
+                    # Save experiment-monitor logs since time_diff seconds ago
+                    monitor_logs = self.k.pod_manager.get_logs_since(
+                        labels, time_diff, "experiment-monitor"
+                    )
+                    with open(f"{multi_run_folder_path}/monitor_logs.txt", "w") as file:
+                        file.write(monitor_logs)
+                    try:
+                        # Export data
+                        dm: DataManager = DataManager(self.__log, self.config)
+                        dm.export(multi_run_folder_path)
+                    except Exception as e:
+                        self.__log.error(f"[EXPERIMENT] Error exporting data: {str(e)}")
+                        return None
+                except Exception as e:
+                    self.__log.error(
+                        f"[EXPERIMENT] Error saving monitor logs: {str(e)}"
+                    )
+                    return None
+            except Exception as e:
+                self.__log.error(
+                    f"[EXPERIMENT] Error creating experiment folder: {str(e)}"
+                )
+                return None
+        else:
+            self.__log.warning(
+                "[EXPERIMENT] No timestamps found. Skipping results creation."
+            )
 
     def cleaning(self):
-        raise NotImplementedError("Cleaning method not implemented.")
+        try:
+            # Remove SCHEDULABLE label from all nodes
+            self.k.node_manager.reset_scaling_labels()
+            self.k.node_manager.reset_state_labels()
+        except Exception as e:
+            self.__log.error(
+                f"[EXPERIMENT] Error cleaning up - resetting labels : {str(e)}"
+            )
+        try:
+            self.k.statefulset_manager.reset_taskmanagers()
 
-    def running(self):
-        raise NotImplementedError("Running method not implemented.")
+            jobmanager_labels = "app=flink,component=jobmanager"
+            self.k.pod_manager.delete_pods_by_label(jobmanager_labels, "flink")
+        except Exception as e:
+            self.__log.error(
+                f"[EXPERIMENT] Error cleaning up - resetting flink: {str(e)}"
+            )
+        try:
+            # Delete load generators
+            self.p.role_load_generators(self.config, tag="delete")
+        except Exception as e:
+            self.__log.error(
+                f"[EXPERIMENT] Error cleaning up - deleting load generators: {str(e)}"
+            )
+        try:
+            self.p.reload_playbook("application/kafka", config=self.config)
+        except Exception as e:
+            self.__log.error(
+                f"[EXPERIMENT] Error cleaning up - reloading kafka: {str(e)}"
+            )
+
+    def __single_run(self):
+        try:
+            # Get current config
+            config = self.config
+
+            # Create scaling object
+            s = Scaling(self.__log, config, self.k)
+            s.set_sleep_command(self.current_experiment_thread.sleep)
+
+            # Create load generators
+            self.p.role_load_generators(self.config, tag="create")
+
+            # Run scaling steps on job
+            ret = s.run()
+            if ret == 1:
+                return 1
+            # Cleaup after each run
+            self.cleaning()
+        except Exception as e:
+            self.__log.error(f"[EXPERIMENT] Error during single run: {str(e)}")
+            return 1
