@@ -24,7 +24,7 @@ class SimpleExperiment(Experiment):
                 # Get start timestamp of this run
                 start_ts = int(datetime.now().timestamp())
                 # Execute single run
-                ret = self.__single_run()
+                ret = self.single_run()
 
                 if ret == 1:
                     # Run was stopped
