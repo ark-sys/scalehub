@@ -191,7 +191,7 @@ class Experiment:
                 f"[EXPERIMENT] Error cleaning up - reloading kafka: {str(e)}"
             )
 
-    def __single_run(self):
+    def single_run(self):
         try:
             # Get current config
             config = self.config
