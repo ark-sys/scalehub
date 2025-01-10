@@ -10,7 +10,7 @@
   hosts: localhost
   tasks:
     - import_tasks: roles/flink/tasks/template.yaml
-      when: template_deployment
+      when: template_deployment | default(false)
   vars:
     image: registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/flink
     tag: 1.20-java11-presto
