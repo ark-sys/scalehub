@@ -126,32 +126,23 @@ class Playbooks:
     def __init__(self, log: Logger):
         self.__log = log
 
-    def __load_config(self, config: Config):
-        load_generators = []
-        for lg_config in config.get(Key.Experiment.Generators.generators):
-            load_generator_params = {
-                "lg_name": lg_config["name"],
-                "lg_topic": lg_config["topic"],
-                "lg_type": lg_config["type"],
-                "lg_numsensors": int(lg_config["num_sensors"]),
-                "lg_intervalms": int(lg_config["interval_ms"]),
-                "lg_replicas": int(lg_config["replicas"]),
-                "lg_value": int(lg_config["value"]),
-            }
-            load_generators.append(load_generator_params)
-
-        return load_generators
-
     def role_load_generators(self, config: Config, tag=None):
-        lg_confs = self.__load_config(config)
-        # set quiet argument
-        for lg in lg_confs:
+        for lg_conf in config.get(Key.Experiment.Generators.generators):
             try:
+                lg_params = {
+                    "lg_name": lg_conf["name"],
+                    "lg_topic": lg_conf["topic"],
+                    "lg_type": lg_conf["type"],
+                    "lg_numsensors": int(lg_conf["num_sensors"]),
+                    "lg_intervalms": int(lg_conf["interval_ms"]),
+                    "lg_replicas": int(lg_conf["replicas"]),
+                    "lg_value": int(lg_conf["value"]),
+                }
                 self.run(
                     "application/load_generators",
                     config=config,
                     tag=tag,
-                    extra_vars=lg,
+                    extra_vars=lg_params,
                     quiet=True,
                 )
             except Exception as e:
