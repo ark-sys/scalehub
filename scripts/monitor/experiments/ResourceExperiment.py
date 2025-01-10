@@ -36,6 +36,7 @@ class ResourceExperiment(Experiment):
                     config=self.config,
                     extra_vars=config_dict,
                     tag="create",
+                    quiet=True,
                 )
 
                 for run in range(self.runs):
@@ -78,4 +79,5 @@ class ResourceExperiment(Experiment):
                     config=self.config,
                     extra_vars=config_dict,
                     tag="delete",
+                    quiet=True,
                 )
