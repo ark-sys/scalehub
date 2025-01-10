@@ -605,12 +605,12 @@ class StatefulSetManager:
             )
             return
 
-    def get_statefulset_by_label(self, label_selector, namespace="default"):
+    def get_statefulset_by_label(self, label_selector=None, namespace="default"):
         try:
-            statefulsets = self.api_instance.list_namespaced_stateful_set(
+            statefulsets_res = self.api_instance.list_namespaced_stateful_set(
                 namespace=namespace, label_selector=label_selector
             )
-            return statefulsets.items
+            return statefulsets_res
         except ApiException as e:
             self.__log.error(
                 f"[STS_MGR] Exception when calling AppsV1Api->list_namespaced_stateful_set: {str(e)}\n"

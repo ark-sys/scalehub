@@ -85,6 +85,10 @@ kind: StatefulSet
 metadata:
   name: "{{tm_name}}"
   namespace: flink
+  labels:
+    component: taskmanager
+    app: flink
+    size: template
 spec:
   replicas: 0
   podManagementPolicy: Parallel
