@@ -8,6 +8,8 @@ from scripts.utils.Defaults import DefaultKeys as Key
 # This class needs to be fixed
 @DeprecationWarning
 class TransscaleExperiment(Experiment):
+    exp_type = "transscale"
+
     def __init__(self, log, config):
         super().__init__(log, config)
         self.log = log
