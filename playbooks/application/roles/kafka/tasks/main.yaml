@@ -38,7 +38,6 @@
         state: present
         definition: "{{ lookup('ansible.builtin.template', 'zookeeper/zookeeper-deployment.yaml.j2' ) | from_yaml }}"
 
-
     - name: Deploy Kafka
       kubernetes.core.k8s:
         state: present
