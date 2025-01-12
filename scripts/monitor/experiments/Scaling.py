@@ -36,6 +36,7 @@ class Scaling:
             self.f.check_nominal_job_run()
             ret = self.f.wait_for_job_running()
             if ret == 1:
+                self.__log.error("[SCALING] Error waiting for job to run.")
                 return 1
             self.__log.info(
                 f"[SCALING] Monitoring interval: for {self.interval_scaling_s} seconds"
@@ -70,6 +71,7 @@ class Scaling:
         # Get the name of the stateful set to scale
         tm_name = self.__get_tm_name(tm_type)
         if not tm_name:
+            self.__log.error("[SCALING] Error getting statefulset name.")
             return 1
         # Get current number of taskmanagers
         taskmanagers_count_dict = self.k.statefulset_manager.get_count_of_taskmanagers()
@@ -83,6 +85,7 @@ class Scaling:
 
         ret = self.__scale_and_wait(new_tm_count)
         if ret == 1:
+            self.__log.error("[SCALING] Error scaling taskmanagers.")
             return 1
 
     # Add replicas linearly
@@ -93,6 +96,7 @@ class Scaling:
                     # Scale up stateful set
                     ret = self.__scale_w_tm(1, tm_type)
                     if ret == 1:
+                        self.__log.error("[SCALING] Error scaling linearly.")
                         return 1
             case "slots":
                 # Get current parallelism of monitored task
@@ -105,6 +109,7 @@ class Scaling:
                     current_parallelism += 1
                     ret = self.__scale_and_wait(current_parallelism)
                     if ret == 1:
+                        self.__log.error("[SCALING] Error scaling linearly.")
                         return 1
             case _:
                 self.__log.warning(
@@ -114,6 +119,7 @@ class Scaling:
                     # Scale up stateful set
                     ret = self.__scale_w_tm(1, tm_type)
                     if ret == 1:
+                        self.__log.error("[SCALING] Error scaling linearly.")
                         return 1
 
     # Add replicas exponentially
@@ -136,6 +142,7 @@ class Scaling:
                     # Scale up stateful set
                     ret = self.__scale_w_tm(i, tm_type)
                     if ret == 1:
+                        self.__log.error("[SCALING] Error scaling exponentially.")
                         return 1
             case "slots":
                 # Get current parallelism of monitored task
@@ -148,6 +155,7 @@ class Scaling:
                     current_parallelism += i
                     ret = self.__scale_and_wait(current_parallelism)
                     if ret == 1:
+                        self.__log.error("[SCALING] Error scaling exponentially.")
                         return 1
             case _:
                 self.__log.warning(
@@ -157,6 +165,7 @@ class Scaling:
                     # Scale up stateful set
                     ret = self.__scale_w_tm(i, tm_type)
                     if ret == 1:
+                        self.__log.error("[SCALING] Error scaling exponentially.")
                         return 1
 
     # Add replicas at once
@@ -199,6 +208,7 @@ class Scaling:
                 )
                 ret = self.__scale_linear(number, tm_type, scope)
         if ret == 1:
+            self.__log.error("[SCALING] Error scaling.")
             return 1
 
     def __scale_step(self, step):
@@ -212,6 +222,7 @@ class Scaling:
         for taskmanager in taskmanagers:
             ret = self.__scale(taskmanager)
             if ret == 1:
+                self.__log.error("[SCALING] Error scaling step.")
                 return 1
 
     def __get_scaling_node(self, step, node_name):
@@ -300,6 +311,7 @@ class Scaling:
         # Get the name of the stateful set to scale
         tm_name = self.__get_tm_name(taskmanager_type)
         if not tm_name:
+            self.__log.error("[SCALING] __setup_run: Error getting statefulset name.")
             return 1
 
         # If method is block, scale up taskmanagers at once
@@ -325,6 +337,9 @@ class Scaling:
             ret = self.f.run_job()
 
         if ret == 1:
+            self.__log.error(
+                "[SCALING] Error scaling first taskmanager and starting job"
+            )
             return 1
 
         # Populate job info
