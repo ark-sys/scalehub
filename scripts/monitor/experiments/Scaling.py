@@ -351,11 +351,13 @@ class Scaling:
     def run(self):
         node_name = self.__setup_run()
         if node_name == 1:
+            self.__log.error("[SCALING] Error setting up experiment.")
             return 1
 
         self.__log.info("[SCALING] First iteration after setup, just waiting...")
         ret = self.__sleep(self.interval_scaling_s)
         if ret == 1:
+            self.__log.info("[SCALING] Exiting after setup.")
             return 1
         else:
             self.__log.info("[SCALING] Scaling started.")
