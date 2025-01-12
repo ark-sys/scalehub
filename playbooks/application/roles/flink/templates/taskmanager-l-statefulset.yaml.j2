@@ -19,7 +19,7 @@ data:
     
     taskmanager.rpc.port: 6122
     taskmanager.numberOfTaskSlots: 1
-    taskmanager.memory.process.size: 32Gb
+    taskmanager.memory.process.size: 6500mb
     taskmanager.memory.managed.fraction: 0.4
     taskmanager.network.memory.buffer-debloat.enabled: true
     taskmanager.network.detailed-metrics: true
@@ -96,6 +96,7 @@ spec:
     matchLabels:
       app: flink
       component: taskmanager
+      size: l
   template:
     metadata:
       labels:
@@ -122,8 +123,8 @@ spec:
           image: "{{image}}:{{tag}}"
           resources:
             limits:
-              memory: 32Gi
-              cpu: 8000m
+              memory: 6500Mi
+              cpu: 1000m
           args: [ "taskmanager" ]
           ports:
             - containerPort: 6122
