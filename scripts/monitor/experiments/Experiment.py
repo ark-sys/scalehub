@@ -238,23 +238,37 @@ class Experiment:
                 return 1
 
     def __single_run(self):
+
+        # Get current config
+        config = self.config
+
         try:
-            # Get current config
-            config = self.config
 
             # Create scaling object
             s = Scaling(self.__log, config, self.k)
             s.set_sleep_command(self.current_experiment_thread.sleep)
+        except Exception as e:
+            self.__log.error(
+                f"[EXPERIMENT] Error during creation and setup of Scaling object: {str(e)}"
+            )
+            return 1
 
+        try:
             # Create load generators
             self.p.role_load_generators(self.config, tag="create")
+        except Exception as e:
+            self.__log.error(f"[EXPERIMENT] Error creating load generators: {str(e)}")
+            return 1
 
+        try:
             # Run scaling steps on job
             ret = s.run()
             if ret == 1:
                 return 1
-            # Cleaup after each run
-            self.cleaning()
         except Exception as e:
-            self.__log.error(f"[EXPERIMENT] Error during single run: {str(e)}")
-            return 1
+            self.__log.error(
+                f"[EXPERIMENT] Error during execution of scaling: {str(e)}"
+            )
+
+        # Cleaup after each run
+        self.cleaning()
