@@ -62,6 +62,7 @@ class Scaling:
                 )
                 return None
             tm_name = statefulsets.items[0].metadata.name
+            self.__log.info(f"[SCALING] Statefulset name to scale : {tm_name}")
         except Exception as e:
             self.__log.error(f"[SCALING] Error getting statefulset name: {str(e)}")
             return None
