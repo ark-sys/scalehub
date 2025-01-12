@@ -5,10 +5,12 @@ from time import sleep
 from transitions.extensions import LockedMachine
 
 from scripts.monitor.experiments.Experiment import Experiment
-from scripts.monitor.experiments.ResourceExperiment import ResourceExperiment
-from scripts.monitor.experiments.SimpleExperiment import SimpleExperiment
-from scripts.monitor.experiments.TestExperiment import TestExperiment
-from scripts.monitor.experiments.TransscaleExperiment import TransscaleExperiment
+from scripts.monitor.experiments.exp_types import (
+    SimpleExperiment,
+    TestExperiment,
+    TransscaleExperiment,
+    ResourceExperiment,
+)
 from scripts.utils.Defaults import DefaultKeys as Key
 from scripts.utils.Logger import Logger
 
@@ -88,13 +90,13 @@ class ExperimentFSM(LockedMachine):
         )
         match experiment_type:
             case "transscale":
-                return TransscaleExperiment(self.__log, config)
+                return TransscaleExperiment.TransscaleExperiment(self.__log, config)
             case "simple":
-                return SimpleExperiment(self.__log, config)
+                return SimpleExperiment.SimpleExperiment(self.__log, config)
             case "test":
-                return TestExperiment(self.__log, config)
+                return TestExperiment.TestExperiment(self.__log, config)
             case "resource":
-                return ResourceExperiment(self.__log, config)
+                return ResourceExperiment.ResourceExperiment(self.__log, config)
             case _:
                 raise ValueError(f"[FSM] Invalid experiment type: {experiment_type}")
 

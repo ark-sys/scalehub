@@ -7,6 +7,7 @@ from scripts.monitor.experiments.Scaling import Scaling
 from scripts.src.data.DataManager import DataManager
 from scripts.src.resources.KubernetesManager import KubernetesManager
 from scripts.utils.Config import Config
+from scripts.utils.Defaults import DefaultKeys as Key
 from scripts.utils.Logger import Logger
 from scripts.utils.Tools import Tools, Playbooks, FolderManager
 
@@ -53,6 +54,7 @@ class Experiment:
         self.p: Playbooks = Playbooks(log)
 
         self.current_experiment_thread = None
+        self.runs = self.config.get_int(Key.Experiment.runs)
 
         # Experiment data
         self.timestamps = []
@@ -83,13 +85,6 @@ class Experiment:
     def join_thread(self):
         if self.current_experiment_thread:
             self.current_experiment_thread.join()
-
-    def starting(self):
-        raise NotImplementedError("Starting method not implemented.")
-
-    def running(self):
-        self.__log.info("[EXPERIMENT] Running experiment.")
-        self.join_thread()
 
     def finishing(self):
         exp_paths = []
@@ -169,8 +164,10 @@ class Experiment:
                 f"[EXPERIMENT] Error cleaning up - resetting labels : {str(e)}"
             )
         try:
+            # Reset taskmanagers to 0
             self.k.statefulset_manager.reset_taskmanagers()
 
+            # Reset jobmanager
             jobmanager_labels = "app=flink,component=jobmanager"
             self.k.pod_manager.delete_pods_by_label(jobmanager_labels, "flink")
         except Exception as e:
@@ -185,13 +182,62 @@ class Experiment:
                 f"[EXPERIMENT] Error cleaning up - deleting load generators: {str(e)}"
             )
         try:
+            # Reload kafka
             self.p.reload_playbook("application/kafka", config=self.config)
         except Exception as e:
             self.__log.error(
                 f"[EXPERIMENT] Error cleaning up - reloading kafka: {str(e)}"
             )
 
-    def single_run(self):
+    def starting(self):
+        self.__log.info("[EXPERIMENT] Starting experiment.")
+
+        # Create a new thread for the experiment
+        self.start_thread(self.exp)
+
+    def exp(self):
+        raise NotImplementedError("Exp method not implemented.")
+
+    def running(self):
+        self.__log.info("[EXPERIMENT] Running experiment.")
+        self.join_thread()
+
+    def do_multi_run(self):
+        # Do a single_run self.runs times and save timestamps for each run
+        for run in range(self.runs):
+            self.__log.info(
+                f"[EXPERIMENT] =================================== Starting run {run + 1} ==================================="
+            )
+            try:
+                # Get start timestamp of this run
+                start_ts = int(datetime.now().timestamp())
+                # Execute single run
+                ret = self.__single_run()
+
+                if ret == 1:
+                    # Run was stopped
+                    self.__log.info(f"[EXPERIMENT] Exiting run {run + 1}")
+                    return 1
+
+                # Get end timestamp of this run
+                end_ts = int(datetime.now().timestamp())
+
+                # Save timestamps
+                self.timestamps.append((start_ts, end_ts))
+                self.__log.info(
+                    f"[EXPERIMENT] Run {run + 1} completed. Start: {start_ts}, End: {end_ts}"
+                )
+                self.__log.info("[EXPERIMENT] Sleeping for 10 seconds before next run.")
+                ret = self.current_experiment_thread.sleep(10)
+                if ret == 1:
+                    self.__log.info(f"[EXPERIMENT] Exiting run {run + 1}")
+                    return 1
+
+            except Exception as e:
+                self.__log.error(f"[EXPERIMENT] Error during run: {str(e)}")
+                return 1
+
+    def __single_run(self):
         try:
             # Get current config
             config = self.config
