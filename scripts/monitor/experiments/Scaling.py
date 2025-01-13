@@ -88,7 +88,7 @@ class Scaling:
                 f"[SCALING] Current taskmanagers count: {taskmanagers_count_dict}"
             )
             # Scale up stateful set
-            new_tm_count = taskmanagers_count_dict[tm_type] + replicas
+            new_tm_count = taskmanagers_count_dict[tm_name] + replicas
         except Exception as e:
             self.__log.error(
                 f"[SCALING] __scale_w_tm: Error getting current taskmanagers count: {str(e)}"
