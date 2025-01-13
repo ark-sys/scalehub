@@ -69,6 +69,9 @@ class Scaling:
         return tm_name
 
     def __scale_w_tm(self, replicas, tm_type):
+        self.__log.info(
+            f"[SCALING] Adding {replicas} replicas of {tm_type} taskmanager."
+        )
         # Get the name of the stateful set to scale
         tm_name = self.__get_tm_name(tm_type)
         if not tm_name:
@@ -79,6 +82,10 @@ class Scaling:
             # Get current number of taskmanagers
             taskmanagers_count_dict = (
                 self.k.statefulset_manager.get_count_of_taskmanagers()
+            )
+
+            self.__log.info(
+                f"[SCALING] Current taskmanagers count: {taskmanagers_count_dict}"
             )
             # Scale up stateful set
             new_tm_count = taskmanagers_count_dict[tm_type] + replicas
