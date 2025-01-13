@@ -72,21 +72,37 @@ class Scaling:
         # Get the name of the stateful set to scale
         tm_name = self.__get_tm_name(tm_type)
         if not tm_name:
-            self.__log.error("[SCALING] Error getting statefulset name.")
+            self.__log.error("[SCALING] __scale_w_tm: Error getting statefulset name.")
             return 1
-        # Get current number of taskmanagers
-        taskmanagers_count_dict = self.k.statefulset_manager.get_count_of_taskmanagers()
-        # Scale up stateful set
-        new_tm_count = taskmanagers_count_dict[tm_type] + replicas
-        self.k.statefulset_manager.scale_statefulset(
-            statefulset_name=tm_name,
-            replicas=new_tm_count,
-            namespace="flink",
-        )
+
+        try:
+            # Get current number of taskmanagers
+            taskmanagers_count_dict = (
+                self.k.statefulset_manager.get_count_of_taskmanagers()
+            )
+            # Scale up stateful set
+            new_tm_count = taskmanagers_count_dict[tm_type] + replicas
+        except Exception as e:
+            self.__log.error(
+                f"[SCALING] __scale_w_tm: Error getting current taskmanagers count: {str(e)}"
+            )
+            return 1
+
+        try:
+            self.k.statefulset_manager.scale_statefulset(
+                statefulset_name=tm_name,
+                replicas=new_tm_count,
+                namespace="flink",
+            )
+        except Exception as e:
+            self.__log.error(
+                f"[SCALING] __scale_w_tm: Error scaling taskmanagers: {str(e)}"
+            )
+            return 1
 
         ret = self.__scale_and_wait(new_tm_count)
         if ret == 1:
-            self.__log.error("[SCALING] Error scaling taskmanagers.")
+            self.__log.error("[SCALING] __scale_w_tm: Error scaling operator.")
             return 1
 
     # Add replicas linearly
@@ -255,6 +271,7 @@ class Scaling:
                     return node_name, "continue"
                 else:
                     # If count is more than 1 and method is not block, decrement count as one taskmanager is already scaled during setup
+                    self.__log.info("[SCALING] Decrementing count of first TM by 1.\n")
                     self.steps[step]["taskmanager"][0]["number"] -= 1
             # If there are more than one taskmanagers in the list, check if count is 1 or method is block and remove the first taskmanager
             else:
