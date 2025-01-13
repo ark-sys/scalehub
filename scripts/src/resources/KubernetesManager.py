@@ -1,5 +1,6 @@
 import os
 from time import sleep
+from typing import Any
 
 import yaml
 from kubernetes import config as kubeconfig, client as client
@@ -616,15 +617,21 @@ class StatefulSetManager:
             )
             return None
 
-    def get_count_of_taskmanagers(self) -> dict:
+    def get_count_of_taskmanagers(self) -> dict[Any, Any] | None:
         replicas = {}
         tm_labels = "app=flink,component=taskmanager"
 
-        statefulsets = self.get_statefulset_by_label(tm_labels, "flink")
+        try:
+            statefulsets = self.get_statefulset_by_label(tm_labels, "flink")
 
-        for statefulset in statefulsets.items:
-            replicas[statefulset.metadata.name] = statefulset.spec.replicas
-        return replicas
+            for statefulset in statefulsets.items:
+                replicas[statefulset.metadata.name] = statefulset.spec.replicas
+            return replicas
+        except ApiException as e:
+            self.__log.error(
+                f"[STS_MGR] Exception when calling AppsV1Api->list_namespaced_stateful_set: {str(e)}\n"
+            )
+            return None
 
     def reset_taskmanagers(self):
         self.__log.info("[STS_MGR] Resetting taskmanagers.")
