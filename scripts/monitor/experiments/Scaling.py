@@ -107,7 +107,9 @@ class Scaling:
             )
             return 1
 
-        ret = self.__scale_and_wait(new_tm_count)
+        # Eval new_par from sum of new_tm_count
+        new_par = sum([new_tm_count])
+        ret = self.__scale_and_wait(new_par)
         if ret == 1:
             self.__log.error("[SCALING] __scale_w_tm: Error scaling operator.")
             return 1

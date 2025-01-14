@@ -46,6 +46,17 @@ class Experiment:
     EXPERIMENTS_BASE_PATH = "/experiment-volume"
     TEMPLATES_BASE_PATH = "/app/templates"
 
+    # TODO eval if we can remove this
+    consul_chaos_template = f"{TEMPLATES_BASE_PATH}/consul-latency.yaml.j2"
+    flink_chaos_template = f"{TEMPLATES_BASE_PATH}/flink-latency.yaml.j2"
+    storage_chaos_template = f"{TEMPLATES_BASE_PATH}/storage-latency.yaml.j2"
+    load_generator_deployment_template = (
+        f"{TEMPLATES_BASE_PATH}/load-generator-deployment.yaml.j2"
+    )
+    load_generator_service_template = (
+        f"{TEMPLATES_BASE_PATH}/load-generator-service.yaml.j2"
+    )
+
     def __init__(self, log: Logger, config: Config):
         self.__log = log
         self.config = config
@@ -58,21 +69,6 @@ class Experiment:
 
         # Experiment data
         self.timestamps = []
-
-        # Chaos resources templates
-        self.consul_chaos_template = (
-            f"{self.TEMPLATES_BASE_PATH}/consul-latency.yaml.j2"
-        )
-        self.flink_chaos_template = f"{self.TEMPLATES_BASE_PATH}/flink-latency.yaml.j2"
-        self.storage_chaos_template = (
-            f"{self.TEMPLATES_BASE_PATH}/storage-latency.yaml.j2"
-        )
-        self.load_generator_deployment_template = (
-            f"{self.TEMPLATES_BASE_PATH}/load-generator-deployment.yaml.j2"
-        )
-        self.load_generator_service_template = (
-            f"{self.TEMPLATES_BASE_PATH}/load-generator-service.yaml.j2"
-        )
 
     def start_thread(self, target):
         self.current_experiment_thread = StoppableThread(log=self.__log, target=target)
@@ -104,7 +100,7 @@ class Experiment:
                     multi_run_folder_path = f.create_multi_run_folder()
                 else:
                     multi_run_folder_path = date_path
-
+                # Try to export data for every single run
                 for i, (start_ts, end_ts) in enumerate(self.timestamps):
                     exp_path = f.create_subfolder(multi_run_folder_path)
                     exp_paths.append(exp_path)
@@ -122,6 +118,8 @@ class Experiment:
                         return log_file_path
                     except Exception as e:
                         self.__log.error(f"[EXP] Error creating log file: {str(e)}")
+
+                # Export monitor logs
                 try:
                     # Get time diff since first start_ts and now
                     time_diff = int(datetime.now().timestamp()) - self.timestamps[0][0]
@@ -132,23 +130,21 @@ class Experiment:
                     )
                     with open(f"{multi_run_folder_path}/monitor_logs.txt", "w") as file:
                         file.write(monitor_logs)
-                    try:
-                        # Export data
-                        dm: DataManager = DataManager(self.__log, self.config)
-                        dm.export(multi_run_folder_path)
-                    except Exception as e:
-                        self.__log.error(f"[EXPERIMENT] Error exporting data: {str(e)}")
-                        return None
                 except Exception as e:
                     self.__log.error(
                         f"[EXPERIMENT] Error saving monitor logs: {str(e)}"
                     )
-                    return None
+                # Export data for multi run
+                try:
+                    # Export data
+                    dm: DataManager = DataManager(self.__log, self.config)
+                    dm.export(multi_run_folder_path)
+                except Exception as e:
+                    self.__log.error(f"[EXPERIMENT] Error exporting data: {str(e)}")
             except Exception as e:
                 self.__log.error(
                     f"[EXPERIMENT] Error creating experiment folder: {str(e)}"
                 )
-                return None
         else:
             self.__log.warning(
                 "[EXPERIMENT] No timestamps found. Skipping results creation."
