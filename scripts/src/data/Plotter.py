@@ -13,12 +13,12 @@ class Plotter:
     def __init__(
         self,
         log,
-        fontsize=22,
+        fontsize=24,
         figsize=(12, 10),
-        linewidth=3,
+        linewidth=6,
         capsize=10,
-        markersize=10,
-        tick_size=20,
+        markersize=15,
+        tick_size=22,
         legend_loc="lower right",
         plots_path="plots",
     ):
@@ -147,6 +147,7 @@ class Plotter:
                     label=label,
                     marker=symbol,
                     color=color,
+                    markersize=self.markersize,
                 )
 
         if ax2_data:
@@ -173,6 +174,7 @@ class Plotter:
                         label=label,
                         color=color,
                         marker=symbol,
+                        markersize=self.markersize,
                     )
 
         if title:
@@ -189,7 +191,7 @@ class Plotter:
         if ylim:
             ax1.set_ylim(ylim)
         if axhline:
-            ax1.axhline(axhline)
+            ax1.axhline(axhline, color="r", linestyle="--")
         ax1.tick_params(axis="both", labelsize=self.tick_size + 6)
         if ylim2:
             ax2.set_ylim(ylim2)
@@ -204,7 +206,7 @@ class Plotter:
                 loc=self.legend_loc,
             )
         else:
-            ax1.legend(handles1, labels1, loc=self.legend_loc)
+            ax1.legend(handles1, labels1, loc=self.legend_loc, fontsize=self.fontsize)
         ax1.set_xlim(left=1)
         plt.tight_layout()
         if not filename:

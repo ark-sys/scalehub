@@ -30,21 +30,26 @@ class DataManager:
     def __process_experiment_path(self, exp_path: str):
         if self.__is_date_folder(exp_path):
             self.__process_date_folder(exp_path)
-        elif self.__is_multi_run_folder(exp_path):
-            self.__process_multi_run_folder(exp_path)
         elif self.__is_single_run_folder(exp_path):
             self.__process_single_run_folder(exp_path)
+        elif self.__is_multi_run_folder(exp_path):
+            self.__process_multi_run_folder(exp_path)
+        elif self.__is_multi_exp_folder(exp_path):
+            self.__process_multi_exp_folder(exp_path)
         else:
             self.__log.error(f"Unknown folder structure: {exp_path}")
 
     def __is_date_folder(self, path: str) -> bool:
         return re.match(r"^\d{4}-\d{2}-\d{2}$", os.path.basename(path)) is not None
 
+    def __is_single_run_folder(self, path: str) -> bool:
+        return re.match(r"^\d+$", os.path.basename(path)) is not None
+
     def __is_multi_run_folder(self, path: str) -> bool:
         return re.match(r"^multi_run_\d+$", os.path.basename(path)) is not None
 
-    def __is_single_run_folder(self, path: str) -> bool:
-        return re.match(r"^\d+$", os.path.basename(path)) is not None
+    def __is_multi_exp_folder(self, path: str) -> bool:
+        return re.match(r"^multi_exp_\d+$", os.path.basename(path)) is not None
 
     def __process_date_folder(self, date_folder: str):
         for subfolder in os.listdir(date_folder):
@@ -65,10 +70,17 @@ class DataManager:
         self.export_experiment(single_run_folder)
         self.evaluate_experiment(single_run_folder)
 
+    def __process_multi_exp_folder(self, multi_exp_folder: str):
+        grouped_data_eval = GroupedDataEval(log=self.__log, exp_path=multi_exp_folder)
+
+        # Detect if multi_node or single_node
+        if grouped_data_eval.is_single_node():
+            grouped_data_eval.generate_multi_exp_single_node_plot()
+        else:
+            grouped_data_eval.generate_multi_exp_multi_node_plot()
+
     def __generate_grouped_data_eval(self, multi_run_folder: str):
-        grouped_data_eval = GroupedDataEval(
-            log=self.__log, multi_run_path=multi_run_folder
-        )
+        grouped_data_eval = GroupedDataEval(log=self.__log, exp_path=multi_run_folder)
         grouped_data_eval.generate_box_for_means()
 
     def export_experiment(self, exp_path: str):
