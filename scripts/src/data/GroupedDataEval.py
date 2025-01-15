@@ -12,21 +12,25 @@ from scripts.utils.Tools import Tools
 
 
 class GroupedDataEval:
-    def __init__(self, log: Logger, multi_run_path: str):
+    def __init__(self, log: Logger, exp_path: str):
         self.__log: Logger = log
         self.t: Tools = Tools(log)
-        self.plotter = Plotter(self.__log, plots_path=multi_run_path)
+        self.plotter = Plotter(self.__log, plots_path=exp_path)
 
-        self.multi_run_path = multi_run_path
-        # We retrieve the config from the first run
-        exp_path = os.path.join(multi_run_path, "1", "exp_log.txt")
-        self.config: Config = Config(log, exp_path)
+        self.base_path = exp_path
 
     # Load the mean_stderr.csv file and generate a boxplot
     def generate_box_for_means(self):
+        if "multi_run" not in self.base_path:
+            self.__log.error(
+                "This function is only available for multi-run experiments."
+            )
+            return
+        exp_path = os.path.join(self.base_path, "1", "exp_log.txt")
+        config: Config = Config(self.__log, exp_path)
 
         dfs = []
-        for root, dirs, files in os.walk(self.multi_run_path):
+        for root, dirs, files in os.walk(self.base_path):
             for file in files:
                 if file == "mean_stderr.csv":
                     file_path = os.path.join(root, file)
@@ -47,7 +51,7 @@ class GroupedDataEval:
         )
 
         # Save new data df to file
-        final_df.to_csv(os.path.join(self.multi_run_path, "final_df.csv"), index=False)
+        final_df.to_csv(os.path.join(self.base_path, "final_df.csv"), index=False)
 
         boxplot_data = [
             [
@@ -78,7 +82,7 @@ class GroupedDataEval:
 
         # Get Workload objective from logs
         workload_objective = 0
-        for generator in self.config.get(Key.Experiment.Generators.generators):
+        for generator in config.get(Key.Experiment.Generators.generators):
             workload_objective += int(generator["num_sensors"])
 
         # Add straight dotted line at y=100000, This is the target objective for the experiment
@@ -97,11 +101,118 @@ class GroupedDataEval:
         ax.legend(loc="upper right", fontsize=22)
 
         # # Get comment from config
-        # comment = self.config.get(Key.Experiment.comment)
+        # comment = config.get(Key.Experiment.comment)
         # ax.set_title(f"{comment}", fontsize=24)
 
         fig.tight_layout()
-        output_path = os.path.join(
-            self.multi_run_path, f"boxplot_{num_runs}_runs_mean.png"
-        )
+        output_path = os.path.join(self.base_path, f"boxplot_{num_runs}_runs_mean.png")
         fig.savefig(output_path)
+
+    def is_single_node(self):
+        if any("single_node" in s for s in os.listdir(self.base_path)):
+            return True
+
+    def __get_multi_exp_dict(self):
+        multi_exp_data = {}
+        # Get folder names in the base path
+        for folder in os.listdir(self.base_path):
+            folder_path = os.path.join(self.base_path, folder)
+
+            # Get final_df.csv file
+            final_df_path = os.path.join(folder_path, "final_df.csv")
+
+            # Get config file
+            exp_log_path = os.path.join(folder_path, "1", "exp_log.txt")
+
+            if os.path.exists(final_df_path) and os.path.exists(exp_log_path):
+                config = Config(self.__log, exp_log_path)
+                final_df = pd.read_csv(final_df_path)
+
+                multi_exp_data[folder] = (config, final_df)
+
+        return multi_exp_data
+
+    def generate_multi_exp_multi_node_plot(self):
+        experiment_data = self.__get_multi_exp_dict()
+
+        plot_data = {}
+
+        for exp_name, (config, final_df) in experiment_data.items():
+            # We need to filter final_df to only include the parallelism amount defined in config
+            steps = config.get(Key.Experiment.Scaling.steps)
+            parallelism_per_node = {}
+            total_taskmanagers = 0
+            for step in steps:
+                node_base_name = step["node"]
+                node_suffix = 1
+                node_name = f"{node_base_name}-{node_suffix}"
+                while node_name in parallelism_per_node:
+                    node_suffix += 1
+                    node_name = f"{node_base_name}-{node_suffix}"
+
+                taskmanagers = sum([tm["number"] for tm in step["taskmanager"]])
+                total_taskmanagers += taskmanagers
+                parallelism_per_node[node_name] = (taskmanagers, total_taskmanagers)
+
+            expected_par_values = [value[1] for value in parallelism_per_node.values()]
+            # Filter final_df to only include the parallelism values in expected_par_values
+            filtered_df = final_df[final_df["Parallelism"].isin(expected_par_values)]
+            #
+            # # Add node name to final_df
+            # final_df["Node"] = final_df["Parallelism"].apply(
+            #     lambda x: list(parallelism_per_node.keys())[
+            #         expected_par_values.index(x)
+            #     ]
+            # )
+
+            # Reset index
+            filtered_df.reset_index(drop=True, inplace=True)
+
+            # Change Throughput_mean to Throughput
+            # Create a new DataFrame with only the Throughput and Parallelism columns
+            new_df = filtered_df.loc[:, ["Parallelism", "Throughput_mean"]].copy()
+            new_df.rename(columns={"Throughput_mean": "Throughput"}, inplace=True)
+            new_df.index += 1
+            plot_data[exp_name] = new_df["Throughput"]
+
+            # Save new data df to file
+            new_df.to_csv(
+                os.path.join(self.base_path, f"{exp_name}_plot_data.csv"), index=True
+            )
+
+        self.plotter.generate_single_plot_multiple_series(
+            plot_data,
+            xlabel="Number of Nodes",
+            ylabels_dict={"Throughput": "Throughput (records/s)"},
+            filename=os.path.join(self.base_path, "multi_node_throughput.png"),
+            ylim=(0, 400000),
+            axhline=350000,
+        )
+
+    def generate_multi_exp_single_node_plot(self):
+        # Here we just need to get the Throughput_mean values for each experiment and Parallelism will be the index
+        experiment_data = self.__get_multi_exp_dict()
+
+        plot_data = {}
+
+        for exp_name, (config, final_df) in experiment_data.items():
+            new_df = final_df.loc[:, ["Parallelism", "Throughput_mean"]].copy()
+            new_df.rename(columns={"Throughput_mean": "Throughput"}, inplace=True)
+
+            # Set Parallelism as index
+            new_df.set_index("Parallelism", inplace=True)
+
+            plot_data[exp_name] = new_df["Throughput"]
+
+            new_df.to_csv(
+                os.path.join(self.base_path, f"{exp_name}_plot_data.csv"), index=True
+            )
+
+        self.plotter.generate_single_plot_multiple_series(
+            plot_data,
+            xlabel="Parallelism",
+            ylabels_dict={"Throughput": "Throughput (records/s)"},
+            filename=os.path.join(self.base_path, "single_node_throughput.png"),
+            ylim=(0, 400000),
+            axhline=350000,
+        )

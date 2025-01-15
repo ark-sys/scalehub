@@ -123,7 +123,7 @@ def tokens():
 
 
 # Export data for a given date, experiment number at date or multirun experiment at date or experiment number at multirun experiment at date
-def export(config: Config, exp_path):
+def export(config: Config, exp_path, export_type="all"):
     log.info("Exporting...")
 
     dm: DataManager = DataManager(log, config)
@@ -200,6 +200,12 @@ def main():
     export_subparser.add_argument(
         "date", help="Provide experiment path in format 'DD-MM-YYYY/N'"
     )
+    export_subparser.add_argument(
+        "export_type",
+        help="Type of action to perform on data.",
+        nargs="?",
+        default="all",
+    )
 
     # Parse command line arguments
     args = parser.parse_args()
@@ -261,7 +267,8 @@ def main():
         case "export":
             config = Config(log, Config.DEFAULTS_PATH)
             date = args.date
-            export(config, date)
+            export_type = args.export_type
+            export(config, date, export_type)
         case _:
             parser.print_help()
 
