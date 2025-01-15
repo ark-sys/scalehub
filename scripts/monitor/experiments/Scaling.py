@@ -23,26 +23,6 @@ class Scaling:
     def set_sleep_command(self, sleep):
         self.__sleep = sleep
 
-    def __scale_and_wait(self, replicas):
-        self.__log.info(
-            f"[SCALING] ************************************ Adding {replicas} replicas ************************************"
-        )
-        ret = self.f.run_job(new_parallelism=replicas)
-        if ret == 1:
-            return 1
-        else:
-            # Rescale successful, populate job info
-            self.f.get_job_info()
-            self.f.check_nominal_job_run()
-            ret = self.f.wait_for_job_running()
-            if ret == 1:
-                self.__log.error("[SCALING] Error waiting for job to run.")
-                return 1
-            self.__log.info(
-                f"[SCALING] Monitoring interval: for {self.interval_scaling_s} seconds"
-            )
-            return self.__sleep(self.interval_scaling_s)
-
     def __get_tm_name(self, tm_type):
         tm_labels = {
             "app": "flink",
@@ -67,6 +47,26 @@ class Scaling:
             self.__log.error(f"[SCALING] Error getting statefulset name: {str(e)}")
             return None
         return tm_name
+
+    def __scale_and_wait(self, replicas):
+        self.__log.info(
+            f"[SCALING] ************************************ Adding {replicas} replicas ************************************"
+        )
+        ret = self.f.run_job(new_parallelism=replicas)
+        if ret == 1:
+            return 1
+        else:
+            # Rescale successful, populate job info
+            self.f.get_job_info()
+            self.f.check_nominal_job_run()
+            ret = self.f.wait_for_job_running()
+            if ret == 1:
+                self.__log.error("[SCALING] Error waiting for job to run.")
+                return 1
+            self.__log.info(
+                f"[SCALING] Monitoring interval: for {self.interval_scaling_s} seconds"
+            )
+            return self.__sleep(self.interval_scaling_s)
 
     def __scale_w_tm(self, replicas, tm_type):
         self.__log.info(
@@ -108,7 +108,7 @@ class Scaling:
             return 1
 
         # Eval new_par from sum of new_tm_count
-        new_par = sum([new_tm_count])
+        new_par = sum(self.k.statefulset_manager.get_count_of_taskmanagers().values())
         ret = self.__scale_and_wait(new_par)
         if ret == 1:
             self.__log.error("[SCALING] __scale_w_tm: Error scaling operator.")
