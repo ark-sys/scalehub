@@ -93,7 +93,7 @@ class Experiment:
                 date_path = f.create_date_folder(self.timestamps[0][0])
             except Exception as e:
                 self.__log.error(f"[EXPERIMENT] Error creating date folder: {str(e)}")
-                return None
+                return
 
             try:
                 if len(self.timestamps) > 1:
@@ -115,7 +115,6 @@ class Experiment:
                             file.write(f"[TIMESTAMPS]\n")
                             file.write(f"Experiment start at : {start_ts}\n")
                             file.write(f"Experiment end at : {end_ts}\n")
-                        return log_file_path
                     except Exception as e:
                         self.__log.error(f"[EXP] Error creating log file: {str(e)}")
 
