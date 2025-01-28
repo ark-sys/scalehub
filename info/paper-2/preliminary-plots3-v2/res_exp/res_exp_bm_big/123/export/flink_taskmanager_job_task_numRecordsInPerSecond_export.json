@@ -1,0 +1,1020 @@
+{
+  "metric": {
+    "__name__": "flink_taskmanager_job_task_numRecordsInPerSecond",
+    "namespace": "flink",
+    "service": "flink-taskmanager",
+    "job": "flink-taskmanager",
+    "instance": "[2001:cafe:42:3::82]:9249",
+    "host": "_2001:cafe:42:3::82_",
+    "pod": "flink-16000m-1024-0",
+    "container": "taskmanager",
+    "endpoint": "metrics",
+    "job_id": "b2e073385d26a9be30238bc1e2863138",
+    "job_name": "myjoin_transscale_0_0_1",
+    "prometheus": "monitoring/prometheus-kube-prometheus-prometheus",
+    "prometheus_replica": "prometheus-prometheus-kube-prometheus-prometheus-0",
+    "subtask_index": "0",
+    "task_attempt_id": "43d0bb3372e11ac8c7b1910c37b71c49_41a95396e613c9f62f1da16142d5ddd2_0_3",
+    "task_attempt_num": "3",
+    "task_id": "41a95396e613c9f62f1da16142d5ddd2",
+    "task_name": "Sink:_Sink",
+    "tm_id": "_2001:cafe:42:3::82_:6122_608eeb"
+  },
+  "values": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    null
+  ],
+  "timestamps": [
+    1737524483932,
+    1737524488932,
+    1737524493932,
+    1737524498932,
+    1737524503932,
+    1737524508932
+  ]
+}
+{
+  "metric": {
+    "__name__": "flink_taskmanager_job_task_numRecordsInPerSecond",
+    "namespace": "flink",
+    "service": "flink-taskmanager",
+    "job": "flink-taskmanager",
+    "instance": "[2001:cafe:42:3::82]:9249",
+    "host": "_2001:cafe:42:3::82_",
+    "pod": "flink-16000m-1024-0",
+    "container": "taskmanager",
+    "endpoint": "metrics",
+    "job_id": "b2e073385d26a9be30238bc1e2863138",
+    "job_name": "myjoin_transscale_0_0_1",
+    "prometheus": "monitoring/prometheus-kube-prometheus-prometheus",
+    "prometheus_replica": "prometheus-prometheus-kube-prometheus-prometheus-0",
+    "subtask_index": "0",
+    "task_attempt_id": "43d0bb3372e11ac8c7b1910c37b71c49_41a95396e613c9f62f1da16142d5ddd2_0_0",
+    "task_attempt_num": "0",
+    "task_id": "41a95396e613c9f62f1da16142d5ddd2",
+    "task_name": "Sink:_Sink",
+    "tm_id": "_2001:cafe:42:3::82_:6122_10a511"
+  },
+  "values": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0.03333333333333,
+    0.03333333333333,
+    0.03333333333333,
+    0.03333333333333,
+    0.03333333333333,
+    null
+  ],
+  "timestamps": [
+    1737524308932,
+    1737524313932,
+    1737524318932,
+    1737524323932,
+    1737524328932,
+    1737524333932,
+    1737524338932,
+    1737524343932,
+    1737524348932,
+    1737524353932,
+    1737524358932,
+    1737524363932
+  ]
+}
+{
+  "metric": {
+    "__name__": "flink_taskmanager_job_task_numRecordsInPerSecond",
+    "namespace": "flink",
+    "service": "flink-taskmanager",
+    "job": "flink-taskmanager",
+    "instance": "[2001:cafe:42:3::82]:9249",
+    "host": "_2001:cafe:42:3::82_",
+    "pod": "flink-16000m-1024-0",
+    "container": "taskmanager",
+    "endpoint": "metrics",
+    "job_id": "b2e073385d26a9be30238bc1e2863138",
+    "job_name": "myjoin_transscale_0_0_1",
+    "prometheus": "monitoring/prometheus-kube-prometheus-prometheus",
+    "prometheus_replica": "prometheus-prometheus-kube-prometheus-prometheus-0",
+    "subtask_index": "0",
+    "task_attempt_id": "43d0bb3372e11ac8c7b1910c37b71c49_e926317ddf99720773e3c7f4f412c3d7_0_0",
+    "task_attempt_num": "0",
+    "task_id": "e926317ddf99720773e3c7f4f412c3d7",
+    "task_name": "Timestamps_Watermarks____Map",
+    "tm_id": "_2001:cafe:42:3::82_:6122_10a511"
+  },
+  "values": [
+    0,
+    0,
+    0,
+    0,
+    121.4666666666,
+    293.8166666666,
+    293.8166666666,
+    307.93333333329997,
+    996.8166666666,
+    996.8166666666,
+    996.8166666666,
+    null
+  ],
+  "timestamps": [
+    1737524308932,
+    1737524313932,
+    1737524318932,
+    1737524323932,
+    1737524328932,
+    1737524333932,
+    1737524338932,
+    1737524343932,
+    1737524348932,
+    1737524353932,
+    1737524358932,
+    1737524363932
+  ]
+}
+{
+  "metric": {
+    "__name__": "flink_taskmanager_job_task_numRecordsInPerSecond",
+    "namespace": "flink",
+    "service": "flink-taskmanager",
+    "job": "flink-taskmanager",
+    "instance": "[2001:cafe:42:3::82]:9249",
+    "host": "_2001:cafe:42:3::82_",
+    "pod": "flink-16000m-1024-0",
+    "container": "taskmanager",
+    "endpoint": "metrics",
+    "job_id": "b2e073385d26a9be30238bc1e2863138",
+    "job_name": "myjoin_transscale_0_0_1",
+    "prometheus": "monitoring/prometheus-kube-prometheus-prometheus",
+    "prometheus_replica": "prometheus-prometheus-kube-prometheus-prometheus-0",
+    "subtask_index": "0",
+    "task_attempt_id": "43d0bb3372e11ac8c7b1910c37b71c49_32f0ffe0b6f0b990239bb81cec28b9d8_0_0",
+    "task_attempt_num": "0",
+    "task_id": "32f0ffe0b6f0b990239bb81cec28b9d8",
+    "task_name": "TumblingEventTimeWindows____Timestamps_Watermarks",
+    "tm_id": "_2001:cafe:42:3::82_:6122_10a511"
+  },
+  "values": [
+    0,
+    0,
+    0,
+    48.0666666667,
+    306.3333333333,
+    478.9,
+    5950.5,
+    10550.4,
+    14059.81666666,
+    14059.81666666,
+    14059.81666666,
+    null
+  ],
+  "timestamps": [
+    1737524308932,
+    1737524313932,
+    1737524318932,
+    1737524323932,
+    1737524328932,
+    1737524333932,
+    1737524338932,
+    1737524343932,
+    1737524348932,
+    1737524353932,
+    1737524358932,
+    1737524363932
+  ]
+}
+{
+  "metric": {
+    "__name__": "flink_taskmanager_job_task_numRecordsInPerSecond",
+    "namespace": "flink",
+    "service": "flink-taskmanager",
+    "job": "flink-taskmanager",
+    "instance": "[2001:cafe:42:3::82]:9249",
+    "host": "_2001:cafe:42:3::82_",
+    "pod": "flink-16000m-1024-0",
+    "container": "taskmanager",
+    "endpoint": "metrics",
+    "job_id": "b2e073385d26a9be30238bc1e2863138",
+    "job_name": "myjoin_transscale_0_0_1",
+    "prometheus": "monitoring/prometheus-kube-prometheus-prometheus",
+    "prometheus_replica": "prometheus-prometheus-kube-prometheus-prometheus-0",
+    "subtask_index": "0",
+    "task_attempt_id": "43d0bb3372e11ac8c7b1910c37b71c49_9c7327831b3b5b4ae2c580979f474a9c_0_0",
+    "task_attempt_num": "0",
+    "task_id": "9c7327831b3b5b4ae2c580979f474a9c",
+    "task_name": "Source:_Source2",
+    "tm_id": "_2001:cafe:42:3::82_:6122_10a511"
+  },
+  "values": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    null
+  ],
+  "timestamps": [
+    1737524308932,
+    1737524313932,
+    1737524318932,
+    1737524323932,
+    1737524328932,
+    1737524333932,
+    1737524338932,
+    1737524343932,
+    1737524348932,
+    1737524353932,
+    1737524358932,
+    1737524363932
+  ]
+}
+{
+  "metric": {
+    "__name__": "flink_taskmanager_job_task_numRecordsInPerSecond",
+    "namespace": "flink",
+    "service": "flink-taskmanager",
+    "job": "flink-taskmanager",
+    "instance": "[2001:cafe:42:3::82]:9249",
+    "host": "_2001:cafe:42:3::82_",
+    "pod": "flink-16000m-1024-0",
+    "container": "taskmanager",
+    "endpoint": "metrics",
+    "job_id": "b2e073385d26a9be30238bc1e2863138",
+    "job_name": "myjoin_transscale_0_0_1",
+    "prometheus": "monitoring/prometheus-kube-prometheus-prometheus",
+    "prometheus_replica": "prometheus-prometheus-kube-prometheus-prometheus-0",
+    "subtask_index": "0",
+    "task_attempt_id": "43d0bb3372e11ac8c7b1910c37b71c49_31ec045e3401e87fc7879b43d8e8625d_0_0",
+    "task_attempt_num": "0",
+    "task_id": "31ec045e3401e87fc7879b43d8e8625d",
+    "task_name": "Timestamps_Watermarks____Map",
+    "tm_id": "_2001:cafe:42:3::82_:6122_10a511"
+  },
+  "values": [
+    0,
+    0,
+    0,
+    48.1666666667,
+    185.0833333333,
+    185.0833333333,
+    5659.15,
+    10249.51666666,
+    13075.216666659999,
+    13075.216666659999,
+    13075.216666659999,
+    null
+  ],
+  "timestamps": [
+    1737524308932,
+    1737524313932,
+    1737524318932,
+    1737524323932,
+    1737524328932,
+    1737524333932,
+    1737524338932,
+    1737524343932,
+    1737524348932,
+    1737524353932,
+    1737524358932,
+    1737524363932
+  ]
+}
+{
+  "metric": {
+    "__name__": "flink_taskmanager_job_task_numRecordsInPerSecond",
+    "namespace": "flink",
+    "service": "flink-taskmanager",
+    "job": "flink-taskmanager",
+    "instance": "[2001:cafe:42:3::82]:9249",
+    "host": "_2001:cafe:42:3::82_",
+    "pod": "flink-16000m-1024-0",
+    "container": "taskmanager",
+    "endpoint": "metrics",
+    "job_id": "b2e073385d26a9be30238bc1e2863138",
+    "job_name": "myjoin_transscale_0_0_1",
+    "prometheus": "monitoring/prometheus-kube-prometheus-prometheus",
+    "prometheus_replica": "prometheus-prometheus-kube-prometheus-prometheus-0",
+    "subtask_index": "0",
+    "task_attempt_id": "43d0bb3372e11ac8c7b1910c37b71c49_dca33db40b2f8f122636cd5297c0c511_0_0",
+    "task_attempt_num": "0",
+    "task_id": "dca33db40b2f8f122636cd5297c0c511",
+    "task_name": "Source:_Source1",
+    "tm_id": "_2001:cafe:42:3::82_:6122_10a511"
+  },
+  "values": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    null
+  ],
+  "timestamps": [
+    1737524308932,
+    1737524313932,
+    1737524318932,
+    1737524323932,
+    1737524328932,
+    1737524333932,
+    1737524338932,
+    1737524343932,
+    1737524348932,
+    1737524353932,
+    1737524358932,
+    1737524363932
+  ]
+}
+{
+  "metric": {
+    "__name__": "flink_taskmanager_job_task_numRecordsInPerSecond",
+    "namespace": "flink",
+    "service": "flink-taskmanager",
+    "job": "flink-taskmanager",
+    "instance": "[2001:cafe:42:3::82]:9249",
+    "host": "_2001:cafe:42:3::82_",
+    "pod": "flink-16000m-1024-0",
+    "container": "taskmanager",
+    "endpoint": "metrics",
+    "job_id": "b2e073385d26a9be30238bc1e2863138",
+    "job_name": "myjoin_transscale_0_0_1",
+    "prometheus": "monitoring/prometheus-kube-prometheus-prometheus",
+    "prometheus_replica": "prometheus-prometheus-kube-prometheus-prometheus-0",
+    "subtask_index": "0",
+    "task_attempt_id": "43d0bb3372e11ac8c7b1910c37b71c49_e926317ddf99720773e3c7f4f412c3d7_0_1",
+    "task_attempt_num": "1",
+    "task_id": "e926317ddf99720773e3c7f4f412c3d7",
+    "task_name": "Timestamps_Watermarks____Map",
+    "tm_id": "_2001:cafe:42:3::82_:6122_e16fa3"
+  },
+  "values": [
+    0,
+    3743.06666667,
+    4767.21666667,
+    4767.21666667,
+    4767.21666667,
+    7624.28333333,
+    7664.63333333,
+    null
+  ],
+  "timestamps": [
+    1737524378932,
+    1737524383932,
+    1737524388932,
+    1737524393932,
+    1737524398932,
+    1737524403932,
+    1737524408932,
+    1737524413932
+  ]
+}
+{
+  "metric": {
+    "__name__": "flink_taskmanager_job_task_numRecordsInPerSecond",
+    "namespace": "flink",
+    "service": "flink-taskmanager",
+    "job": "flink-taskmanager",
+    "instance": "[2001:cafe:42:3::82]:9249",
+    "host": "_2001:cafe:42:3::82_",
+    "pod": "flink-16000m-1024-0",
+    "container": "taskmanager",
+    "endpoint": "metrics",
+    "job_id": "b2e073385d26a9be30238bc1e2863138",
+    "job_name": "myjoin_transscale_0_0_1",
+    "prometheus": "monitoring/prometheus-kube-prometheus-prometheus",
+    "prometheus_replica": "prometheus-prometheus-kube-prometheus-prometheus-0",
+    "subtask_index": "0",
+    "task_attempt_id": "43d0bb3372e11ac8c7b1910c37b71c49_41a95396e613c9f62f1da16142d5ddd2_0_1",
+    "task_attempt_num": "1",
+    "task_id": "41a95396e613c9f62f1da16142d5ddd2",
+    "task_name": "Sink:_Sink",
+    "tm_id": "_2001:cafe:42:3::82_:6122_e16fa3"
+  },
+  "values": [
+    0,
+    0,
+    34.25,
+    35.516666666700004,
+    35.516666666700004,
+    41.483333333299996,
+    41.483333333299996,
+    null
+  ],
+  "timestamps": [
+    1737524378932,
+    1737524383932,
+    1737524388932,
+    1737524393932,
+    1737524398932,
+    1737524403932,
+    1737524408932,
+    1737524413932
+  ]
+}
+{
+  "metric": {
+    "__name__": "flink_taskmanager_job_task_numRecordsInPerSecond",
+    "namespace": "flink",
+    "service": "flink-taskmanager",
+    "job": "flink-taskmanager",
+    "instance": "[2001:cafe:42:3::82]:9249",
+    "host": "_2001:cafe:42:3::82_",
+    "pod": "flink-16000m-1024-0",
+    "container": "taskmanager",
+    "endpoint": "metrics",
+    "job_id": "b2e073385d26a9be30238bc1e2863138",
+    "job_name": "myjoin_transscale_0_0_1",
+    "prometheus": "monitoring/prometheus-kube-prometheus-prometheus",
+    "prometheus_replica": "prometheus-prometheus-kube-prometheus-prometheus-0",
+    "subtask_index": "0",
+    "task_attempt_id": "43d0bb3372e11ac8c7b1910c37b71c49_9c7327831b3b5b4ae2c580979f474a9c_0_1",
+    "task_attempt_num": "1",
+    "task_id": "9c7327831b3b5b4ae2c580979f474a9c",
+    "task_name": "Source:_Source2",
+    "tm_id": "_2001:cafe:42:3::82_:6122_e16fa3"
+  },
+  "values": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    null
+  ],
+  "timestamps": [
+    1737524378932,
+    1737524383932,
+    1737524388932,
+    1737524393932,
+    1737524398932,
+    1737524403932,
+    1737524408932,
+    1737524413932
+  ]
+}
+{
+  "metric": {
+    "__name__": "flink_taskmanager_job_task_numRecordsInPerSecond",
+    "namespace": "flink",
+    "service": "flink-taskmanager",
+    "job": "flink-taskmanager",
+    "instance": "[2001:cafe:42:3::82]:9249",
+    "host": "_2001:cafe:42:3::82_",
+    "pod": "flink-16000m-1024-0",
+    "container": "taskmanager",
+    "endpoint": "metrics",
+    "job_id": "b2e073385d26a9be30238bc1e2863138",
+    "job_name": "myjoin_transscale_0_0_1",
+    "prometheus": "monitoring/prometheus-kube-prometheus-prometheus",
+    "prometheus_replica": "prometheus-prometheus-kube-prometheus-prometheus-0",
+    "subtask_index": "0",
+    "task_attempt_id": "43d0bb3372e11ac8c7b1910c37b71c49_32f0ffe0b6f0b990239bb81cec28b9d8_0_1",
+    "task_attempt_num": "1",
+    "task_id": "32f0ffe0b6f0b990239bb81cec28b9d8",
+    "task_name": "TumblingEventTimeWindows____Timestamps_Watermarks",
+    "tm_id": "_2001:cafe:42:3::82_:6122_e16fa3"
+  },
+  "values": [
+    0,
+    7250.08333333,
+    9278.8,
+    9278.8,
+    9278.8,
+    15031.65,
+    15165.35,
+    null
+  ],
+  "timestamps": [
+    1737524378932,
+    1737524383932,
+    1737524388932,
+    1737524393932,
+    1737524398932,
+    1737524403932,
+    1737524408932,
+    1737524413932
+  ]
+}
+{
+  "metric": {
+    "__name__": "flink_taskmanager_job_task_numRecordsInPerSecond",
+    "namespace": "flink",
+    "service": "flink-taskmanager",
+    "job": "flink-taskmanager",
+    "instance": "[2001:cafe:42:3::82]:9249",
+    "host": "_2001:cafe:42:3::82_",
+    "pod": "flink-16000m-1024-0",
+    "container": "taskmanager",
+    "endpoint": "metrics",
+    "job_id": "b2e073385d26a9be30238bc1e2863138",
+    "job_name": "myjoin_transscale_0_0_1",
+    "prometheus": "monitoring/prometheus-kube-prometheus-prometheus",
+    "prometheus_replica": "prometheus-prometheus-kube-prometheus-prometheus-0",
+    "subtask_index": "0",
+    "task_attempt_id": "43d0bb3372e11ac8c7b1910c37b71c49_dca33db40b2f8f122636cd5297c0c511_0_1",
+    "task_attempt_num": "1",
+    "task_id": "dca33db40b2f8f122636cd5297c0c511",
+    "task_name": "Source:_Source1",
+    "tm_id": "_2001:cafe:42:3::82_:6122_e16fa3"
+  },
+  "values": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    null
+  ],
+  "timestamps": [
+    1737524378932,
+    1737524383932,
+    1737524388932,
+    1737524393932,
+    1737524398932,
+    1737524403932,
+    1737524408932,
+    1737524413932
+  ]
+}
+{
+  "metric": {
+    "__name__": "flink_taskmanager_job_task_numRecordsInPerSecond",
+    "namespace": "flink",
+    "service": "flink-taskmanager",
+    "job": "flink-taskmanager",
+    "instance": "[2001:cafe:42:3::82]:9249",
+    "host": "_2001:cafe:42:3::82_",
+    "pod": "flink-16000m-1024-0",
+    "container": "taskmanager",
+    "endpoint": "metrics",
+    "job_id": "b2e073385d26a9be30238bc1e2863138",
+    "job_name": "myjoin_transscale_0_0_1",
+    "prometheus": "monitoring/prometheus-kube-prometheus-prometheus",
+    "prometheus_replica": "prometheus-prometheus-kube-prometheus-prometheus-0",
+    "subtask_index": "0",
+    "task_attempt_id": "43d0bb3372e11ac8c7b1910c37b71c49_41a95396e613c9f62f1da16142d5ddd2_0_2",
+    "task_attempt_num": "2",
+    "task_id": "41a95396e613c9f62f1da16142d5ddd2",
+    "task_name": "Sink:_Sink",
+    "tm_id": "_2001:cafe:42:3::82_:6122_a4338c"
+  },
+  "values": [
+    0,
+    0,
+    408.73333333330004,
+    408.73333333330004,
+    null
+  ],
+  "timestamps": [
+    1737524438932,
+    1737524443932,
+    1737524448932,
+    1737524453932,
+    1737524458932
+  ]
+}
+{
+  "metric": {
+    "__name__": "flink_taskmanager_job_task_numRecordsInPerSecond",
+    "namespace": "flink",
+    "service": "flink-taskmanager",
+    "job": "flink-taskmanager",
+    "instance": "[2001:cafe:42:3::82]:9249",
+    "host": "_2001:cafe:42:3::82_",
+    "pod": "flink-16000m-1024-0",
+    "container": "taskmanager",
+    "endpoint": "metrics",
+    "job_id": "b2e073385d26a9be30238bc1e2863138",
+    "job_name": "myjoin_transscale_0_0_1",
+    "prometheus": "monitoring/prometheus-kube-prometheus-prometheus",
+    "prometheus_replica": "prometheus-prometheus-kube-prometheus-prometheus-0",
+    "subtask_index": "0",
+    "task_attempt_id": "43d0bb3372e11ac8c7b1910c37b71c49_9c7327831b3b5b4ae2c580979f474a9c_0_2",
+    "task_attempt_num": "2",
+    "task_id": "9c7327831b3b5b4ae2c580979f474a9c",
+    "task_name": "Source:_Source2",
+    "tm_id": "_2001:cafe:42:3::82_:6122_a4338c"
+  },
+  "values": [
+    0,
+    0,
+    0,
+    0,
+    null
+  ],
+  "timestamps": [
+    1737524438932,
+    1737524443932,
+    1737524448932,
+    1737524453932,
+    1737524458932
+  ]
+}
+{
+  "metric": {
+    "__name__": "flink_taskmanager_job_task_numRecordsInPerSecond",
+    "namespace": "flink",
+    "service": "flink-taskmanager",
+    "job": "flink-taskmanager",
+    "instance": "[2001:cafe:42:3::82]:9249",
+    "host": "_2001:cafe:42:3::82_",
+    "pod": "flink-16000m-1024-0",
+    "container": "taskmanager",
+    "endpoint": "metrics",
+    "job_id": "b2e073385d26a9be30238bc1e2863138",
+    "job_name": "myjoin_transscale_0_0_1",
+    "prometheus": "monitoring/prometheus-kube-prometheus-prometheus",
+    "prometheus_replica": "prometheus-prometheus-kube-prometheus-prometheus-0",
+    "subtask_index": "0",
+    "task_attempt_id": "43d0bb3372e11ac8c7b1910c37b71c49_e926317ddf99720773e3c7f4f412c3d7_0_2",
+    "task_attempt_num": "2",
+    "task_id": "e926317ddf99720773e3c7f4f412c3d7",
+    "task_name": "Timestamps_Watermarks____Map",
+    "tm_id": "_2001:cafe:42:3::82_:6122_a4338c"
+  },
+  "values": [
+    0,
+    0,
+    1290.9666666665998,
+    4148.13333333,
+    null
+  ],
+  "timestamps": [
+    1737524438932,
+    1737524443932,
+    1737524448932,
+    1737524453932,
+    1737524458932
+  ]
+}
+{
+  "metric": {
+    "__name__": "flink_taskmanager_job_task_numRecordsInPerSecond",
+    "namespace": "flink",
+    "service": "flink-taskmanager",
+    "job": "flink-taskmanager",
+    "instance": "[2001:cafe:42:3::82]:9249",
+    "host": "_2001:cafe:42:3::82_",
+    "pod": "flink-16000m-1024-0",
+    "container": "taskmanager",
+    "endpoint": "metrics",
+    "job_id": "b2e073385d26a9be30238bc1e2863138",
+    "job_name": "myjoin_transscale_0_0_1",
+    "prometheus": "monitoring/prometheus-kube-prometheus-prometheus",
+    "prometheus_replica": "prometheus-prometheus-kube-prometheus-prometheus-0",
+    "subtask_index": "0",
+    "task_attempt_id": "43d0bb3372e11ac8c7b1910c37b71c49_dca33db40b2f8f122636cd5297c0c511_0_3",
+    "task_attempt_num": "3",
+    "task_id": "dca33db40b2f8f122636cd5297c0c511",
+    "task_name": "Source:_Source1",
+    "tm_id": "_2001:cafe:42:3::82_:6122_608eeb"
+  },
+  "values": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    null
+  ],
+  "timestamps": [
+    1737524483932,
+    1737524488932,
+    1737524493932,
+    1737524498932,
+    1737524503932,
+    1737524508932
+  ]
+}
+{
+  "metric": {
+    "__name__": "flink_taskmanager_job_task_numRecordsInPerSecond",
+    "namespace": "flink",
+    "service": "flink-taskmanager",
+    "job": "flink-taskmanager",
+    "instance": "[2001:cafe:42:3::82]:9249",
+    "host": "_2001:cafe:42:3::82_",
+    "pod": "flink-16000m-1024-0",
+    "container": "taskmanager",
+    "endpoint": "metrics",
+    "job_id": "b2e073385d26a9be30238bc1e2863138",
+    "job_name": "myjoin_transscale_0_0_1",
+    "prometheus": "monitoring/prometheus-kube-prometheus-prometheus",
+    "prometheus_replica": "prometheus-prometheus-kube-prometheus-prometheus-0",
+    "subtask_index": "0",
+    "task_attempt_id": "43d0bb3372e11ac8c7b1910c37b71c49_e926317ddf99720773e3c7f4f412c3d7_0_3",
+    "task_attempt_num": "3",
+    "task_id": "e926317ddf99720773e3c7f4f412c3d7",
+    "task_name": "Timestamps_Watermarks____Map",
+    "tm_id": "_2001:cafe:42:3::82_:6122_608eeb"
+  },
+  "values": [
+    0,
+    0,
+    3079.6833333333,
+    4941.38333333,
+    4941.38333333,
+    null
+  ],
+  "timestamps": [
+    1737524483932,
+    1737524488932,
+    1737524493932,
+    1737524498932,
+    1737524503932,
+    1737524508932
+  ]
+}
+{
+  "metric": {
+    "__name__": "flink_taskmanager_job_task_numRecordsInPerSecond",
+    "namespace": "flink",
+    "service": "flink-taskmanager",
+    "job": "flink-taskmanager",
+    "instance": "[2001:cafe:42:3::82]:9249",
+    "host": "_2001:cafe:42:3::82_",
+    "pod": "flink-16000m-1024-0",
+    "container": "taskmanager",
+    "endpoint": "metrics",
+    "job_id": "b2e073385d26a9be30238bc1e2863138",
+    "job_name": "myjoin_transscale_0_0_1",
+    "prometheus": "monitoring/prometheus-kube-prometheus-prometheus",
+    "prometheus_replica": "prometheus-prometheus-kube-prometheus-prometheus-0",
+    "subtask_index": "0",
+    "task_attempt_id": "43d0bb3372e11ac8c7b1910c37b71c49_9c7327831b3b5b4ae2c580979f474a9c_0_3",
+    "task_attempt_num": "3",
+    "task_id": "9c7327831b3b5b4ae2c580979f474a9c",
+    "task_name": "Source:_Source2",
+    "tm_id": "_2001:cafe:42:3::82_:6122_608eeb"
+  },
+  "values": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    null
+  ],
+  "timestamps": [
+    1737524483932,
+    1737524488932,
+    1737524493932,
+    1737524498932,
+    1737524503932,
+    1737524508932
+  ]
+}
+{
+  "metric": {
+    "__name__": "flink_taskmanager_job_task_numRecordsInPerSecond",
+    "namespace": "flink",
+    "service": "flink-taskmanager",
+    "job": "flink-taskmanager",
+    "instance": "[2001:cafe:42:3::82]:9249",
+    "host": "_2001:cafe:42:3::82_",
+    "pod": "flink-16000m-1024-0",
+    "container": "taskmanager",
+    "endpoint": "metrics",
+    "job_id": "b2e073385d26a9be30238bc1e2863138",
+    "job_name": "myjoin_transscale_0_0_1",
+    "prometheus": "monitoring/prometheus-kube-prometheus-prometheus",
+    "prometheus_replica": "prometheus-prometheus-kube-prometheus-prometheus-0",
+    "subtask_index": "0",
+    "task_attempt_id": "43d0bb3372e11ac8c7b1910c37b71c49_31ec045e3401e87fc7879b43d8e8625d_0_1",
+    "task_attempt_num": "1",
+    "task_id": "31ec045e3401e87fc7879b43d8e8625d",
+    "task_name": "Timestamps_Watermarks____Map",
+    "tm_id": "_2001:cafe:42:3::82_:6122_e16fa3"
+  },
+  "values": [
+    0,
+    3732.43333333,
+    4749.15,
+    4749.15,
+    4749.15,
+    7641.01666666,
+    7683.38333333,
+    null
+  ],
+  "timestamps": [
+    1737524378932,
+    1737524383932,
+    1737524388932,
+    1737524393932,
+    1737524398932,
+    1737524403932,
+    1737524408932,
+    1737524413932
+  ]
+}
+{
+  "metric": {
+    "__name__": "flink_taskmanager_job_task_numRecordsInPerSecond",
+    "namespace": "flink",
+    "service": "flink-taskmanager",
+    "job": "flink-taskmanager",
+    "instance": "[2001:cafe:42:3::82]:9249",
+    "host": "_2001:cafe:42:3::82_",
+    "pod": "flink-16000m-1024-0",
+    "container": "taskmanager",
+    "endpoint": "metrics",
+    "job_id": "b2e073385d26a9be30238bc1e2863138",
+    "job_name": "myjoin_transscale_0_0_1",
+    "prometheus": "monitoring/prometheus-kube-prometheus-prometheus",
+    "prometheus_replica": "prometheus-prometheus-kube-prometheus-prometheus-0",
+    "subtask_index": "0",
+    "task_attempt_id": "43d0bb3372e11ac8c7b1910c37b71c49_dca33db40b2f8f122636cd5297c0c511_0_2",
+    "task_attempt_num": "2",
+    "task_id": "dca33db40b2f8f122636cd5297c0c511",
+    "task_name": "Source:_Source1",
+    "tm_id": "_2001:cafe:42:3::82_:6122_a4338c"
+  },
+  "values": [
+    0,
+    0,
+    0,
+    0,
+    null
+  ],
+  "timestamps": [
+    1737524438932,
+    1737524443932,
+    1737524448932,
+    1737524453932,
+    1737524458932
+  ]
+}
+{
+  "metric": {
+    "__name__": "flink_taskmanager_job_task_numRecordsInPerSecond",
+    "namespace": "flink",
+    "service": "flink-taskmanager",
+    "job": "flink-taskmanager",
+    "instance": "[2001:cafe:42:3::82]:9249",
+    "host": "_2001:cafe:42:3::82_",
+    "pod": "flink-16000m-1024-0",
+    "container": "taskmanager",
+    "endpoint": "metrics",
+    "job_id": "b2e073385d26a9be30238bc1e2863138",
+    "job_name": "myjoin_transscale_0_0_1",
+    "prometheus": "monitoring/prometheus-kube-prometheus-prometheus",
+    "prometheus_replica": "prometheus-prometheus-kube-prometheus-prometheus-0",
+    "subtask_index": "0",
+    "task_attempt_id": "43d0bb3372e11ac8c7b1910c37b71c49_31ec045e3401e87fc7879b43d8e8625d_0_2",
+    "task_attempt_num": "2",
+    "task_id": "31ec045e3401e87fc7879b43d8e8625d",
+    "task_name": "Timestamps_Watermarks____Map",
+    "tm_id": "_2001:cafe:42:3::82_:6122_a4338c"
+  },
+  "values": [
+    0,
+    0,
+    1308.65,
+    4164.25,
+    null
+  ],
+  "timestamps": [
+    1737524438932,
+    1737524443932,
+    1737524448932,
+    1737524453932,
+    1737524458932
+  ]
+}
+{
+  "metric": {
+    "__name__": "flink_taskmanager_job_task_numRecordsInPerSecond",
+    "namespace": "flink",
+    "service": "flink-taskmanager",
+    "job": "flink-taskmanager",
+    "instance": "[2001:cafe:42:3::82]:9249",
+    "host": "_2001:cafe:42:3::82_",
+    "pod": "flink-16000m-1024-0",
+    "container": "taskmanager",
+    "endpoint": "metrics",
+    "job_id": "b2e073385d26a9be30238bc1e2863138",
+    "job_name": "myjoin_transscale_0_0_1",
+    "prometheus": "monitoring/prometheus-kube-prometheus-prometheus",
+    "prometheus_replica": "prometheus-prometheus-kube-prometheus-prometheus-0",
+    "subtask_index": "0",
+    "task_attempt_id": "43d0bb3372e11ac8c7b1910c37b71c49_32f0ffe0b6f0b990239bb81cec28b9d8_0_2",
+    "task_attempt_num": "2",
+    "task_id": "32f0ffe0b6f0b990239bb81cec28b9d8",
+    "task_name": "TumblingEventTimeWindows____Timestamps_Watermarks",
+    "tm_id": "_2001:cafe:42:3::82_:6122_a4338c"
+  },
+  "values": [
+    0,
+    0,
+    2369.4166666666,
+    8083.81666666,
+    null
+  ],
+  "timestamps": [
+    1737524438932,
+    1737524443932,
+    1737524448932,
+    1737524453932,
+    1737524458932
+  ]
+}
+{
+  "metric": {
+    "__name__": "flink_taskmanager_job_task_numRecordsInPerSecond",
+    "namespace": "flink",
+    "service": "flink-taskmanager",
+    "job": "flink-taskmanager",
+    "instance": "[2001:cafe:42:3::82]:9249",
+    "host": "_2001:cafe:42:3::82_",
+    "pod": "flink-16000m-1024-0",
+    "container": "taskmanager",
+    "endpoint": "metrics",
+    "job_id": "b2e073385d26a9be30238bc1e2863138",
+    "job_name": "myjoin_transscale_0_0_1",
+    "prometheus": "monitoring/prometheus-kube-prometheus-prometheus",
+    "prometheus_replica": "prometheus-prometheus-kube-prometheus-prometheus-0",
+    "subtask_index": "0",
+    "task_attempt_id": "43d0bb3372e11ac8c7b1910c37b71c49_31ec045e3401e87fc7879b43d8e8625d_0_3",
+    "task_attempt_num": "3",
+    "task_id": "31ec045e3401e87fc7879b43d8e8625d",
+    "task_name": "Timestamps_Watermarks____Map",
+    "tm_id": "_2001:cafe:42:3::82_:6122_608eeb"
+  },
+  "values": [
+    0,
+    0,
+    3073.1333333333,
+    4922.06666667,
+    4922.06666667,
+    null
+  ],
+  "timestamps": [
+    1737524483932,
+    1737524488932,
+    1737524493932,
+    1737524498932,
+    1737524503932,
+    1737524508932
+  ]
+}
+{
+  "metric": {
+    "__name__": "flink_taskmanager_job_task_numRecordsInPerSecond",
+    "namespace": "flink",
+    "service": "flink-taskmanager",
+    "job": "flink-taskmanager",
+    "instance": "[2001:cafe:42:3::82]:9249",
+    "host": "_2001:cafe:42:3::82_",
+    "pod": "flink-16000m-1024-0",
+    "container": "taskmanager",
+    "endpoint": "metrics",
+    "job_id": "b2e073385d26a9be30238bc1e2863138",
+    "job_name": "myjoin_transscale_0_0_1",
+    "prometheus": "monitoring/prometheus-kube-prometheus-prometheus",
+    "prometheus_replica": "prometheus-prometheus-kube-prometheus-prometheus-0",
+    "subtask_index": "0",
+    "task_attempt_id": "43d0bb3372e11ac8c7b1910c37b71c49_32f0ffe0b6f0b990239bb81cec28b9d8_0_3",
+    "task_attempt_num": "3",
+    "task_id": "32f0ffe0b6f0b990239bb81cec28b9d8",
+    "task_name": "TumblingEventTimeWindows____Timestamps_Watermarks",
+    "tm_id": "_2001:cafe:42:3::82_:6122_608eeb"
+  },
+  "values": [
+    0,
+    0,
+    5915.483333329999,
+    9625.55,
+    9625.55,
+    null
+  ],
+  "timestamps": [
+    1737524483932,
+    1737524488932,
+    1737524493932,
+    1737524498932,
+    1737524503932,
+    1737524508932
+  ]
+}
