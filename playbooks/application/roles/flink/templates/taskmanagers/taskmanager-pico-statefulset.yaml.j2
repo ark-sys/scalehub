@@ -83,12 +83,12 @@ data:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: flink-taskmanager-s
+  name: flink-taskmanager-pico
   namespace: flink
   labels:
     app: flink
     component: taskmanager
-    size: s-2c
+    size: pico
 spec:
   replicas: 0
   podManagementPolicy: Parallel
