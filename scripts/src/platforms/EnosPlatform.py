@@ -17,12 +17,12 @@ class EnosPlatform(Platform):
         self.reservation_name = self.config["reservation_name"]
         self.site = self.config["site"]
         self.cluster = self.config.get("cluster")
-        self.producers = self.config["producers"]
-        self.consumers = self.config["consumers"]
+        self.producers = int(self.config["producers"])
+        self.consumers = int(self.config["consumers"])
         self.queue = self.config["queue"]
         self.walltime = self.config["walltime"]
         self.start_time = self.config.get("start_time")
-        self.control = self.config["control"]
+        self.control = True if self.config.get("control") == "true" else False
 
         # Create .python-grid5000.yaml required by enoslib
         self.check_credentials_file()
@@ -109,8 +109,8 @@ class EnosPlatform(Platform):
                         "number": 1,
                         "vcore_type": "core",
                         "flavour_desc": {
-                            "core": self.config["core_per_vm"],
-                            "mem": self.config["memory_per_vm"],
+                            "core": int(self.config["core_per_vm"]),
+                            "mem": int(self.config["memory_per_vm"]),
                         },
                     }
                     if self.control
@@ -121,8 +121,8 @@ class EnosPlatform(Platform):
                         "number": self.producers,
                         "vcore_type": "core",
                         "flavour_desc": {
-                            "core": self.config["core_per_vm"],
-                            "mem": self.config["memory_per_vm"],
+                            "core": int(self.config["core_per_vm"]),
+                            "mem": int(self.config["memory_per_vm"]),
                         },
                     }
                     if self.producers and self.producers > 0
@@ -133,8 +133,8 @@ class EnosPlatform(Platform):
                         "number": self.consumers,
                         "vcore_type": "core",
                         "flavour_desc": {
-                            "core": self.config["core_per_vm"],
-                            "mem": self.config["memory_per_vm"],
+                            "core": int(self.config["core_per_vm"]),
+                            "mem": int(self.config["memory_per_vm"]),
                         },
                     }
                     if self.consumers and self.consumers > 0

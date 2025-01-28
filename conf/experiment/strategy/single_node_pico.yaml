@@ -1,5 +1,5 @@
 - node: pico
   taskmanager:
-    - number: 1
-      type: s
-      method: block
+    - number: 2
+      type: pico
+      method: linear

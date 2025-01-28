@@ -16,8 +16,8 @@ class FlinkManager:
         self.flink_port = 8081
 
         # Store running job information
-        self.monitored_task = self.config.get_str(Key.Experiment.task_name)
-        self.job_file = self.config.get_str(Key.Experiment.job_file)
+        self.monitored_task = self.config.get_str(Key.Experiment.task_name.key)
+        self.job_file = self.config.get_str(Key.Experiment.job_file.key)
         self.job_plan = None
         self.job_id = None
         self.operators = {}

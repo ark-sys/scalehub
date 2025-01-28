@@ -180,7 +180,9 @@ class ProvisionManager:
             inventory = self.enos_inventory or self.pi_inventory
 
         if not inventory:
-            self.__log.error("No platforms are specified in the configuration file.")
+            self.__log.error(
+                "[PROVISION_MGR] No platforms are specified in the configuration file."
+            )
             raise Exception("No platforms to provision.")
 
         # Create ConfigParser object
@@ -195,7 +197,7 @@ class ProvisionManager:
         self.__log.info("Platforms provisioned")
 
         # Save final inventory to a file
-        inventory_path = os.path.join(self.__config.get_str(Key.Scalehub.inventory))
+        inventory_path = os.path.join(self.__config.get_str(Key.Scalehub.inventory.key))
 
         with open(inventory_path, "w") as file:
             config_parser.write(file)

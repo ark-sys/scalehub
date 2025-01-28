@@ -305,15 +305,11 @@ class DataExporter:
 
         return res
 
-    def get_job_metrics(self, json_content, metric):
-        pass
-
     def export(self):
-
         ############################ Retrieve job information ############################
 
         # Get job name from config file
-        job_name = self.config.get(Key.Experiment.name)
+        job_name = self.config.get(Key.Experiment.name.key)
         # If job name is Map, get list of tasks from pipeline dict
         if job_name == "Map":
             tasks = list(MAP_PIPELINE_DICT.values())
@@ -329,7 +325,7 @@ class DataExporter:
             self.__log.error(f"Unknown job name: {job_name}")
             exit(1)
         # Retrieve operator name from config file
-        operator_name = self.config.get(Key.Experiment.task_name)
+        operator_name = self.config.get(Key.Experiment.task_name.key)
         if operator_name == "TumblingEventTimeWindows":
             operator_name = "TumblingEventTimeWindows____Timestamps_Watermarks"
 

@@ -31,6 +31,7 @@ class FolderManager:
         return None
 
     def create_subfolder(self, base_path):
+
         # List all subfolders
         subfolders = [
             f
@@ -127,7 +128,7 @@ class Playbooks:
         self.__log = log
 
     def role_load_generators(self, config: Config, tag=None):
-        for lg_conf in config.get(Key.Experiment.Generators.generators):
+        for lg_conf in config.get(Key.Experiment.Generators.generators.key):
             try:
                 lg_params = {
                     "lg_name": lg_conf["name"],
@@ -147,8 +148,7 @@ class Playbooks:
                 )
             except Exception as e:
                 self.__log.error(str(e))
-                return 1
-        return 0
+                raise e
 
     def reload_playbook(self, playbook, config: Config, extra_vars=None):
         self.__log.info(f"Reloading playbook: {playbook}")
@@ -176,12 +176,15 @@ class Playbooks:
                 )
         except Exception as e:
             self.__log.error(str(e))
+            raise e
 
     def run(self, playbook, config: Config, tag=None, extra_vars=None, quiet=False):
         if extra_vars is None:
             extra_vars = {}
-        inventory = config.get_str(Key.Scalehub.inventory)
-        playbook_filename = f"{config.get_str(Key.Scalehub.playbook)}/{playbook}.yaml"
+        inventory = config.get_str(Key.Scalehub.inventory.key)
+        playbook_filename = (
+            f"{config.get_str(Key.Scalehub.playbook.key)}/{playbook}.yaml"
+        )
         if not os.path.exists(playbook_filename):
             # Raise an error with the file path
             raise FileNotFoundError(f"The file doesn't exist: {playbook_filename}")
@@ -220,3 +223,4 @@ class Playbooks:
                 )
         except Exception as e:
             self.__log.error(e.__str__())
+            raise e

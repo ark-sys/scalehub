@@ -18,9 +18,9 @@ class RaspberryPi(Platform):
 
         # Depending on the requested number of producers and consumers, create the inventory
         # file for the Raspberry Pi cluster
-        producers = self.config["producers"]
-        consumers = self.config["consumers"]
-        control = self.config["control"]
+        producers = int(self.config["producers"])
+        consumers = int(self.config["consumers"])
+        control = True if self.config["control"] == "true" else False
 
         # Check if there are enough hosts available
         # Check if there are enough hosts available

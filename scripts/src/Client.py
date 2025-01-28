@@ -22,8 +22,8 @@ class Client:
 
         self.client = mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION1)
         self.configs = configs
-        self.broker_host = configs[0].get_str(Key.Experiment.broker_mqtt_host)
-        self.broker_port = configs[0].get_int(Key.Experiment.broker_mqtt_port)
+        self.broker_host = configs[0].get_str(Key.Experiment.broker_mqtt_host.key)
+        self.broker_port = configs[0].get_int(Key.Experiment.broker_mqtt_port.key)
         self.mqtt_user = "scalehub"
         self.mqtt_pass = "s_password"
         self.ack = None

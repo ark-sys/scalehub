@@ -13,9 +13,9 @@ class Scaling:
         self.k = km
         self.f = FlinkManager(log, config, self.k)
         # Load strategy from configuration
-        self.steps = deepcopy(config.get(Key.Experiment.Scaling.steps))
+        self.steps = deepcopy(config.get(Key.Experiment.Scaling.steps.key))
         self.interval_scaling_s = config.get_int(
-            Key.Experiment.Scaling.interval_scaling_s
+            Key.Experiment.Scaling.interval_scaling_s.key
         )
         # Set sleep command
         self.__sleep = None
@@ -116,37 +116,27 @@ class Scaling:
 
     # Add replicas linearly
     def __scale_linear(self, number, tm_type, scope):
-        match scope:
-            case "taskmanager":
-                for i in range(number):
-                    # Scale up stateful set
-                    ret = self.__scale_w_tm(1, tm_type)
-                    if ret == 1:
-                        self.__log.error("[SCALING] Error scaling linearly.")
-                        return 1
-            case "slots":
-                # Get current parallelism of monitored task
-                current_parallelism = self.f.monitored_task_parallelism
-                self.__log.info(
-                    f"[SCALING] Current parallelism of monitored task: {current_parallelism}"
-                )
-                for i in range(number):
-                    # Scale up operator
-                    current_parallelism += 1
-                    ret = self.__scale_and_wait(current_parallelism)
-                    if ret == 1:
-                        self.__log.error("[SCALING] Error scaling linearly.")
-                        return 1
-            case _:
-                self.__log.warning(
-                    f"[SCALING] Scope {scope} not supported. Defaulting to taskmanager."
-                )
-                for i in range(number):
-                    # Scale up stateful set
-                    ret = self.__scale_w_tm(1, tm_type)
-                    if ret == 1:
-                        self.__log.error("[SCALING] Error scaling linearly.")
-                        return 1
+        if scope == "slots":
+            # Get current parallelism of monitored task
+            current_parallelism = self.f.monitored_task_parallelism
+            self.__log.info(
+                f"[SCALING] Current parallelism of monitored task: {current_parallelism}"
+            )
+            for _ in range(number):
+                # Scale up operator
+                current_parallelism += 1
+                ret = self.__scale_and_wait(current_parallelism)
+                if ret == 1:
+                    self.__log.error("[SCALING] Error scaling linearly.")
+                    return 1
+        else:
+            # Default to taskmanager
+            for _ in range(number):
+                # Scale up stateful set
+                ret = self.__scale_w_tm(1, tm_type)
+                if ret == 1:
+                    self.__log.error("[SCALING] Error scaling linearly.")
+                    return 1
 
     # Add replicas exponentially
     def __scale_exponential(self, number, tm_type, scope):
@@ -162,58 +152,42 @@ class Scaling:
 
         scaline_sequence = __get_scaling_sequence(number)
 
-        match scope:
-            case "taskmanager":
-                for i in scaline_sequence:
-                    # Scale up stateful set
-                    ret = self.__scale_w_tm(i, tm_type)
-                    if ret == 1:
-                        self.__log.error("[SCALING] Error scaling exponentially.")
-                        return 1
-            case "slots":
-                # Get current parallelism of monitored task
-                current_parallelism = self.f.monitored_task_parallelism
-                self.__log.info(
-                    f"[SCALING] Current parallelism of monitored task: {current_parallelism}"
-                )
-                for i in scaline_sequence:
-                    # Scale up operator
-                    current_parallelism += i
-                    ret = self.__scale_and_wait(current_parallelism)
-                    if ret == 1:
-                        self.__log.error("[SCALING] Error scaling exponentially.")
-                        return 1
-            case _:
-                self.__log.warning(
-                    f"[SCALING] Scope {scope} not supported. Defaulting to taskmanager."
-                )
-                for i in scaline_sequence:
-                    # Scale up stateful set
-                    ret = self.__scale_w_tm(i, tm_type)
-                    if ret == 1:
-                        self.__log.error("[SCALING] Error scaling exponentially.")
-                        return 1
+        if scope == "slots":
+            # Get current parallelism of monitored task
+            current_parallelism = self.f.monitored_task_parallelism
+            self.__log.info(
+                f"[SCALING] Current parallelism of monitored task: {current_parallelism}"
+            )
+            for i in scaline_sequence:
+                # Scale up operator
+                current_parallelism += i
+                ret = self.__scale_and_wait(current_parallelism)
+                if ret == 1:
+                    self.__log.error("[SCALING] Error scaling exponentially.")
+                    return 1
+        else:
+            # Default to taskmanager
+            for i in scaline_sequence:
+                # Scale up stateful set
+                ret = self.__scale_w_tm(i, tm_type)
+                if ret == 1:
+                    self.__log.error("[SCALING] Error scaling exponentially.")
+                    return 1
 
     # Add replicas at once
     def __scale_block(self, number, tm_type, scope):
-        match scope:
-            case "taskmanager":
-                # Get current number of taskmanagers
-                return self.__scale_w_tm(number, tm_type)
-            case "slots":
-                # Get current parallelism of monitored task
-                current_parallelism = self.f.monitored_task_parallelism
-                self.__log.info(
-                    f"[SCALING] Current parallelism of monitored task: {current_parallelism}"
-                )
-                # Scale up operator
-                new_parallelism = current_parallelism + number
-                return self.__scale_and_wait(new_parallelism)
-            case _:
-                self.__log.warning(
-                    f"[SCALING] Scope {scope} not supported. Defaulting to taskmanager."
-                )
-                return self.__scale_w_tm(number, tm_type)
+        if scope == "slots":
+            # Get current parallelism of monitored task
+            current_parallelism = self.f.monitored_task_parallelism
+            self.__log.info(
+                f"[SCALING] Current parallelism of monitored task: {current_parallelism}"
+            )
+            # Scale up operator
+            new_parallelism = current_parallelism + number
+            return self.__scale_and_wait(new_parallelism)
+        else:
+            # Default to taskmanager
+            return self.__scale_w_tm(number, tm_type)
 
     def __scale(self, taskmanager):
         number = taskmanager["number"]
