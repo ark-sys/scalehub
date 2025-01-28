@@ -1,3 +1,17 @@
+class ConfigKey:
+    def __init__(self, key: str, is_optional: bool = False, *args, **kwargs):
+        self.key = key
+        self.is_optional = is_optional
+        self.args = args
+        self.kwargs = kwargs
+
+    def __str__(self):
+        return self.key
+
+
+# Defaults.py
+from dataclasses import dataclass
+
 metrics_dict = {
     "operator_metrics": [
         "flink_taskmanager_job_task_numRecordsInPerSecond",
@@ -24,185 +38,166 @@ JOIN_PIPELINE_DICT = {
 }
 
 
+@dataclass
 class DefaultKeys:
     class Scalehub:
-        inventory = "scalehub.inventory"
-        playbook = "scalehub.playbook"
-        experiments = "scalehub.experiments"
-        debug_level = "scalehub.debug_level"
+        inventory = ConfigKey("scalehub.inventory", is_optional=False)
+        playbook = ConfigKey("scalehub.playbook", is_optional=False)
+        experiments = ConfigKey("scalehub.experiments", is_optional=False)
+        debug_level = ConfigKey("scalehub.debug_level", is_optional=False)
 
     class Platforms:
-        platforms = "platforms"
+        platforms = ConfigKey("platforms", is_optional=True)
 
         class Platform:
-            name = "platforms.name"
-            type = "platforms.name.type"
-            reservation_name = "platforms.name.reservation_name"
-            site = "platforms.name.site"
-            cluster = "platforms.name.cluster"
-            producers = "platforms.name.producers"
-            consumers = "platforms.name.consumers"
-            core_per_vm = "platforms.name.core_per_vm"
-            memory_per_vm = "platforms.name.memory_per_vm"
-            disk_per_vm = "platforms.name.disk_per_vm"
-            queue = "platforms.name.queue"
-            walltime = "platforms.name.walltime"
-            start_time = "platforms.name.start_time"
-            kubernetes_type = "platforms.name.kubernetes_type"
-            archi = "platforms.name.archi"
-            control = "platforms.name.control"
+            name = ConfigKey("platforms.name", is_optional=False)
+            type = ConfigKey("platforms.name.type", is_optional=False)
+            reservation_name = ConfigKey(
+                "platforms.name.reservation_name",
+                is_optional=False,
+                for_types=["Grid5000", "FIT", "VM_on_Grid5000"],
+            )
+            site = ConfigKey(
+                "platforms.name.site",
+                is_optional=False,
+                for_types=["Grid5000", "FIT", "VM_on_Grid5000"],
+            )
+            cluster = ConfigKey(
+                "platforms.name.cluster",
+                is_optional=False,
+                for_types=["Grid5000", "FIT", "VM_on_Grid5000"],
+            )
+            producers = ConfigKey("platforms.name.producers", is_optional=False)
+            consumers = ConfigKey("platforms.name.consumers", is_optional=False)
+            core_per_vm = ConfigKey(
+                "platforms.name.core_per_vm",
+                is_optional=False,
+                for_types=["VM_on_Grid5000"],
+            )
+            memory_per_vm = ConfigKey(
+                "platforms.name.memory_per_vm",
+                is_optional=False,
+                for_types=["VM_on_Grid5000"],
+            )
+            disk_per_vm = ConfigKey(
+                "platforms.name.disk_per_vm",
+                is_optional=False,
+                for_types=["VM_on_Grid5000"],
+            )
+            queue = ConfigKey(
+                "platforms.name.queue",
+                is_optional=False,
+                for_types=["VM_on_Grid5000", "Grid5000", "FIT"],
+            )
+            walltime = ConfigKey(
+                "platforms.name.walltime",
+                is_optional=False,
+                for_types=["VM_on_Grid5000", "Grid5000", "FIT"],
+            )
+            start_time = ConfigKey(
+                "platforms.name.start_time",
+                is_optional=False,
+                for_types=["VM_on_Grid5000", "Grid5000", "FIT"],
+            )
+            kubernetes_type = ConfigKey(
+                "platforms.name.kubernetes_type", is_optional=True
+            )
+            archi = ConfigKey(
+                "platforms.name.archi", is_optional=False, for_types=["FIT"]
+            )
+            control = ConfigKey(
+                "platforms.name.control",
+                is_optional=False,
+                for_types=["VM_on_Grid5000", "Grid5000"],
+            )
 
     class Experiment:
-        name = "experiment.name"
-        job_file = "experiment.job_file"
-        task_name = "experiment.task_name"
-        output_skip_s = "experiment.output_skip_s"
-        output_stats = "experiment.output_stats"
-        output_plot = "experiment.output_plot"
-        broker_mqtt_host = "experiment.broker_mqtt_host"
-        broker_mqtt_port = "experiment.broker_mqtt_port"
-        kafka_partitions = "experiment.kafka_partitions"
-        first_node = "experiment.first_node"
-        unchained_tasks = "experiment.unchained_tasks"
-        type = "experiment.type"
-        runs = "experiment.runs"
-        comment = "experiment.comment"
+        name = ConfigKey("experiment.name", is_optional=False)
+        job_file = ConfigKey("experiment.job_file", is_optional=False)
+        task_name = ConfigKey("experiment.task_name", is_optional=False)
+        output_skip_s = ConfigKey("experiment.output_skip_s", is_optional=False)
+        output_stats = ConfigKey("experiment.output_stats", is_optional=False)
+        output_plot = ConfigKey("experiment.output_plot", is_optional=False)
+        broker_mqtt_host = ConfigKey("experiment.broker_mqtt_host", is_optional=False)
+        broker_mqtt_port = ConfigKey("experiment.broker_mqtt_port", is_optional=False)
+        kafka_partitions = ConfigKey("experiment.kafka_partitions", is_optional=False)
+        unchained_tasks = ConfigKey("experiment.unchained_tasks", is_optional=False)
+        type = ConfigKey("experiment.type", is_optional=False)
+        runs = ConfigKey("experiment.runs", is_optional=False)
+        comment = ConfigKey("experiment.comment", is_optional=True)
 
         class Scaling:
-            strategy_path = "experiment.scaling.strategy_path"
-            interval_scaling_s = "experiment.scaling.interval_scaling_s"
-            max_parallelism = "experiment.scaling.max_parallelism"
-            duration_s = "experiment.scaling.duration_s"
-            steps = "experiment.scaling.steps"
+            strategy_path = ConfigKey(
+                "experiment.scaling.strategy_path", is_optional=True
+            )
+            interval_scaling_s = ConfigKey(
+                "experiment.scaling.interval_scaling_s", is_optional=True
+            )
+            max_parallelism = ConfigKey(
+                "experiment.scaling.max_parallelism", is_optional=True
+            )
+            steps = ConfigKey("experiment.scaling.steps", is_optional=True)
 
         class Generators:
-            generators = "experiment.generators"
+            generators = ConfigKey("experiment.generators", is_optional=True)
 
             class Generator:
-                name = "experiment.generators.name"
-                topic = "experiment.generators.name.topic"
-                type = "experiment.generators.name.type"
-                num_sensors = "experiment.generators.name.num_sensors"
-                interval_ms = "experiment.generators.name.interval_ms"
-                replicas = "experiment.generators.name.replicas"
-                value = "experiment.generators.name.value"
+                name = ConfigKey("experiment.generators.name", is_optional=False)
+                topic = ConfigKey("experiment.generators.name.topic", is_optional=False)
+                type = ConfigKey("experiment.generators.name.type", is_optional=False)
+                num_sensors = ConfigKey(
+                    "experiment.generators.name.num_sensors", is_optional=False
+                )
+                interval_ms = ConfigKey(
+                    "experiment.generators.name.interval_ms", is_optional=False
+                )
+                replicas = ConfigKey(
+                    "experiment.generators.name.replicas", is_optional=False
+                )
+                value = ConfigKey("experiment.generators.name.value", is_optional=False)
 
         class Flink:
-            checkpoint_interval_ms = "experiment.flink.checkpoint_interval_ms"
-            window_size_ms = "experiment.flink.window_size_ms"
-            fibonacci_value = "experiment.flink.fibonacci_value"
+            checkpoint_interval_ms = ConfigKey(
+                "experiment.flink.checkpoint_interval_ms", is_optional=False
+            )
+            window_size_ms = ConfigKey(
+                "experiment.flink.window_size_ms", is_optional=False
+            )
+            fibonacci_value = ConfigKey(
+                "experiment.flink.fibonacci_value", is_optional=False
+            )
 
         class Transscale:
-            max_parallelism = "experiment.transscale.max_parallelism"
-            monitoring_warmup_s = "experiment.transscale.monitoring_warmup_s"
-            monitoring_interval_s = "experiment.transscale.monitoring_interval_s"
+            max_parallelism = ConfigKey(
+                "experiment.transscale.max_parallelism", is_optional=True
+            )
+            monitoring_warmup_s = ConfigKey(
+                "experiment.transscale.monitoring_warmup_s", is_optional=True
+            )
+            monitoring_interval_s = ConfigKey(
+                "experiment.transscale.monitoring_interval_s", is_optional=True
+            )
 
         class Chaos:
-            enable = "experiment.chaos.enable"
-            affected_nodes_percentage = "experiment.chaos.affected_nodes_percentage"
-            delay_latency_ms = "experiment.chaos.delay_latency_ms"
-            delay_jitter_ms = "experiment.chaos.delay_jitter_ms"
-            delay_correlation = "experiment.chaos.delay_correlation"
-            bandwidth_rate_mbps = "experiment.chaos.bandwidth_rate_mbps"
-            bandwidth_limit = "experiment.chaos.bandwidth_limit"
-            bandwidth_buffer = "experiment.chaos.bandwidth_buffer"
-
-
-class DefaultValues:
-    conf_path = "/app/conf/scalehub.ini"
-
-    class Scalehub:
-        # Path to where the playbooks are located
-        playbooks = "/app/playbooks/project"
-        # Base path to where experiments will be stored
-        experiments = "/app/experiments-data"
-        # Path to where the inventory  ansible inventory will be
-        inventory = "/tmp/hosts"
-
-        class Debug:
-            DISABLED = 0
-            LEVEL_1 = 1
-            level = DISABLED
-
-    class Platforms:
-        platforms = ["grid5000"]
-
-        class Platform:
-            type = "Grid5000"
-            reservation_name = "scalehub"
-            site = "rennes"
-            cluster = "parasilo"
-            producers = 1
-            consumers = 1
-            queue = "default"
-            walltime = "1:00:00"
-            core_per_vm = 2
-            memory_per_vm = 4096
-            disk_per_vm = 40
-            start_time = None
-            kubernetes_type = "k3s"
-            archi = "rpi3:at86rf233"
-            # This platform reservation contains a control node
-            control = True
-
-    class Experiment:
-        name = "scalehub"
-        job_file = "myjoin-all.jar"
-        task_name = "TumblingEventTimeWindows"
-        output_skip_s = 120
-        output_stats = True
-        output_plot = True
-        broker_mqtt_host = "broker-mqtt.scalehub.local"
-        broker_mqtt_port = 1883
-        kafka_partitions = 1000
-        first_node = "grid5000"
-        unchained_tasks = False
-        type = "standalone"
-        runs = 1
-        comment = "Default experiment"
-
-        class Scaling:
-            strategy_path = "scaling-strategies/strategy1.yaml"
-            interval_scaling_s = 60
-            max_parallelism = 10
-            duration_s = 600
-            steps = [
-                {
-                    "node": "grid5000",
-                    "taskmanager": [
-                        {"number": 10, "type": "taskmanager-s"},
-                    ],
-                }
-            ]
-
-        class Generators:
-            generators = ["generator1"]
-
-            class Generator:
-                name = "generator1"
-                topic = "input-topic1"
-                type = "theodolite-lg"
-                num_sensors = 100000
-                interval_ms = 3000
-                replicas = 1
-                value = 5
-
-        class Transscale:
-            max_parallelism = 10
-            monitoring_warmup_s = 66
-            monitoring_interval_s = 60
-
-        class Flink:
-            checkpoint_interval_ms = 4000
-            window_size_ms = 1000
-            fibonacci_value = 18
-
-        class Chaos:
-            enable = False
-            affected_nodes_percentage = 50
-            latency_ms = 25
-            jitter_ms = 0
-            correlation = 0
-            bandwidth_rate_mbps = 100
-            bandwidth_limit = 1000
-            bandwidth_buffer = 100
+            enable = ConfigKey("experiment.chaos.enable", is_optional=True)
+            affected_nodes_percentage = ConfigKey(
+                "experiment.chaos.affected_nodes_percentage", is_optional=True
+            )
+            delay_latency_ms = ConfigKey(
+                "experiment.chaos.delay_latency_ms", is_optional=True
+            )
+            delay_jitter_ms = ConfigKey(
+                "experiment.chaos.delay_jitter_ms", is_optional=True
+            )
+            delay_correlation = ConfigKey(
+                "experiment.chaos.delay_correlation", is_optional=True
+            )
+            bandwidth_rate_mbps = ConfigKey(
+                "experiment.chaos.bandwidth_rate_mbps", is_optional=True
+            )
+            bandwidth_limit = ConfigKey(
+                "experiment.chaos.bandwidth_limit", is_optional=True
+            )
+            bandwidth_buffer = ConfigKey(
+                "experiment.chaos.bandwidth_buffer", is_optional=True
+            )

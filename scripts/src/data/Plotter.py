@@ -1,9 +1,11 @@
 import itertools
 import os
 
+import numpy as np
 import pandas as pd
-from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt, cm
 from matplotlib.ticker import FuncFormatter, MaxNLocator
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 
 class Plotter:
@@ -102,6 +104,7 @@ class Plotter:
         ylim2=None,
         axhline=None,
         filename=None,
+        zoom_region=None,
     ):
         plt.figure(figsize=self.figsize)
         ax1 = plt.gca()
@@ -181,7 +184,7 @@ class Plotter:
             ax1.set_title(title, fontsize=self.fontsize)
         ax1.set_xlabel(xlabel, fontsize=self.fontsize)
         ax1.xaxis.set_major_locator(MaxNLocator(integer=True))
-        ax1.yaxis.grid(True)
+        # ax1.yaxis.grid(True)
         ax1.yaxis.set_major_formatter(FuncFormatter(self.__log.thousands_formatter))
 
         if ylabels_dict:
@@ -206,9 +209,44 @@ class Plotter:
                 loc=self.legend_loc,
             )
         else:
-            ax1.legend(handles1, labels1, loc=self.legend_loc, fontsize=self.fontsize)
+            # Upper right
+            legend_loc = "upper right"
+            ax1.legend(handles1, labels1, loc=legend_loc, fontsize=self.fontsize)
         ax1.set_xlim(left=1)
         plt.tight_layout()
+        if zoom_region:
+            x1, x2, y1, y2 = zoom_region
+            axins = inset_axes(
+                ax1,
+                width="40%",
+                height="40%",
+                loc="lower left",
+                bbox_to_anchor=(0.5, 0.1, 1, 1),
+                bbox_transform=ax1.transAxes,
+            )
+            axins.set_xlim(x1, x2)
+            axins.set_ylim(y1, y2)
+            symbols = itertools.cycle(self.default_symbols)
+            colors = itertools.cycle(self.default_colors)
+            for label, series in ax1_data.items():
+                symbol = next(symbols)
+                color = next(colors)
+                axins.plot(
+                    series.index,
+                    series,
+                    linewidth=self.linewidth,
+                    label=label,
+                    marker=symbol,
+                    color=color,
+                    markersize=self.markersize,
+                )
+            axins.yaxis.set_major_formatter(
+                FuncFormatter(self.__log.thousands_formatter)
+            )
+            axins.tick_params(axis="both", labelsize=self.tick_size)
+            axins.grid(True)
+            ax1.indicate_inset_zoom(axins)
+
         if not filename:
             filename = f"{title}.png"
         plt.savefig(os.path.join(self.plots_path, filename))
@@ -286,3 +324,83 @@ class Plotter:
         if not filename:
             filename = f"{title}.png"
         plt.savefig(os.path.join(self.plots_path, filename))
+
+    def generate_3d_plot(self, x, y, z, title, xlabel, ylabel, zlabel, filename):
+        fig = plt.figure(figsize=self.figsize)
+        ax = fig.add_subplot(projection="3d")
+
+        # Create a grid for the surface plot
+        X, Y = np.meshgrid(np.unique(x), np.unique(y))
+        Z = np.zeros_like(X, dtype=float)
+
+        # Fill Z with the corresponding throughput values
+        for i in range(len(x)):
+            xi = np.where(np.unique(x) == x[i])[0][0]
+            yi = np.where(np.unique(y) == y[i])[0][0]
+            Z[yi, xi] = z[i]
+
+        # Plot the surface with a single color gradient
+        surf = ax.plot_surface(X, Y, Z, cmap=cm.viridis, edgecolor="none", alpha=0.5)
+
+        # Add color bar for the gradient
+        cbar = fig.colorbar(surf, ax=ax, shrink=0.5, aspect=15, pad=0.05)
+
+        cbar.ax.tick_params(labelsize=self.fontsize)
+
+        surf.set_clim(6000, 13000)
+
+        cbar.ax.yaxis.set_major_formatter(FuncFormatter(self.__log.thousands_formatter))
+
+        # Plot the wireframe
+        ax.plot_wireframe(X, Y, Z, color="k", linewidth=0.5)
+
+        # Mark the highest and smallest points
+        max_idx = np.unravel_index(np.argmax(Z, axis=None), Z.shape)
+        min_idx = np.unravel_index(np.argmin(Z, axis=None), Z.shape)
+        max_point = (X[max_idx], Y[max_idx], Z[max_idx])
+        min_point = (X[min_idx], Y[min_idx], Z[min_idx])
+
+        ax.scatter(*max_point, color="black", s=100, label="Max MST", marker="^")
+        ax.scatter(*min_point, color="grey", s=100, label="Min MST", marker="v")
+
+        # Add text to the max and min points with (cpu, mem)
+        ax.text(
+            *max_point,
+            f"({int(max_point[0])}, {int(max_point[1])}) -> {int(max_point[2])}",
+            fontsize=self.fontsize - 2,
+            color="black",
+            ha="center",
+        )
+        ax.text(
+            *min_point,
+            f"({int(min_point[0])}, {int(min_point[1])}) -> {int(min_point[2])}",
+            fontsize=self.fontsize - 2,
+            color="grey",
+            ha="center",
+        )
+
+        # Add legend
+        ax.legend(fontsize=self.fontsize)
+
+        ax.set_title(title)
+        ax.set_xlabel(xlabel, fontsize=self.fontsize, labelpad=12)
+        ax.set_ylabel(ylabel, fontsize=self.fontsize, labelpad=12)
+        ax.set_zlabel(zlabel, fontsize=self.fontsize, labelpad=16)
+        ax.set_zlim(0, Z.max())
+
+        # Fix scale of x-axis
+        ax.set_xticks(np.unique(x))
+        ax.set_yticks(np.unique(y))
+        ax.tick_params(axis="x", labelsize=self.tick_size - 2)
+        ax.tick_params(axis="y", labelsize=self.tick_size - 2)
+        ax.tick_params(axis="z", labelsize=self.tick_size)
+
+        # apply thousands formatter on z
+        ax.zaxis.set_major_formatter(FuncFormatter(self.__log.thousands_formatter))
+
+        ax.set_xlim(ax.get_xlim()[::-1])
+
+        path_to_save = os.path.join(self.plots_path, filename)
+        fig.tight_layout()
+        plt.savefig(os.path.join(path_to_save))
+        self.__log.info(f"3D plot saved to {path_to_save}")

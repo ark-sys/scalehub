@@ -1,29 +1,29 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: flink-config-tm-s
+  name: flink-config-tm-m-2c
   namespace: flink
   labels:
     app: flink
     component: taskmanager
-    size: s
+    size: m-2c
 data:
-  flink-conf-taskmanager-s.yaml: |+
+  flink-conf-taskmanager-m-2c.yaml: |+
     akka.framesize: 104857600b
     blob.server.port: 6124
     rest.profiling.enabled: true
-
+    
     jobmanager.rpc.address: flink-jobmanager.flink.svc.cluster.local
     jobmanager.rpc.port: 6123
     queryable-state.proxy.ports: 6125
-
+    
     taskmanager.rpc.port: 6122
     taskmanager.numberOfTaskSlots: 1
-    taskmanager.memory.process.size: 1024mb
+    taskmanager.memory.process.size: 3500mb
     taskmanager.memory.managed.fraction: 0.4
     taskmanager.network.memory.buffer-debloat.enabled: true
     taskmanager.network.detailed-metrics: true
-
+    
     metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
     metrics.reporter.prom.interval: 5 SECONDS
     metrics.reporter.prom.port: 9249
@@ -83,12 +83,12 @@ data:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: flink-taskmanager-s
+  name: flink-taskmanager-m-2c
   namespace: flink
   labels:
     app: flink
     component: taskmanager
-    size: s
+    size: m-2c
 spec:
   replicas: 0
   podManagementPolicy: Parallel
@@ -96,13 +96,13 @@ spec:
     matchLabels:
       app: flink
       component: taskmanager
-      size: s
+      size: m-2c
   template:
     metadata:
       labels:
         app: flink
         component: taskmanager
-        size: s
+        size: m-2c
     spec:
       affinity:
         nodeAffinity:
@@ -123,8 +123,8 @@ spec:
           image: "{{image}}:{{tag}}"
           resources:
             limits:
-              memory: 1024Mi
-              cpu: 1000m
+              memory: 3500Mi
+              cpu: 2000m
           args: [ "taskmanager" ]
           ports:
             - containerPort: 6122
@@ -146,9 +146,9 @@ spec:
       volumes:
         - name: flink-config-volume
           configMap:
-            name: flink-config-tm-s
+            name: flink-config-tm-m
             items:
-              - key: flink-conf-taskmanager-s.yaml
+              - key: flink-conf-taskmanager-m.yaml
                 path: flink-conf.yaml
               - key: log4j-console.properties
                 path: log4j-console.properties

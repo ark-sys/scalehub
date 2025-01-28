@@ -1,3 +1,4 @@
+import json
 import os
 import re
 from datetime import datetime
@@ -27,11 +28,6 @@ class DataEval:
         # Path to transscale log file
         self.transscale_log = os.path.join(self.exp_path, "transscale_log.txt")
 
-        # Create an export folder if it doesn't exist
-        self.export_path = os.path.join(self.exp_path, "export")
-        if not os.path.exists(self.export_path):
-            os.makedirs(self.export_path)
-
         # Create a folder for plots if it doesn't exist
         self.plots_path = os.path.join(self.exp_path, "plots")
         if not os.path.exists(self.plots_path):
@@ -44,7 +40,7 @@ class DataEval:
         self.conf: Config = Config(log, self.log_file)
 
         # Time to skip in seconds at the beginning and the end of a parallelism region
-        self.start_skip = self.conf.get_int(Key.Experiment.output_skip_s)
+        self.start_skip = self.conf.get_int(Key.Experiment.output_skip_s.key)
         self.end_skip = 30
 
         if not hasattr(self, "final_df"):
@@ -71,7 +67,7 @@ class DataEval:
                 operator = match.group(3)
                 time = match.group(1)
 
-                operator_name = self.conf.get(Key.Experiment.task_name)
+                operator_name = self.conf.get(Key.Experiment.task_name.key)
 
                 if operator_name in operator:
                     throughput_pattern = rf".*par, transp: {target_parallelism}, 1 target tput: (\d+) new_tput %: (\d+\.\d+)"
@@ -209,9 +205,12 @@ class DataEval:
             "BackpressureTime": hardBackPressuredTimeMsPerSecond_df,
         }
 
+        # Evaluate ylim for throughput, round up to nearest 10000
+        ylim = (0, (numRecordsInPerSecond_df.max().max() // 10000 + 1) * 10000)
+
         # Prepare ylim dictionary
         ylim_dict = {
-            "Throughput": (0, 30000),
+            "Throughput": ylim,
             "BusyTime": (0, 1200),
             "BackpressureTime": (0, 1200),
         }
@@ -261,7 +260,7 @@ class DataEval:
             ax1_data["Predictions"] = dataset["Predictions"]
 
         # Get operator name from config file
-        jobname = self.conf.get(Key.Experiment.job_file)
+        jobname = self.conf.get(Key.Experiment.job_file.key)
         # Extract the operator name from the job name
         if "join" in jobname:
             if "kk" in jobname:
@@ -276,15 +275,16 @@ class DataEval:
             operator_name = "Unknown"
 
         # Check if latency is enabled, and if so, check if jitter is enabled
-        if self.conf.get(Key.Experiment.Chaos.enable) == "true":
-            jitter = self.conf.get(Key.Experiment.Chaos.delay_jitter_ms)
+        if self.conf.get(Key.Experiment.Chaos.enable.key) == "true":
+            jitter = self.conf.get(Key.Experiment.Chaos.delay_jitter_ms.key)
             if int(jitter) > 0:
                 title = f"{operator_name} - Latency and Jitter"
             else:
                 title = f"{operator_name} - Latency"
         else:
             title = f"{operator_name} - No Latency"
-
+        # eval max value for ylim from throughput. round up to nearest 50000
+        y_val = dataset["Throughput"].max()
         # Call generate_single_plot_multiple_series() to plot the data
         self.plotter.generate_single_plot_multiple_series(
             ax1_data,
@@ -298,7 +298,7 @@ class DataEval:
                 "BusyTime": "ms/s",
                 "BackpressureTime": "ms/s",
             },
-            ylim=(0, 120000),
+            ylim=(0, (dataset["Throughput"].max() // 50000 + 1) * 50000),
             ylim2=(0, 1200),
             filename="summary_plot.png",
         )
@@ -408,7 +408,7 @@ class DataEval:
         G = nx.DiGraph()
 
         # Get the name of the experiment
-        experiment_name = self.conf.get(Key.Experiment.name)
+        experiment_name = self.conf.get(Key.Experiment.name.key)
 
         # Choose the appropriate pipeline dictionary based on the experiment name
         if experiment_name == "Map":
@@ -472,7 +472,7 @@ class DataEval:
             header=[0, 1, 2],
         )
 
-        if self.conf.get(Key.Experiment.name) == "Join":
+        if self.conf.get(Key.Experiment.name.key) == "Join":
             # Build df for metric flink_taskmanager_job_task_Shuffle_Netty_Output_Buffers_outputQueueLength and task Timestamps_Watermarks____Map
             outpre_df = job_metrics_df[
                 "flink_taskmanager_job_task_Shuffle_Netty_Output_Buffers_outputQueueLength"
@@ -490,7 +490,7 @@ class DataEval:
             etcb_tumbling_df = job_metrics_df[
                 "flink_taskmanager_job_task_estimatedTimeToConsumeBuffersMs"
             ]["TumblingEventTimeWindows____Timestamps_Watermarks"]
-        elif self.conf.get(Key.Experiment.name) == "Map":
+        elif self.conf.get(Key.Experiment.name.key) == "Map":
             # Build df for metric flink_taskmanager_job_task_Shuffle_Netty_Output_Buffers_outputQueueLength and task Timestamps_Watermarks____Map
             outpre_df = job_metrics_df[
                 "flink_taskmanager_job_task_Shuffle_Netty_Output_Buffers_outputQueueLength"
@@ -510,7 +510,7 @@ class DataEval:
             ]["Map"]
         else:
             self.__log.error(
-                f"Unknown experiment name: {self.conf.get(Key.Experiment.name)}"
+                f"Unknown experiment name: {self.conf.get(Key.Experiment.name.key)}"
             )
             return
 
@@ -634,7 +634,7 @@ class DataEval:
         )
 
         # Get input and output queues columns
-        if self.conf.get(Key.Experiment.name) == "Join":
+        if self.conf.get(Key.Experiment.name.key) == "Join":
             self.__log.info("Join experiment")
 
             timestamp_cols = [
@@ -673,7 +673,7 @@ class DataEval:
 
             df["EstimatedTimeCBOp"] = filtered_etcb_df[tumbling_etcb_cols].sum(axis=1)
 
-        elif self.conf.get(Key.Experiment.name) == "Map":
+        elif self.conf.get(Key.Experiment.name.key) == "Map":
             self.__log.info("Map experiment")
 
             source_cols = [
@@ -701,7 +701,7 @@ class DataEval:
             df["EstimatedTimeCBOp"] = filtered_etcb_df[map_etcb_cols].sum(axis=1)
         else:
             self.__log.error(
-                f"Unknown experiment name: {self.conf.get(Key.Experiment.name)}"
+                f"Unknown experiment name: {self.conf.get(Key.Experiment.name.key)}"
             )
             return
 
@@ -755,3 +755,61 @@ class DataEval:
             "EstimatedTimeCBOp",
             "EstimatedTimeCBOpStdErr",
         ]
+
+    def eval_resource_plot(self):
+
+        metrics_file_path = os.path.join(
+            self.exp_path,
+            "export",
+            "flink_taskmanager_job_task_numRecordsInPerSecond_export.json",
+        )
+
+        json_data = []
+
+        try:
+            with open(metrics_file_path, "r") as file:
+                for line in file:
+                    json_data.append(json.loads(line))
+        except Exception as e:
+            self.__log.error("Failed to load metrics from json file.")
+            return
+
+        # Extract data and create DataFrame
+        data = []
+        for entry in json_data:
+            pod = entry["metric"]["pod"]
+            cpu_millis, mem_mb, _ = map(int, re.findall(r"\d+", pod))
+            timestamps = entry["timestamps"]
+            values = entry["values"]
+
+            for ts, val in zip(timestamps, values):
+                if val is not None:
+                    data.append(
+                        {
+                            "cpu": cpu_millis / 1000,
+                            "mem": mem_mb / 1024,
+                            "timestamp": ts,
+                            "throughput": val,
+                        }
+                    )
+
+        df = pd.DataFrame(data)
+
+        # Group by CPU and memory, and calculate mean throughput
+        df_grouped = (
+            df.groupby(["cpu", "mem"]).agg({"throughput": "mean"}).reset_index()
+        )
+
+        # Save the grouped DataFrame to a CSV file
+        df_grouped.to_csv(os.path.join(self.exp_path, "resource_data.csv"))
+        # Call the plotter to generate the 3D plot
+        self.plotter.generate_3d_plot(
+            df_grouped["cpu"],
+            df_grouped["mem"],
+            df_grouped["throughput"],
+            title="Throughput vs CPU and Memory",
+            xlabel="CPU (cores)",
+            ylabel="Memory (GB)",
+            zlabel="Throughput (Records/s)",
+            filename="resource_plot.png",
+        )

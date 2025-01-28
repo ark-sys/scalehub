@@ -1,6 +1,6 @@
 - node: vm_grid5000
   type: small
   taskmanager:
-    - number: 1
-      type: s
+    - number: 2
+      type: m
       method: linear

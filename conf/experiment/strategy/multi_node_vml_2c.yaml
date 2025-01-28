@@ -1,0 +1,26 @@
+- node: vm_grid5000
+  type: large
+  taskmanager:
+    - number: 4
+      type: m-2c
+      method: block
+- node: vm_grid5000
+  type: large
+  taskmanager:
+    - number: 4
+      type: m-2c
+      method: block
+- node: vm_grid5000
+  type: large
+  taskmanager:
+    - number: 4
+      type: m-2c
+      method: block
+- node: vm_grid5000
+  type: large
+  taskmanager:
+    - number: 4
+      type: m-2c
+      method: block
+
+

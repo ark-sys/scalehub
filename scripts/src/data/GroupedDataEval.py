@@ -21,11 +21,6 @@ class GroupedDataEval:
 
     # Load the mean_stderr.csv file and generate a boxplot
     def generate_box_for_means(self):
-        if "multi_run" not in self.base_path:
-            self.__log.error(
-                "This function is only available for multi-run experiments."
-            )
-            return
         exp_path = os.path.join(self.base_path, "1", "exp_log.txt")
         config: Config = Config(self.__log, exp_path)
 
@@ -75,14 +70,14 @@ class GroupedDataEval:
 
         ax.yaxis.set_major_formatter(formatter)
 
-        ax.set_xlabel("Operator Parallelism", fontsize=24)
+        ax.set_xlabel("TaskManagers", fontsize=24)
         ax.set_ylabel("Throughput (records/s)", fontsize=24)
         plt.xticks(fontsize=20)
         ax.tick_params(axis="y", labelsize=20)
 
         # Get Workload objective from logs
         workload_objective = 0
-        for generator in config.get(Key.Experiment.Generators.generators):
+        for generator in config.get(Key.Experiment.Generators.generators.key):
             workload_objective += int(generator["num_sensors"])
 
         # Add straight dotted line at y=100000, This is the target objective for the experiment
@@ -98,10 +93,10 @@ class GroupedDataEval:
         ax.set_ylim(0, ylim_val)
 
         # Add a legend
-        ax.legend(loc="upper right", fontsize=22)
+        # ax.legend(loc="upper right", fontsize=22)
 
         # # Get comment from config
-        # comment = config.get(Key.Experiment.comment)
+        # comment = config.get(Key.Experiment.comment.key)
         # ax.set_title(f"{comment}", fontsize=24)
 
         fig.tight_layout()
@@ -139,7 +134,7 @@ class GroupedDataEval:
 
         for exp_name, (config, final_df) in experiment_data.items():
             # We need to filter final_df to only include the parallelism amount defined in config
-            steps = config.get(Key.Experiment.Scaling.steps)
+            steps = config.get(Key.Experiment.Scaling.steps.key)
             parallelism_per_node = {}
             total_taskmanagers = 0
             for step in steps:
@@ -182,7 +177,7 @@ class GroupedDataEval:
 
         self.plotter.generate_single_plot_multiple_series(
             plot_data,
-            xlabel="Number of Nodes",
+            xlabel="Number of Machines",
             ylabels_dict={"Throughput": "Throughput (records/s)"},
             filename=os.path.join(self.base_path, "multi_node_throughput.png"),
             ylim=(0, 400000),
@@ -202,17 +197,84 @@ class GroupedDataEval:
             # Set Parallelism as index
             new_df.set_index("Parallelism", inplace=True)
 
-            plot_data[exp_name] = new_df["Throughput"]
-
+            # Save a copy of the new DataFrame to a CSV file
             new_df.to_csv(
                 os.path.join(self.base_path, f"{exp_name}_plot_data.csv"), index=True
             )
 
+            # Refactor name: remove single_node, replace _ with space, and capitalize letters before number
+            exp_name = exp_name.replace("single_node_", "")
+
+            exp_name = (
+                (exp_name.split("_")[0].upper() + " " + exp_name.split("_")[1])
+                if "_" in exp_name
+                else exp_name.upper()
+            )
+
+            plot_data[exp_name] = new_df["Throughput"]
+
+        zoom_region = (0, 4, 0, 60000)
+
         self.plotter.generate_single_plot_multiple_series(
             plot_data,
-            xlabel="Parallelism",
+            xlabel="Number of TaskManagers",
             ylabels_dict={"Throughput": "Throughput (records/s)"},
             filename=os.path.join(self.base_path, "single_node_throughput.png"),
             ylim=(0, 400000),
             axhline=350000,
+            zoom_region=zoom_region,
+        )
+
+    def generate_resource_plot(self):
+        resource_data = {}
+
+        # Iterate through all resource_data.csv files in the base path
+        for root, dirs, files in os.walk(self.base_path):
+            for file in files:
+                if file == "resource_data.csv":
+                    file_path = os.path.join(root, file)
+                    df = pd.read_csv(file_path)
+
+                    # Update the resource_data dictionary
+                    for _, row in df.iterrows():
+                        cpu_mem = (row["cpu"], row["mem"])
+                        if cpu_mem not in resource_data:
+                            resource_data[cpu_mem] = {"throughput_values": []}
+                        resource_data[cpu_mem]["throughput_values"].append(
+                            row["throughput"]
+                        )
+
+        # Calculate the average throughput for each CPU and memory combination
+        final_data = []
+        for (cpu, mem), values in resource_data.items():
+            throughput_values = values["throughput_values"]
+            avg_throughput = sum(throughput_values) / len(throughput_values)
+            occurrences = len(throughput_values)
+            final_data.append(
+                {
+                    "cpu": cpu,
+                    "mem": mem,
+                    "throughput": avg_throughput,
+                    "occurrences": occurrences,
+                },
+            )
+
+        # Create a final DataFrame from the dictionary
+        final_df = pd.DataFrame(final_data)
+
+        # Save the final DataFrame to a CSV file
+        final_df.to_csv(
+            os.path.join(self.base_path, "final_resource_data.csv"), index=False
+        )
+
+        # Pass the final DataFrame to self.plotter.generate_3d_plot() for 3D plot generation
+        self.plotter.generate_3d_plot(
+            final_df["cpu"],
+            final_df["mem"],
+            final_df["throughput"],
+            title="",
+            xlabel="CPU (cores)",
+            ylabel="Memory (GB)",
+            zlabel="Throughput (Records/s)",
+            filename="resource_plot_multi_run.png",
         )

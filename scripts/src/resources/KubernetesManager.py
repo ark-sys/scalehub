@@ -141,6 +141,7 @@ class PodManager:
             self.__log.error(
                 f"[POD_MGR] Exception when calling CoreV1Api->list_namespaced_pod: {str(e)}"
             )
+            raise e
 
     # Check if pod is running and ready
     def is_pod_ready(self, pod_name, namespace="default"):
@@ -490,7 +491,7 @@ class NodeManager:
             self.__log.error(
                 f"[NODE_MGR] Exception when calling CoreV1Api->list_node: {str(e)}\n"
             )
-            return None
+            raise e
 
     def mark_node_as_schedulable(self, node_name):
         label = "node-role.kubernetes.io/scaling"
@@ -562,7 +563,7 @@ class StatefulSetManager:
             self.__log.error(
                 f"[STS_MGR] Exception when calling AppsV1Api->read_namespaced_stateful_set: {str(e)}\n"
             )
-            return None
+            raise e
 
         # Scale the statefulset
         patch = {"spec": {"replicas": int(replicas)}}
@@ -591,7 +592,7 @@ class StatefulSetManager:
             self.__log.error(
                 f"[STS_MGR] Exception when calling AppsV1Api->patch_namespaced_stateful_set: {str(e)}\n"
             )
-            return None
+            raise e
 
     def get_statefulset_replicas(self, statefulset_name, namespace):
         try:

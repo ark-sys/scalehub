@@ -1,0 +1,14 @@
+- node: grid5000
+  taskmanager:
+    - number: 8
+      type: xxl
+      scope: slots
+      method: exponential
+    - number: 8
+      type: xxl
+      scope: slots
+      method: linear
+    - number: 36
+      type: xxl
+      scope: slots
+      method: exponential

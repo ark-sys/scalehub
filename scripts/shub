@@ -14,7 +14,7 @@ from scripts.utils.Tools import Tools, Playbooks
 
 # Build cluster and install dependencies
 def provision(config: Config):
-    platforms = config.get(Key.Platforms.platforms)
+    platforms = config.get(Key.Platforms.platforms.key)
 
     if platforms is not None:
         log.info(f"Found {len(platforms)} platforms to provision.")
@@ -24,7 +24,7 @@ def provision(config: Config):
         pm.provision()
 
         # Platforms are provisioned, create runtime file
-        config.create_runtime_file()
+        config.update_runtime_file(create=True)
 
         # Provisition should be complete, deploy infrastructure
         p: Playbooks = Playbooks(log)
@@ -39,7 +39,7 @@ def provision(config: Config):
 
 # Destroy cluster
 def destroy(config: Config):
-    platforms = config.get(Key.Platforms.platforms)
+    platforms = config.get(Key.Platforms.platforms.key)
 
     if platforms is not None:
         log.info(f"Found {len(platforms)} platforms to destroy.")
@@ -65,7 +65,6 @@ def deploy(playbook, config: Config):
     except Exception as e:
         log.error(f"Error during deployment: {str(e)}")
         exit(1)
-    return
 
 
 # Execute tasks with "delete" tag for a given playbook
@@ -81,7 +80,6 @@ def delete(playbook, config: Config):
     except Exception as e:
         log.error(f"Error during deletion: {str(e)}")
         exit(1)
-    return
 
 
 # Delete and re-deploy 'playbook' parameter
@@ -134,7 +132,68 @@ def export(config: Config, exp_path, export_type="all"):
 def sync_experiment_data(config: Config):
     log.info("Syncing experiment data...")
     t: Tools = Tools(log)
-    t.sync_data(config.get_str(Key.Scalehub.experiments))
+    t.sync_data(config.get_str(Key.Scalehub.experiments.key))
+
+
+def load_config(command, conf_paths=None) -> Config | list[Config] | None:
+    # Load configuration from provided path. If multiple paths are provided, we will use the first one.
+    if conf_paths is None:
+        conf_paths = None
+    elif "," in conf_paths:
+        conf_paths = conf_paths.split(",")
+    else:
+        conf_paths = [conf_paths]
+
+    if command != "experiment":
+        if conf_paths is None:
+            try:
+                # Try to load configuration from RUNTIME_PATH
+                config = Config(log, Config.RUNTIME_PATH)
+                return config
+            except FileNotFoundError as e:
+                # If RUNTIME_PATH is not provided and the command is not "destroy", we will use DEFAULTS_PATH
+                if command != "destroy":
+                    config = Config(log, Config.DEFAULTS_PATH)
+                    return config
+                else:
+                    log.error(f"Error while parsing configuration file: {str(e)}")
+                    raise e
+
+        else:
+            # Handle the case when a custom path is provided
+            conf_path = conf_paths[0]
+            if os.path.exists(conf_path):
+                try:
+                    log.info(f"Loading configuration from {conf_path}")
+                    config = Config(log, conf_path)
+                    if command in ["deploy", "delete", "reload"]:
+                        config.update_runtime_file()
+                    return config
+                except Exception as e:
+                    log.error(
+                        f"Error while parsing configuration file {conf_path} : {str(e)}"
+                    )
+                    raise e
+            else:
+                raise FileNotFoundError(
+                    f"Configuration file {conf_path} does not exist."
+                )
+    else:
+        log.info("Handling multiple configuration files for 'experiment' command.")
+        configs = []
+        for path in conf_paths:
+            if os.path.exists(path):
+                log.info(f"Loading configuration from {path}")
+                try:
+                    config = Config(log, path)
+                    configs.append(config)
+                except Exception as e:
+                    log.error(f"Error while parsing configuration file: {str(e)}")
+                    raise e
+            else:
+                raise FileNotFoundError(f"Configuration file {path} does not exist.")
+
+        return configs
 
 
 def main():
@@ -146,7 +205,7 @@ def main():
         "--confs",
         dest="conf_files",
         action="store",
-        default=Config.RUNTIME_PATH,
+        default=None,
         help="Specify a custom path for the configuration used for either provisioning or experiment running.\n"
         "Separate multiple paths with a comma. e.g. -c /app/conf/experiment/exp1.yaml,/app/conf/experiment/exp2.yaml",
     )
@@ -213,59 +272,34 @@ def main():
     # Parse configuration file values
     configuration_files = args.conf_files
 
-    # Check if we have one path or multiple paths separated by comma
-    if "," in configuration_files:
-        configuration_files = configuration_files.split(",")
-    else:
-        configuration_files = [configuration_files]
-    configs = []
-    for conf_path in configuration_files:
-        if os.path.exists(conf_path):
-            try:
-                config = Config(log, conf_path)
-                configs.append(config)
-            except Exception as e:
-                log.error(f"Error while parsing configuration file: {str(e)}")
-        else:
-            log.error(f"Configuration file {conf_path} does not exist.")
+    try:
+        config = load_config(args.command, configuration_files)
+    except Exception as e:
+        log.error(f"Error while loading configuration file: {str(e)}")
+        exit(1)
 
     match args.command:
         case "destroy":
-            config = Config(log, Config.RUNTIME_PATH)
             destroy(config)
         case "provision":
-            if len(configs) > 1:
-                log.warning(
-                    "Multiple configuration files are not supported for 'provision' command. Using the first one."
-                )
-            provision(configs[0])
+            provision(config)
         case "deploy":
-            if len(configs) > 1:
-                log.warning(
-                    "Multiple configuration files are not supported for 'deploy' command. Using the first one."
-                )
-            deploy(args.playbook, configs[0])
+            deploy(args.playbook, config)
         case "delete":
-            if len(configs) > 1:
-                log.warning(
-                    "Multiple configuration files are not supported for 'delete' command. Using the first one."
-                )
-            delete(args.playbook, configs[0])
+            delete(args.playbook, config)
         case "reload":
-            if len(configs) > 1:
-                log.warning(
-                    "Multiple configuration files are not supported for 'reload' command. Using the first one."
-                )
-            reload(args.playbook, configs[0])
+            reload(args.playbook, config)
         case "experiment":
-            experiment(args.action, configs)
+            # Check if we have one path or multiple paths separated by comma
+            assert (
+                len(config) > 0
+            ), "No valid configuration files found. 'experiment' command requires at least one configuration file."
+            experiment(args.action, config)
         case "tokens":
             tokens()
         case "sync":
-            config = Config(log, Config.DEFAULTS_PATH)
             sync_experiment_data(config)
         case "export":
-            config = Config(log, Config.DEFAULTS_PATH)
             date = args.date
             export_type = args.export_type
             export(config, date, export_type)

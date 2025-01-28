@@ -105,7 +105,7 @@ class ExperimentFSM(LockedMachine):
 
     def on_enter_STARTING(self):
         config = self.__get_next_config()
-        experiment_type = config.get_str(Key.Experiment.type)
+        experiment_type = config.get_str(Key.Experiment.type.key)
         self.__log.info(f"[FSM] Start phase with experiment: {experiment_type}")
 
         self.__log.info(f"[FSM] State is {self.state}")

@@ -2,5 +2,5 @@
   type: large
   taskmanager:
     - number: 8
-      type: s
+      type: m
       method: linear
