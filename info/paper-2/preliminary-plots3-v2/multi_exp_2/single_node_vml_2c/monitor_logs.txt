@@ -1,0 +1,1051 @@
+[0m[2025-01-25T10:22:30.076774] [CLIENT] Received payload b''. Current state: States.IDLE.
+[0m[2025-01-25T10:22:30.302578] [FSM] Start phase with experiment: simple
+[0m[2025-01-25T10:22:30.302650] [FSM] State is States.STARTING
+[0m[2025-01-25T10:22:30.302803] [FSM] Creating experiment instance of type: simple
+[0;93m[2025-01-25T10:22:30.302885] [WARNING] Error loading kubeconfig from ENV: Invalid kube-config file. No configuration found.[0m
+[0;93m[2025-01-25T10:22:30.302891] [WARNING] Trying incluster config instead.[0m
+[0m[2025-01-25T10:22:30.303703] [EXPERIMENT] Starting experiment.
+[0m[2025-01-25T10:22:30.303936] [THRD] Starting thread.
+[0m[2025-01-25T10:22:30.303973] [EXPERIMENT] =================================== Starting run 1 ===================================
+[0m[2025-01-25T10:22:30.304176] [FSM] FSM startup complete, transitioning to running.
+[0m[2025-01-25T10:22:30.304301] [FSM] Run phase started.
+[0m[2025-01-25T10:22:30.304355] [FSM] State is States.RUNNING
+[0m[2025-01-25T10:22:30.305914] [EXPERIMENT] Running experiment.
+[0m[2025-01-25T10:22:32.168240] Playbook /app/playbooks/application/load_generators.yaml with tag create executed successfully.
+[0m[2025-01-25T10:22:34.054958] Playbook /app/playbooks/application/load_generators.yaml with tag create executed successfully.
+[0m[2025-01-25T10:22:34.055021] [SCALING] Setting up experiment.
+
+
+[0m[2025-01-25T10:22:34.055029] [NODE_MGR] Resetting scaling labels to unschedulable.
+[0m[2025-01-25T10:22:34.062636] [NODE_MGR] Resetting state labels.
+[0m[2025-01-25T10:22:34.076651] [SCALING] First node: virtual-158-0-2
+
+[0m[2025-01-25T10:22:34.093426] [SCALING] Statefulset name to scale : flink-taskmanager-m-2c
+[0m[2025-01-25T10:22:34.102142] [STS_MGR] StatefulSet flink-taskmanager-m-2c scaled to 1 replica.
+[0m[2025-01-25T10:22:39.109997] [FLK_MGR] Running job.
+[0m[2025-01-25T10:22:39.539022] [POD_MGR] Running command ['/bin/sh', '-c', 'flink run -d -j /tmp/jobs/myjoin-transscale-all.jar'] on pod flink-jobmanager-7d7c784b74-ck99c
+[0m[2025-01-25T10:22:43.609592] [FLK_MGR] Job run response: ERROR StatusLogger Reconfiguration failed: No configuration found for '37f8bb67' at 'null' in 'null'
+ERROR StatusLogger Reconfiguration failed: No configuration found for '34e9fd99' at 'null' in 'null'
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator (file:/opt/flink/lib/flink-dist-1.20.0.jar) to field java.util.Collections$UnmodifiableMap.m
+WARNING: Please consider reporting this to the maintainers of org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+KAFKA_BOOTSTRAP_SERVERS: kafka-service.kafka.svc.cluster.local:9092
+SCHEMA_REGISTRY_URL: http://schema-registry-service.kafka.svc.cluster.local:8081
+KAFKA_INPUT_TOPIC1: input-topic1
+KAFKA_INPUT_TOPIC2: input-topic2
+JOB_WINDOW_SIZE: 1000
+CHECKPOINTING: true
+FIB_INPUT: 18
+Starting JoinApplication.
+Job has been submitted with JobID 8ff1e20317b06e38565918397fe4b6a8
+
+[0m[2025-01-25T10:22:43.609645] [FLK_MGR] Running job id: 8ff1e20317b06e38565918397fe4b6a8
+[0m[2025-01-25T10:22:43.609652] [FLK_MGR] Getting job info.
+[0m[2025-01-25T10:22:43.626884] [FLK_MGR] Job plan response: {"plan":{"jid":"8ff1e20317b06e38565918397fe4b6a8","name":"myjoin-transscale-0.0.1","type":"STREAMING","nodes":[{"id":"41a95396e613c9f62f1da16142d5ddd2","parallelism":1,"operator":"","operator_strategy":"","description":"Sink: Sink<br/>","inputs":[{"num":0,"id":"32f0ffe0b6f0b990239bb81cec28b9d8","ship_strategy":"FORWARD","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"32f0ffe0b6f0b990239bb81cec28b9d8","parallelism":1,"operator":"","operator_strategy":"","description":"Window(TumblingEventTimeWindows(1000), EventTimeTrigger, TimeEvictor, CoGroupWindowFunction)<br/>+- Timestamps/Watermarks<br/>","inputs":[{"num":0,"id":"31ec045e3401e87fc7879b43d8e8625d","ship_strategy":"HASH","exchange":"pipelined_bounded"},{"num":1,"id":"e926317ddf99720773e3c7f4f412c3d7","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"31ec045e3401e87fc7879b43d8e8625d","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"dca33db40b2f8f122636cd5297c0c511","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"dca33db40b2f8f122636cd5297c0c511","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source1<br/>","optimizer_properties":{}},{"id":"e926317ddf99720773e3c7f4f412c3d7","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"9c7327831b3b5b4ae2c580979f474a9c","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"9c7327831b3b5b4ae2c580979f474a9c","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source2<br/>","optimizer_properties":{}}]}}
+[0m[2025-01-25T10:22:43.627021] [FLK_MGR] Current operator names: dict_keys(['Sink__Sink', 'Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks', 'Timestamps/Watermarks+-_Map', 'Source__Source1', 'Source__Source2'])
+[0m[2025-01-25T10:22:44.005230] [POD_MGR] Running command ['/bin/sh', '-c', 'flink list -r 2>/dev/null'] on pod flink-jobmanager-7d7c784b74-ck99c
+[0m[2025-01-25T10:22:45.414432] [FLK_MGR] Running jobs: Waiting for response...
+------------------ Running/Restarting Jobs -------------------
+25.01.2025 10:22:42 : 8ff1e20317b06e38565918397fe4b6a8 : myjoin-transscale-0.0.1 (RUNNING)
+--------------------------------------------------------------
+[0m[2025-01-25T10:22:45.414495] [FLK_MGR] Running jobs: ['8ff1e20317b06e38565918397fe4b6a8']
+[0m[2025-01-25T10:22:45.414502] [FLK_MGR] Total jobs cancelled: 0
+[0m[2025-01-25T10:22:45.414508] [SCALING] First iteration after setup, just waiting...
+[0m[2025-01-25T10:26:45.439063] [SCALING] Scaling started.
+[0m[2025-01-25T10:26:45.439165] [SCALING] Decrementing count of first TM by 1.
+
+[0m[2025-01-25T10:26:45.439216] =========================================================== Step 0 ===========================================================
+[0m[2025-01-25T10:26:45.439236] [SCALING] Scaling on node : vm_grid5000
+[0m[2025-01-25T10:26:45.439268] [SCALING] Adding 1 replicas of m-2c taskmanager.
+[0m[2025-01-25T10:26:45.444670] [SCALING] Statefulset name to scale : flink-taskmanager-m-2c
+[0m[2025-01-25T10:26:45.456945] [SCALING] Current taskmanagers count: {'flink-taskmanager-l': 0, 'flink-taskmanager-l-2c': 0, 'flink-taskmanager-m': 0, 'flink-taskmanager-m-2c': 1, 'flink-taskmanager-s': 0, 'flink-taskmanager-s-2c': 0, 'flink-taskmanager-xl': 0, 'flink-taskmanager-xxl': 0}
+[0m[2025-01-25T10:26:45.465450] [STS_MGR] StatefulSet flink-taskmanager-m-2c scaled to 2 replica.
+[0m[2025-01-25T10:26:50.484983] [SCALING] ************************************ Adding 2 replicas ************************************
+[0m[2025-01-25T10:26:50.485008] [FLK_MGR] Running job.
+[0m[2025-01-25T10:26:50.485012] [FLK_MGR] Rescaling job to 2.
+[0m[2025-01-25T10:26:50.805756] [POD_MGR] Running command ['/bin/sh', '-c', 'flink stop -p -d 8ff1e20317b06e38565918397fe4b6a8'] on pod flink-jobmanager-7d7c784b74-ck99c
+[0m[2025-01-25T10:26:54.842762] [FLK_MGR] Savepoint path: s3://flink-bucket/savepoints/savepoint-8ff1e2-1308dfb391df
+[0m[2025-01-25T10:27:14.269157] [POD_MGR] Running command ['/bin/sh', '-c', "flink run -d -s s3://flink-bucket/savepoints/savepoint-8ff1e2-1308dfb391df -j /tmp/jobs/myjoin-transscale-all.jar --parmap 'Sink__Sink:1;Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks:2;Timestamps/Watermarks+-_Map:1;Source__Source1:1;Source__Source2:1'"] on pod flink-jobmanager-7d7c784b74-ck99c
+[0m[2025-01-25T10:27:17.286053] [FLK_MGR] Operator TumblingEventTimeWindows rescaled to 2.
+[0m[2025-01-25T10:27:17.286097] [FLK_MGR] Job run response: ERROR StatusLogger Reconfiguration failed: No configuration found for '37f8bb67' at 'null' in 'null'
+ERROR StatusLogger Reconfiguration failed: No configuration found for '34e9fd99' at 'null' in 'null'
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator (file:/opt/flink/lib/flink-dist-1.20.0.jar) to field java.util.Collections$UnmodifiableMap.m
+WARNING: Please consider reporting this to the maintainers of org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+KAFKA_BOOTSTRAP_SERVERS: kafka-service.kafka.svc.cluster.local:9092
+SCHEMA_REGISTRY_URL: http://schema-registry-service.kafka.svc.cluster.local:8081
+KAFKA_INPUT_TOPIC1: input-topic1
+KAFKA_INPUT_TOPIC2: input-topic2
+JOB_WINDOW_SIZE: 1000
+CHECKPOINTING: true
+FIB_INPUT: 18
+Starting JoinApplication.
+Sink__Sink:1;Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks:2;Timestamps/Watermarks+-_Map:1;Source__Source1:1;Source__Source2:1
+Sink__Sink --> 1
+Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks --> 2
+Timestamps/Watermarks+-_Map --> 1
+Source__Source1 --> 1
+Source__Source2 --> 1
+Job has been submitted with JobID c2e5c62d28339cfa4776a963746ac83d
+
+[0m[2025-01-25T10:27:17.286127] [FLK_MGR] Running job id: c2e5c62d28339cfa4776a963746ac83d
+[0m[2025-01-25T10:27:17.286138] [FLK_MGR] Getting job info.
+[0m[2025-01-25T10:27:17.296893] [FLK_MGR] Job plan response: {"plan":{"jid":"c2e5c62d28339cfa4776a963746ac83d","name":"myjoin-transscale-0.0.1","type":"STREAMING","nodes":[{"id":"41a95396e613c9f62f1da16142d5ddd2","parallelism":1,"operator":"","operator_strategy":"","description":"Sink: Sink<br/>","inputs":[{"num":0,"id":"32f0ffe0b6f0b990239bb81cec28b9d8","ship_strategy":"REBALANCE","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"32f0ffe0b6f0b990239bb81cec28b9d8","parallelism":2,"operator":"","operator_strategy":"","description":"Window(TumblingEventTimeWindows(1000), EventTimeTrigger, TimeEvictor, CoGroupWindowFunction)<br/>+- Timestamps/Watermarks<br/>","inputs":[{"num":0,"id":"31ec045e3401e87fc7879b43d8e8625d","ship_strategy":"HASH","exchange":"pipelined_bounded"},{"num":1,"id":"e926317ddf99720773e3c7f4f412c3d7","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"31ec045e3401e87fc7879b43d8e8625d","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"dca33db40b2f8f122636cd5297c0c511","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"dca33db40b2f8f122636cd5297c0c511","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source1<br/>","optimizer_properties":{}},{"id":"e926317ddf99720773e3c7f4f412c3d7","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"9c7327831b3b5b4ae2c580979f474a9c","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"9c7327831b3b5b4ae2c580979f474a9c","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source2<br/>","optimizer_properties":{}}]}}
+[0m[2025-01-25T10:27:17.297071] [FLK_MGR] Current operator names: dict_keys(['Sink__Sink', 'Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks', 'Timestamps/Watermarks+-_Map', 'Source__Source1', 'Source__Source2'])
+[0m[2025-01-25T10:27:17.686096] [POD_MGR] Running command ['/bin/sh', '-c', 'flink list -r 2>/dev/null'] on pod flink-jobmanager-7d7c784b74-ck99c
+[0m[2025-01-25T10:27:19.102321] [FLK_MGR] Running jobs: Waiting for response...
+------------------ Running/Restarting Jobs -------------------
+25.01.2025 10:27:17 : c2e5c62d28339cfa4776a963746ac83d : myjoin-transscale-0.0.1 (RUNNING)
+--------------------------------------------------------------
+[0m[2025-01-25T10:27:19.102380] [FLK_MGR] Running jobs: ['c2e5c62d28339cfa4776a963746ac83d']
+[0m[2025-01-25T10:27:19.102388] [FLK_MGR] Total jobs cancelled: 0
+[0m[2025-01-25T10:27:19.109573] [SCALING] Monitoring interval: for 240 seconds
+[0m[2025-01-25T10:31:19.132441] [SCALING] Adding 1 replicas of m-2c taskmanager.
+[0m[2025-01-25T10:31:19.138284] [SCALING] Statefulset name to scale : flink-taskmanager-m-2c
+[0m[2025-01-25T10:31:19.151488] [SCALING] Current taskmanagers count: {'flink-taskmanager-l': 0, 'flink-taskmanager-l-2c': 0, 'flink-taskmanager-m': 0, 'flink-taskmanager-m-2c': 2, 'flink-taskmanager-s': 0, 'flink-taskmanager-s-2c': 0, 'flink-taskmanager-xl': 0, 'flink-taskmanager-xxl': 0}
+[0m[2025-01-25T10:31:19.160586] [STS_MGR] StatefulSet flink-taskmanager-m-2c scaled to 3 replica.
+[0m[2025-01-25T10:31:24.182738] [SCALING] ************************************ Adding 3 replicas ************************************
+[0m[2025-01-25T10:31:24.182779] [FLK_MGR] Running job.
+[0m[2025-01-25T10:31:24.182784] [FLK_MGR] Rescaling job to 3.
+[0m[2025-01-25T10:31:24.495381] [POD_MGR] Running command ['/bin/sh', '-c', 'flink stop -p -d c2e5c62d28339cfa4776a963746ac83d'] on pod flink-jobmanager-7d7c784b74-ck99c
+[0m[2025-01-25T10:31:32.549888] [FLK_MGR] Savepoint path: s3://flink-bucket/savepoints/savepoint-c2e5c6-585b0bbfa409
+[0m[2025-01-25T10:31:51.993992] [POD_MGR] Running command ['/bin/sh', '-c', "flink run -d -s s3://flink-bucket/savepoints/savepoint-c2e5c6-585b0bbfa409 -j /tmp/jobs/myjoin-transscale-all.jar --parmap 'Sink__Sink:1;Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks:3;Timestamps/Watermarks+-_Map:1;Source__Source1:1;Source__Source2:1'"] on pod flink-jobmanager-7d7c784b74-ck99c
+[0m[2025-01-25T10:31:54.939708] [FLK_MGR] Operator TumblingEventTimeWindows rescaled to 3.
+[0m[2025-01-25T10:31:54.939744] [FLK_MGR] Job run response: ERROR StatusLogger Reconfiguration failed: No configuration found for '37f8bb67' at 'null' in 'null'
+ERROR StatusLogger Reconfiguration failed: No configuration found for '34e9fd99' at 'null' in 'null'
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator (file:/opt/flink/lib/flink-dist-1.20.0.jar) to field java.util.Collections$UnmodifiableMap.m
+WARNING: Please consider reporting this to the maintainers of org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+KAFKA_BOOTSTRAP_SERVERS: kafka-service.kafka.svc.cluster.local:9092
+SCHEMA_REGISTRY_URL: http://schema-registry-service.kafka.svc.cluster.local:8081
+KAFKA_INPUT_TOPIC1: input-topic1
+KAFKA_INPUT_TOPIC2: input-topic2
+JOB_WINDOW_SIZE: 1000
+CHECKPOINTING: true
+FIB_INPUT: 18
+Starting JoinApplication.
+Sink__Sink:1;Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks:3;Timestamps/Watermarks+-_Map:1;Source__Source1:1;Source__Source2:1
+Sink__Sink --> 1
+Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks --> 3
+Timestamps/Watermarks+-_Map --> 1
+Source__Source1 --> 1
+Source__Source2 --> 1
+Job has been submitted with JobID f9ce8656f69926f25c3a89add3129c4f
+
+[0m[2025-01-25T10:31:54.939763] [FLK_MGR] Running job id: f9ce8656f69926f25c3a89add3129c4f
+[0m[2025-01-25T10:31:54.939769] [FLK_MGR] Getting job info.
+[0m[2025-01-25T10:31:54.946905] [FLK_MGR] Job plan response: {"plan":{"jid":"f9ce8656f69926f25c3a89add3129c4f","name":"myjoin-transscale-0.0.1","type":"STREAMING","nodes":[{"id":"41a95396e613c9f62f1da16142d5ddd2","parallelism":1,"operator":"","operator_strategy":"","description":"Sink: Sink<br/>","inputs":[{"num":0,"id":"32f0ffe0b6f0b990239bb81cec28b9d8","ship_strategy":"REBALANCE","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"32f0ffe0b6f0b990239bb81cec28b9d8","parallelism":3,"operator":"","operator_strategy":"","description":"Window(TumblingEventTimeWindows(1000), EventTimeTrigger, TimeEvictor, CoGroupWindowFunction)<br/>+- Timestamps/Watermarks<br/>","inputs":[{"num":0,"id":"31ec045e3401e87fc7879b43d8e8625d","ship_strategy":"HASH","exchange":"pipelined_bounded"},{"num":1,"id":"e926317ddf99720773e3c7f4f412c3d7","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"31ec045e3401e87fc7879b43d8e8625d","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"dca33db40b2f8f122636cd5297c0c511","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"dca33db40b2f8f122636cd5297c0c511","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source1<br/>","optimizer_properties":{}},{"id":"e926317ddf99720773e3c7f4f412c3d7","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"9c7327831b3b5b4ae2c580979f474a9c","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"9c7327831b3b5b4ae2c580979f474a9c","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source2<br/>","optimizer_properties":{}}]}}
+[0m[2025-01-25T10:31:54.947044] [FLK_MGR] Current operator names: dict_keys(['Sink__Sink', 'Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks', 'Timestamps/Watermarks+-_Map', 'Source__Source1', 'Source__Source2'])
+[0m[2025-01-25T10:31:55.380726] [POD_MGR] Running command ['/bin/sh', '-c', 'flink list -r 2>/dev/null'] on pod flink-jobmanager-7d7c784b74-ck99c
+[0m[2025-01-25T10:31:56.777588] [FLK_MGR] Running jobs: Waiting for response...
+------------------ Running/Restarting Jobs -------------------
+25.01.2025 10:31:54 : f9ce8656f69926f25c3a89add3129c4f : myjoin-transscale-0.0.1 (RUNNING)
+--------------------------------------------------------------
+[0m[2025-01-25T10:31:56.777641] [FLK_MGR] Running jobs: ['f9ce8656f69926f25c3a89add3129c4f']
+[0m[2025-01-25T10:31:56.777648] [FLK_MGR] Total jobs cancelled: 0
+[0m[2025-01-25T10:31:56.783244] [SCALING] Monitoring interval: for 240 seconds
+[0m[2025-01-25T10:35:56.807623] [SCALING] Adding 1 replicas of m-2c taskmanager.
+[0m[2025-01-25T10:35:56.812515] [SCALING] Statefulset name to scale : flink-taskmanager-m-2c
+[0m[2025-01-25T10:35:56.825138] [SCALING] Current taskmanagers count: {'flink-taskmanager-l': 0, 'flink-taskmanager-l-2c': 0, 'flink-taskmanager-m': 0, 'flink-taskmanager-m-2c': 3, 'flink-taskmanager-s': 0, 'flink-taskmanager-s-2c': 0, 'flink-taskmanager-xl': 0, 'flink-taskmanager-xxl': 0}
+[0m[2025-01-25T10:35:56.833766] [STS_MGR] StatefulSet flink-taskmanager-m-2c scaled to 4 replica.
+[0m[2025-01-25T10:36:01.855187] [SCALING] ************************************ Adding 4 replicas ************************************
+[0m[2025-01-25T10:36:01.855213] [FLK_MGR] Running job.
+[0m[2025-01-25T10:36:01.855217] [FLK_MGR] Rescaling job to 4.
+[0m[2025-01-25T10:36:02.177782] [POD_MGR] Running command ['/bin/sh', '-c', 'flink stop -p -d f9ce8656f69926f25c3a89add3129c4f'] on pod flink-jobmanager-7d7c784b74-ck99c
+[0m[2025-01-25T10:36:08.237540] [FLK_MGR] Savepoint path: s3://flink-bucket/savepoints/savepoint-f9ce86-b9398100cfa0
+[0m[2025-01-25T10:36:27.672261] [POD_MGR] Running command ['/bin/sh', '-c', "flink run -d -s s3://flink-bucket/savepoints/savepoint-f9ce86-b9398100cfa0 -j /tmp/jobs/myjoin-transscale-all.jar --parmap 'Sink__Sink:1;Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks:4;Timestamps/Watermarks+-_Map:1;Source__Source1:1;Source__Source2:1'"] on pod flink-jobmanager-7d7c784b74-ck99c
+[0m[2025-01-25T10:36:30.424803] [FLK_MGR] Operator TumblingEventTimeWindows rescaled to 4.
+[0m[2025-01-25T10:36:30.424837] [FLK_MGR] Job run response: ERROR StatusLogger Reconfiguration failed: No configuration found for '37f8bb67' at 'null' in 'null'
+ERROR StatusLogger Reconfiguration failed: No configuration found for '34e9fd99' at 'null' in 'null'
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator (file:/opt/flink/lib/flink-dist-1.20.0.jar) to field java.util.Collections$UnmodifiableMap.m
+WARNING: Please consider reporting this to the maintainers of org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+KAFKA_BOOTSTRAP_SERVERS: kafka-service.kafka.svc.cluster.local:9092
+SCHEMA_REGISTRY_URL: http://schema-registry-service.kafka.svc.cluster.local:8081
+KAFKA_INPUT_TOPIC1: input-topic1
+KAFKA_INPUT_TOPIC2: input-topic2
+JOB_WINDOW_SIZE: 1000
+CHECKPOINTING: true
+FIB_INPUT: 18
+Starting JoinApplication.
+Sink__Sink:1;Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks:4;Timestamps/Watermarks+-_Map:1;Source__Source1:1;Source__Source2:1
+Sink__Sink --> 1
+Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks --> 4
+Timestamps/Watermarks+-_Map --> 1
+Source__Source1 --> 1
+Source__Source2 --> 1
+Job has been submitted with JobID 922d8c2c766abbc69cf14f350c838581
+
+[0m[2025-01-25T10:36:30.424868] [FLK_MGR] Running job id: 922d8c2c766abbc69cf14f350c838581
+[0m[2025-01-25T10:36:30.424875] [FLK_MGR] Getting job info.
+[0m[2025-01-25T10:36:30.432157] [FLK_MGR] Job plan response: {"plan":{"jid":"922d8c2c766abbc69cf14f350c838581","name":"myjoin-transscale-0.0.1","type":"STREAMING","nodes":[{"id":"41a95396e613c9f62f1da16142d5ddd2","parallelism":1,"operator":"","operator_strategy":"","description":"Sink: Sink<br/>","inputs":[{"num":0,"id":"32f0ffe0b6f0b990239bb81cec28b9d8","ship_strategy":"REBALANCE","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"32f0ffe0b6f0b990239bb81cec28b9d8","parallelism":4,"operator":"","operator_strategy":"","description":"Window(TumblingEventTimeWindows(1000), EventTimeTrigger, TimeEvictor, CoGroupWindowFunction)<br/>+- Timestamps/Watermarks<br/>","inputs":[{"num":0,"id":"31ec045e3401e87fc7879b43d8e8625d","ship_strategy":"HASH","exchange":"pipelined_bounded"},{"num":1,"id":"e926317ddf99720773e3c7f4f412c3d7","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"31ec045e3401e87fc7879b43d8e8625d","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"dca33db40b2f8f122636cd5297c0c511","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"dca33db40b2f8f122636cd5297c0c511","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source1<br/>","optimizer_properties":{}},{"id":"e926317ddf99720773e3c7f4f412c3d7","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"9c7327831b3b5b4ae2c580979f474a9c","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"9c7327831b3b5b4ae2c580979f474a9c","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source2<br/>","optimizer_properties":{}}]}}
+[0m[2025-01-25T10:36:30.432339] [FLK_MGR] Current operator names: dict_keys(['Sink__Sink', 'Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks', 'Timestamps/Watermarks+-_Map', 'Source__Source1', 'Source__Source2'])
+[0m[2025-01-25T10:36:30.901804] [POD_MGR] Running command ['/bin/sh', '-c', 'flink list -r 2>/dev/null'] on pod flink-jobmanager-7d7c784b74-ck99c
+[0m[2025-01-25T10:36:32.311088] [FLK_MGR] Running jobs: Waiting for response...
+------------------ Running/Restarting Jobs -------------------
+25.01.2025 10:36:30 : 922d8c2c766abbc69cf14f350c838581 : myjoin-transscale-0.0.1 (RUNNING)
+--------------------------------------------------------------
+[0m[2025-01-25T10:36:32.311145] [FLK_MGR] Running jobs: ['922d8c2c766abbc69cf14f350c838581']
+[0m[2025-01-25T10:36:32.311152] [FLK_MGR] Total jobs cancelled: 0
+[0m[2025-01-25T10:36:32.317634] [SCALING] Monitoring interval: for 240 seconds
+[0m[2025-01-25T10:40:32.340054] [SCALING] Scaling step on node virtual-158-0-2 finished. Marking node as full.
+[0m[2025-01-25T10:40:37.352708] [SCALING] Scaling finished.
+[0m[2025-01-25T10:40:37.352802] [NODE_MGR] Resetting scaling labels to unschedulable.
+[0m[2025-01-25T10:40:37.370916] [NODE_MGR] Resetting state labels.
+[0m[2025-01-25T10:40:37.386252] [STS_MGR] Resetting taskmanagers.
+[0m[2025-01-25T10:40:37.407461] [STS_MGR] StatefulSet flink-taskmanager-l scaled to 0 replica.
+[0m[2025-01-25T10:40:37.418848] [STS_MGR] StatefulSet flink-taskmanager-l-2c scaled to 0 replica.
+[0m[2025-01-25T10:40:37.430037] [STS_MGR] StatefulSet flink-taskmanager-m scaled to 0 replica.
+[0m[2025-01-25T10:40:37.441260] [STS_MGR] StatefulSet flink-taskmanager-m-2c scaled to 0 replica.
+[0m[2025-01-25T10:40:42.460377] [STS_MGR] StatefulSet flink-taskmanager-s scaled to 0 replica.
+[0m[2025-01-25T10:40:42.474386] [STS_MGR] StatefulSet flink-taskmanager-s-2c scaled to 0 replica.
+[0m[2025-01-25T10:40:42.488014] [STS_MGR] StatefulSet flink-taskmanager-xl scaled to 0 replica.
+[0m[2025-01-25T10:40:42.500870] [STS_MGR] StatefulSet flink-taskmanager-xxl scaled to 0 replica.
+[0m[2025-01-25T10:40:42.519217] [POD_MGR] Pod flink-jobmanager-7d7c784b74-ck99c deleted
+[0m[2025-01-25T10:40:44.403902] Playbook /app/playbooks/application/load_generators.yaml with tag delete executed successfully.
+[0m[2025-01-25T10:40:46.237238] Playbook /app/playbooks/application/load_generators.yaml with tag delete executed successfully.
+[0m[2025-01-25T10:40:46.237302] Reloading playbook: application/kafka
+[0m[2025-01-25T10:40:52.117113] Playbook /app/playbooks/application/kafka.yaml with tag delete executed successfully.
+[0m[2025-01-25T10:41:33.054419] Playbook /app/playbooks/application/kafka.yaml with tag create executed successfully.
+[0m[2025-01-25T10:41:33.054554] [EXPERIMENT] Run 1 completed. Start: 1737800550, End: 1737801693
+[0m[2025-01-25T10:41:33.054560] [EXPERIMENT] Sleeping for 10 seconds before next run.
+[0m[2025-01-25T10:41:43.055454] [EXPERIMENT] =================================== Starting run 2 ===================================
+[0m[2025-01-25T10:41:44.920635] Playbook /app/playbooks/application/load_generators.yaml with tag create executed successfully.
+[0m[2025-01-25T10:41:46.772824] Playbook /app/playbooks/application/load_generators.yaml with tag create executed successfully.
+[0m[2025-01-25T10:41:46.772914] [SCALING] Setting up experiment.
+
+
+[0m[2025-01-25T10:41:46.772923] [NODE_MGR] Resetting scaling labels to unschedulable.
+[0m[2025-01-25T10:41:46.777973] [NODE_MGR] Resetting state labels.
+[0m[2025-01-25T10:41:46.793014] [SCALING] First node: virtual-158-0-2
+
+[0m[2025-01-25T10:41:46.807331] [SCALING] Statefulset name to scale : flink-taskmanager-m-2c
+[0m[2025-01-25T10:41:46.817053] [STS_MGR] StatefulSet flink-taskmanager-m-2c scaled to 1 replica.
+[0m[2025-01-25T10:41:51.824999] [FLK_MGR] Running job.
+[0m[2025-01-25T10:41:52.134798] [POD_MGR] Running command ['/bin/sh', '-c', 'flink run -d -j /tmp/jobs/myjoin-transscale-all.jar'] on pod flink-jobmanager-7d7c784b74-k75qh
+[0m[2025-01-25T10:41:56.198470] [FLK_MGR] Job run response: ERROR StatusLogger Reconfiguration failed: No configuration found for '37f8bb67' at 'null' in 'null'
+ERROR StatusLogger Reconfiguration failed: No configuration found for '34e9fd99' at 'null' in 'null'
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator (file:/opt/flink/lib/flink-dist-1.20.0.jar) to field java.util.Collections$UnmodifiableMap.m
+WARNING: Please consider reporting this to the maintainers of org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+KAFKA_BOOTSTRAP_SERVERS: kafka-service.kafka.svc.cluster.local:9092
+SCHEMA_REGISTRY_URL: http://schema-registry-service.kafka.svc.cluster.local:8081
+KAFKA_INPUT_TOPIC1: input-topic1
+KAFKA_INPUT_TOPIC2: input-topic2
+JOB_WINDOW_SIZE: 1000
+CHECKPOINTING: true
+FIB_INPUT: 18
+Starting JoinApplication.
+Job has been submitted with JobID 7ce1d051fab292b100d2015a55730734
+
+[0m[2025-01-25T10:41:56.198520] [FLK_MGR] Running job id: 7ce1d051fab292b100d2015a55730734
+[0m[2025-01-25T10:41:56.198528] [FLK_MGR] Getting job info.
+[0m[2025-01-25T10:41:56.217218] [FLK_MGR] Job plan response: {"plan":{"jid":"7ce1d051fab292b100d2015a55730734","name":"myjoin-transscale-0.0.1","type":"STREAMING","nodes":[{"id":"41a95396e613c9f62f1da16142d5ddd2","parallelism":1,"operator":"","operator_strategy":"","description":"Sink: Sink<br/>","inputs":[{"num":0,"id":"32f0ffe0b6f0b990239bb81cec28b9d8","ship_strategy":"FORWARD","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"32f0ffe0b6f0b990239bb81cec28b9d8","parallelism":1,"operator":"","operator_strategy":"","description":"Window(TumblingEventTimeWindows(1000), EventTimeTrigger, TimeEvictor, CoGroupWindowFunction)<br/>+- Timestamps/Watermarks<br/>","inputs":[{"num":0,"id":"31ec045e3401e87fc7879b43d8e8625d","ship_strategy":"HASH","exchange":"pipelined_bounded"},{"num":1,"id":"e926317ddf99720773e3c7f4f412c3d7","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"31ec045e3401e87fc7879b43d8e8625d","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"dca33db40b2f8f122636cd5297c0c511","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"dca33db40b2f8f122636cd5297c0c511","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source1<br/>","optimizer_properties":{}},{"id":"e926317ddf99720773e3c7f4f412c3d7","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"9c7327831b3b5b4ae2c580979f474a9c","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"9c7327831b3b5b4ae2c580979f474a9c","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source2<br/>","optimizer_properties":{}}]}}
+[0m[2025-01-25T10:41:56.217364] [FLK_MGR] Current operator names: dict_keys(['Sink__Sink', 'Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks', 'Timestamps/Watermarks+-_Map', 'Source__Source1', 'Source__Source2'])
+[0m[2025-01-25T10:41:56.602060] [POD_MGR] Running command ['/bin/sh', '-c', 'flink list -r 2>/dev/null'] on pod flink-jobmanager-7d7c784b74-k75qh
+[0m[2025-01-25T10:41:58.008958] [FLK_MGR] Running jobs: Waiting for response...
+------------------ Running/Restarting Jobs -------------------
+25.01.2025 10:41:55 : 7ce1d051fab292b100d2015a55730734 : myjoin-transscale-0.0.1 (RUNNING)
+--------------------------------------------------------------
+[0m[2025-01-25T10:41:58.009011] [FLK_MGR] Running jobs: ['7ce1d051fab292b100d2015a55730734']
+[0m[2025-01-25T10:41:58.009018] [FLK_MGR] Total jobs cancelled: 0
+[0m[2025-01-25T10:41:58.009024] [SCALING] First iteration after setup, just waiting...
+[0m[2025-01-25T10:45:58.031524] [SCALING] Scaling started.
+[0m[2025-01-25T10:45:58.031573] [SCALING] Decrementing count of first TM by 1.
+
+[0m[2025-01-25T10:45:58.031587] =========================================================== Step 0 ===========================================================
+[0m[2025-01-25T10:45:58.031594] [SCALING] Scaling on node : vm_grid5000
+[0m[2025-01-25T10:45:58.031603] [SCALING] Adding 1 replicas of m-2c taskmanager.
+[0m[2025-01-25T10:45:58.036983] [SCALING] Statefulset name to scale : flink-taskmanager-m-2c
+[0m[2025-01-25T10:45:58.050070] [SCALING] Current taskmanagers count: {'flink-taskmanager-l': 0, 'flink-taskmanager-l-2c': 0, 'flink-taskmanager-m': 0, 'flink-taskmanager-m-2c': 1, 'flink-taskmanager-s': 0, 'flink-taskmanager-s-2c': 0, 'flink-taskmanager-xl': 0, 'flink-taskmanager-xxl': 0}
+[0m[2025-01-25T10:45:58.059015] [STS_MGR] StatefulSet flink-taskmanager-m-2c scaled to 2 replica.
+[0m[2025-01-25T10:46:03.079585] [SCALING] ************************************ Adding 2 replicas ************************************
+[0m[2025-01-25T10:46:03.079609] [FLK_MGR] Running job.
+[0m[2025-01-25T10:46:03.079614] [FLK_MGR] Rescaling job to 2.
+[0m[2025-01-25T10:46:03.458059] [POD_MGR] Running command ['/bin/sh', '-c', 'flink stop -p -d 7ce1d051fab292b100d2015a55730734'] on pod flink-jobmanager-7d7c784b74-k75qh
+[0m[2025-01-25T10:46:07.508886] [FLK_MGR] Savepoint path: s3://flink-bucket/savepoints/savepoint-7ce1d0-66ef8397ee41
+[0m[2025-01-25T10:46:26.849240] [POD_MGR] Running command ['/bin/sh', '-c', "flink run -d -s s3://flink-bucket/savepoints/savepoint-7ce1d0-66ef8397ee41 -j /tmp/jobs/myjoin-transscale-all.jar --parmap 'Sink__Sink:1;Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks:2;Timestamps/Watermarks+-_Map:1;Source__Source1:1;Source__Source2:1'"] on pod flink-jobmanager-7d7c784b74-k75qh
+[0m[2025-01-25T10:46:29.966109] [FLK_MGR] Operator TumblingEventTimeWindows rescaled to 2.
+[0m[2025-01-25T10:46:29.966144] [FLK_MGR] Job run response: ERROR StatusLogger Reconfiguration failed: No configuration found for '37f8bb67' at 'null' in 'null'
+ERROR StatusLogger Reconfiguration failed: No configuration found for '34e9fd99' at 'null' in 'null'
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator (file:/opt/flink/lib/flink-dist-1.20.0.jar) to field java.util.Collections$UnmodifiableMap.m
+WARNING: Please consider reporting this to the maintainers of org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+KAFKA_BOOTSTRAP_SERVERS: kafka-service.kafka.svc.cluster.local:9092
+SCHEMA_REGISTRY_URL: http://schema-registry-service.kafka.svc.cluster.local:8081
+KAFKA_INPUT_TOPIC1: input-topic1
+KAFKA_INPUT_TOPIC2: input-topic2
+JOB_WINDOW_SIZE: 1000
+CHECKPOINTING: true
+FIB_INPUT: 18
+Starting JoinApplication.
+Sink__Sink:1;Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks:2;Timestamps/Watermarks+-_Map:1;Source__Source1:1;Source__Source2:1
+Sink__Sink --> 1
+Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks --> 2
+Timestamps/Watermarks+-_Map --> 1
+Source__Source1 --> 1
+Source__Source2 --> 1
+Job has been submitted with JobID 79ce6c8200f06cde5e8cfd25828bd64e
+
+[0m[2025-01-25T10:46:29.966167] [FLK_MGR] Running job id: 79ce6c8200f06cde5e8cfd25828bd64e
+[0m[2025-01-25T10:46:29.966174] [FLK_MGR] Getting job info.
+[0m[2025-01-25T10:46:29.972760] [FLK_MGR] Job plan response: {"plan":{"jid":"79ce6c8200f06cde5e8cfd25828bd64e","name":"myjoin-transscale-0.0.1","type":"STREAMING","nodes":[{"id":"41a95396e613c9f62f1da16142d5ddd2","parallelism":1,"operator":"","operator_strategy":"","description":"Sink: Sink<br/>","inputs":[{"num":0,"id":"32f0ffe0b6f0b990239bb81cec28b9d8","ship_strategy":"REBALANCE","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"32f0ffe0b6f0b990239bb81cec28b9d8","parallelism":2,"operator":"","operator_strategy":"","description":"Window(TumblingEventTimeWindows(1000), EventTimeTrigger, TimeEvictor, CoGroupWindowFunction)<br/>+- Timestamps/Watermarks<br/>","inputs":[{"num":0,"id":"31ec045e3401e87fc7879b43d8e8625d","ship_strategy":"HASH","exchange":"pipelined_bounded"},{"num":1,"id":"e926317ddf99720773e3c7f4f412c3d7","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"31ec045e3401e87fc7879b43d8e8625d","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"dca33db40b2f8f122636cd5297c0c511","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"dca33db40b2f8f122636cd5297c0c511","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source1<br/>","optimizer_properties":{}},{"id":"e926317ddf99720773e3c7f4f412c3d7","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"9c7327831b3b5b4ae2c580979f474a9c","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"9c7327831b3b5b4ae2c580979f474a9c","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source2<br/>","optimizer_properties":{}}]}}
+[0m[2025-01-25T10:46:29.972920] [FLK_MGR] Current operator names: dict_keys(['Sink__Sink', 'Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks', 'Timestamps/Watermarks+-_Map', 'Source__Source1', 'Source__Source2'])
+[0m[2025-01-25T10:46:30.367059] [POD_MGR] Running command ['/bin/sh', '-c', 'flink list -r 2>/dev/null'] on pod flink-jobmanager-7d7c784b74-k75qh
+[0m[2025-01-25T10:46:31.809026] [FLK_MGR] Running jobs: Waiting for response...
+------------------ Running/Restarting Jobs -------------------
+25.01.2025 10:46:29 : 79ce6c8200f06cde5e8cfd25828bd64e : myjoin-transscale-0.0.1 (RUNNING)
+--------------------------------------------------------------
+[0m[2025-01-25T10:46:31.809083] [FLK_MGR] Running jobs: ['79ce6c8200f06cde5e8cfd25828bd64e']
+[0m[2025-01-25T10:46:31.809089] [FLK_MGR] Total jobs cancelled: 0
+[0m[2025-01-25T10:46:31.816265] [SCALING] Monitoring interval: for 240 seconds
+[0m[2025-01-25T10:50:31.839652] [SCALING] Adding 1 replicas of m-2c taskmanager.
+[0m[2025-01-25T10:50:31.847116] [SCALING] Statefulset name to scale : flink-taskmanager-m-2c
+[0m[2025-01-25T10:50:31.860562] [SCALING] Current taskmanagers count: {'flink-taskmanager-l': 0, 'flink-taskmanager-l-2c': 0, 'flink-taskmanager-m': 0, 'flink-taskmanager-m-2c': 2, 'flink-taskmanager-s': 0, 'flink-taskmanager-s-2c': 0, 'flink-taskmanager-xl': 0, 'flink-taskmanager-xxl': 0}
+[0m[2025-01-25T10:50:31.869201] [STS_MGR] StatefulSet flink-taskmanager-m-2c scaled to 3 replica.
+[0m[2025-01-25T10:50:36.890838] [SCALING] ************************************ Adding 3 replicas ************************************
+[0m[2025-01-25T10:50:36.890869] [FLK_MGR] Running job.
+[0m[2025-01-25T10:50:36.890874] [FLK_MGR] Rescaling job to 3.
+[0m[2025-01-25T10:50:37.271519] [POD_MGR] Running command ['/bin/sh', '-c', 'flink stop -p -d 79ce6c8200f06cde5e8cfd25828bd64e'] on pod flink-jobmanager-7d7c784b74-k75qh
+[0m[2025-01-25T10:50:43.328633] [FLK_MGR] Savepoint path: s3://flink-bucket/savepoints/savepoint-79ce6c-29bff8aac42f
+[0m[2025-01-25T10:51:02.644880] [POD_MGR] Running command ['/bin/sh', '-c', "flink run -d -s s3://flink-bucket/savepoints/savepoint-79ce6c-29bff8aac42f -j /tmp/jobs/myjoin-transscale-all.jar --parmap 'Sink__Sink:1;Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks:3;Timestamps/Watermarks+-_Map:1;Source__Source1:1;Source__Source2:1'"] on pod flink-jobmanager-7d7c784b74-k75qh
+[0m[2025-01-25T10:51:05.530450] [FLK_MGR] Operator TumblingEventTimeWindows rescaled to 3.
+[0m[2025-01-25T10:51:05.530484] [FLK_MGR] Job run response: ERROR StatusLogger Reconfiguration failed: No configuration found for '37f8bb67' at 'null' in 'null'
+ERROR StatusLogger Reconfiguration failed: No configuration found for '34e9fd99' at 'null' in 'null'
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator (file:/opt/flink/lib/flink-dist-1.20.0.jar) to field java.util.Collections$UnmodifiableMap.m
+WARNING: Please consider reporting this to the maintainers of org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+KAFKA_BOOTSTRAP_SERVERS: kafka-service.kafka.svc.cluster.local:9092
+SCHEMA_REGISTRY_URL: http://schema-registry-service.kafka.svc.cluster.local:8081
+KAFKA_INPUT_TOPIC1: input-topic1
+KAFKA_INPUT_TOPIC2: input-topic2
+JOB_WINDOW_SIZE: 1000
+CHECKPOINTING: true
+FIB_INPUT: 18
+Starting JoinApplication.
+Sink__Sink:1;Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks:3;Timestamps/Watermarks+-_Map:1;Source__Source1:1;Source__Source2:1
+Sink__Sink --> 1
+Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks --> 3
+Timestamps/Watermarks+-_Map --> 1
+Source__Source1 --> 1
+Source__Source2 --> 1
+Job has been submitted with JobID 28a53aba77bd473e4be0a62d4dfdb994
+
+[0m[2025-01-25T10:51:05.530506] [FLK_MGR] Running job id: 28a53aba77bd473e4be0a62d4dfdb994
+[0m[2025-01-25T10:51:05.530513] [FLK_MGR] Getting job info.
+[0m[2025-01-25T10:51:05.539273] [FLK_MGR] Job plan response: {"plan":{"jid":"28a53aba77bd473e4be0a62d4dfdb994","name":"myjoin-transscale-0.0.1","type":"STREAMING","nodes":[{"id":"41a95396e613c9f62f1da16142d5ddd2","parallelism":1,"operator":"","operator_strategy":"","description":"Sink: Sink<br/>","inputs":[{"num":0,"id":"32f0ffe0b6f0b990239bb81cec28b9d8","ship_strategy":"REBALANCE","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"32f0ffe0b6f0b990239bb81cec28b9d8","parallelism":3,"operator":"","operator_strategy":"","description":"Window(TumblingEventTimeWindows(1000), EventTimeTrigger, TimeEvictor, CoGroupWindowFunction)<br/>+- Timestamps/Watermarks<br/>","inputs":[{"num":0,"id":"31ec045e3401e87fc7879b43d8e8625d","ship_strategy":"HASH","exchange":"pipelined_bounded"},{"num":1,"id":"e926317ddf99720773e3c7f4f412c3d7","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"31ec045e3401e87fc7879b43d8e8625d","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"dca33db40b2f8f122636cd5297c0c511","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"dca33db40b2f8f122636cd5297c0c511","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source1<br/>","optimizer_properties":{}},{"id":"e926317ddf99720773e3c7f4f412c3d7","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"9c7327831b3b5b4ae2c580979f474a9c","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"9c7327831b3b5b4ae2c580979f474a9c","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source2<br/>","optimizer_properties":{}}]}}
+[0m[2025-01-25T10:51:05.539433] [FLK_MGR] Current operator names: dict_keys(['Sink__Sink', 'Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks', 'Timestamps/Watermarks+-_Map', 'Source__Source1', 'Source__Source2'])
+[0m[2025-01-25T10:51:06.005173] [POD_MGR] Running command ['/bin/sh', '-c', 'flink list -r 2>/dev/null'] on pod flink-jobmanager-7d7c784b74-k75qh
+[0m[2025-01-25T10:51:07.446248] [FLK_MGR] Running jobs: Waiting for response...
+------------------ Running/Restarting Jobs -------------------
+25.01.2025 10:51:05 : 28a53aba77bd473e4be0a62d4dfdb994 : myjoin-transscale-0.0.1 (RUNNING)
+--------------------------------------------------------------
+[0m[2025-01-25T10:51:07.446304] [FLK_MGR] Running jobs: ['28a53aba77bd473e4be0a62d4dfdb994']
+[0m[2025-01-25T10:51:07.446311] [FLK_MGR] Total jobs cancelled: 0
+[0m[2025-01-25T10:51:07.453040] [SCALING] Monitoring interval: for 240 seconds
+[0m[2025-01-25T10:55:07.478012] [SCALING] Adding 1 replicas of m-2c taskmanager.
+[0m[2025-01-25T10:55:07.483835] [SCALING] Statefulset name to scale : flink-taskmanager-m-2c
+[0m[2025-01-25T10:55:07.497175] [SCALING] Current taskmanagers count: {'flink-taskmanager-l': 0, 'flink-taskmanager-l-2c': 0, 'flink-taskmanager-m': 0, 'flink-taskmanager-m-2c': 3, 'flink-taskmanager-s': 0, 'flink-taskmanager-s-2c': 0, 'flink-taskmanager-xl': 0, 'flink-taskmanager-xxl': 0}
+[0m[2025-01-25T10:55:07.507400] [STS_MGR] StatefulSet flink-taskmanager-m-2c scaled to 4 replica.
+[0m[2025-01-25T10:55:12.529918] [SCALING] ************************************ Adding 4 replicas ************************************
+[0m[2025-01-25T10:55:12.529946] [FLK_MGR] Running job.
+[0m[2025-01-25T10:55:12.529950] [FLK_MGR] Rescaling job to 4.
+[0m[2025-01-25T10:55:12.911077] [POD_MGR] Running command ['/bin/sh', '-c', 'flink stop -p -d 28a53aba77bd473e4be0a62d4dfdb994'] on pod flink-jobmanager-7d7c784b74-k75qh
+[0m[2025-01-25T10:55:16.916648] [FLK_MGR] Savepoint path: s3://flink-bucket/savepoints/savepoint-28a53a-e025a250ecb0
+[0m[2025-01-25T10:55:36.347489] [POD_MGR] Running command ['/bin/sh', '-c', "flink run -d -s s3://flink-bucket/savepoints/savepoint-28a53a-e025a250ecb0 -j /tmp/jobs/myjoin-transscale-all.jar --parmap 'Sink__Sink:1;Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks:4;Timestamps/Watermarks+-_Map:1;Source__Source1:1;Source__Source2:1'"] on pod flink-jobmanager-7d7c784b74-k75qh
+[0m[2025-01-25T10:55:39.204288] [FLK_MGR] Operator TumblingEventTimeWindows rescaled to 4.
+[0m[2025-01-25T10:55:39.204330] [FLK_MGR] Job run response: ERROR StatusLogger Reconfiguration failed: No configuration found for '37f8bb67' at 'null' in 'null'
+ERROR StatusLogger Reconfiguration failed: No configuration found for '34e9fd99' at 'null' in 'null'
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator (file:/opt/flink/lib/flink-dist-1.20.0.jar) to field java.util.Collections$UnmodifiableMap.m
+WARNING: Please consider reporting this to the maintainers of org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+KAFKA_BOOTSTRAP_SERVERS: kafka-service.kafka.svc.cluster.local:9092
+SCHEMA_REGISTRY_URL: http://schema-registry-service.kafka.svc.cluster.local:8081
+KAFKA_INPUT_TOPIC1: input-topic1
+KAFKA_INPUT_TOPIC2: input-topic2
+JOB_WINDOW_SIZE: 1000
+CHECKPOINTING: true
+FIB_INPUT: 18
+Starting JoinApplication.
+Sink__Sink:1;Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks:4;Timestamps/Watermarks+-_Map:1;Source__Source1:1;Source__Source2:1
+Sink__Sink --> 1
+Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks --> 4
+Timestamps/Watermarks+-_Map --> 1
+Source__Source1 --> 1
+Source__Source2 --> 1
+Job has been submitted with JobID aeb8815a97b13f97f4f0096cdf43fbf0
+
+[0m[2025-01-25T10:55:39.204351] [FLK_MGR] Running job id: aeb8815a97b13f97f4f0096cdf43fbf0
+[0m[2025-01-25T10:55:39.204357] [FLK_MGR] Getting job info.
+[0m[2025-01-25T10:55:39.212039] [FLK_MGR] Job plan response: {"plan":{"jid":"aeb8815a97b13f97f4f0096cdf43fbf0","name":"myjoin-transscale-0.0.1","type":"STREAMING","nodes":[{"id":"41a95396e613c9f62f1da16142d5ddd2","parallelism":1,"operator":"","operator_strategy":"","description":"Sink: Sink<br/>","inputs":[{"num":0,"id":"32f0ffe0b6f0b990239bb81cec28b9d8","ship_strategy":"REBALANCE","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"32f0ffe0b6f0b990239bb81cec28b9d8","parallelism":4,"operator":"","operator_strategy":"","description":"Window(TumblingEventTimeWindows(1000), EventTimeTrigger, TimeEvictor, CoGroupWindowFunction)<br/>+- Timestamps/Watermarks<br/>","inputs":[{"num":0,"id":"31ec045e3401e87fc7879b43d8e8625d","ship_strategy":"HASH","exchange":"pipelined_bounded"},{"num":1,"id":"e926317ddf99720773e3c7f4f412c3d7","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"31ec045e3401e87fc7879b43d8e8625d","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"dca33db40b2f8f122636cd5297c0c511","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"dca33db40b2f8f122636cd5297c0c511","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source1<br/>","optimizer_properties":{}},{"id":"e926317ddf99720773e3c7f4f412c3d7","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"9c7327831b3b5b4ae2c580979f474a9c","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"9c7327831b3b5b4ae2c580979f474a9c","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source2<br/>","optimizer_properties":{}}]}}
+[0m[2025-01-25T10:55:39.212182] [FLK_MGR] Current operator names: dict_keys(['Sink__Sink', 'Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks', 'Timestamps/Watermarks+-_Map', 'Source__Source1', 'Source__Source2'])
+[0m[2025-01-25T10:55:39.528680] [POD_MGR] Running command ['/bin/sh', '-c', 'flink list -r 2>/dev/null'] on pod flink-jobmanager-7d7c784b74-k75qh
+[0m[2025-01-25T10:55:40.950120] [FLK_MGR] Running jobs: Waiting for response...
+------------------ Running/Restarting Jobs -------------------
+25.01.2025 10:55:39 : aeb8815a97b13f97f4f0096cdf43fbf0 : myjoin-transscale-0.0.1 (RUNNING)
+--------------------------------------------------------------
+[0m[2025-01-25T10:55:40.950181] [FLK_MGR] Running jobs: ['aeb8815a97b13f97f4f0096cdf43fbf0']
+[0m[2025-01-25T10:55:40.950188] [FLK_MGR] Total jobs cancelled: 0
+[0m[2025-01-25T10:55:40.957097] [SCALING] Monitoring interval: for 240 seconds
+[0m[2025-01-25T10:59:40.980475] [SCALING] Scaling step on node virtual-158-0-2 finished. Marking node as full.
+[0m[2025-01-25T10:59:45.992711] [SCALING] Scaling finished.
+[0m[2025-01-25T10:59:45.992757] [NODE_MGR] Resetting scaling labels to unschedulable.
+[0m[2025-01-25T10:59:46.011537] [NODE_MGR] Resetting state labels.
+[0m[2025-01-25T10:59:46.026293] [STS_MGR] Resetting taskmanagers.
+[0m[2025-01-25T10:59:46.046681] [STS_MGR] StatefulSet flink-taskmanager-l scaled to 0 replica.
+[0m[2025-01-25T10:59:46.057394] [STS_MGR] StatefulSet flink-taskmanager-l-2c scaled to 0 replica.
+[0m[2025-01-25T10:59:46.068692] [STS_MGR] StatefulSet flink-taskmanager-m scaled to 0 replica.
+[0m[2025-01-25T10:59:46.079917] [STS_MGR] StatefulSet flink-taskmanager-m-2c scaled to 0 replica.
+[0m[2025-01-25T10:59:51.096645] [STS_MGR] StatefulSet flink-taskmanager-s scaled to 0 replica.
+[0m[2025-01-25T10:59:51.107913] [STS_MGR] StatefulSet flink-taskmanager-s-2c scaled to 0 replica.
+[0m[2025-01-25T10:59:51.118803] [STS_MGR] StatefulSet flink-taskmanager-xl scaled to 0 replica.
+[0m[2025-01-25T10:59:51.130847] [STS_MGR] StatefulSet flink-taskmanager-xxl scaled to 0 replica.
+[0m[2025-01-25T10:59:51.149286] [POD_MGR] Pod flink-jobmanager-7d7c784b74-k75qh deleted
+[0m[2025-01-25T10:59:53.073165] Playbook /app/playbooks/application/load_generators.yaml with tag delete executed successfully.
+[0m[2025-01-25T10:59:54.966345] Playbook /app/playbooks/application/load_generators.yaml with tag delete executed successfully.
+[0m[2025-01-25T10:59:54.966403] Reloading playbook: application/kafka
+[0m[2025-01-25T11:00:00.873664] Playbook /app/playbooks/application/kafka.yaml with tag delete executed successfully.
+[0m[2025-01-25T11:00:41.804337] Playbook /app/playbooks/application/kafka.yaml with tag create executed successfully.
+[0m[2025-01-25T11:00:41.804498] [EXPERIMENT] Run 2 completed. Start: 1737801703, End: 1737802841
+[0m[2025-01-25T11:00:41.804505] [EXPERIMENT] Sleeping for 10 seconds before next run.
+[0m[2025-01-25T11:00:51.805648] [EXPERIMENT] =================================== Starting run 3 ===================================
+[0m[2025-01-25T11:00:53.691270] Playbook /app/playbooks/application/load_generators.yaml with tag create executed successfully.
+[0m[2025-01-25T11:00:55.540762] Playbook /app/playbooks/application/load_generators.yaml with tag create executed successfully.
+[0m[2025-01-25T11:00:55.540830] [SCALING] Setting up experiment.
+
+
+[0m[2025-01-25T11:00:55.540838] [NODE_MGR] Resetting scaling labels to unschedulable.
+[0m[2025-01-25T11:00:55.545989] [NODE_MGR] Resetting state labels.
+[0m[2025-01-25T11:00:55.560392] [SCALING] First node: virtual-158-0-2
+
+[0m[2025-01-25T11:00:55.574561] [SCALING] Statefulset name to scale : flink-taskmanager-m-2c
+[0m[2025-01-25T11:00:55.583186] [STS_MGR] StatefulSet flink-taskmanager-m-2c scaled to 1 replica.
+[0m[2025-01-25T11:01:00.592085] [FLK_MGR] Running job.
+[0m[2025-01-25T11:01:00.990255] [POD_MGR] Running command ['/bin/sh', '-c', 'flink run -d -j /tmp/jobs/myjoin-transscale-all.jar'] on pod flink-jobmanager-7d7c784b74-mf8b2
+[0m[2025-01-25T11:01:05.056320] [FLK_MGR] Job run response: ERROR StatusLogger Reconfiguration failed: No configuration found for '37f8bb67' at 'null' in 'null'
+ERROR StatusLogger Reconfiguration failed: No configuration found for '34e9fd99' at 'null' in 'null'
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator (file:/opt/flink/lib/flink-dist-1.20.0.jar) to field java.util.Collections$UnmodifiableMap.m
+WARNING: Please consider reporting this to the maintainers of org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+KAFKA_BOOTSTRAP_SERVERS: kafka-service.kafka.svc.cluster.local:9092
+SCHEMA_REGISTRY_URL: http://schema-registry-service.kafka.svc.cluster.local:8081
+KAFKA_INPUT_TOPIC1: input-topic1
+KAFKA_INPUT_TOPIC2: input-topic2
+JOB_WINDOW_SIZE: 1000
+CHECKPOINTING: true
+FIB_INPUT: 18
+Starting JoinApplication.
+Job has been submitted with JobID 204d4620da8f4df304b1fece90fa69d1
+
+[0m[2025-01-25T11:01:05.056369] [FLK_MGR] Running job id: 204d4620da8f4df304b1fece90fa69d1
+[0m[2025-01-25T11:01:05.056376] [FLK_MGR] Getting job info.
+[0m[2025-01-25T11:01:05.073310] [FLK_MGR] Job plan response: {"plan":{"jid":"204d4620da8f4df304b1fece90fa69d1","name":"myjoin-transscale-0.0.1","type":"STREAMING","nodes":[{"id":"41a95396e613c9f62f1da16142d5ddd2","parallelism":1,"operator":"","operator_strategy":"","description":"Sink: Sink<br/>","inputs":[{"num":0,"id":"32f0ffe0b6f0b990239bb81cec28b9d8","ship_strategy":"FORWARD","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"32f0ffe0b6f0b990239bb81cec28b9d8","parallelism":1,"operator":"","operator_strategy":"","description":"Window(TumblingEventTimeWindows(1000), EventTimeTrigger, TimeEvictor, CoGroupWindowFunction)<br/>+- Timestamps/Watermarks<br/>","inputs":[{"num":0,"id":"31ec045e3401e87fc7879b43d8e8625d","ship_strategy":"HASH","exchange":"pipelined_bounded"},{"num":1,"id":"e926317ddf99720773e3c7f4f412c3d7","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"31ec045e3401e87fc7879b43d8e8625d","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"dca33db40b2f8f122636cd5297c0c511","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"dca33db40b2f8f122636cd5297c0c511","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source1<br/>","optimizer_properties":{}},{"id":"e926317ddf99720773e3c7f4f412c3d7","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"9c7327831b3b5b4ae2c580979f474a9c","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"9c7327831b3b5b4ae2c580979f474a9c","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source2<br/>","optimizer_properties":{}}]}}
+[0m[2025-01-25T11:01:05.073456] [FLK_MGR] Current operator names: dict_keys(['Sink__Sink', 'Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks', 'Timestamps/Watermarks+-_Map', 'Source__Source1', 'Source__Source2'])
+[0m[2025-01-25T11:01:05.487719] [POD_MGR] Running command ['/bin/sh', '-c', 'flink list -r 2>/dev/null'] on pod flink-jobmanager-7d7c784b74-mf8b2
+[0m[2025-01-25T11:01:06.908758] [FLK_MGR] Running jobs: Waiting for response...
+------------------ Running/Restarting Jobs -------------------
+25.01.2025 11:01:04 : 204d4620da8f4df304b1fece90fa69d1 : myjoin-transscale-0.0.1 (RUNNING)
+--------------------------------------------------------------
+[0m[2025-01-25T11:01:06.908812] [FLK_MGR] Running jobs: ['204d4620da8f4df304b1fece90fa69d1']
+[0m[2025-01-25T11:01:06.908819] [FLK_MGR] Total jobs cancelled: 0
+[0m[2025-01-25T11:01:06.908825] [SCALING] First iteration after setup, just waiting...
+[0m[2025-01-25T11:05:06.932102] [SCALING] Scaling started.
+[0m[2025-01-25T11:05:06.932194] [SCALING] Decrementing count of first TM by 1.
+
+[0m[2025-01-25T11:05:06.932228] =========================================================== Step 0 ===========================================================
+[0m[2025-01-25T11:05:06.932248] [SCALING] Scaling on node : vm_grid5000
+[0m[2025-01-25T11:05:06.932274] [SCALING] Adding 1 replicas of m-2c taskmanager.
+[0m[2025-01-25T11:05:06.938236] [SCALING] Statefulset name to scale : flink-taskmanager-m-2c
+[0m[2025-01-25T11:05:06.951433] [SCALING] Current taskmanagers count: {'flink-taskmanager-l': 0, 'flink-taskmanager-l-2c': 0, 'flink-taskmanager-m': 0, 'flink-taskmanager-m-2c': 1, 'flink-taskmanager-s': 0, 'flink-taskmanager-s-2c': 0, 'flink-taskmanager-xl': 0, 'flink-taskmanager-xxl': 0}
+[0m[2025-01-25T11:05:06.961125] [STS_MGR] StatefulSet flink-taskmanager-m-2c scaled to 2 replica.
+[0m[2025-01-25T11:05:11.982453] [SCALING] ************************************ Adding 2 replicas ************************************
+[0m[2025-01-25T11:05:11.982475] [FLK_MGR] Running job.
+[0m[2025-01-25T11:05:11.982481] [FLK_MGR] Rescaling job to 2.
+[0m[2025-01-25T11:05:12.298294] [POD_MGR] Running command ['/bin/sh', '-c', 'flink stop -p -d 204d4620da8f4df304b1fece90fa69d1'] on pod flink-jobmanager-7d7c784b74-mf8b2
+[0m[2025-01-25T11:05:20.390695] [FLK_MGR] Savepoint path: s3://flink-bucket/savepoints/savepoint-204d46-7d188381700d
+[0m[2025-01-25T11:05:39.786616] [POD_MGR] Running command ['/bin/sh', '-c', "flink run -d -s s3://flink-bucket/savepoints/savepoint-204d46-7d188381700d -j /tmp/jobs/myjoin-transscale-all.jar --parmap 'Sink__Sink:1;Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks:2;Timestamps/Watermarks+-_Map:1;Source__Source1:1;Source__Source2:1'"] on pod flink-jobmanager-7d7c784b74-mf8b2
+[0m[2025-01-25T11:05:42.776528] [FLK_MGR] Operator TumblingEventTimeWindows rescaled to 2.
+[0m[2025-01-25T11:05:42.776561] [FLK_MGR] Job run response: ERROR StatusLogger Reconfiguration failed: No configuration found for '37f8bb67' at 'null' in 'null'
+ERROR StatusLogger Reconfiguration failed: No configuration found for '34e9fd99' at 'null' in 'null'
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator (file:/opt/flink/lib/flink-dist-1.20.0.jar) to field java.util.Collections$UnmodifiableMap.m
+WARNING: Please consider reporting this to the maintainers of org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+KAFKA_BOOTSTRAP_SERVERS: kafka-service.kafka.svc.cluster.local:9092
+SCHEMA_REGISTRY_URL: http://schema-registry-service.kafka.svc.cluster.local:8081
+KAFKA_INPUT_TOPIC1: input-topic1
+KAFKA_INPUT_TOPIC2: input-topic2
+JOB_WINDOW_SIZE: 1000
+CHECKPOINTING: true
+FIB_INPUT: 18
+Starting JoinApplication.
+Sink__Sink:1;Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks:2;Timestamps/Watermarks+-_Map:1;Source__Source1:1;Source__Source2:1
+Sink__Sink --> 1
+Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks --> 2
+Timestamps/Watermarks+-_Map --> 1
+Source__Source1 --> 1
+Source__Source2 --> 1
+Job has been submitted with JobID 843c05221bbc875a5a9ee76b2453cf63
+
+[0m[2025-01-25T11:05:42.776579] [FLK_MGR] Running job id: 843c05221bbc875a5a9ee76b2453cf63
+[0m[2025-01-25T11:05:42.776584] [FLK_MGR] Getting job info.
+[0m[2025-01-25T11:05:42.782645] [FLK_MGR] Job plan response: {"plan":{"jid":"843c05221bbc875a5a9ee76b2453cf63","name":"myjoin-transscale-0.0.1","type":"STREAMING","nodes":[{"id":"41a95396e613c9f62f1da16142d5ddd2","parallelism":1,"operator":"","operator_strategy":"","description":"Sink: Sink<br/>","inputs":[{"num":0,"id":"32f0ffe0b6f0b990239bb81cec28b9d8","ship_strategy":"REBALANCE","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"32f0ffe0b6f0b990239bb81cec28b9d8","parallelism":2,"operator":"","operator_strategy":"","description":"Window(TumblingEventTimeWindows(1000), EventTimeTrigger, TimeEvictor, CoGroupWindowFunction)<br/>+- Timestamps/Watermarks<br/>","inputs":[{"num":0,"id":"31ec045e3401e87fc7879b43d8e8625d","ship_strategy":"HASH","exchange":"pipelined_bounded"},{"num":1,"id":"e926317ddf99720773e3c7f4f412c3d7","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"31ec045e3401e87fc7879b43d8e8625d","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"dca33db40b2f8f122636cd5297c0c511","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"dca33db40b2f8f122636cd5297c0c511","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source1<br/>","optimizer_properties":{}},{"id":"e926317ddf99720773e3c7f4f412c3d7","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"9c7327831b3b5b4ae2c580979f474a9c","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"9c7327831b3b5b4ae2c580979f474a9c","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source2<br/>","optimizer_properties":{}}]}}
+[0m[2025-01-25T11:05:42.782778] [FLK_MGR] Current operator names: dict_keys(['Sink__Sink', 'Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks', 'Timestamps/Watermarks+-_Map', 'Source__Source1', 'Source__Source2'])
+[0m[2025-01-25T11:05:43.195631] [POD_MGR] Running command ['/bin/sh', '-c', 'flink list -r 2>/dev/null'] on pod flink-jobmanager-7d7c784b74-mf8b2
+[0m[2025-01-25T11:05:44.633899] [FLK_MGR] Running jobs: Waiting for response...
+------------------ Running/Restarting Jobs -------------------
+25.01.2025 11:05:42 : 843c05221bbc875a5a9ee76b2453cf63 : myjoin-transscale-0.0.1 (RUNNING)
+--------------------------------------------------------------
+[0m[2025-01-25T11:05:44.633971] [FLK_MGR] Running jobs: ['843c05221bbc875a5a9ee76b2453cf63']
+[0m[2025-01-25T11:05:44.633979] [FLK_MGR] Total jobs cancelled: 0
+[0m[2025-01-25T11:05:44.641353] [SCALING] Monitoring interval: for 240 seconds
+[0m[2025-01-25T11:09:44.664743] [SCALING] Adding 1 replicas of m-2c taskmanager.
+[0m[2025-01-25T11:09:44.671043] [SCALING] Statefulset name to scale : flink-taskmanager-m-2c
+[0m[2025-01-25T11:09:44.684334] [SCALING] Current taskmanagers count: {'flink-taskmanager-l': 0, 'flink-taskmanager-l-2c': 0, 'flink-taskmanager-m': 0, 'flink-taskmanager-m-2c': 2, 'flink-taskmanager-s': 0, 'flink-taskmanager-s-2c': 0, 'flink-taskmanager-xl': 0, 'flink-taskmanager-xxl': 0}
+[0m[2025-01-25T11:09:44.693999] [STS_MGR] StatefulSet flink-taskmanager-m-2c scaled to 3 replica.
+[0m[2025-01-25T11:09:49.717067] [SCALING] ************************************ Adding 3 replicas ************************************
+[0m[2025-01-25T11:09:49.717102] [FLK_MGR] Running job.
+[0m[2025-01-25T11:09:49.717107] [FLK_MGR] Rescaling job to 3.
+[0m[2025-01-25T11:09:50.030338] [POD_MGR] Running command ['/bin/sh', '-c', 'flink stop -p -d 843c05221bbc875a5a9ee76b2453cf63'] on pod flink-jobmanager-7d7c784b74-mf8b2
+[0m[2025-01-25T11:10:02.087117] [FLK_MGR] Savepoint path: s3://flink-bucket/savepoints/savepoint-843c05-48723f382564
+[0m[2025-01-25T11:10:21.507752] [POD_MGR] Running command ['/bin/sh', '-c', "flink run -d -s s3://flink-bucket/savepoints/savepoint-843c05-48723f382564 -j /tmp/jobs/myjoin-transscale-all.jar --parmap 'Sink__Sink:1;Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks:3;Timestamps/Watermarks+-_Map:1;Source__Source1:1;Source__Source2:1'"] on pod flink-jobmanager-7d7c784b74-mf8b2
+[0m[2025-01-25T11:10:24.347853] [FLK_MGR] Operator TumblingEventTimeWindows rescaled to 3.
+[0m[2025-01-25T11:10:24.347893] [FLK_MGR] Job run response: ERROR StatusLogger Reconfiguration failed: No configuration found for '37f8bb67' at 'null' in 'null'
+ERROR StatusLogger Reconfiguration failed: No configuration found for '34e9fd99' at 'null' in 'null'
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator (file:/opt/flink/lib/flink-dist-1.20.0.jar) to field java.util.Collections$UnmodifiableMap.m
+WARNING: Please consider reporting this to the maintainers of org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+KAFKA_BOOTSTRAP_SERVERS: kafka-service.kafka.svc.cluster.local:9092
+SCHEMA_REGISTRY_URL: http://schema-registry-service.kafka.svc.cluster.local:8081
+KAFKA_INPUT_TOPIC1: input-topic1
+KAFKA_INPUT_TOPIC2: input-topic2
+JOB_WINDOW_SIZE: 1000
+CHECKPOINTING: true
+FIB_INPUT: 18
+Starting JoinApplication.
+Sink__Sink:1;Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks:3;Timestamps/Watermarks+-_Map:1;Source__Source1:1;Source__Source2:1
+Sink__Sink --> 1
+Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks --> 3
+Timestamps/Watermarks+-_Map --> 1
+Source__Source1 --> 1
+Source__Source2 --> 1
+Job has been submitted with JobID b026a26e1e5fd978851ce9d39d88dcac
+
+[0m[2025-01-25T11:10:24.347913] [FLK_MGR] Running job id: b026a26e1e5fd978851ce9d39d88dcac
+[0m[2025-01-25T11:10:24.347919] [FLK_MGR] Getting job info.
+[0m[2025-01-25T11:10:24.355094] [FLK_MGR] Job plan response: {"plan":{"jid":"b026a26e1e5fd978851ce9d39d88dcac","name":"myjoin-transscale-0.0.1","type":"STREAMING","nodes":[{"id":"41a95396e613c9f62f1da16142d5ddd2","parallelism":1,"operator":"","operator_strategy":"","description":"Sink: Sink<br/>","inputs":[{"num":0,"id":"32f0ffe0b6f0b990239bb81cec28b9d8","ship_strategy":"REBALANCE","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"32f0ffe0b6f0b990239bb81cec28b9d8","parallelism":3,"operator":"","operator_strategy":"","description":"Window(TumblingEventTimeWindows(1000), EventTimeTrigger, TimeEvictor, CoGroupWindowFunction)<br/>+- Timestamps/Watermarks<br/>","inputs":[{"num":0,"id":"31ec045e3401e87fc7879b43d8e8625d","ship_strategy":"HASH","exchange":"pipelined_bounded"},{"num":1,"id":"e926317ddf99720773e3c7f4f412c3d7","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"31ec045e3401e87fc7879b43d8e8625d","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"dca33db40b2f8f122636cd5297c0c511","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"dca33db40b2f8f122636cd5297c0c511","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source1<br/>","optimizer_properties":{}},{"id":"e926317ddf99720773e3c7f4f412c3d7","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"9c7327831b3b5b4ae2c580979f474a9c","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"9c7327831b3b5b4ae2c580979f474a9c","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source2<br/>","optimizer_properties":{}}]}}
+[0m[2025-01-25T11:10:24.355421] [FLK_MGR] Current operator names: dict_keys(['Sink__Sink', 'Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks', 'Timestamps/Watermarks+-_Map', 'Source__Source1', 'Source__Source2'])
+[0m[2025-01-25T11:10:24.768975] [POD_MGR] Running command ['/bin/sh', '-c', 'flink list -r 2>/dev/null'] on pod flink-jobmanager-7d7c784b74-mf8b2
+[0m[2025-01-25T11:10:26.169839] [FLK_MGR] Running jobs: Waiting for response...
+------------------ Running/Restarting Jobs -------------------
+25.01.2025 11:10:24 : b026a26e1e5fd978851ce9d39d88dcac : myjoin-transscale-0.0.1 (RUNNING)
+--------------------------------------------------------------
+[0m[2025-01-25T11:10:26.169891] [FLK_MGR] Running jobs: ['b026a26e1e5fd978851ce9d39d88dcac']
+[0m[2025-01-25T11:10:26.169897] [FLK_MGR] Total jobs cancelled: 0
+[0m[2025-01-25T11:10:26.175925] [SCALING] Monitoring interval: for 240 seconds
+[0m[2025-01-25T11:14:26.198422] [SCALING] Adding 1 replicas of m-2c taskmanager.
+[0m[2025-01-25T11:14:26.204313] [SCALING] Statefulset name to scale : flink-taskmanager-m-2c
+[0m[2025-01-25T11:14:26.217206] [SCALING] Current taskmanagers count: {'flink-taskmanager-l': 0, 'flink-taskmanager-l-2c': 0, 'flink-taskmanager-m': 0, 'flink-taskmanager-m-2c': 3, 'flink-taskmanager-s': 0, 'flink-taskmanager-s-2c': 0, 'flink-taskmanager-xl': 0, 'flink-taskmanager-xxl': 0}
+[0m[2025-01-25T11:14:26.225548] [STS_MGR] StatefulSet flink-taskmanager-m-2c scaled to 4 replica.
+[0m[2025-01-25T11:14:31.249337] [SCALING] ************************************ Adding 4 replicas ************************************
+[0m[2025-01-25T11:14:31.249368] [FLK_MGR] Running job.
+[0m[2025-01-25T11:14:31.249373] [FLK_MGR] Rescaling job to 4.
+[0m[2025-01-25T11:14:31.580849] [POD_MGR] Running command ['/bin/sh', '-c', 'flink stop -p -d b026a26e1e5fd978851ce9d39d88dcac'] on pod flink-jobmanager-7d7c784b74-mf8b2
+[0m[2025-01-25T11:14:37.621068] [FLK_MGR] Savepoint path: s3://flink-bucket/savepoints/savepoint-b026a2-75103be01e40
+[0m[2025-01-25T11:14:57.001160] [POD_MGR] Running command ['/bin/sh', '-c', "flink run -d -s s3://flink-bucket/savepoints/savepoint-b026a2-75103be01e40 -j /tmp/jobs/myjoin-transscale-all.jar --parmap 'Sink__Sink:1;Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks:4;Timestamps/Watermarks+-_Map:1;Source__Source1:1;Source__Source2:1'"] on pod flink-jobmanager-7d7c784b74-mf8b2
+[0m[2025-01-25T11:14:59.839047] [FLK_MGR] Operator TumblingEventTimeWindows rescaled to 4.
+[0m[2025-01-25T11:14:59.839090] [FLK_MGR] Job run response: ERROR StatusLogger Reconfiguration failed: No configuration found for '37f8bb67' at 'null' in 'null'
+ERROR StatusLogger Reconfiguration failed: No configuration found for '34e9fd99' at 'null' in 'null'
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator (file:/opt/flink/lib/flink-dist-1.20.0.jar) to field java.util.Collections$UnmodifiableMap.m
+WARNING: Please consider reporting this to the maintainers of org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+KAFKA_BOOTSTRAP_SERVERS: kafka-service.kafka.svc.cluster.local:9092
+SCHEMA_REGISTRY_URL: http://schema-registry-service.kafka.svc.cluster.local:8081
+KAFKA_INPUT_TOPIC1: input-topic1
+KAFKA_INPUT_TOPIC2: input-topic2
+JOB_WINDOW_SIZE: 1000
+CHECKPOINTING: true
+FIB_INPUT: 18
+Starting JoinApplication.
+Sink__Sink:1;Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks:4;Timestamps/Watermarks+-_Map:1;Source__Source1:1;Source__Source2:1
+Sink__Sink --> 1
+Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks --> 4
+Timestamps/Watermarks+-_Map --> 1
+Source__Source1 --> 1
+Source__Source2 --> 1
+Job has been submitted with JobID 18eb5c0c1863b1807d60a6084ae02fc0
+
+[0m[2025-01-25T11:14:59.839111] [FLK_MGR] Running job id: 18eb5c0c1863b1807d60a6084ae02fc0
+[0m[2025-01-25T11:14:59.839116] [FLK_MGR] Getting job info.
+[0m[2025-01-25T11:14:59.846625] [FLK_MGR] Job plan response: {"plan":{"jid":"18eb5c0c1863b1807d60a6084ae02fc0","name":"myjoin-transscale-0.0.1","type":"STREAMING","nodes":[{"id":"41a95396e613c9f62f1da16142d5ddd2","parallelism":1,"operator":"","operator_strategy":"","description":"Sink: Sink<br/>","inputs":[{"num":0,"id":"32f0ffe0b6f0b990239bb81cec28b9d8","ship_strategy":"REBALANCE","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"32f0ffe0b6f0b990239bb81cec28b9d8","parallelism":4,"operator":"","operator_strategy":"","description":"Window(TumblingEventTimeWindows(1000), EventTimeTrigger, TimeEvictor, CoGroupWindowFunction)<br/>+- Timestamps/Watermarks<br/>","inputs":[{"num":0,"id":"31ec045e3401e87fc7879b43d8e8625d","ship_strategy":"HASH","exchange":"pipelined_bounded"},{"num":1,"id":"e926317ddf99720773e3c7f4f412c3d7","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"31ec045e3401e87fc7879b43d8e8625d","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"dca33db40b2f8f122636cd5297c0c511","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"dca33db40b2f8f122636cd5297c0c511","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source1<br/>","optimizer_properties":{}},{"id":"e926317ddf99720773e3c7f4f412c3d7","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"9c7327831b3b5b4ae2c580979f474a9c","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"9c7327831b3b5b4ae2c580979f474a9c","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source2<br/>","optimizer_properties":{}}]}}
+[0m[2025-01-25T11:14:59.846787] [FLK_MGR] Current operator names: dict_keys(['Sink__Sink', 'Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks', 'Timestamps/Watermarks+-_Map', 'Source__Source1', 'Source__Source2'])
+[0m[2025-01-25T11:15:00.386787] [POD_MGR] Running command ['/bin/sh', '-c', 'flink list -r 2>/dev/null'] on pod flink-jobmanager-7d7c784b74-mf8b2
+[0m[2025-01-25T11:15:01.801899] [FLK_MGR] Running jobs: Waiting for response...
+------------------ Running/Restarting Jobs -------------------
+25.01.2025 11:14:59 : 18eb5c0c1863b1807d60a6084ae02fc0 : myjoin-transscale-0.0.1 (RUNNING)
+--------------------------------------------------------------
+[0m[2025-01-25T11:15:01.801958] [FLK_MGR] Running jobs: ['18eb5c0c1863b1807d60a6084ae02fc0']
+[0m[2025-01-25T11:15:01.801966] [FLK_MGR] Total jobs cancelled: 0
+[0m[2025-01-25T11:15:01.808171] [SCALING] Monitoring interval: for 240 seconds
+[0m[2025-01-25T11:19:01.831335] [SCALING] Scaling step on node virtual-158-0-2 finished. Marking node as full.
+[0m[2025-01-25T11:19:06.843314] [SCALING] Scaling finished.
+[0m[2025-01-25T11:19:06.843367] [NODE_MGR] Resetting scaling labels to unschedulable.
+[0m[2025-01-25T11:19:06.859952] [NODE_MGR] Resetting state labels.
+[0m[2025-01-25T11:19:06.876683] [STS_MGR] Resetting taskmanagers.
+[0m[2025-01-25T11:19:06.898359] [STS_MGR] StatefulSet flink-taskmanager-l scaled to 0 replica.
+[0m[2025-01-25T11:19:06.909300] [STS_MGR] StatefulSet flink-taskmanager-l-2c scaled to 0 replica.
+[0m[2025-01-25T11:19:06.921487] [STS_MGR] StatefulSet flink-taskmanager-m scaled to 0 replica.
+[0m[2025-01-25T11:19:06.934852] [STS_MGR] StatefulSet flink-taskmanager-m-2c scaled to 0 replica.
+[0m[2025-01-25T11:19:11.953631] [STS_MGR] StatefulSet flink-taskmanager-s scaled to 0 replica.
+[0m[2025-01-25T11:19:11.964890] [STS_MGR] StatefulSet flink-taskmanager-s-2c scaled to 0 replica.
+[0m[2025-01-25T11:19:11.975825] [STS_MGR] StatefulSet flink-taskmanager-xl scaled to 0 replica.
+[0m[2025-01-25T11:19:11.986571] [STS_MGR] StatefulSet flink-taskmanager-xxl scaled to 0 replica.
+[0m[2025-01-25T11:19:12.003739] [POD_MGR] Pod flink-jobmanager-7d7c784b74-mf8b2 deleted
+[0m[2025-01-25T11:19:13.852418] Playbook /app/playbooks/application/load_generators.yaml with tag delete executed successfully.
+[0m[2025-01-25T11:19:15.770363] Playbook /app/playbooks/application/load_generators.yaml with tag delete executed successfully.
+[0m[2025-01-25T11:19:15.770425] Reloading playbook: application/kafka
+[0m[2025-01-25T11:19:21.761424] Playbook /app/playbooks/application/kafka.yaml with tag delete executed successfully.
+[0m[2025-01-25T11:20:02.691894] Playbook /app/playbooks/application/kafka.yaml with tag create executed successfully.
+[0m[2025-01-25T11:20:02.692042] [EXPERIMENT] Run 3 completed. Start: 1737802851, End: 1737804002
+[0m[2025-01-25T11:20:02.692048] [EXPERIMENT] Sleeping for 10 seconds before next run.
+[0m[2025-01-25T11:20:12.693151] [EXPERIMENT] =================================== Starting run 4 ===================================
+[0m[2025-01-25T11:20:14.566427] Playbook /app/playbooks/application/load_generators.yaml with tag create executed successfully.
+[0m[2025-01-25T11:20:16.452666] Playbook /app/playbooks/application/load_generators.yaml with tag create executed successfully.
+[0m[2025-01-25T11:20:16.452730] [SCALING] Setting up experiment.
+
+
+[0m[2025-01-25T11:20:16.452737] [NODE_MGR] Resetting scaling labels to unschedulable.
+[0m[2025-01-25T11:20:16.457859] [NODE_MGR] Resetting state labels.
+[0m[2025-01-25T11:20:16.472127] [SCALING] First node: virtual-158-0-2
+
+[0m[2025-01-25T11:20:16.485797] [SCALING] Statefulset name to scale : flink-taskmanager-m-2c
+[0m[2025-01-25T11:20:16.494163] [STS_MGR] StatefulSet flink-taskmanager-m-2c scaled to 1 replica.
+[0m[2025-01-25T11:20:21.502512] [FLK_MGR] Running job.
+[0m[2025-01-25T11:20:21.818438] [POD_MGR] Running command ['/bin/sh', '-c', 'flink run -d -j /tmp/jobs/myjoin-transscale-all.jar'] on pod flink-jobmanager-7d7c784b74-kjdc8
+[0m[2025-01-25T11:20:25.875231] [FLK_MGR] Job run response: ERROR StatusLogger Reconfiguration failed: No configuration found for '37f8bb67' at 'null' in 'null'
+ERROR StatusLogger Reconfiguration failed: No configuration found for '34e9fd99' at 'null' in 'null'
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator (file:/opt/flink/lib/flink-dist-1.20.0.jar) to field java.util.Collections$UnmodifiableMap.m
+WARNING: Please consider reporting this to the maintainers of org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+KAFKA_BOOTSTRAP_SERVERS: kafka-service.kafka.svc.cluster.local:9092
+SCHEMA_REGISTRY_URL: http://schema-registry-service.kafka.svc.cluster.local:8081
+KAFKA_INPUT_TOPIC1: input-topic1
+KAFKA_INPUT_TOPIC2: input-topic2
+JOB_WINDOW_SIZE: 1000
+CHECKPOINTING: true
+FIB_INPUT: 18
+Starting JoinApplication.
+Job has been submitted with JobID 5b76980f7f7981d35cd4b80dc531c4cf
+
+[0m[2025-01-25T11:20:25.875282] [FLK_MGR] Running job id: 5b76980f7f7981d35cd4b80dc531c4cf
+[0m[2025-01-25T11:20:25.875291] [FLK_MGR] Getting job info.
+[0m[2025-01-25T11:20:25.894004] [FLK_MGR] Job plan response: {"plan":{"jid":"5b76980f7f7981d35cd4b80dc531c4cf","name":"myjoin-transscale-0.0.1","type":"STREAMING","nodes":[{"id":"41a95396e613c9f62f1da16142d5ddd2","parallelism":1,"operator":"","operator_strategy":"","description":"Sink: Sink<br/>","inputs":[{"num":0,"id":"32f0ffe0b6f0b990239bb81cec28b9d8","ship_strategy":"FORWARD","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"32f0ffe0b6f0b990239bb81cec28b9d8","parallelism":1,"operator":"","operator_strategy":"","description":"Window(TumblingEventTimeWindows(1000), EventTimeTrigger, TimeEvictor, CoGroupWindowFunction)<br/>+- Timestamps/Watermarks<br/>","inputs":[{"num":0,"id":"31ec045e3401e87fc7879b43d8e8625d","ship_strategy":"HASH","exchange":"pipelined_bounded"},{"num":1,"id":"e926317ddf99720773e3c7f4f412c3d7","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"31ec045e3401e87fc7879b43d8e8625d","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"dca33db40b2f8f122636cd5297c0c511","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"dca33db40b2f8f122636cd5297c0c511","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source1<br/>","optimizer_properties":{}},{"id":"e926317ddf99720773e3c7f4f412c3d7","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"9c7327831b3b5b4ae2c580979f474a9c","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"9c7327831b3b5b4ae2c580979f474a9c","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source2<br/>","optimizer_properties":{}}]}}
+[0m[2025-01-25T11:20:25.894180] [FLK_MGR] Current operator names: dict_keys(['Sink__Sink', 'Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks', 'Timestamps/Watermarks+-_Map', 'Source__Source1', 'Source__Source2'])
+[0m[2025-01-25T11:20:26.289159] [POD_MGR] Running command ['/bin/sh', '-c', 'flink list -r 2>/dev/null'] on pod flink-jobmanager-7d7c784b74-kjdc8
+[0m[2025-01-25T11:20:27.714945] [FLK_MGR] Running jobs: Waiting for response...
+------------------ Running/Restarting Jobs -------------------
+25.01.2025 11:20:24 : 5b76980f7f7981d35cd4b80dc531c4cf : myjoin-transscale-0.0.1 (RUNNING)
+--------------------------------------------------------------
+[0m[2025-01-25T11:20:27.715001] [FLK_MGR] Running jobs: ['5b76980f7f7981d35cd4b80dc531c4cf']
+[0m[2025-01-25T11:20:27.715008] [FLK_MGR] Total jobs cancelled: 0
+[0m[2025-01-25T11:20:27.715014] [SCALING] First iteration after setup, just waiting...
+[0m[2025-01-25T11:24:27.738343] [SCALING] Scaling started.
+[0m[2025-01-25T11:24:27.738391] [SCALING] Decrementing count of first TM by 1.
+
+[0m[2025-01-25T11:24:27.738403] =========================================================== Step 0 ===========================================================
+[0m[2025-01-25T11:24:27.738409] [SCALING] Scaling on node : vm_grid5000
+[0m[2025-01-25T11:24:27.738417] [SCALING] Adding 1 replicas of m-2c taskmanager.
+[0m[2025-01-25T11:24:27.744063] [SCALING] Statefulset name to scale : flink-taskmanager-m-2c
+[0m[2025-01-25T11:24:27.757943] [SCALING] Current taskmanagers count: {'flink-taskmanager-l': 0, 'flink-taskmanager-l-2c': 0, 'flink-taskmanager-m': 0, 'flink-taskmanager-m-2c': 1, 'flink-taskmanager-s': 0, 'flink-taskmanager-s-2c': 0, 'flink-taskmanager-xl': 0, 'flink-taskmanager-xxl': 0}
+[0m[2025-01-25T11:24:27.767400] [STS_MGR] StatefulSet flink-taskmanager-m-2c scaled to 2 replica.
+[0m[2025-01-25T11:24:32.789511] [SCALING] ************************************ Adding 2 replicas ************************************
+[0m[2025-01-25T11:24:32.789541] [FLK_MGR] Running job.
+[0m[2025-01-25T11:24:32.789546] [FLK_MGR] Rescaling job to 2.
+[0m[2025-01-25T11:24:33.163083] [POD_MGR] Running command ['/bin/sh', '-c', 'flink stop -p -d 5b76980f7f7981d35cd4b80dc531c4cf'] on pod flink-jobmanager-7d7c784b74-kjdc8
+[0m[2025-01-25T11:24:39.238842] [FLK_MGR] Savepoint path: s3://flink-bucket/savepoints/savepoint-5b7698-c79e0fbd2deb
+[0m[2025-01-25T11:24:58.557677] [POD_MGR] Running command ['/bin/sh', '-c', "flink run -d -s s3://flink-bucket/savepoints/savepoint-5b7698-c79e0fbd2deb -j /tmp/jobs/myjoin-transscale-all.jar --parmap 'Sink__Sink:1;Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks:2;Timestamps/Watermarks+-_Map:1;Source__Source1:1;Source__Source2:1'"] on pod flink-jobmanager-7d7c784b74-kjdc8
+[0m[2025-01-25T11:25:01.592490] [FLK_MGR] Operator TumblingEventTimeWindows rescaled to 2.
+[0m[2025-01-25T11:25:01.592527] [FLK_MGR] Job run response: ERROR StatusLogger Reconfiguration failed: No configuration found for '37f8bb67' at 'null' in 'null'
+ERROR StatusLogger Reconfiguration failed: No configuration found for '34e9fd99' at 'null' in 'null'
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator (file:/opt/flink/lib/flink-dist-1.20.0.jar) to field java.util.Collections$UnmodifiableMap.m
+WARNING: Please consider reporting this to the maintainers of org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+KAFKA_BOOTSTRAP_SERVERS: kafka-service.kafka.svc.cluster.local:9092
+SCHEMA_REGISTRY_URL: http://schema-registry-service.kafka.svc.cluster.local:8081
+KAFKA_INPUT_TOPIC1: input-topic1
+KAFKA_INPUT_TOPIC2: input-topic2
+JOB_WINDOW_SIZE: 1000
+CHECKPOINTING: true
+FIB_INPUT: 18
+Starting JoinApplication.
+Sink__Sink:1;Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks:2;Timestamps/Watermarks+-_Map:1;Source__Source1:1;Source__Source2:1
+Sink__Sink --> 1
+Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks --> 2
+Timestamps/Watermarks+-_Map --> 1
+Source__Source1 --> 1
+Source__Source2 --> 1
+Job has been submitted with JobID c40f4755537187ab25c2d39862313959
+
+[0m[2025-01-25T11:25:01.592549] [FLK_MGR] Running job id: c40f4755537187ab25c2d39862313959
+[0m[2025-01-25T11:25:01.592557] [FLK_MGR] Getting job info.
+[0m[2025-01-25T11:25:01.599621] [FLK_MGR] Job plan response: {"plan":{"jid":"c40f4755537187ab25c2d39862313959","name":"myjoin-transscale-0.0.1","type":"STREAMING","nodes":[{"id":"41a95396e613c9f62f1da16142d5ddd2","parallelism":1,"operator":"","operator_strategy":"","description":"Sink: Sink<br/>","inputs":[{"num":0,"id":"32f0ffe0b6f0b990239bb81cec28b9d8","ship_strategy":"REBALANCE","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"32f0ffe0b6f0b990239bb81cec28b9d8","parallelism":2,"operator":"","operator_strategy":"","description":"Window(TumblingEventTimeWindows(1000), EventTimeTrigger, TimeEvictor, CoGroupWindowFunction)<br/>+- Timestamps/Watermarks<br/>","inputs":[{"num":0,"id":"31ec045e3401e87fc7879b43d8e8625d","ship_strategy":"HASH","exchange":"pipelined_bounded"},{"num":1,"id":"e926317ddf99720773e3c7f4f412c3d7","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"31ec045e3401e87fc7879b43d8e8625d","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"dca33db40b2f8f122636cd5297c0c511","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"dca33db40b2f8f122636cd5297c0c511","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source1<br/>","optimizer_properties":{}},{"id":"e926317ddf99720773e3c7f4f412c3d7","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"9c7327831b3b5b4ae2c580979f474a9c","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"9c7327831b3b5b4ae2c580979f474a9c","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source2<br/>","optimizer_properties":{}}]}}
+[0m[2025-01-25T11:25:01.599839] [FLK_MGR] Current operator names: dict_keys(['Sink__Sink', 'Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks', 'Timestamps/Watermarks+-_Map', 'Source__Source1', 'Source__Source2'])
+[0m[2025-01-25T11:25:01.982762] [POD_MGR] Running command ['/bin/sh', '-c', 'flink list -r 2>/dev/null'] on pod flink-jobmanager-7d7c784b74-kjdc8
+[0m[2025-01-25T11:25:03.396735] [FLK_MGR] Running jobs: Waiting for response...
+------------------ Running/Restarting Jobs -------------------
+25.01.2025 11:25:01 : c40f4755537187ab25c2d39862313959 : myjoin-transscale-0.0.1 (RUNNING)
+--------------------------------------------------------------
+[0m[2025-01-25T11:25:03.396797] [FLK_MGR] Running jobs: ['c40f4755537187ab25c2d39862313959']
+[0m[2025-01-25T11:25:03.396805] [FLK_MGR] Total jobs cancelled: 0
+[0m[2025-01-25T11:25:03.406097] [SCALING] Monitoring interval: for 240 seconds
+[0m[2025-01-25T11:29:03.428341] [SCALING] Adding 1 replicas of m-2c taskmanager.
+[0m[2025-01-25T11:29:03.434014] [SCALING] Statefulset name to scale : flink-taskmanager-m-2c
+[0m[2025-01-25T11:29:03.457806] [SCALING] Current taskmanagers count: {'flink-taskmanager-l': 0, 'flink-taskmanager-l-2c': 0, 'flink-taskmanager-m': 0, 'flink-taskmanager-m-2c': 2, 'flink-taskmanager-s': 0, 'flink-taskmanager-s-2c': 0, 'flink-taskmanager-xl': 0, 'flink-taskmanager-xxl': 0}
+[0m[2025-01-25T11:29:03.469270] [STS_MGR] StatefulSet flink-taskmanager-m-2c scaled to 3 replica.
+[0m[2025-01-25T11:29:08.490290] [SCALING] ************************************ Adding 3 replicas ************************************
+[0m[2025-01-25T11:29:08.490321] [FLK_MGR] Running job.
+[0m[2025-01-25T11:29:08.490326] [FLK_MGR] Rescaling job to 3.
+[0m[2025-01-25T11:29:08.865873] [POD_MGR] Running command ['/bin/sh', '-c', 'flink stop -p -d c40f4755537187ab25c2d39862313959'] on pod flink-jobmanager-7d7c784b74-kjdc8
+[0m[2025-01-25T11:29:14.923765] [FLK_MGR] Savepoint path: s3://flink-bucket/savepoints/savepoint-c40f47-8ab6980c0f71
+[0m[2025-01-25T11:29:34.244794] [POD_MGR] Running command ['/bin/sh', '-c', "flink run -d -s s3://flink-bucket/savepoints/savepoint-c40f47-8ab6980c0f71 -j /tmp/jobs/myjoin-transscale-all.jar --parmap 'Sink__Sink:1;Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks:3;Timestamps/Watermarks+-_Map:1;Source__Source1:1;Source__Source2:1'"] on pod flink-jobmanager-7d7c784b74-kjdc8
+[0m[2025-01-25T11:29:37.027213] [FLK_MGR] Operator TumblingEventTimeWindows rescaled to 3.
+[0m[2025-01-25T11:29:37.027253] [FLK_MGR] Job run response: ERROR StatusLogger Reconfiguration failed: No configuration found for '37f8bb67' at 'null' in 'null'
+ERROR StatusLogger Reconfiguration failed: No configuration found for '34e9fd99' at 'null' in 'null'
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator (file:/opt/flink/lib/flink-dist-1.20.0.jar) to field java.util.Collections$UnmodifiableMap.m
+WARNING: Please consider reporting this to the maintainers of org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+KAFKA_BOOTSTRAP_SERVERS: kafka-service.kafka.svc.cluster.local:9092
+SCHEMA_REGISTRY_URL: http://schema-registry-service.kafka.svc.cluster.local:8081
+KAFKA_INPUT_TOPIC1: input-topic1
+KAFKA_INPUT_TOPIC2: input-topic2
+JOB_WINDOW_SIZE: 1000
+CHECKPOINTING: true
+FIB_INPUT: 18
+Starting JoinApplication.
+Sink__Sink:1;Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks:3;Timestamps/Watermarks+-_Map:1;Source__Source1:1;Source__Source2:1
+Sink__Sink --> 1
+Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks --> 3
+Timestamps/Watermarks+-_Map --> 1
+Source__Source1 --> 1
+Source__Source2 --> 1
+Job has been submitted with JobID 7379fa01501a35d84aa5866b647a20bd
+
+[0m[2025-01-25T11:29:37.027279] [FLK_MGR] Running job id: 7379fa01501a35d84aa5866b647a20bd
+[0m[2025-01-25T11:29:37.027288] [FLK_MGR] Getting job info.
+[0m[2025-01-25T11:29:37.035912] [FLK_MGR] Job plan response: {"plan":{"jid":"7379fa01501a35d84aa5866b647a20bd","name":"myjoin-transscale-0.0.1","type":"STREAMING","nodes":[{"id":"41a95396e613c9f62f1da16142d5ddd2","parallelism":1,"operator":"","operator_strategy":"","description":"Sink: Sink<br/>","inputs":[{"num":0,"id":"32f0ffe0b6f0b990239bb81cec28b9d8","ship_strategy":"REBALANCE","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"32f0ffe0b6f0b990239bb81cec28b9d8","parallelism":3,"operator":"","operator_strategy":"","description":"Window(TumblingEventTimeWindows(1000), EventTimeTrigger, TimeEvictor, CoGroupWindowFunction)<br/>+- Timestamps/Watermarks<br/>","inputs":[{"num":0,"id":"31ec045e3401e87fc7879b43d8e8625d","ship_strategy":"HASH","exchange":"pipelined_bounded"},{"num":1,"id":"e926317ddf99720773e3c7f4f412c3d7","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"31ec045e3401e87fc7879b43d8e8625d","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"dca33db40b2f8f122636cd5297c0c511","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"dca33db40b2f8f122636cd5297c0c511","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source1<br/>","optimizer_properties":{}},{"id":"e926317ddf99720773e3c7f4f412c3d7","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"9c7327831b3b5b4ae2c580979f474a9c","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"9c7327831b3b5b4ae2c580979f474a9c","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source2<br/>","optimizer_properties":{}}]}}
+[0m[2025-01-25T11:29:37.036100] [FLK_MGR] Current operator names: dict_keys(['Sink__Sink', 'Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks', 'Timestamps/Watermarks+-_Map', 'Source__Source1', 'Source__Source2'])
+[0m[2025-01-25T11:29:37.483660] [POD_MGR] Running command ['/bin/sh', '-c', 'flink list -r 2>/dev/null'] on pod flink-jobmanager-7d7c784b74-kjdc8
+[0m[2025-01-25T11:29:38.912519] [FLK_MGR] Running jobs: Waiting for response...
+------------------ Running/Restarting Jobs -------------------
+25.01.2025 11:29:36 : 7379fa01501a35d84aa5866b647a20bd : myjoin-transscale-0.0.1 (RUNNING)
+--------------------------------------------------------------
+[0m[2025-01-25T11:29:38.912570] [FLK_MGR] Running jobs: ['7379fa01501a35d84aa5866b647a20bd']
+[0m[2025-01-25T11:29:38.912577] [FLK_MGR] Total jobs cancelled: 0
+[0m[2025-01-25T11:29:38.918240] [SCALING] Monitoring interval: for 240 seconds
+[0m[2025-01-25T11:33:38.941012] [SCALING] Adding 1 replicas of m-2c taskmanager.
+[0m[2025-01-25T11:33:38.946868] [SCALING] Statefulset name to scale : flink-taskmanager-m-2c
+[0m[2025-01-25T11:33:38.959447] [SCALING] Current taskmanagers count: {'flink-taskmanager-l': 0, 'flink-taskmanager-l-2c': 0, 'flink-taskmanager-m': 0, 'flink-taskmanager-m-2c': 3, 'flink-taskmanager-s': 0, 'flink-taskmanager-s-2c': 0, 'flink-taskmanager-xl': 0, 'flink-taskmanager-xxl': 0}
+[0m[2025-01-25T11:33:38.967650] [STS_MGR] StatefulSet flink-taskmanager-m-2c scaled to 4 replica.
+[0m[2025-01-25T11:33:43.989175] [SCALING] ************************************ Adding 4 replicas ************************************
+[0m[2025-01-25T11:33:43.989199] [FLK_MGR] Running job.
+[0m[2025-01-25T11:33:43.989203] [FLK_MGR] Rescaling job to 4.
+[0m[2025-01-25T11:33:44.379383] [POD_MGR] Running command ['/bin/sh', '-c', 'flink stop -p -d 7379fa01501a35d84aa5866b647a20bd'] on pod flink-jobmanager-7d7c784b74-kjdc8
+[0m[2025-01-25T11:33:50.423203] [FLK_MGR] Savepoint path: s3://flink-bucket/savepoints/savepoint-7379fa-1f2ffe2190c4
+[0m[2025-01-25T11:34:09.842887] [POD_MGR] Running command ['/bin/sh', '-c', "flink run -d -s s3://flink-bucket/savepoints/savepoint-7379fa-1f2ffe2190c4 -j /tmp/jobs/myjoin-transscale-all.jar --parmap 'Sink__Sink:1;Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks:4;Timestamps/Watermarks+-_Map:1;Source__Source1:1;Source__Source2:1'"] on pod flink-jobmanager-7d7c784b74-kjdc8
+[0m[2025-01-25T11:34:12.710455] [FLK_MGR] Operator TumblingEventTimeWindows rescaled to 4.
+[0m[2025-01-25T11:34:12.710487] [FLK_MGR] Job run response: ERROR StatusLogger Reconfiguration failed: No configuration found for '37f8bb67' at 'null' in 'null'
+ERROR StatusLogger Reconfiguration failed: No configuration found for '34e9fd99' at 'null' in 'null'
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator (file:/opt/flink/lib/flink-dist-1.20.0.jar) to field java.util.Collections$UnmodifiableMap.m
+WARNING: Please consider reporting this to the maintainers of org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+KAFKA_BOOTSTRAP_SERVERS: kafka-service.kafka.svc.cluster.local:9092
+SCHEMA_REGISTRY_URL: http://schema-registry-service.kafka.svc.cluster.local:8081
+KAFKA_INPUT_TOPIC1: input-topic1
+KAFKA_INPUT_TOPIC2: input-topic2
+JOB_WINDOW_SIZE: 1000
+CHECKPOINTING: true
+FIB_INPUT: 18
+Starting JoinApplication.
+Sink__Sink:1;Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks:4;Timestamps/Watermarks+-_Map:1;Source__Source1:1;Source__Source2:1
+Sink__Sink --> 1
+Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks --> 4
+Timestamps/Watermarks+-_Map --> 1
+Source__Source1 --> 1
+Source__Source2 --> 1
+Job has been submitted with JobID e03ecfd4e418db82bfe1b6882fe41702
+
+[0m[2025-01-25T11:34:12.710504] [FLK_MGR] Running job id: e03ecfd4e418db82bfe1b6882fe41702
+[0m[2025-01-25T11:34:12.710510] [FLK_MGR] Getting job info.
+[0m[2025-01-25T11:34:12.717469] [FLK_MGR] Job plan response: {"plan":{"jid":"e03ecfd4e418db82bfe1b6882fe41702","name":"myjoin-transscale-0.0.1","type":"STREAMING","nodes":[{"id":"41a95396e613c9f62f1da16142d5ddd2","parallelism":1,"operator":"","operator_strategy":"","description":"Sink: Sink<br/>","inputs":[{"num":0,"id":"32f0ffe0b6f0b990239bb81cec28b9d8","ship_strategy":"REBALANCE","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"32f0ffe0b6f0b990239bb81cec28b9d8","parallelism":4,"operator":"","operator_strategy":"","description":"Window(TumblingEventTimeWindows(1000), EventTimeTrigger, TimeEvictor, CoGroupWindowFunction)<br/>+- Timestamps/Watermarks<br/>","inputs":[{"num":0,"id":"31ec045e3401e87fc7879b43d8e8625d","ship_strategy":"HASH","exchange":"pipelined_bounded"},{"num":1,"id":"e926317ddf99720773e3c7f4f412c3d7","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"31ec045e3401e87fc7879b43d8e8625d","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"dca33db40b2f8f122636cd5297c0c511","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"dca33db40b2f8f122636cd5297c0c511","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source1<br/>","optimizer_properties":{}},{"id":"e926317ddf99720773e3c7f4f412c3d7","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"9c7327831b3b5b4ae2c580979f474a9c","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"9c7327831b3b5b4ae2c580979f474a9c","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source2<br/>","optimizer_properties":{}}]}}
+[0m[2025-01-25T11:34:12.717628] [FLK_MGR] Current operator names: dict_keys(['Sink__Sink', 'Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks', 'Timestamps/Watermarks+-_Map', 'Source__Source1', 'Source__Source2'])
+[0m[2025-01-25T11:34:13.034305] [POD_MGR] Running command ['/bin/sh', '-c', 'flink list -r 2>/dev/null'] on pod flink-jobmanager-7d7c784b74-kjdc8
+[0m[2025-01-25T11:34:14.455458] [FLK_MGR] Running jobs: Waiting for response...
+------------------ Running/Restarting Jobs -------------------
+25.01.2025 11:34:12 : e03ecfd4e418db82bfe1b6882fe41702 : myjoin-transscale-0.0.1 (RUNNING)
+--------------------------------------------------------------
+[0m[2025-01-25T11:34:14.455509] [FLK_MGR] Running jobs: ['e03ecfd4e418db82bfe1b6882fe41702']
+[0m[2025-01-25T11:34:14.455516] [FLK_MGR] Total jobs cancelled: 0
+[0m[2025-01-25T11:34:14.462328] [SCALING] Monitoring interval: for 240 seconds
+[0m[2025-01-25T11:38:14.485662] [SCALING] Scaling step on node virtual-158-0-2 finished. Marking node as full.
+[0m[2025-01-25T11:38:19.498127] [SCALING] Scaling finished.
+[0m[2025-01-25T11:38:19.498221] [NODE_MGR] Resetting scaling labels to unschedulable.
+[0m[2025-01-25T11:38:19.516609] [NODE_MGR] Resetting state labels.
+[0m[2025-01-25T11:38:19.531544] [STS_MGR] Resetting taskmanagers.
+[0m[2025-01-25T11:38:19.553567] [STS_MGR] StatefulSet flink-taskmanager-l scaled to 0 replica.
+[0m[2025-01-25T11:38:19.566198] [STS_MGR] StatefulSet flink-taskmanager-l-2c scaled to 0 replica.
+[0m[2025-01-25T11:38:19.577702] [STS_MGR] StatefulSet flink-taskmanager-m scaled to 0 replica.
+[0m[2025-01-25T11:38:19.590191] [STS_MGR] StatefulSet flink-taskmanager-m-2c scaled to 0 replica.
+[0m[2025-01-25T11:38:29.612255] [STS_MGR] StatefulSet flink-taskmanager-s scaled to 0 replica.
+[0m[2025-01-25T11:38:29.623295] [STS_MGR] StatefulSet flink-taskmanager-s-2c scaled to 0 replica.
+[0m[2025-01-25T11:38:29.634195] [STS_MGR] StatefulSet flink-taskmanager-xl scaled to 0 replica.
+[0m[2025-01-25T11:38:29.644803] [STS_MGR] StatefulSet flink-taskmanager-xxl scaled to 0 replica.
+[0m[2025-01-25T11:38:29.663161] [POD_MGR] Pod flink-jobmanager-7d7c784b74-kjdc8 deleted
+[0m[2025-01-25T11:38:31.518847] Playbook /app/playbooks/application/load_generators.yaml with tag delete executed successfully.
+[0m[2025-01-25T11:38:33.418000] Playbook /app/playbooks/application/load_generators.yaml with tag delete executed successfully.
+[0m[2025-01-25T11:38:33.418063] Reloading playbook: application/kafka
+[0m[2025-01-25T11:38:39.342557] Playbook /app/playbooks/application/kafka.yaml with tag delete executed successfully.
+[0m[2025-01-25T11:39:20.261392] Playbook /app/playbooks/application/kafka.yaml with tag create executed successfully.
+[0m[2025-01-25T11:39:20.261608] [EXPERIMENT] Run 4 completed. Start: 1737804012, End: 1737805160
+[0m[2025-01-25T11:39:20.261615] [EXPERIMENT] Sleeping for 10 seconds before next run.
+[0m[2025-01-25T11:39:30.262569] [EXPERIMENT] =================================== Starting run 5 ===================================
+[0m[2025-01-25T11:39:32.135132] Playbook /app/playbooks/application/load_generators.yaml with tag create executed successfully.
+[0m[2025-01-25T11:39:34.018964] Playbook /app/playbooks/application/load_generators.yaml with tag create executed successfully.
+[0m[2025-01-25T11:39:34.019107] [SCALING] Setting up experiment.
+
+
+[0m[2025-01-25T11:39:34.019153] [NODE_MGR] Resetting scaling labels to unschedulable.
+[0m[2025-01-25T11:39:34.024203] [NODE_MGR] Resetting state labels.
+[0m[2025-01-25T11:39:34.038420] [SCALING] First node: virtual-158-0-2
+
+[0m[2025-01-25T11:39:34.053505] [SCALING] Statefulset name to scale : flink-taskmanager-m-2c
+[0m[2025-01-25T11:39:34.062644] [STS_MGR] StatefulSet flink-taskmanager-m-2c scaled to 1 replica.
+[0m[2025-01-25T11:39:39.070809] [FLK_MGR] Running job.
+[0m[2025-01-25T11:39:39.500441] [POD_MGR] Running command ['/bin/sh', '-c', 'flink run -d -j /tmp/jobs/myjoin-transscale-all.jar'] on pod flink-jobmanager-7d7c784b74-stkcx
+[0m[2025-01-25T11:39:43.629958] [FLK_MGR] Job run response: ERROR StatusLogger Reconfiguration failed: No configuration found for '37f8bb67' at 'null' in 'null'
+ERROR StatusLogger Reconfiguration failed: No configuration found for '34e9fd99' at 'null' in 'null'
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator (file:/opt/flink/lib/flink-dist-1.20.0.jar) to field java.util.Collections$UnmodifiableMap.m
+WARNING: Please consider reporting this to the maintainers of org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+KAFKA_BOOTSTRAP_SERVERS: kafka-service.kafka.svc.cluster.local:9092
+SCHEMA_REGISTRY_URL: http://schema-registry-service.kafka.svc.cluster.local:8081
+KAFKA_INPUT_TOPIC1: input-topic1
+KAFKA_INPUT_TOPIC2: input-topic2
+JOB_WINDOW_SIZE: 1000
+CHECKPOINTING: true
+FIB_INPUT: 18
+Starting JoinApplication.
+Job has been submitted with JobID 044769e12dd53a89626fb0ed52dccd1b
+
+[0m[2025-01-25T11:39:43.630013] [FLK_MGR] Running job id: 044769e12dd53a89626fb0ed52dccd1b
+[0m[2025-01-25T11:39:43.630021] [FLK_MGR] Getting job info.
+[0m[2025-01-25T11:39:43.648351] [FLK_MGR] Job plan response: {"plan":{"jid":"044769e12dd53a89626fb0ed52dccd1b","name":"myjoin-transscale-0.0.1","type":"STREAMING","nodes":[{"id":"41a95396e613c9f62f1da16142d5ddd2","parallelism":1,"operator":"","operator_strategy":"","description":"Sink: Sink<br/>","inputs":[{"num":0,"id":"32f0ffe0b6f0b990239bb81cec28b9d8","ship_strategy":"FORWARD","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"32f0ffe0b6f0b990239bb81cec28b9d8","parallelism":1,"operator":"","operator_strategy":"","description":"Window(TumblingEventTimeWindows(1000), EventTimeTrigger, TimeEvictor, CoGroupWindowFunction)<br/>+- Timestamps/Watermarks<br/>","inputs":[{"num":0,"id":"31ec045e3401e87fc7879b43d8e8625d","ship_strategy":"HASH","exchange":"pipelined_bounded"},{"num":1,"id":"e926317ddf99720773e3c7f4f412c3d7","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"31ec045e3401e87fc7879b43d8e8625d","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"dca33db40b2f8f122636cd5297c0c511","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"dca33db40b2f8f122636cd5297c0c511","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source1<br/>","optimizer_properties":{}},{"id":"e926317ddf99720773e3c7f4f412c3d7","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"9c7327831b3b5b4ae2c580979f474a9c","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"9c7327831b3b5b4ae2c580979f474a9c","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source2<br/>","optimizer_properties":{}}]}}
+[0m[2025-01-25T11:39:43.648508] [FLK_MGR] Current operator names: dict_keys(['Sink__Sink', 'Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks', 'Timestamps/Watermarks+-_Map', 'Source__Source1', 'Source__Source2'])
+[0m[2025-01-25T11:39:44.057570] [POD_MGR] Running command ['/bin/sh', '-c', 'flink list -r 2>/dev/null'] on pod flink-jobmanager-7d7c784b74-stkcx
+[0m[2025-01-25T11:39:45.492689] [FLK_MGR] Running jobs: Waiting for response...
+------------------ Running/Restarting Jobs -------------------
+25.01.2025 11:39:42 : 044769e12dd53a89626fb0ed52dccd1b : myjoin-transscale-0.0.1 (RUNNING)
+--------------------------------------------------------------
+[0m[2025-01-25T11:39:45.492739] [FLK_MGR] Running jobs: ['044769e12dd53a89626fb0ed52dccd1b']
+[0m[2025-01-25T11:39:45.492746] [FLK_MGR] Total jobs cancelled: 0
+[0m[2025-01-25T11:39:45.492752] [SCALING] First iteration after setup, just waiting...
+[0m[2025-01-25T11:43:45.514687] [SCALING] Scaling started.
+[0m[2025-01-25T11:43:45.514746] [SCALING] Decrementing count of first TM by 1.
+
+[0m[2025-01-25T11:43:45.514763] =========================================================== Step 0 ===========================================================
+[0m[2025-01-25T11:43:45.514771] [SCALING] Scaling on node : vm_grid5000
+[0m[2025-01-25T11:43:45.514783] [SCALING] Adding 1 replicas of m-2c taskmanager.
+[0m[2025-01-25T11:43:45.520950] [SCALING] Statefulset name to scale : flink-taskmanager-m-2c
+[0m[2025-01-25T11:43:45.533933] [SCALING] Current taskmanagers count: {'flink-taskmanager-l': 0, 'flink-taskmanager-l-2c': 0, 'flink-taskmanager-m': 0, 'flink-taskmanager-m-2c': 1, 'flink-taskmanager-s': 0, 'flink-taskmanager-s-2c': 0, 'flink-taskmanager-xl': 0, 'flink-taskmanager-xxl': 0}
+[0m[2025-01-25T11:43:45.543465] [STS_MGR] StatefulSet flink-taskmanager-m-2c scaled to 2 replica.
+[0m[2025-01-25T11:43:50.565973] [SCALING] ************************************ Adding 2 replicas ************************************
+[0m[2025-01-25T11:43:50.566004] [FLK_MGR] Running job.
+[0m[2025-01-25T11:43:50.566009] [FLK_MGR] Rescaling job to 2.
+[0m[2025-01-25T11:43:50.903379] [POD_MGR] Running command ['/bin/sh', '-c', 'flink stop -p -d 044769e12dd53a89626fb0ed52dccd1b'] on pod flink-jobmanager-7d7c784b74-stkcx
+[0m[2025-01-25T11:43:54.947757] [FLK_MGR] Savepoint path: s3://flink-bucket/savepoints/savepoint-044769-c2b780488230
+[0m[2025-01-25T11:44:14.344257] [POD_MGR] Running command ['/bin/sh', '-c', "flink run -d -s s3://flink-bucket/savepoints/savepoint-044769-c2b780488230 -j /tmp/jobs/myjoin-transscale-all.jar --parmap 'Sink__Sink:1;Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks:2;Timestamps/Watermarks+-_Map:1;Source__Source1:1;Source__Source2:1'"] on pod flink-jobmanager-7d7c784b74-stkcx
+[0m[2025-01-25T11:44:17.456338] [FLK_MGR] Operator TumblingEventTimeWindows rescaled to 2.
+[0m[2025-01-25T11:44:17.456379] [FLK_MGR] Job run response: ERROR StatusLogger Reconfiguration failed: No configuration found for '37f8bb67' at 'null' in 'null'
+ERROR StatusLogger Reconfiguration failed: No configuration found for '34e9fd99' at 'null' in 'null'
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator (file:/opt/flink/lib/flink-dist-1.20.0.jar) to field java.util.Collections$UnmodifiableMap.m
+WARNING: Please consider reporting this to the maintainers of org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+KAFKA_BOOTSTRAP_SERVERS: kafka-service.kafka.svc.cluster.local:9092
+SCHEMA_REGISTRY_URL: http://schema-registry-service.kafka.svc.cluster.local:8081
+KAFKA_INPUT_TOPIC1: input-topic1
+KAFKA_INPUT_TOPIC2: input-topic2
+JOB_WINDOW_SIZE: 1000
+CHECKPOINTING: true
+FIB_INPUT: 18
+Starting JoinApplication.
+Sink__Sink:1;Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks:2;Timestamps/Watermarks+-_Map:1;Source__Source1:1;Source__Source2:1
+Sink__Sink --> 1
+Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks --> 2
+Timestamps/Watermarks+-_Map --> 1
+Source__Source1 --> 1
+Source__Source2 --> 1
+Job has been submitted with JobID f861630f8d6d69d02948de57dc6632d1
+
+[0m[2025-01-25T11:44:17.456400] [FLK_MGR] Running job id: f861630f8d6d69d02948de57dc6632d1
+[0m[2025-01-25T11:44:17.456406] [FLK_MGR] Getting job info.
+[0m[2025-01-25T11:44:17.463569] [FLK_MGR] Job plan response: {"plan":{"jid":"f861630f8d6d69d02948de57dc6632d1","name":"myjoin-transscale-0.0.1","type":"STREAMING","nodes":[{"id":"41a95396e613c9f62f1da16142d5ddd2","parallelism":1,"operator":"","operator_strategy":"","description":"Sink: Sink<br/>","inputs":[{"num":0,"id":"32f0ffe0b6f0b990239bb81cec28b9d8","ship_strategy":"REBALANCE","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"32f0ffe0b6f0b990239bb81cec28b9d8","parallelism":2,"operator":"","operator_strategy":"","description":"Window(TumblingEventTimeWindows(1000), EventTimeTrigger, TimeEvictor, CoGroupWindowFunction)<br/>+- Timestamps/Watermarks<br/>","inputs":[{"num":0,"id":"31ec045e3401e87fc7879b43d8e8625d","ship_strategy":"HASH","exchange":"pipelined_bounded"},{"num":1,"id":"e926317ddf99720773e3c7f4f412c3d7","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"31ec045e3401e87fc7879b43d8e8625d","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"dca33db40b2f8f122636cd5297c0c511","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"dca33db40b2f8f122636cd5297c0c511","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source1<br/>","optimizer_properties":{}},{"id":"e926317ddf99720773e3c7f4f412c3d7","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"9c7327831b3b5b4ae2c580979f474a9c","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"9c7327831b3b5b4ae2c580979f474a9c","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source2<br/>","optimizer_properties":{}}]}}
+[0m[2025-01-25T11:44:17.463733] [FLK_MGR] Current operator names: dict_keys(['Sink__Sink', 'Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks', 'Timestamps/Watermarks+-_Map', 'Source__Source1', 'Source__Source2'])
+[0m[2025-01-25T11:44:17.865271] [POD_MGR] Running command ['/bin/sh', '-c', 'flink list -r 2>/dev/null'] on pod flink-jobmanager-7d7c784b74-stkcx
+[0m[2025-01-25T11:44:19.270199] [FLK_MGR] Running jobs: Waiting for response...
+------------------ Running/Restarting Jobs -------------------
+25.01.2025 11:44:17 : f861630f8d6d69d02948de57dc6632d1 : myjoin-transscale-0.0.1 (RUNNING)
+--------------------------------------------------------------
+[0m[2025-01-25T11:44:19.270265] [FLK_MGR] Running jobs: ['f861630f8d6d69d02948de57dc6632d1']
+[0m[2025-01-25T11:44:19.270273] [FLK_MGR] Total jobs cancelled: 0
+[0m[2025-01-25T11:44:19.277662] [SCALING] Monitoring interval: for 240 seconds
+[0m[2025-01-25T11:48:19.299626] [SCALING] Adding 1 replicas of m-2c taskmanager.
+[0m[2025-01-25T11:48:19.305160] [SCALING] Statefulset name to scale : flink-taskmanager-m-2c
+[0m[2025-01-25T11:48:19.319004] [SCALING] Current taskmanagers count: {'flink-taskmanager-l': 0, 'flink-taskmanager-l-2c': 0, 'flink-taskmanager-m': 0, 'flink-taskmanager-m-2c': 2, 'flink-taskmanager-s': 0, 'flink-taskmanager-s-2c': 0, 'flink-taskmanager-xl': 0, 'flink-taskmanager-xxl': 0}
+[0m[2025-01-25T11:48:19.328340] [STS_MGR] StatefulSet flink-taskmanager-m-2c scaled to 3 replica.
+[0m[2025-01-25T11:48:24.349234] [SCALING] ************************************ Adding 3 replicas ************************************
+[0m[2025-01-25T11:48:24.349268] [FLK_MGR] Running job.
+[0m[2025-01-25T11:48:24.349273] [FLK_MGR] Rescaling job to 3.
+[0m[2025-01-25T11:48:24.667937] [POD_MGR] Running command ['/bin/sh', '-c', 'flink stop -p -d f861630f8d6d69d02948de57dc6632d1'] on pod flink-jobmanager-7d7c784b74-stkcx
+[0m[2025-01-25T11:48:30.699751] [FLK_MGR] Savepoint path: s3://flink-bucket/savepoints/savepoint-f86163-3c10bf4031c6
+[0m[2025-01-25T11:48:50.087172] [POD_MGR] Running command ['/bin/sh', '-c', "flink run -d -s s3://flink-bucket/savepoints/savepoint-f86163-3c10bf4031c6 -j /tmp/jobs/myjoin-transscale-all.jar --parmap 'Sink__Sink:1;Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks:3;Timestamps/Watermarks+-_Map:1;Source__Source1:1;Source__Source2:1'"] on pod flink-jobmanager-7d7c784b74-stkcx
+[0m[2025-01-25T11:48:52.974124] [FLK_MGR] Operator TumblingEventTimeWindows rescaled to 3.
+[0m[2025-01-25T11:48:52.974162] [FLK_MGR] Job run response: ERROR StatusLogger Reconfiguration failed: No configuration found for '37f8bb67' at 'null' in 'null'
+ERROR StatusLogger Reconfiguration failed: No configuration found for '34e9fd99' at 'null' in 'null'
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator (file:/opt/flink/lib/flink-dist-1.20.0.jar) to field java.util.Collections$UnmodifiableMap.m
+WARNING: Please consider reporting this to the maintainers of org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+KAFKA_BOOTSTRAP_SERVERS: kafka-service.kafka.svc.cluster.local:9092
+SCHEMA_REGISTRY_URL: http://schema-registry-service.kafka.svc.cluster.local:8081
+KAFKA_INPUT_TOPIC1: input-topic1
+KAFKA_INPUT_TOPIC2: input-topic2
+JOB_WINDOW_SIZE: 1000
+CHECKPOINTING: true
+FIB_INPUT: 18
+Starting JoinApplication.
+Sink__Sink:1;Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks:3;Timestamps/Watermarks+-_Map:1;Source__Source1:1;Source__Source2:1
+Sink__Sink --> 1
+Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks --> 3
+Timestamps/Watermarks+-_Map --> 1
+Source__Source1 --> 1
+Source__Source2 --> 1
+Job has been submitted with JobID 3a4f41d0c73db48dcc2f7fc9823f017d
+
+[0m[2025-01-25T11:48:52.974182] [FLK_MGR] Running job id: 3a4f41d0c73db48dcc2f7fc9823f017d
+[0m[2025-01-25T11:48:52.974187] [FLK_MGR] Getting job info.
+[0m[2025-01-25T11:48:52.980975] [FLK_MGR] Job plan response: {"plan":{"jid":"3a4f41d0c73db48dcc2f7fc9823f017d","name":"myjoin-transscale-0.0.1","type":"STREAMING","nodes":[{"id":"41a95396e613c9f62f1da16142d5ddd2","parallelism":1,"operator":"","operator_strategy":"","description":"Sink: Sink<br/>","inputs":[{"num":0,"id":"32f0ffe0b6f0b990239bb81cec28b9d8","ship_strategy":"REBALANCE","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"32f0ffe0b6f0b990239bb81cec28b9d8","parallelism":3,"operator":"","operator_strategy":"","description":"Window(TumblingEventTimeWindows(1000), EventTimeTrigger, TimeEvictor, CoGroupWindowFunction)<br/>+- Timestamps/Watermarks<br/>","inputs":[{"num":0,"id":"31ec045e3401e87fc7879b43d8e8625d","ship_strategy":"HASH","exchange":"pipelined_bounded"},{"num":1,"id":"e926317ddf99720773e3c7f4f412c3d7","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"31ec045e3401e87fc7879b43d8e8625d","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"dca33db40b2f8f122636cd5297c0c511","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"dca33db40b2f8f122636cd5297c0c511","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source1<br/>","optimizer_properties":{}},{"id":"e926317ddf99720773e3c7f4f412c3d7","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"9c7327831b3b5b4ae2c580979f474a9c","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"9c7327831b3b5b4ae2c580979f474a9c","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source2<br/>","optimizer_properties":{}}]}}
+[0m[2025-01-25T11:48:52.981112] [FLK_MGR] Current operator names: dict_keys(['Sink__Sink', 'Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks', 'Timestamps/Watermarks+-_Map', 'Source__Source1', 'Source__Source2'])
+[0m[2025-01-25T11:48:53.398626] [POD_MGR] Running command ['/bin/sh', '-c', 'flink list -r 2>/dev/null'] on pod flink-jobmanager-7d7c784b74-stkcx
+[0m[2025-01-25T11:48:54.819170] [FLK_MGR] Running jobs: Waiting for response...
+------------------ Running/Restarting Jobs -------------------
+25.01.2025 11:48:52 : 3a4f41d0c73db48dcc2f7fc9823f017d : myjoin-transscale-0.0.1 (RUNNING)
+--------------------------------------------------------------
+[0m[2025-01-25T11:48:54.819221] [FLK_MGR] Running jobs: ['3a4f41d0c73db48dcc2f7fc9823f017d']
+[0m[2025-01-25T11:48:54.819229] [FLK_MGR] Total jobs cancelled: 0
+[0m[2025-01-25T11:48:54.826674] [SCALING] Monitoring interval: for 240 seconds
+[0m[2025-01-25T11:52:54.849830] [SCALING] Adding 1 replicas of m-2c taskmanager.
+[0m[2025-01-25T11:52:54.855348] [SCALING] Statefulset name to scale : flink-taskmanager-m-2c
+[0m[2025-01-25T11:52:54.867643] [SCALING] Current taskmanagers count: {'flink-taskmanager-l': 0, 'flink-taskmanager-l-2c': 0, 'flink-taskmanager-m': 0, 'flink-taskmanager-m-2c': 3, 'flink-taskmanager-s': 0, 'flink-taskmanager-s-2c': 0, 'flink-taskmanager-xl': 0, 'flink-taskmanager-xxl': 0}
+[0m[2025-01-25T11:52:54.876376] [STS_MGR] StatefulSet flink-taskmanager-m-2c scaled to 4 replica.
+[0m[2025-01-25T11:52:59.896288] [SCALING] ************************************ Adding 4 replicas ************************************
+[0m[2025-01-25T11:52:59.896313] [FLK_MGR] Running job.
+[0m[2025-01-25T11:52:59.896317] [FLK_MGR] Rescaling job to 4.
+[0m[2025-01-25T11:53:00.206249] [POD_MGR] Running command ['/bin/sh', '-c', 'flink stop -p -d 3a4f41d0c73db48dcc2f7fc9823f017d'] on pod flink-jobmanager-7d7c784b74-stkcx
+[0m[2025-01-25T11:53:08.245156] [FLK_MGR] Savepoint path: s3://flink-bucket/savepoints/savepoint-3a4f41-234fef4b07d4
+[0m[2025-01-25T11:53:27.636223] [POD_MGR] Running command ['/bin/sh', '-c', "flink run -d -s s3://flink-bucket/savepoints/savepoint-3a4f41-234fef4b07d4 -j /tmp/jobs/myjoin-transscale-all.jar --parmap 'Sink__Sink:1;Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks:4;Timestamps/Watermarks+-_Map:1;Source__Source1:1;Source__Source2:1'"] on pod flink-jobmanager-7d7c784b74-stkcx
+[0m[2025-01-25T11:53:30.423217] [FLK_MGR] Operator TumblingEventTimeWindows rescaled to 4.
+[0m[2025-01-25T11:53:30.423251] [FLK_MGR] Job run response: ERROR StatusLogger Reconfiguration failed: No configuration found for '37f8bb67' at 'null' in 'null'
+ERROR StatusLogger Reconfiguration failed: No configuration found for '34e9fd99' at 'null' in 'null'
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator (file:/opt/flink/lib/flink-dist-1.20.0.jar) to field java.util.Collections$UnmodifiableMap.m
+WARNING: Please consider reporting this to the maintainers of org.apache.flink.streaming.runtime.translators.DataStreamV2SinkTransformationTranslator
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+KAFKA_BOOTSTRAP_SERVERS: kafka-service.kafka.svc.cluster.local:9092
+SCHEMA_REGISTRY_URL: http://schema-registry-service.kafka.svc.cluster.local:8081
+KAFKA_INPUT_TOPIC1: input-topic1
+KAFKA_INPUT_TOPIC2: input-topic2
+JOB_WINDOW_SIZE: 1000
+CHECKPOINTING: true
+FIB_INPUT: 18
+Starting JoinApplication.
+Sink__Sink:1;Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks:4;Timestamps/Watermarks+-_Map:1;Source__Source1:1;Source__Source2:1
+Sink__Sink --> 1
+Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks --> 4
+Timestamps/Watermarks+-_Map --> 1
+Source__Source1 --> 1
+Source__Source2 --> 1
+Job has been submitted with JobID 2c902679f4ed6d826a7aab065bc9c892
+
+[0m[2025-01-25T11:53:30.423268] [FLK_MGR] Running job id: 2c902679f4ed6d826a7aab065bc9c892
+[0m[2025-01-25T11:53:30.423273] [FLK_MGR] Getting job info.
+[0m[2025-01-25T11:53:30.430898] [FLK_MGR] Job plan response: {"plan":{"jid":"2c902679f4ed6d826a7aab065bc9c892","name":"myjoin-transscale-0.0.1","type":"STREAMING","nodes":[{"id":"41a95396e613c9f62f1da16142d5ddd2","parallelism":1,"operator":"","operator_strategy":"","description":"Sink: Sink<br/>","inputs":[{"num":0,"id":"32f0ffe0b6f0b990239bb81cec28b9d8","ship_strategy":"REBALANCE","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"32f0ffe0b6f0b990239bb81cec28b9d8","parallelism":4,"operator":"","operator_strategy":"","description":"Window(TumblingEventTimeWindows(1000), EventTimeTrigger, TimeEvictor, CoGroupWindowFunction)<br/>+- Timestamps/Watermarks<br/>","inputs":[{"num":0,"id":"31ec045e3401e87fc7879b43d8e8625d","ship_strategy":"HASH","exchange":"pipelined_bounded"},{"num":1,"id":"e926317ddf99720773e3c7f4f412c3d7","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"31ec045e3401e87fc7879b43d8e8625d","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"dca33db40b2f8f122636cd5297c0c511","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"dca33db40b2f8f122636cd5297c0c511","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source1<br/>","optimizer_properties":{}},{"id":"e926317ddf99720773e3c7f4f412c3d7","parallelism":1,"operator":"","operator_strategy":"","description":"Timestamps/Watermarks<br/>+- Map<br/>","inputs":[{"num":0,"id":"9c7327831b3b5b4ae2c580979f474a9c","ship_strategy":"HASH","exchange":"pipelined_bounded"}],"optimizer_properties":{}},{"id":"9c7327831b3b5b4ae2c580979f474a9c","parallelism":1,"operator":"","operator_strategy":"","description":"Source: Source2<br/>","optimizer_properties":{}}]}}
+[0m[2025-01-25T11:53:30.431025] [FLK_MGR] Current operator names: dict_keys(['Sink__Sink', 'Window(TumblingEventTimeWindows(1000),_EventTimeTrigger,_TimeEvictor,_CoGroupWindowFunction)+-_Timestamps/Watermarks', 'Timestamps/Watermarks+-_Map', 'Source__Source1', 'Source__Source2'])
+[0m[2025-01-25T11:53:30.844430] [POD_MGR] Running command ['/bin/sh', '-c', 'flink list -r 2>/dev/null'] on pod flink-jobmanager-7d7c784b74-stkcx
+[0m[2025-01-25T11:53:32.229692] [FLK_MGR] Running jobs: Waiting for response...
+------------------ Running/Restarting Jobs -------------------
+25.01.2025 11:53:30 : 2c902679f4ed6d826a7aab065bc9c892 : myjoin-transscale-0.0.1 (RUNNING)
+--------------------------------------------------------------
+[0m[2025-01-25T11:53:32.229743] [FLK_MGR] Running jobs: ['2c902679f4ed6d826a7aab065bc9c892']
+[0m[2025-01-25T11:53:32.229750] [FLK_MGR] Total jobs cancelled: 0
+[0m[2025-01-25T11:53:32.236402] [SCALING] Monitoring interval: for 240 seconds
+[0m[2025-01-25T11:57:32.261767] [SCALING] Scaling step on node virtual-158-0-2 finished. Marking node as full.
+[0m[2025-01-25T11:57:37.273774] [SCALING] Scaling finished.
+[0m[2025-01-25T11:57:37.273864] [NODE_MGR] Resetting scaling labels to unschedulable.
+[0m[2025-01-25T11:57:37.291386] [NODE_MGR] Resetting state labels.
+[0m[2025-01-25T11:57:37.323348] [STS_MGR] Resetting taskmanagers.
+[0m[2025-01-25T11:57:37.345608] [STS_MGR] StatefulSet flink-taskmanager-l scaled to 0 replica.
+[0m[2025-01-25T11:57:37.358597] [STS_MGR] StatefulSet flink-taskmanager-l-2c scaled to 0 replica.
+[0m[2025-01-25T11:57:37.370917] [STS_MGR] StatefulSet flink-taskmanager-m scaled to 0 replica.
+[0m[2025-01-25T11:57:37.384017] [STS_MGR] StatefulSet flink-taskmanager-m-2c scaled to 0 replica.
+[0m[2025-01-25T11:57:47.407691] [STS_MGR] StatefulSet flink-taskmanager-s scaled to 0 replica.
+[0m[2025-01-25T11:57:47.420982] [STS_MGR] StatefulSet flink-taskmanager-s-2c scaled to 0 replica.
+[0m[2025-01-25T11:57:47.433480] [STS_MGR] StatefulSet flink-taskmanager-xl scaled to 0 replica.
+[0m[2025-01-25T11:57:47.446011] [STS_MGR] StatefulSet flink-taskmanager-xxl scaled to 0 replica.
+[0m[2025-01-25T11:57:47.466948] [POD_MGR] Pod flink-jobmanager-7d7c784b74-stkcx deleted
+[0m[2025-01-25T11:57:49.336018] Playbook /app/playbooks/application/load_generators.yaml with tag delete executed successfully.
+[0m[2025-01-25T11:57:51.216579] Playbook /app/playbooks/application/load_generators.yaml with tag delete executed successfully.
+[0m[2025-01-25T11:57:51.216632] Reloading playbook: application/kafka
+[0m[2025-01-25T11:57:57.105454] Playbook /app/playbooks/application/kafka.yaml with tag delete executed successfully.
+[0m[2025-01-25T11:58:38.040264] Playbook /app/playbooks/application/kafka.yaml with tag create executed successfully.
+[0m[2025-01-25T11:58:38.040530] [EXPERIMENT] Run 5 completed. Start: 1737805170, End: 1737806318
+[0m[2025-01-25T11:58:38.040538] [EXPERIMENT] Sleeping for 10 seconds before next run.
+[0m[2025-01-25T11:58:48.041975] [FSM] Run phase complete, transitioning to finishing.
+[0m[2025-01-25T11:58:48.042428] [FSM] Finish phase started.
+[0m[2025-01-25T11:58:48.042467] [FSM] State is States.FINISHING
+[0m[2025-01-25T11:58:48.042769] FolderManager initialized with base path: /experiment-volume. Date: None
