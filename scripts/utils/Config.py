@@ -7,7 +7,7 @@ from inspect import getmembers, isclass
 import yaml
 
 from scripts.utils.Defaults import DefaultKeys as Key, ConfigKey
-from .Logger import Logger
+from scripts.utils.Logger import Logger
 
 
 @dataclass
