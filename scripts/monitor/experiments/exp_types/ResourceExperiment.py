@@ -9,7 +9,9 @@ class ResourceExperiment(Experiment):
         self.__log = log
         self.config = config
 
-        self.cpu_milli = self.config.get_list_int("cpu_values")
+        cpu_values = self.config.get_list_int("cpu_values")
+        self.cpu_milli = [str(cpu * 1000) + "m" for cpu in cpu_values]
+
         self.memory_values = self.config.get_list_int("memory_values")
 
     def exp(self):
@@ -18,6 +20,7 @@ class ResourceExperiment(Experiment):
                 self.__log.info(
                     f"[RESOURCE_E] Running experiment with {c_val} cores and {memory} memory."
                 )
+
                 config_dict = {
                     "tm_name": f"flink-{c_val}-{memory}",
                     "cpu_milli": c_val,

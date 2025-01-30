@@ -143,7 +143,7 @@ class Experiment:
                     return 1
             except Exception as e:
                 self.__log.error(f"[EXPERIMENT] Error during run: {str(e)}")
-                return 1
+                raise e
 
     def __single_run(self):
         try:
@@ -156,3 +156,4 @@ class Experiment:
             self.__log.error(f"[EXPERIMENT] Error during single run: {str(e)}")
             return 1
         self.cleaning()
+        return 0
