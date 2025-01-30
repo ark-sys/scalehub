@@ -1,6 +1,0 @@
-- node: vm_grid5000
-  type: large
-  taskmanager:
-    - number: 1
-      type: template
-      method: block

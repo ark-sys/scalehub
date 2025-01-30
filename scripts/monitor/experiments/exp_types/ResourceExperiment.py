@@ -2,13 +2,15 @@ from scripts.monitor.experiments.Experiment import Experiment
 
 
 class ResourceExperiment(Experiment):
-    memory_values = [1024, 2048, 4096, 8192, 16384, 32768]
-    cpu_milli = ["1000m", "2000m", "4000m", "8000m", "16000m", "32000m"]
     exp_type = "resource"
 
     def __init__(self, log, config):
         super().__init__(log, config)
         self.__log = log
+        self.config = config
+
+        self.cpu_milli = self.config.get_list_int("cpu_values")
+        self.memory_values = self.config.get_list_int("memory_values")
 
     def exp(self):
         for c_val in self.cpu_milli:

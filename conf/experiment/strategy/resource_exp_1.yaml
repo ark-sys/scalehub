@@ -1,5 +1,0 @@
-- node: grid5000
-  taskmanager:
-    - number: 1
-      type: template
-      method: block

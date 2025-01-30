@@ -3,4 +3,4 @@
   taskmanager:
     - number: 1
       type: m-2c
-      method: linear
+      method: block

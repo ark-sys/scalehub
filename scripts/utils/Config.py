@@ -93,7 +93,7 @@ class Config:
 
         # Special handling for platforms section
         if section_base == "platforms":
-            platform_names = parser[section_base].get("platforms").split(",")
+            platform_names = parser[section_base].get("platforms").split()
             self.__config[Key.Platforms.platforms.key] = platform_names
             platform_dicts = []
             for platform_name in platform_names:
@@ -202,10 +202,10 @@ class Config:
         return str(self.get(key))
 
     def get_list_str(self, key):
-        return [str(value) for value in self.get_str(key).split(",")]
+        return [str(value) for value in self.get_str(key).split()]
 
     def get_list_int(self, key):
-        return [int(value) for value in self.get_str(key).split(",")]
+        return [int(value) for value in self.get(key).split()]
 
     def update_runtime_file(self, create=False):
         try:
@@ -236,15 +236,17 @@ class Config:
             raise e
 
     def __parse_load_generators(self, parser):
-        try:
-            load_generators_str = parser[
-                Key.Experiment.Generators.generators.key
-            ].values()
+        load_generators_names = parser.get(
+            Key.Experiment.Generators.generators.key, "generators"
+        ).split()
+        if not load_generators_names:
+            self.__log.error("No load generators found in config file.")
+
+        else:
             load_generators = []
-            for value in load_generators_str:
-                for generator_name in value.split(","):
-                    name = generator_name.strip()
-                    generator_section = f"experiment.generators.{name}"
+            for name in load_generators_names:
+                generator_section = f"{Key.Experiment.Generators.generators.key}.{name}"
+                try:
                     generator = {
                         "name": name,
                         "type": parser[generator_section]["type"],
@@ -255,10 +257,12 @@ class Config:
                         "value": int(parser[generator_section]["value"]),
                     }
                     load_generators.append(generator)
+                except KeyError as e:
+                    self.__log.error(
+                        f"Error while parsing load generator {name}: {str(e)}"
+                    )
+                    raise e
             return load_generators
-        except Exception as e:
-            self.__log.error(f"Error while parsing load generators: {str(e)}")
-            raise e
 
     def __parse_scaling_strategy(self):
         strategy_path = self.get_str(Key.Experiment.Scaling.strategy_path.key)

@@ -21,23 +21,29 @@ class TransscaleExperiment(Experiment):
         self.start_ts = int(datetime.now().timestamp())
 
         # Check if chaos is enabled
-        if self.config.get_bool(Key.Experiment.Chaos.enable):
+        if self.config.get_bool(Key.Experiment.Chaos.enable.key):
             self.__log.info(
                 "Chaos injection enabled. Deploying chaos resources on Consul and Flink."
             )
             # Setup experiment_params
             chaos_params = {
                 "affected_nodes_percentage": self.config.get_int(
-                    Key.Experiment.Chaos.affected_nodes_percentage
+                    Key.Experiment.Chaos.affected_nodes_percentage.key
                 ),
-                "latency": self.config.get_int(Key.Experiment.Chaos.delay_latency_ms),
-                "jitter": self.config.get_int(Key.Experiment.Chaos.delay_jitter_ms),
+                "latency": self.config.get_int(
+                    Key.Experiment.Chaos.delay_latency_ms.key
+                ),
+                "jitter": self.config.get_int(Key.Experiment.Chaos.delay_jitter_ms.key),
                 "correlation": self.config.get_float(
-                    Key.Experiment.Chaos.delay_correlation
+                    Key.Experiment.Chaos.delay_correlation.key
                 ),
-                "rate": self.config.get_int(Key.Experiment.Chaos.bandwidth_rate_mbps),
-                "limit": self.config.get_int(Key.Experiment.Chaos.bandwidth_limit),
-                "buffer": self.config.get_int(Key.Experiment.Chaos.bandwidth_buffer),
+                "rate": self.config.get_int(
+                    Key.Experiment.Chaos.bandwidth_rate_mbps.key
+                ),
+                "limit": self.config.get_int(Key.Experiment.Chaos.bandwidth_limit.key),
+                "buffer": self.config.get_int(
+                    Key.Experiment.Chaos.bandwidth_buffer.key
+                ),
             }
             self.k.chaos_manager.deploy_networkchaos(chaos_params)
 
@@ -119,12 +125,12 @@ class TransscaleExperiment(Experiment):
     # # Export data from victoriametrics
     # data_exp.export()
     #
-    # if self.config.get_bool(Key.Experiment.output_stats):
+    # if self.config.get_bool(Key.Experiment.output_stats.key):
     #     data_eval = DataEval(log=self.__log, exp_path=self.exp_path)
     #     # If output_stats is enabled, evaluate mean throughput and extract predictions from transscale-job logs in stats.csv file
     #     data_eval.eval_mean_stderr()
     #     # If output_plot is enabled, evaluate plot from stats.csv file
-    #     if self.config.get_bool(Key.Experiment.output_plot):
+    #     if self.config.get_bool(Key.Experiment.output_plot.key):
     #         data_eval.eval_summary_plot()
     #         data_eval.eval_experiment_plot()
     #         data_eval.eval_plot_with_checkpoints()
@@ -144,7 +150,7 @@ class TransscaleExperiment(Experiment):
         # Clean transscale remaining pods
         self.k.pod_manager.delete_pods_by_label("job-name=transscale-job")
         # Delete load generators
-        for generator in self.config.get(Key.Experiment.Generators.generators):
+        for generator in self.config.get(Key.Experiment.Generators.generators.key):
             load_generator_params = {
                 "lg_name": generator["name"],
                 "lg_topic": generator["topic"],
@@ -160,7 +166,7 @@ class TransscaleExperiment(Experiment):
                 self.load_generator_deployment_template, load_generator_params
             )
 
-        if self.config.get_bool(Key.Experiment.Chaos.enable):
+        if self.config.get_bool(Key.Experiment.Chaos.enable.key):
             # Clean all network chaos resources
             self.k.chaos_manager.delete_networkchaos()
 
