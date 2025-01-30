@@ -17,7 +17,10 @@ class StoppableThread(threading.Thread):
         super().__init__(*args, **kwargs)
         self.__stop_event = threading.Event()
         self.__log = log
-        self.target = target
+        if callable(target):
+            self.target = target
+        else:
+            raise ValueError("Target must be a callable.")
 
     def stop_thread(self):
         self.__log.info("[THRD] Stopping thread.")

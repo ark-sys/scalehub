@@ -1,4 +1,5 @@
 from scripts.monitor.experiments.Experiment import Experiment
+from scripts.utils.Defaults import DefaultKeys as Key
 
 
 class ResourceExperiment(Experiment):
@@ -9,13 +10,14 @@ class ResourceExperiment(Experiment):
         self.__log = log
         self.config = config
 
-        cpu_values = self.config.get_list_int("cpu_values")
-        self.cpu_milli = [str(cpu * 1000) + "m" for cpu in cpu_values]
-
-        self.memory_values = self.config.get_list_int("memory_values")
+        self.cpu_millis = [
+            str(cpu * 1000) + "m"
+            for cpu in self.config.get_list_int(Key.Experiment.cpu_values.key)
+        ]
+        self.memory_values = self.config.get_list_int(Key.Experiment.memory_values.key)
 
     def exp(self):
-        for c_val in self.cpu_milli:
+        for c_val in self.cpu_millis:
             for memory in self.memory_values:
                 self.__log.info(
                     f"[RESOURCE_E] Running experiment with {c_val} cores and {memory} memory."
