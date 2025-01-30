@@ -1,0 +1,5 @@
+- node: pico
+  taskmanager:
+    - number: 1
+      type: template
+      method: block
