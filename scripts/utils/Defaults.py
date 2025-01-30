@@ -126,6 +126,13 @@ class DefaultKeys:
         runs = ConfigKey("experiment.runs", is_optional=False)
         comment = ConfigKey("experiment.comment", is_optional=True)
 
+        cpu_values = ConfigKey(
+            "experiment.cpu_values", is_optional=True, for_types=["resource"]
+        )
+        memory_values = ConfigKey(
+            "experiment.memory_values", is_optional=True, for_types=["resource"]
+        )
+
         class Scaling:
             strategy_path = ConfigKey(
                 "experiment.scaling.strategy_path", is_optional=True
