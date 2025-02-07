@@ -67,7 +67,10 @@ class DataManager:
 
     def __is_multi_exp_folder(self, path: str) -> bool:
         return (
-            re.match(r"^multi_exp_\d+$", os.path.basename(os.path.normpath(path)))
+            re.match(
+                r"^multi_exp_\d+(_\d+[a-zA-Z])?$",
+                os.path.basename(os.path.normpath(path)),
+            )
             is not None
         )
 
@@ -89,7 +92,7 @@ class DataManager:
         # Get exp log from first single run folder to know if we are dealing with a resource experiment
         first_single_run_folder = os.path.join(multi_run_folder, "1")
         local_config = Config(
-            self.__log, os.path.join(first_single_run_folder, "exp_log.txt")
+            self.__log, os.path.join(first_single_run_folder, "exp_log.json")
         )
         if local_config.get_str(Keys.Experiment.type.key) == "resource":
             self.__log.info("Evaluating resource experiment")

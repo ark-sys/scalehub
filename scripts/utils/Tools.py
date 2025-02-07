@@ -98,16 +98,49 @@ class Tools:
         # Execute the command
         subprocess.run(cmd, shell=True)
 
-    def get_timestamp_from_log(self, full_exp_path):
-        # Get the log file
-        log_file = os.path.join(full_exp_path, "log.txt")
-        # Read the log file
-        with open(log_file, "r") as file:
-            lines = file.readlines()
-        # Get the timestamp start and end timestamps
-        start_ts = lines[0].split(":")[1].strip()
-        end_ts = lines[-1].split(":")[1].strip()
-        return start_ts, end_ts
+    def generate_grafana_quicklink(self, start_ts, end_ts) -> str:
+        grafana_cluster_url = "http://grafana.monitoring.svc.cluster.local"
+        start_ts = int(start_ts) * 1000
+        end_ts = int(end_ts) * 1000
+
+        # Retrieve the dashboard url
+        try:
+            import requests
+
+            response = requests.get(f"{grafana_cluster_url}/api/search")
+            response.raise_for_status()
+            dashboards = response.json()
+            dashboard_url = None
+            for dashboard in dashboards:
+                if dashboard["title"] == "Scalehub monitoring":
+                    dashboard_url = f"{grafana_cluster_url}{dashboard['url']}"
+                    break
+            if dashboard_url is None:
+                raise Exception("Dashboard not found")
+        except Exception as e:
+            self.__log.error(f"Error: {e}")
+            raise e
+
+        # Create the quicklink for localhost/grafana instead of grafana.monitoring.svc.cluster.local
+        quicklink = f"http://localhost/{dashboard_url}?from={start_ts}&to={end_ts}"
+        return quicklink
+
+    def create_log_file(self, config, exp_path, start_ts, end_ts, run_number=None):
+        log_file_path = os.path.join(exp_path, "exp_log.json")
+        json_logs = {
+            "run_number": run_number if run_number else "N/A",
+            "config": config,
+            "timestamps": {"start": start_ts, "end": end_ts},
+            "quicklink": self.generate_grafana_quicklink(start_ts, end_ts),
+        }
+        try:
+            import json
+
+            with open(log_file_path, "w") as file:
+                file.write(json.dumps(json_logs, indent=4))
+        except Exception as e:
+            self.__log.error(f"Error: {e}")
+            raise e
 
     def load_resource_definition(self, resource_filename, experiment_params):
         try:
