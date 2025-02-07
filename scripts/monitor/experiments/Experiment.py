@@ -1,4 +1,3 @@
-import os
 import threading
 from datetime import datetime
 from time import sleep
@@ -83,14 +82,9 @@ class Experiment:
 
             for i, (start_ts, end_ts) in enumerate(self.timestamps):
                 exp_path = f.create_subfolder(multi_run_folder_path)
-                log_file_path = os.path.join(exp_path, "exp_log.txt")
-                with open(log_file_path, "w") as file:
-                    file.write(
-                        f"Experiment run {i + 1}\n\n[CONFIG]\n{self.config.to_json()}\n\n[TIMESTAMPS]\n"
-                    )
-                    file.write(
-                        f"Experiment start at : {start_ts}\nExperiment end at : {end_ts}\n"
-                    )
+                self.t.create_log_file(
+                    self.config.to_json(), exp_path, start_ts, end_ts
+                )
 
             time_diff = int(datetime.now().timestamp()) - self.timestamps[0][0]
             monitor_logs = self.k.pod_manager.get_logs_since(

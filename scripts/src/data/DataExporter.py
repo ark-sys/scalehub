@@ -1,6 +1,5 @@
 import json
 import os
-import re
 from io import StringIO
 
 import pandas as pd
@@ -31,29 +30,22 @@ class DataExporter:
             os.makedirs(self.export_path)
 
         # Load configuration and timestamps from log file
-        log_file = os.path.join(self.exp_path, "exp_log.txt")
+        log_file = os.path.join(self.exp_path, "exp_log.json")
         self.config = Config(log, log_file)
-        self.start_ts, self.end_ts = self.__get_timestamps_from_log(log_file)
+
+        # try to get timestamps from log file
+        try:
+            with open(log_file, "r") as log_file:
+                logs = json.load(log_file)
+                self.start_ts = logs["timestamps"]["start"]
+                self.end_ts = logs["timestamps"]["end"]
+        except Exception as e:
+            self.__log.error(f"Failed to load json file {log_file} due to : {str(e)}")
+            raise e
 
         # VictoriaMetrics database url
         self.db_url = "victoria-metrics-single-server.default.svc.cluster.local:8428"
         self.db_url_local = "localhost/vm"
-
-    def __get_timestamps_from_log(self, log_path: str) -> tuple[int, int]:
-        # Parse log file for experiment info
-        with open(log_path, "r") as log_file:
-            logs = log_file.read()
-        # Extract start and end timestamps from log file
-        start_ts = int(re.search(r"Experiment start at : (\d+)", logs).group(1))
-        end_ts = int(re.search(r"Experiment end at : (\d+)", logs).group(1))
-
-        # Check that timestamps are valid
-        if start_ts is None or end_ts is None:
-            self.__log.error("Failed to parse timestamps from log file.")
-            exit(1)
-
-        # Return timestamps
-        return start_ts, end_ts
 
     def load_json(self, file_path) -> [dict]:
         res = []
@@ -64,14 +56,6 @@ class DataExporter:
             return res
         except Exception as e:
             self.__log.error(f"Failed to load json file {file_path} due to : {str(e)}")
-
-    def extract_pod_names(self, metrics_content) -> dict:
-        pod_names = {}
-        for metric in metrics_content:
-            subtask_index = metric["metric"]["subtask_index"]
-            pod_name = metric["metric"]["pod"]
-            pod_names[subtask_index] = pod_name
-        return pod_names
 
     def export_timeseries_json(
         self,
@@ -210,7 +194,7 @@ class DataExporter:
         self, metrics_content, metric_name, task_name
     ) -> tuple[str, pd.DataFrame]:
         data = {}
-        pod_names = self.extract_pod_names(metrics_content)
+        # pod_names = self.extract_pod_names(metrics_content)
         output_file = os.path.join(self.export_path, f"{metric_name}_export.csv")
         for metric in metrics_content:
             if metric["metric"]["task_name"] == task_name:

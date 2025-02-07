@@ -37,15 +37,24 @@ class Config:
         if _param.endswith(".ini"):
             self.__load_ini_file(_param)
         elif _param.endswith(".json"):
-            with open(_param, "r") as f:
-                self.__config = json.load(f)
-        elif "log" in _param:
-            self.load_from_log(_param)
+            self.__load_json_file(_param)
         else:
             self.__log.error(
                 f"Invalid configuration file {_param}. Expected .ini file or log file."
             )
             raise ValueError(f"Invalid configuration file {_param}")
+
+    def __load_json_file(self, _param: str):
+        try:
+            with open(_param, "r") as f:
+                file_config = json.load(f)
+                if "config" in file_config:
+                    self.__config = file_config["config"]
+                else:
+                    self.__config = file_config
+        except Exception as e:
+            self.__log.error(f"Error while loading json file: {str(e)}")
+            raise e
 
     def __load_ini_file(self, _param: str):
         self.__init_defaults()
@@ -279,16 +288,4 @@ class Config:
             return json.dumps(self.__config, indent=4)
         except Exception as e:
             self.__log.error(f"Error while converting config to json: {str(e)}")
-            raise e
-
-    def load_from_log(self, log_path: str):
-        try:
-            with open(log_path, "r") as f:
-                lines = f.readlines()
-            start_line = lines.index("[CONFIG]\n") + 1
-            end_line = lines.index("[TIMESTAMPS]\n")
-            config_content = "".join(lines[start_line:end_line])
-            self.__config = json.loads(config_content)
-        except Exception as e:
-            self.__log.error(f"Error while loading config from log: {str(e)}")
             raise e

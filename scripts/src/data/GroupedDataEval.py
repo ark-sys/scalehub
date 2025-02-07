@@ -21,7 +21,7 @@ class GroupedDataEval:
 
     # Load the mean_stderr.csv file and generate a boxplot
     def generate_box_for_means(self):
-        exp_path = os.path.join(self.base_path, "1", "exp_log.txt")
+        exp_path = os.path.join(self.base_path, "1", "exp_log.json")
         config: Config = Config(self.__log, exp_path)
 
         dfs = []
@@ -70,7 +70,7 @@ class GroupedDataEval:
 
         ax.yaxis.set_major_formatter(formatter)
 
-        ax.set_xlabel("TaskManagers", fontsize=24)
+        ax.set_xlabel("Number of slots", fontsize=24)
         ax.set_ylabel("Throughput (records/s)", fontsize=24)
         plt.xticks(fontsize=20)
         ax.tick_params(axis="y", labelsize=20)
@@ -117,7 +117,7 @@ class GroupedDataEval:
             final_df_path = os.path.join(folder_path, "final_df.csv")
 
             # Get config file
-            exp_log_path = os.path.join(folder_path, "1", "exp_log.txt")
+            exp_log_path = os.path.join(folder_path, "1", "exp_log.json")
 
             if os.path.exists(final_df_path) and os.path.exists(exp_log_path):
                 config = Config(self.__log, exp_log_path)

@@ -7,7 +7,6 @@ ENV KUBECONFIG="/app/conf/kubeconfig"
 # Some ansible modules use the K8S_AUTH_KUBECONFIG variable instead of KUBECONFIG
 ENV K8S_AUTH_KUBECONFIG="/app/conf/kubeconfig"
 ENV ANSIBLE_CONFIG="/app/conf/ansible.cfg"
-ENV SHUB_CONFIG="/app/conf/scalehub.ini"
 ENV PATH="$PATH:/app/scripts"
 ENV PYTHONPATH="/app:/app/scripts"
 # Silence warnirngs related to dependencies

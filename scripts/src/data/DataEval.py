@@ -24,9 +24,7 @@ class DataEval:
         # Path to experiment folder
         self.exp_path = exp_path
         # Path to log file
-        self.log_file = os.path.join(self.exp_path, "exp_log.txt")
-        # Path to transscale log file
-        self.transscale_log = os.path.join(self.exp_path, "transscale_log.txt")
+        log_file = os.path.join(self.exp_path, "exp_log.json")
 
         # Create a folder for plots if it doesn't exist
         self.plots_path = os.path.join(self.exp_path, "plots")
@@ -37,7 +35,7 @@ class DataEval:
         self.plotter = Plotter(self.__log, plots_path=self.plots_path)
 
         # Parse configuration file for experiment
-        self.conf: Config = Config(log, self.log_file)
+        self.conf: Config = Config(log, log_file)
 
         # Time to skip in seconds at the beginning and the end of a parallelism region
         self.start_skip = self.conf.get_int(Key.Experiment.output_skip_s.key)
@@ -51,14 +49,15 @@ class DataEval:
             )
 
     def __export_predictions(self) -> list[tuple[int, int, int, float]]:
+        predictions = []
+        transscale_log = os.path.join(self.exp_path, "transscale_log.txt")
         try:
-            with open(self.transscale_log, "r") as file:
+            with open(transscale_log, "r") as file:
                 log_content = file.read()
 
             # Define the regular expression pattern
             pattern = r"\[(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})\] \[COMBO_CTRL\] Reconf: Scale (Up|Down) (.*) from par (\d+)([\s\S]*?)\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\] \[RES_MNGR\] Re-configuring PARALLELISM[\s\S].*\n.*Target Parallelism: (\d+)"
             # Extract the matches
-            predictions = []
             for match in re.finditer(pattern, log_content):
                 # Extract the match
                 current_parallelism = int(match.group(4))
@@ -85,10 +84,18 @@ class DataEval:
                                 throughput,
                             )
                         )
-        except:
-            self.__log.error("Failed to extract predictions from transscale log.")
-            predictions = []
-        return predictions
+        except FileNotFoundError:
+
+            # self.__log.error("Failed to extract predictions from transscale log.")
+            self.__log.error(
+                "Failed to extract predictions from transscale log: File not found."
+            )
+        except Exception as e:
+            self.__log.error(
+                f"Failed to extract predictions from transscale log: {str(e)}"
+            )
+        finally:
+            return predictions
 
     def eval_mean_stderr(self):
         # Load the DataFrame
