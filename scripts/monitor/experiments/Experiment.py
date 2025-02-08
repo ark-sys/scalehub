@@ -75,7 +75,7 @@ class Experiment:
 
         f = FolderManager(self.__log, self.EXPERIMENTS_BASE_PATH)
         try:
-            date_path = f.create_date_folder(self.timestamps[0][0])
+            date_path = f.create_date_folder()
             multi_run_folder_path = (
                 f.create_multi_run_folder() if len(self.timestamps) > 1 else date_path
             )

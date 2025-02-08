@@ -1,5 +1,4 @@
 import os
-import re
 import subprocess
 from datetime import datetime
 from time import sleep
@@ -17,75 +16,80 @@ class FolderManager:
     def __init__(self, log, base_path):
         self.__log = log
         self.base_path = base_path
-        self.date = self.__check_date_in_path(self.base_path)
+        self.date = datetime.fromtimestamp(int(datetime.now().timestamp())).strftime(
+            "%Y-%m-%d"
+        )
+        self.date_path = os.path.join(self.base_path, self.date)
         self.__log.info(
             f"FolderManager initialized with base path: {self.base_path}. Date: {self.date}"
         )
 
-    def __check_date_in_path(self, path):
-        # regex to match date in the path
-        date_regex = r"\d{4}-\d{2}-\d{2}"
-        # If we have a date in the path, return it
-        if re.search(date_regex, path):
-            return re.search(date_regex, path).group()
-        return None
-
     def create_subfolder(self, base_path, type="single_run", **kwargs):
+        try:
+            match type:
+                case "single_run":
+                    subfolders = [
+                        f
+                        for f in os.listdir(base_path)
+                        if os.path.isdir(os.path.join(base_path, f))
+                    ]
+                    subfolder_numbers = [int(f) for f in subfolders if f.isdigit()]
+                    next_subfolder_number = max(subfolder_numbers, default=0) + 1
+                    new_folder_path = os.path.join(
+                        base_path, str(next_subfolder_number)
+                    )
+                    os.makedirs(new_folder_path)
+                    return new_folder_path
+                case "tm":
+                    # Get tm_name from kwargs
+                    tm_name = kwargs.get("tm_name")
+                    # Create the res_exp folder
+                    new_folder_path = os.path.join(base_path, tm_name)
+                    os.makedirs(new_folder_path)
+                    return new_folder_path
+                case "res_exp":
+                    # Get node_name from kwargs
+                    node_name = kwargs.get("node_name")
+                    # Create the res_exp folder
+                    # Find the next available folder number
+                    existing_folders = [
+                        f
+                        for f in os.listdir(base_path)
+                        if f.startswith(f"res_exp_{node_name}_")
+                    ]
+                    folder_numbers = [
+                        int(f.split("_")[-1])
+                        for f in existing_folders
+                        if f.split("_")[-1].isdigit()
+                    ]
+                    next_folder_number = max(folder_numbers, default=1) + 1
+                    new_folder_path = os.path.join(
+                        base_path, f"res_exp_{node_name}_{next_folder_number}"
+                    )
+                    os.makedirs(new_folder_path)
+                    return new_folder_path
+                case _:
+                    self.__log.error(f"Unknown folder type: {type}")
+                    raise ValueError(f"Unknown folder type: {type}")
+        except FileExistsError:
+            return new_folder_path
+        except Exception as e:
+            self.__log.error(f"Error: {e}")
 
-        match type:
-            case "single_run":
-                subfolders = [
-                    f
-                    for f in os.listdir(base_path)
-                    if os.path.isdir(os.path.join(base_path, f))
-                ]
-                subfolder_numbers = [int(f) for f in subfolders if f.isdigit()]
-                next_subfolder_number = max(subfolder_numbers, default=0) + 1
-                new_folder_path = os.path.join(base_path, str(next_subfolder_number))
-                os.makedirs(new_folder_path)
-                return new_folder_path
-            case "tm":
-                # Get tm_name from kwargs
-                tm_name = kwargs.get("tm_name")
-                # Create the res_exp folder
-                new_folder_path = os.path.join(base_path, tm_name)
-                os.makedirs(new_folder_path)
-                return new_folder_path
-            case "res_exp":
-                # Get node_name from kwargs
-                node_name = kwargs.get("node_name")
-                # Create the res_exp folder
-                new_folder_path = os.path.join(base_path, f"res_exp_{node_name}_1")
-                os.makedirs(new_folder_path)
-                return new_folder_path
-            case _:
-                self.__log.error(f"Unknown folder type: {type}")
-                raise ValueError(f"Unknown folder type: {type}")
-
-    def create_date_folder(self, timestamp: int):
-        # Convert timestamp to date string
-        date_str = datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d")
-
-        # Set date
-        self.date = date_str
-
-        # Date path
-        date_path = os.path.join(self.base_path, date_str)
-
+    def create_date_folder(self):
         # Create the date folder if it doesn't exist
         try:
-            os.makedirs(date_path)
-            return date_path
+            os.makedirs(self.date_path)
+            return self.date_path
         except FileExistsError:
-            return date_path
+            return self.date_path
 
     def create_multi_run_folder(self):
-        base_path = os.path.join(self.base_path, self.date)
-        if not os.path.exists(base_path):
-            os.makedirs(base_path)
+        if not os.path.exists(self.date_path):
+            os.makedirs(self.date_path)
 
         multi_run_folders = [
-            f for f in os.listdir(base_path) if f.startswith("multi_run_")
+            f for f in os.listdir(self.date_path) if f.startswith("multi_run_")
         ]
         multi_run_numbers = [
             int(f.split("_")[-1])
@@ -94,7 +98,7 @@ class FolderManager:
         ]
         next_multi_run_number = max(multi_run_numbers, default=0) + 1
         multi_run_folder_path = os.path.join(
-            base_path, f"multi_run_{str(next_multi_run_number)}"
+            self.date_path, f"multi_run_{str(next_multi_run_number)}"
         )
         os.makedirs(multi_run_folder_path)
         return multi_run_folder_path
