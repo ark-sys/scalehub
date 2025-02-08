@@ -81,6 +81,8 @@ class ResourceExperiment(Experiment):
 
                 end_ts = int(datetime.now().timestamp())
 
+                if tm_name not in self.timestamps_dict:
+                    self.timestamps_dict[tm_name] = []
                 self.timestamps_dict[tm_name].append((start_ts, end_ts))
 
                 self.__log.info(
