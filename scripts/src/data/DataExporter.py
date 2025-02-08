@@ -55,7 +55,23 @@ class DataExporter:
                     res.append(json.loads(line))
             return res
         except Exception as e:
-            self.__log.error(f"Failed to load json file {file_path} due to : {str(e)}")
+            self.__log.warning(
+                f"Failed to load json file {file_path} due to : {str(e)}\nTrying fix..."
+            )
+            # Probably the file is not properly formatted, try to remove newlines and load it again
+            try:
+                with open(file_path, "r") as file:
+                    content = file.read().replace("\n", "")
+
+                    content = content.replace("}{", "}\n{")
+                    res = [json.loads(line) for line in content.split("\n")]
+                    return res
+
+            except Exception as e:
+                self.__log.error(
+                    f"Failed to load json file {file_path} due to : {str(e)}"
+                )
+                raise e
 
     def export_timeseries_json(
         self,

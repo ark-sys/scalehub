@@ -347,7 +347,7 @@ class Plotter:
 
         cbar.ax.tick_params(labelsize=self.fontsize)
 
-        surf.set_clim(6000, 13000)
+        surf.set_clim(6000, 45000)
 
         cbar.ax.yaxis.set_major_formatter(FuncFormatter(self.__log.thousands_formatter))
 

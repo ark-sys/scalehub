@@ -30,23 +30,37 @@ class FolderManager:
             return re.search(date_regex, path).group()
         return None
 
-    def create_subfolder(self, base_path):
+    def create_subfolder(self, base_path, type="single_run", **kwargs):
 
-        # List all subfolders
-        subfolders = [
-            f
-            for f in os.listdir(base_path)
-            if os.path.isdir(os.path.join(base_path, f))
-        ]
-        # Get the subfolder numbers
-        subfolder_numbers = [int(f) for f in subfolders if f.isdigit()]
-        # Get the next subfolder number
-        next_subfolder_number = max(subfolder_numbers, default=0) + 1
-        # Create the new subfolder path
-        new_folder_path = os.path.join(base_path, str(next_subfolder_number))
-        # Create the new subfolder
-        os.makedirs(new_folder_path)
-        return new_folder_path
+        match type:
+            case "single_run":
+                subfolders = [
+                    f
+                    for f in os.listdir(base_path)
+                    if os.path.isdir(os.path.join(base_path, f))
+                ]
+                subfolder_numbers = [int(f) for f in subfolders if f.isdigit()]
+                next_subfolder_number = max(subfolder_numbers, default=0) + 1
+                new_folder_path = os.path.join(base_path, str(next_subfolder_number))
+                os.makedirs(new_folder_path)
+                return new_folder_path
+            case "tm":
+                # Get tm_name from kwargs
+                tm_name = kwargs.get("tm_name")
+                # Create the res_exp folder
+                new_folder_path = os.path.join(base_path, tm_name)
+                os.makedirs(new_folder_path)
+                return new_folder_path
+            case "res_exp":
+                # Get node_name from kwargs
+                node_name = kwargs.get("node_name")
+                # Create the res_exp folder
+                new_folder_path = os.path.join(base_path, f"res_exp_{node_name}_1")
+                os.makedirs(new_folder_path)
+                return new_folder_path
+            case _:
+                self.__log.error(f"Unknown folder type: {type}")
+                raise ValueError(f"Unknown folder type: {type}")
 
     def create_date_folder(self, timestamp: int):
         # Convert timestamp to date string

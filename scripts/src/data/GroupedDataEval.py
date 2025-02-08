@@ -1,4 +1,5 @@
 import os
+import re
 
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -102,6 +103,7 @@ class GroupedDataEval:
         fig.tight_layout()
         output_path = os.path.join(self.base_path, f"boxplot_{num_runs}_runs_mean.png")
         fig.savefig(output_path)
+        plt.close(fig)
 
     def is_single_node(self):
         if any("single_node" in s for s in os.listdir(self.base_path)):
@@ -225,47 +227,46 @@ class GroupedDataEval:
             zoom_region=zoom_region,
         )
 
-    def generate_resource_plot(self):
+    def process_resource_data(self):
         resource_data = {}
 
-        # Iterate through all resource_data.csv files in the base path
-        for root, dirs, files in os.walk(self.base_path):
-            for file in files:
-                if file == "resource_data.csv":
-                    file_path = os.path.join(root, file)
-                    df = pd.read_csv(file_path)
+        subdirs = [d for d in os.listdir(self.base_path) if "flink" in d]
+        for subdir in subdirs:
+            subdir_path = os.path.join(self.base_path, subdir)
 
-                    # Update the resource_data dictionary
-                    for _, row in df.iterrows():
-                        cpu_mem = (row["cpu"], row["mem"])
-                        if cpu_mem not in resource_data:
-                            resource_data[cpu_mem] = {"throughput_values": []}
-                        resource_data[cpu_mem]["throughput_values"].append(
-                            row["throughput"]
-                        )
+            # Retrieve final_df.csv from the subdir
+            final_df_path = os.path.join(subdir_path, "final_df.csv")
+            try:
+                df = pd.read_csv(final_df_path)
+                throughput = df["Throughput_mean"].values[0]
+                pod_config = r"flink-(\d+)m-(\d+)(-(.*))?"
+                match = re.search(pod_config, subdir)
+                cpu, mem = match.group(1), match.group(2)
+                resource_data[(int(cpu) // 1000, int(mem) // 1024)] = throughput
 
-        # Calculate the average throughput for each CPU and memory combination
-        final_data = []
-        for (cpu, mem), values in resource_data.items():
-            throughput_values = values["throughput_values"]
-            avg_throughput = sum(throughput_values) / len(throughput_values)
-            occurrences = len(throughput_values)
-            final_data.append(
+            except FileNotFoundError:
+                self.__log.error(
+                    f"final_df.csv not found in {subdir_path}. Skipping directory."
+                )
+
+        return resource_data
+
+    def generate_resource_plot(self):
+        resource_data = self.process_resource_data()
+        final_df = pd.DataFrame(
+            [
                 {
                     "cpu": cpu,
                     "mem": mem,
-                    "throughput": avg_throughput,
-                    "occurrences": occurrences,
-                },
-            )
-
-        # Create a final DataFrame from the dictionary
-        final_df = pd.DataFrame(final_data)
+                    "throughput": throughput,
+                }
+                for (cpu, mem), throughput in resource_data.items()
+            ]
+        )
+        final_df = final_df.apply(pd.to_numeric, errors="coerce").dropna()
 
         # Save the final DataFrame to a CSV file
-        final_df.to_csv(
-            os.path.join(self.base_path, "final_resource_data.csv"), index=False
-        )
+        final_df.to_csv(os.path.join(self.base_path, "resource_data.csv"), index=False)
 
         # Pass the final DataFrame to self.plotter.generate_3d_plot() for 3D plot generation
         self.plotter.generate_3d_plot(
@@ -278,3 +279,6 @@ class GroupedDataEval:
             zlabel="Throughput (Records/s)",
             filename="resource_plot_multi_run.png",
         )
+
+        def generate_resource_core_info(self):
+            pass
