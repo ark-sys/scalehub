@@ -170,17 +170,17 @@ class DataEval:
         # Clean up the DataFrame: rows with parallelism > 0 that have 0 throughput are removed
         df_final = df_final[df_final["Throughput"] > 0]
 
-        # Extract predictions from transscale log
-        predictions = self.__export_predictions()
-
-        if len(predictions) == 0:
-            self.__log.warning("No predictions found in transscale log.")
-        else:
-            # Add the predictions to the DataFrame
-            df_final["Predictions"] = np.nan
-            for prediction in predictions:
-                time, current_parallelism, target_parallelism, throughput = prediction
-                df_final.loc[target_parallelism, "Predictions"] = throughput
+        # # Extract predictions from transscale log
+        # predictions = self.__export_predictions()
+        #
+        # if len(predictions) == 0:
+        #     self.__log.warning("No predictions found in transscale log.")
+        # else:
+        #     # Add the predictions to the DataFrame
+        #     df_final["Predictions"] = np.nan
+        #     for prediction in predictions:
+        #         time, current_parallelism, target_parallelism, throughput = prediction
+        #         df_final.loc[target_parallelism, "Predictions"] = throughput
 
         # Save the DataFrame to a CSV file
         df_final.to_csv(os.path.join(self.exp_path, "mean_stderr.csv"))

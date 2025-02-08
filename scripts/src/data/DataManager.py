@@ -183,8 +183,8 @@ class DataManager:
         try:
             data_eval = DataEval(log=self.__log, exp_path=exp_path)
             data_eval.eval_mean_stderr()
-            # data_eval.eval_summary_plot()
-            # data_eval.eval_experiment_plot()
+            data_eval.eval_summary_plot()
+            data_eval.eval_experiment_plot()
         except Exception as e:
             self.__log.error(f"Error evaluating data: {e}")
             raise e
