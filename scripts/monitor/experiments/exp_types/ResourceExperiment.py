@@ -30,9 +30,9 @@ class ResourceExperiment(Experiment):
         try:
             date_folder = f.create_date_folder(self.timestamps[0][0][0])
             # Get node name from strategy
-            node_type = self.config.get_str(Key.Experiment.Scaling.steps.key)[0]["node"]
+            node_type = self.config.get(Key.Experiment.Scaling.steps.key)[0]["node"]
             vm_type = (
-                self.config.get_str(Key.Experiment.Scaling.steps.key)[0]["type"]
+                self.config.get(Key.Experiment.Scaling.steps.key)[0]["type"]
                 if node_type == "vm_grid5000"
                 else None
             )
