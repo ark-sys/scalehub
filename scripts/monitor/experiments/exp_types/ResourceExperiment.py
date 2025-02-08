@@ -28,7 +28,7 @@ class ResourceExperiment(Experiment):
 
         f = FolderManager(self.__log, self.EXPERIMENTS_BASE_PATH)
         try:
-            date_folder = f.create_date_folder(self.timestamps_dict[0][0][0])
+            date_folder = f.create_date_folder()
             # Get node name from strategy
             node_type = self.config.get(Key.Experiment.Scaling.steps.key)[0]["node"]
             vm_type = (
@@ -53,7 +53,8 @@ class ResourceExperiment(Experiment):
                 date_folder, type="res_exp", node_name=node_name
             )
 
-            for tm_name in self.timestamps_dict.items():
+            # Create subfolders for each tm_name
+            for tm_name in self.timestamps_dict:
                 tm_path = f.create_subfolder(res_exp_folder, type="tm", tm_name=tm_name)
                 for (start_ts, end_ts) in self.timestamps_dict[tm_name]:
                     single_run_path = f.create_subfolder(tm_path, type="single_run")
@@ -82,8 +83,9 @@ class ResourceExperiment(Experiment):
                 end_ts = int(datetime.now().timestamp())
 
                 if tm_name not in self.timestamps_dict:
-                    self.timestamps_dict[tm_name] = []
-                self.timestamps_dict[tm_name].append((start_ts, end_ts))
+                    self.timestamps_dict[tm_name] = [(start_ts, end_ts)]
+                else:
+                    self.timestamps_dict[tm_name].append((start_ts, end_ts))
 
                 self.__log.info(
                     f"[RESOURCE_E] Run {run + 1}/{self.runs} completed. Start: {start_ts}, End: {end_ts}"
