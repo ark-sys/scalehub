@@ -73,7 +73,7 @@ class ResourceExperiment(Experiment):
 
             try:
                 start_ts = int(datetime.now().timestamp())
-                if self.__single_run() == 1:
+                if self.single_run() == 1:
                     self.__log.info(
                         f"[RESOURCE_E] Experiment exiting run {run + 1}/{self.runs}"
                     )
