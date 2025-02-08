@@ -306,101 +306,106 @@ class DataExporter:
         return res
 
     def export(self):
-        ############################ Retrieve job information ############################
+        try:
+            ############################ Retrieve job information ############################
 
-        # Get job name from config file
-        job_name = self.config.get(Key.Experiment.name.key)
-        # If job name is Map, get list of tasks from pipeline dict
-        if job_name == "Map":
-            tasks = list(MAP_PIPELINE_DICT.values())
-        # If job name is Join, get list of tasks from pipeline dict
-        elif job_name == "Join":
-            tasks = list(JOIN_PIPELINE_DICT.values())
-            # list contains a tuple, unpack it
-            for task in tasks:
-                if isinstance(task, tuple):
-                    tasks.pop(tasks.index(task))
-                    tasks.extend(task)
-        else:
-            self.__log.error(f"Unknown job name: {job_name}")
-            exit(1)
-        # Retrieve operator name from config file
-        operator_name = self.config.get(Key.Experiment.task_name.key)
-        if operator_name == "TumblingEventTimeWindows":
-            operator_name = "TumblingEventTimeWindows____Timestamps_Watermarks"
+            # Get job name from config file
+            job_name = self.config.get(Key.Experiment.name.key)
+            # If job name is Map, get list of tasks from pipeline dict
+            if job_name == "Map":
+                tasks = list(MAP_PIPELINE_DICT.values())
+            # If job name is Join, get list of tasks from pipeline dict
+            elif job_name == "Join":
+                tasks = list(JOIN_PIPELINE_DICT.values())
+                # list contains a tuple, unpack it
+                for task in tasks:
+                    if isinstance(task, tuple):
+                        tasks.pop(tasks.index(task))
+                        tasks.extend(task)
+            else:
+                self.__log.error(f"Unknown job name: {job_name}")
+                exit(1)
+            # Retrieve operator name from config file
+            operator_name = self.config.get(Key.Experiment.task_name.key)
+            if operator_name == "TumblingEventTimeWindows":
+                operator_name = "TumblingEventTimeWindows____Timestamps_Watermarks"
 
-        ############################ Export monitored operator metrics ############################
-        operator_metrics_list = []
-        # Export operator metrics
-        for metric in metrics_dict["operator_metrics"]:
-            path_to_export = self.export_timeseries_json(metric)
-            if path_to_export:
-                self.__log.info(f"Data exported to {path_to_export}")
-                json_content = self.load_json(path_to_export)
-                _, df = self.get_metrics_per_subtask(
-                    json_content, metric, operator_name
-                )
-                operator_metrics_list.append(df)
-
-        ############################ Export sources metrics ############################
-        # Export sources metrics
-        sources_metrics_list = []
-        for metric in metrics_dict["sources_metrics"]:
-            path_to_export = self.export_timeseries_json(metric)
-            if path_to_export:
-                self.__log.info(f"Data exported to {path_to_export}")
-                json_content = self.load_json(path_to_export)
-                df = self.get_sources_metrics(json_content, metric)
-                sources_metrics_list.extend(df)
-
-        ############################ Export state metrics ############################
-        state_metrics_list = []
-        for metric in metrics_dict["state_metrics"]:
-            path_to_export, df = self.export_timeseries_csv(metric)
-            state_metrics_list.append(df)
-
-        ############################ Export metrics for all operators ############################
-        job_metrics_list = []
-        for metric in metrics_dict["job_metrics"]:
-            path_to_export = self.export_timeseries_json(metric)
-            if path_to_export:
-                self.__log.info(f"Data exported to {path_to_export}")
-                json_content = self.load_json(path_to_export)
-                for task_name in tasks:
+            ############################ Export monitored operator metrics ############################
+            operator_metrics_list = []
+            # Export operator metrics
+            for metric in metrics_dict["operator_metrics"]:
+                path_to_export = self.export_timeseries_json(metric)
+                if path_to_export:
+                    self.__log.info(f"Data exported to {path_to_export}")
+                    json_content = self.load_json(path_to_export)
                     _, df = self.get_metrics_per_subtask(
-                        json_content, metric, task_name
+                        json_content, metric, operator_name
                     )
+                    operator_metrics_list.append(df)
 
-                    # Output df has multindex (metric_name, subtask_index). We want to extend the index with the task name, so that we have (metric_name, task_name, subtask_index)
-                    job_metrics_list.append(df)
-        # Join the dataframes in metrics_with_subtasks_list and sources_metrics_list on Timestamp index
-        operator_metrics_df = pd.concat(operator_metrics_list, axis=1)
+            ############################ Export sources metrics ############################
+            # Export sources metrics
+            sources_metrics_list = []
+            for metric in metrics_dict["sources_metrics"]:
+                path_to_export = self.export_timeseries_json(metric)
+                if path_to_export:
+                    self.__log.info(f"Data exported to {path_to_export}")
+                    json_content = self.load_json(path_to_export)
+                    df = self.get_sources_metrics(json_content, metric)
+                    sources_metrics_list.extend(df)
 
-        sources_metrics_df = pd.concat(sources_metrics_list, axis=1)
+            ############################ Export state metrics ############################
+            state_metrics_list = []
+            for metric in metrics_dict["state_metrics"]:
+                path_to_export, df = self.export_timeseries_csv(metric)
+                state_metrics_list.append(df)
 
-        job_metrics_df = pd.concat(job_metrics_list, axis=1)
+            ############################ Export metrics for all operators ############################
+            job_metrics_list = []
+            for metric in metrics_dict["job_metrics"]:
+                path_to_export = self.export_timeseries_json(metric)
+                if path_to_export:
+                    self.__log.info(f"Data exported to {path_to_export}")
+                    json_content = self.load_json(path_to_export)
+                    for task_name in tasks:
+                        _, df = self.get_metrics_per_subtask(
+                            json_content, metric, task_name
+                        )
 
-        final_df = pd.concat([operator_metrics_df, sources_metrics_df], axis=1)
+                        # Output df has multindex (metric_name, subtask_index). We want to extend the index with the task name, so that we have (metric_name, task_name, subtask_index)
+                        job_metrics_list.append(df)
+            # Join the dataframes in metrics_with_subtasks_list and sources_metrics_list on Timestamp index
+            operator_metrics_df = pd.concat(operator_metrics_list, axis=1)
 
-        # Start time from 0
-        final_df.index = (final_df.index - final_df.index.min()) / 1000
+            sources_metrics_df = pd.concat(sources_metrics_list, axis=1)
 
-        # Set index as int
-        final_df.index = final_df.index.astype(int)
+            job_metrics_df = pd.concat(job_metrics_list, axis=1)
 
-        # Add df from job metrics to final_df
-        state_metrics_df = pd.concat(state_metrics_list, axis=1)
-        final_df = pd.concat([final_df, state_metrics_df], axis=1)
+            final_df = pd.concat([operator_metrics_df, sources_metrics_df], axis=1)
 
-        # Add Parallelism column
-        numRecordsInPerSecond_cols = [
-            col
-            for col in final_df.columns
-            if any("numRecordsInPerSecond" in str(item) for item in col)
-        ]
-        final_df["Parallelism"] = final_df[numRecordsInPerSecond_cols].count(axis=1)
+            # Start time from 0
+            final_df.index = (final_df.index - final_df.index.min()) / 1000
 
-        # self.final_df = final_df
-        final_df.to_csv(os.path.join(self.exp_path, "final_df.csv"))
+            # Set index as int
+            final_df.index = final_df.index.astype(int)
 
-        job_metrics_df.to_csv(os.path.join(self.exp_path, "job_metrics_df.csv"))
+            # Add df from job metrics to final_df
+            state_metrics_df = pd.concat(state_metrics_list, axis=1)
+            final_df = pd.concat([final_df, state_metrics_df], axis=1)
+
+            # Add Parallelism column
+            numRecordsInPerSecond_cols = [
+                col
+                for col in final_df.columns
+                if any("numRecordsInPerSecond" in str(item) for item in col)
+            ]
+            final_df["Parallelism"] = final_df[numRecordsInPerSecond_cols].count(axis=1)
+
+            # self.final_df = final_df
+            final_df.to_csv(os.path.join(self.exp_path, "final_df.csv"))
+
+            job_metrics_df.to_csv(os.path.join(self.exp_path, "job_metrics_df.csv"))
+
+        except Exception as e:
+            self.__log.error(f"[DATA_EXP] Error exporting data: {e}")
+            raise e
