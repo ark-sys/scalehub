@@ -280,15 +280,15 @@ class DataEval:
         else:
             operator_name = "Unknown"
 
-        # Check if latency is enabled, and if so, check if jitter is enabled
-        if self.conf.get(Key.Experiment.Chaos.enable.key) == "true":
-            jitter = self.conf.get(Key.Experiment.Chaos.delay_jitter_ms.key)
-            if int(jitter) > 0:
-                title = f"{operator_name} - Latency and Jitter"
-            else:
-                title = f"{operator_name} - Latency"
-        else:
-            title = f"{operator_name} - No Latency"
+        # # Check if latency is enabled, and if so, check if jitter is enabled
+        # if self.conf.get(Key.Experiment.Chaos.enable.key) == "true":
+        #     jitter = self.conf.get(Key.Experiment.Chaos.delay_jitter_ms.key)
+        #     if int(jitter) > 0:
+        #         title = f"{operator_name} - Latency and Jitter"
+        #     else:
+        #         title = f"{operator_name} - Latency"
+        # else:
+        #     title = f"{operator_name} - No Latency"
         # eval max value for ylim from throughput. round up to nearest 50000
         y_val = dataset["Throughput"].max()
         # Call generate_single_plot_multiple_series() to plot the data
@@ -297,7 +297,6 @@ class DataEval:
             ax1_error_data,
             ax2_data,
             ax2_error_data,
-            title=title,
             xlabel="Parallelism Level",
             ylabels_dict={
                 "Throughput": "Records/s",
