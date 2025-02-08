@@ -19,16 +19,16 @@ class ResourceExperiment(Experiment):
             for cpu in self.config.get_list_int(Key.Experiment.cpu_values.key)
         ]
         self.memory_values = self.config.get_list_int(Key.Experiment.memory_values.key)
-        self.timestamps = {}
+        self.timestamps_dict = {}
 
     def finishing(self):
-        if not self.timestamps:
+        if not self.timestamps_dict:
             self.__log.warning("[RESOURCE_E] No timestamps to export.")
             return
 
         f = FolderManager(self.__log, self.EXPERIMENTS_BASE_PATH)
         try:
-            date_folder = f.create_date_folder(self.timestamps[0][0][0])
+            date_folder = f.create_date_folder(self.timestamps_dict[0][0][0])
             # Get node name from strategy
             node_type = self.config.get(Key.Experiment.Scaling.steps.key)[0]["node"]
             vm_type = (
@@ -53,9 +53,9 @@ class ResourceExperiment(Experiment):
                 date_folder, type="res_exp", node_name=node_name
             )
 
-            for tm_name in self.timestamps.items():
+            for tm_name in self.timestamps_dict.items():
                 tm_path = f.create_subfolder(res_exp_folder, type="tm", tm_name=tm_name)
-                for (start_ts, end_ts) in self.timestamps[tm_name]:
+                for (start_ts, end_ts) in self.timestamps_dict[tm_name]:
                     single_run_path = f.create_subfolder(tm_path, type="single_run")
                     self.t.create_log_file(
                         self.config.to_json(), single_run_path, start_ts, end_ts
@@ -78,8 +78,11 @@ class ResourceExperiment(Experiment):
                         f"[RESOURCE_E] Experiment exiting run {run + 1}/{self.runs}"
                     )
                     return 1
+
                 end_ts = int(datetime.now().timestamp())
-                self.timestamps[tm_name].append((start_ts, end_ts))
+
+                self.timestamps_dict[tm_name].append((start_ts, end_ts))
+
                 self.__log.info(
                     f"[RESOURCE_E] Run {run + 1}/{self.runs} completed. Start: {start_ts}, End: {end_ts}"
                 )
