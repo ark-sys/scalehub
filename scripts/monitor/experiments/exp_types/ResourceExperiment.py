@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from scripts.monitor.experiments.Experiment import Experiment
-from scripts.src.data.DataManager import DataManager
 from scripts.utils.Defaults import DefaultKeys as Key
 from scripts.utils.Tools import FolderManager
 
@@ -56,14 +55,15 @@ class ResourceExperiment(Experiment):
             # Create subfolders for each tm_name
             for tm_name in self.timestamps_dict:
                 tm_path = f.create_subfolder(res_exp_folder, type="tm", tm_name=tm_name)
+
                 for (start_ts, end_ts) in self.timestamps_dict[tm_name]:
                     single_run_path = f.create_subfolder(tm_path, type="single_run")
                     self.t.create_log_file(
                         self.config.to_json(), single_run_path, start_ts, end_ts
                     )
 
-            dm = DataManager(self.__log, self.config)
-            dm.export(res_exp_folder)
+            # dm = DataManager(self.__log, self.config)
+            # dm.export(res_exp_folder)
         except Exception as e:
             self.__log.error(f"[RESOURCE_E] Error during finishing: {str(e)}")
 

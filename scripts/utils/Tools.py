@@ -83,6 +83,8 @@ class FolderManager:
             return self.date_path
         except FileExistsError:
             return self.date_path
+        except Exception as e:
+            raise e
 
     def create_multi_run_folder(self):
         if not os.path.exists(self.date_path):
