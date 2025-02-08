@@ -280,5 +280,68 @@ class GroupedDataEval:
             filename="resource_plot_multi_run.png",
         )
 
-        def generate_resource_core_info(self):
-            pass
+    def generate_resource_core_info(self):
+        nodes_config = {
+            "bm": {"cpu": 52, "mem": 386},
+            "vml": {"cpu": 8, "mem": 32},
+            "vms": {"cpu": 2, "mem": 8},
+            "pico": {"cpu": 4, "mem": 4},
+        }
+
+        resource_data = self.process_resource_data()
+        final_df = pd.DataFrame(
+            [
+                {
+                    "cpu": cpu,
+                    "mem": mem,
+                    "throughput": throughput,
+                }
+                for (cpu, mem), throughput in resource_data.items()
+            ]
+        )
+        final_df = final_df.apply(pd.to_numeric, errors="coerce").dropna()
+
+        final_df["tpt_per_core"] = final_df["throughput"] / final_df["cpu"]
+
+        # Get node_name from self.base_path
+        node_name = os.path.basename(self.base_path).split("_")[2]
+
+        node_config = nodes_config[node_name]
+
+        final_df["inst_full"] = final_df.apply(
+            lambda row: min(
+                node_config["cpu"] // row["cpu"], node_config["mem"] // row["mem"]
+            ),
+            axis=1,
+        )
+
+        final_df["exp_tpt_full"] = final_df["throughput"] * final_df["inst_full"]
+
+        # Save the final DataFrame to a CSV file
+        final_df.to_csv(
+            os.path.join(self.base_path, "resource_core_info.csv"), index=False
+        )
+
+        best_row = final_df.loc[final_df["exp_tpt_full"].idxmax()]
+
+        # Prepare latex data
+        latex_data = final_df.o_latex(
+            index=False,
+            float_format="%.2f",
+            escape=True,
+            caption=f"Throughput evaluation for {node_name.upper()}",
+        )
+
+        # Create the best row configuration string
+        best_row_string = (
+            f"Best throughput per core of {round(best_row['throughput'], 2)} is achieved with {int(best_row['cpu'])} CPUs, {round(best_row['mem'], 1)} GB of memory."
+            f"With this configuration, a {node_name} machine can host {int(best_row['inst_full'])} instances, with an expected throughput of {round(best_row['exp_tpt_full'], 2)}."
+        )
+
+        latex_data = latex_data.replace(
+            "\\end{tabular}", "\\end{tabular}\n" f"\\textbf{{{best_row_string}}}\n"
+        )
+
+        latex_file_path = os.path.join(self.base_path, "resource_core_info.tex")
+        with open(latex_file_path, "w") as file:
+            file.write(latex_data)
