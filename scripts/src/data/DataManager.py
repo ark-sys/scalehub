@@ -95,6 +95,7 @@ class DataManager:
             self.__log.info("Generating resource plot")
             grouped_data_eval = GroupedDataEval(log=self.__log, exp_path=res_exp_folder)
             grouped_data_eval.generate_resource_plot()
+            grouped_data_eval.generate_resource_core_info()
 
     def __process_multi_run_folder(self, multi_run_folder: str, **kwargs):
         for subfolder in os.listdir(multi_run_folder):
