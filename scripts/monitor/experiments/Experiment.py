@@ -126,7 +126,7 @@ class Experiment:
             self.__log.info(f"[EXPERIMENT] Starting run {run + 1}")
             try:
                 start_ts = int(datetime.now().timestamp())
-                if self.__single_run() == 1:
+                if self.single_run() == 1:
                     self.__log.info(f"[EXPERIMENT] Exiting run {run + 1}")
                     return 1
                 end_ts = int(datetime.now().timestamp())
@@ -141,7 +141,7 @@ class Experiment:
                 self.__log.error(f"[EXPERIMENT] Error during run: {str(e)}")
                 raise e
 
-    def __single_run(self):
+    def single_run(self):
         try:
             s = Scaling(self.__log, self.config, self.k)
             s.set_sleep_command(self.current_experiment_thread.sleep)
