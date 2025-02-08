@@ -24,9 +24,9 @@ class FolderManager:
             f"FolderManager initialized with base path: {self.base_path}. Date: {self.date}"
         )
 
-    def create_subfolder(self, base_path, type="single_run", **kwargs):
+    def create_subfolder(self, base_path, subfolder_type="single_run", **kwargs):
         try:
-            match type:
+            match subfolder_type:
                 case "single_run":
                     subfolders = [
                         f
@@ -38,14 +38,14 @@ class FolderManager:
                     new_folder_path = os.path.join(
                         base_path, str(next_subfolder_number)
                     )
-                    os.makedirs(new_folder_path)
+                    os.makedirs(new_folder_path, exist_ok=True)
                     return new_folder_path
                 case "tm":
                     # Get tm_name from kwargs
                     tm_name = kwargs.get("tm_name")
                     # Create the res_exp folder
                     new_folder_path = os.path.join(base_path, tm_name)
-                    os.makedirs(new_folder_path)
+                    os.makedirs(new_folder_path, exist_ok=True)
                     return new_folder_path
                 case "res_exp":
                     # Get node_name from kwargs
@@ -66,13 +66,11 @@ class FolderManager:
                     new_folder_path = os.path.join(
                         base_path, f"res_exp_{node_name}_{next_folder_number}"
                     )
-                    os.makedirs(new_folder_path)
+                    os.makedirs(new_folder_path, exist_ok=True)
                     return new_folder_path
                 case _:
-                    self.__log.error(f"Unknown folder type: {type}")
-                    raise ValueError(f"Unknown folder type: {type}")
-        except FileExistsError:
-            return new_folder_path
+                    self.__log.error(f"Unknown folder type: {subfolder_type}")
+                    raise ValueError(f"Unknown folder type: {subfolder_type}")
         except Exception as e:
             self.__log.error(f"Error: {e}")
 
