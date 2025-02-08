@@ -15,6 +15,7 @@ class DataManager:
         self.__config = config
 
     def export(self, exp_path: str, **kwargs):
+        self.__log.info(f"Exporting data from: {exp_path}")
         exp_path = (
             os.path.join(self.__config.get_str(Keys.Scalehub.experiments.key), exp_path)
             if not os.path.isabs(exp_path)
@@ -63,7 +64,7 @@ class DataManager:
 
     def __is_res_exp_folder(self, path: str) -> bool:
         return (
-            re.match(r"^res_exp_\w+$", os.path.basename(os.path.normpath(path)))
+            re.match(r"^res_exp_\w+(_\d+)?$", os.path.basename(os.path.normpath(path)))
             is not None
         )
 
