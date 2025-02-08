@@ -1,4 +1,3 @@
-import json
 import os
 import re
 from datetime import datetime
@@ -763,60 +762,60 @@ class DataEval:
             "EstimatedTimeCBOpStdErr",
         ]
 
-    def eval_resource_plot(self):
-
-        metrics_file_path = os.path.join(
-            self.exp_path,
-            "export",
-            "flink_taskmanager_job_task_numRecordsInPerSecond_export.json",
-        )
-
-        json_data = []
-
-        try:
-            with open(metrics_file_path, "r") as file:
-                for line in file:
-                    json_data.append(json.loads(line))
-        except Exception as e:
-            self.__log.error("Failed to load metrics from json file.")
-            return
-
-        # Extract data and create DataFrame
-        data = []
-        for entry in json_data:
-            pod = entry["metric"]["pod"]
-            cpu_millis, mem_mb, _ = map(int, re.findall(r"\d+", pod))
-            timestamps = entry["timestamps"]
-            values = entry["values"]
-
-            for ts, val in zip(timestamps, values):
-                if val is not None:
-                    data.append(
-                        {
-                            "cpu": cpu_millis / 1000,
-                            "mem": mem_mb / 1024,
-                            "timestamp": ts,
-                            "throughput": val,
-                        }
-                    )
-
-        df = pd.DataFrame(data)
-
-        # Group by CPU and memory, and calculate mean throughput
-        df_grouped = (
-            df.groupby(["cpu", "mem"]).agg({"throughput": "mean"}).reset_index()
-        )
-
-        # Save the grouped DataFrame to a CSV file
-        df_grouped.to_csv(os.path.join(self.exp_path, "resource_data.csv"))
-        # Call the plotter to generate the 3D plot
-        self.plotter.generate_3d_plot(
-            df_grouped["cpu"],
-            df_grouped["mem"],
-            df_grouped["throughput"],
-            title="Throughput vs CPU and Memory",
-            xlabel="CPU (cores)",
-            ylabel="Memory (GB)",
-            zlabel="Throughput (Records/s)",
-            filename="resource_plot.png",
-        )
+    # def eval_resource_plot(self):
+    #
+    #     metrics_file_path = os.path.join(
+    #         self.exp_path,
+    #         "export",
+    #         "flink_taskmanager_job_task_numRecordsInPerSecond_export.json",
+    #     )
+    #
+    #     json_data = []
+    #
+    #     try:
+    #         with open(metrics_file_path, "r") as file:
+    #             for line in file:
+    #                 json_data.append(json.loads(line))
+    #     except Exception as e:
+    #         self.__log.error("Failed to load metrics from json file.")
+    #         return
+    #
+    #     # Extract data and create DataFrame
+    #     data = []
+    #     for entry in json_data:
+    #         pod = entry["metric"]["pod"]
+    #         cpu_millis, mem_mb, _ = map(int, re.findall(r"\d+", pod))
+    #         timestamps = entry["timestamps"]
+    #         values = entry["values"]
+    #
+    #         for ts, val in zip(timestamps, values):
+    #             if val is not None:
+    #                 data.append(
+    #                     {
+    #                         "cpu": cpu_millis / 1000,
+    #                         "mem": mem_mb / 1024,
+    #                         "timestamp": ts,
+    #                         "throughput": val,
+    #                     }
+    #                 )
+    #
+    #     df = pd.DataFrame(data)
+    #
+    #     # Group by CPU and memory, and calculate mean throughput
+    #     df_grouped = (
+    #         df.groupby(["cpu", "mem"]).agg({"throughput": "mean"}).reset_index()
+    #     )
+    #
+    #     # Save the grouped DataFrame to a CSV file
+    #     df_grouped.to_csv(os.path.join(self.exp_path, "resource_data.csv"))
+    #     # Call the plotter to generate the 3D plot
+    #     self.plotter.generate_3d_plot(
+    #         df_grouped["cpu"],
+    #         df_grouped["mem"],
+    #         df_grouped["throughput"],
+    #         title="Throughput vs CPU and Memory",
+    #         xlabel="CPU (cores)",
+    #         ylabel="Memory (GB)",
+    #         zlabel="Throughput (Records/s)",
+    #         filename="resource_plot.png",
+    #     )

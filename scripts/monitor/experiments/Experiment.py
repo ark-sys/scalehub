@@ -79,7 +79,6 @@ class Experiment:
             multi_run_folder_path = (
                 f.create_multi_run_folder() if len(self.timestamps) > 1 else date_path
             )
-
             for i, (start_ts, end_ts) in enumerate(self.timestamps):
                 exp_path = f.create_subfolder(multi_run_folder_path)
                 self.t.create_log_file(
@@ -122,7 +121,7 @@ class Experiment:
         self.__log.info("[EXPERIMENT] Running experiment.")
         self.join_thread()
 
-    def do_multi_run(self):
+    def do_multi_run(self, **kwargs):
         for run in range(self.runs):
             self.__log.info(f"[EXPERIMENT] Starting run {run + 1}")
             try:

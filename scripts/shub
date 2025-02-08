@@ -120,13 +120,12 @@ def tokens():
     log.info(f"Kubernetes Dashboard Token : \n{kubernetes_dashboard_token}\n\n")
 
 
-# Export data for a given date, experiment number at date or multirun experiment at date or experiment number at multirun experiment at date
 def export(config: Config, exp_path, export_type="all"):
     log.info("Exporting...")
 
     dm: DataManager = DataManager(log, config)
 
-    dm.export(exp_path)
+    dm.export(exp_path, dry_run=False, single_export=False, single_eval=False)
 
 
 def sync_experiment_data(config: Config):
