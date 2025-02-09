@@ -26,7 +26,7 @@ def provision(config: Config):
         # Platforms are provisioned, create runtime file
         config.update_runtime_file(create=True)
 
-        # Provisition should be complete, deploy infrastructure
+        # Provision should be complete, deploy infrastructure
         p: Playbooks = Playbooks(log)
         try:
             p.run("infrastructure/setup", tag="create", config=config)
@@ -120,12 +120,12 @@ def tokens():
     log.info(f"Kubernetes Dashboard Token : \n{kubernetes_dashboard_token}\n\n")
 
 
-def export(config: Config, exp_path, export_type="all"):
+def export(config: Config, exp_path):
     log.info("Exporting...")
 
     dm: DataManager = DataManager(log, config)
 
-    dm.export(exp_path, dry_run=False, single_export=False, single_eval=False)
+    dm.export(exp_path, dry_run=False, single_export=True, single_eval=True)
 
 
 def sync_experiment_data(config: Config):
@@ -258,17 +258,11 @@ def main():
     export_subparser.add_argument(
         "date", help="Provide experiment path in format 'DD-MM-YYYY/N'"
     )
-    export_subparser.add_argument(
-        "export_type",
-        help="Type of action to perform on data.",
-        nargs="?",
-        default="all",
-    )
 
     # Parse command line arguments
     args = parser.parse_args()
 
-    # Parse configuration file values
+    # Parse configuration file's values
     configuration_files = args.conf_files
 
     try:
@@ -300,8 +294,7 @@ def main():
             sync_experiment_data(config)
         case "export":
             date = args.date
-            export_type = args.export_type
-            export(config, date, export_type)
+            export(config, date)
         case _:
             parser.print_help()
 

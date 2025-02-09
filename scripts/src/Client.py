@@ -3,7 +3,6 @@ import time
 from time import sleep
 
 import paho.mqtt.client as mqtt
-
 # noinspection PyUnresolvedReferences
 from paho.mqtt.enums import CallbackAPIVersion
 
@@ -33,7 +32,7 @@ class Client:
 
         self.setup_mqtt()
 
-    def on_message(self, client, userdata, message):
+    def on_message(self, message):
 
         match message.topic:
             case "experiment/ack":
@@ -43,7 +42,7 @@ class Client:
                 self.state = message.payload.decode("utf-8")
                 self.__log.info(f"Received state {self.state}")
 
-    def on_connect(self, client, userdata, flags, rc):
+    def on_connect(self, rc):
         self.__log.info(f"Connected with result code {rc}")
 
         # Subscribe to experiment topics

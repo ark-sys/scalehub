@@ -98,7 +98,8 @@ class ProvisionManager:
                 )
                 return None
 
-    def __generate_enos_inventory(self, roles):
+    @staticmethod
+    def __generate_enos_inventory(roles):
         inventory = InventoryManager(loader=DataLoader())
         groups = [
             "ungrouped",

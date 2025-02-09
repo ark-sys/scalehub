@@ -1,0 +1,6 @@
+---
+- name: Deploy Gitlab
+  hosts: localhost
+  gather_facts: false
+  roles:
+    - gitlab
