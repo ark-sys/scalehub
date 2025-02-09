@@ -3,7 +3,6 @@ import os
 import threading
 
 import paho.mqtt.client as mqtt
-
 # noinspection PyUnresolvedReferences
 from paho.mqtt.enums import CallbackAPIVersion
 
@@ -33,7 +32,7 @@ class MQTTClient(threading.Thread):
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
 
-    def on_connect(self, connect_flags):
+    def on_connect(self, client, userdata, connect_flags, reason_code, properties):
         self.__log.info(f"[CLIENT] Connected with result code {connect_flags}")
 
         # Subscribe to experiment command topic
@@ -50,7 +49,7 @@ class MQTTClient(threading.Thread):
             return False
         return True
 
-    def on_message(self, msg):
+    def on_message(self, client, userdata, msg):
         if msg.topic == "experiment/command":
             # Check if payload is in json format
             self.__log.info(
