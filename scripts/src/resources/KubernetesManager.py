@@ -190,9 +190,7 @@ class DeploymentManager:
         self.t: Tools = Tools(self.__log)
         self.api_instance = client.AppsV1Api()
 
-    def create_deployment_from_template(
-        self, template_filename, params, namespace="default"
-    ):
+    def create_deployment_from_template(self, template_filename, params):
         # Load resource definition from file
         resource_object = self.t.load_resource_definition(template_filename, params)
         try:
@@ -249,7 +247,7 @@ class DeploymentManager:
     def scale_deployment(self, deployment_name, replicas=1, namespace="default"):
         # Fetch the deployment
         try:
-            deployment = self.api_instance.read_namespaced_deployment(
+            deployment_name = self.api_instance.read_namespaced_deployment(
                 name=deployment_name, namespace=namespace, async_req=False
             )
         except ApiException as e:

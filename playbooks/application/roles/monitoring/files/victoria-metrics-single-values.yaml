@@ -253,7 +253,7 @@ server:
 
   vmbackupmanager:
     # -- Enable automatic creation of backup via vmbackupmanager. vmbackupmanager is part of Enterprise packages
-    enabled: false
+    enabled: true
 
     image:
       # -- VMBackupManager image registry
@@ -266,13 +266,13 @@ server:
       # e.g. enterprise.
       variant: ""
     # -- Disable hourly backups
-    disableHourly: false
+    disableHourly: true
     # -- Disable daily backups
-    disableDaily: false
+    disableDaily: true
     # -- Disable weekly backups
-    disableWeekly: false
+    disableWeekly: true
     # -- Disable monthly backups
-    disableMonthly: false
+    disableMonthly: true
     # -- Backup destination at S3, GCS or local filesystem. Release name will be included to path!
     destination: ""
     # -- Backups' retention settings
@@ -293,7 +293,10 @@ server:
     # Extra Volume Mounts for the container
     extraVolumeMounts:
       [ ]
-      # - name: example
+      # - name: vm-pvc
+    #   mountPath: /storage
+
+    # - name: example
     #   mountPath: /example
     # -- Allows to enable restore options for pod.
     # Read more [here](https://docs.victoriametrics.com/vmbackupmanager#restore-commands)

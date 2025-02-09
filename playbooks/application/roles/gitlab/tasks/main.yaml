@@ -1,0 +1,27 @@
+---
+- name: Deploy GitLab chart
+  tags: [ create ]
+  block:
+    - name: Add GitLab repo
+      kubernetes.core.helm_repository:
+        name: gitlab
+        repo_url: https://charts.gitlab.io
+        state: present
+    - name: Install GitLab
+      kubernetes.core.helm:
+        kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
+        chart_ref: gitlab/gitlab-agent
+        name: gitlab
+        release_namespace: gitlab-agent
+        create_namespace: true
+        wait: true
+        release_state: present
+        values: "{{ lookup('file', 'values.yaml' ) | from_yaml}}"
+- name: Delete GitLab chart
+  tags: [ delete ]
+  kubernetes.core.helm:
+    kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
+    chart_ref: gitlab/gitlab-agent
+    name: gitlab
+    release_namespace: gitlab-agent
+    release_state: absent

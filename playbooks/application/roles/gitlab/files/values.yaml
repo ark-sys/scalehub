@@ -1,0 +1,228 @@
+# -- configure the used image
+image:
+  # -- used image repository
+  repository: "registry.gitlab.com/gitlab-org/cluster-integration/gitlab-agent/agentk"
+  # -- set the `pullPolicy`
+  pullPolicy: IfNotPresent
+  # -- Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+# -- Optionally set `imagePullSecrets`
+imagePullSecrets: [ ]
+# -- Override the default chart name
+nameOverride: ""
+# -- Override the full chart name
+fullnameOverride: ""
+
+# -- set number of replicas
+replicas: 2
+# -- set number of ReplicaSets to retain
+# revisionHistoryLimit -- (int) Cleanup policy, default value is determined by Kubernetes.
+revisionHistoryLimit:
+# -- set maxSurge for rolling update
+maxSurge: 1
+# -- set maxUnavailable for rolling update
+maxUnavailable: 0
+
+# -- rbac settings
+rbac:
+  # -- Specifies whether RBAC resources should be created
+  create: true
+  # -- Set to a rolename to use existing role.
+  # @default -- cluster-admin
+  useExistingRole:
+
+# -- serviceAccount settings
+serviceAccount:
+  # -- Specifies whether a service account should be created
+  create: true
+  # -- Annotations to add to the service account
+  annotations: { }
+  # -- The name of the service account to use.
+  # @default -- name is generated using the fullname template
+  name:
+
+# -- set podSecurityContext
+# Example: `fsGroup: 2000`
+podSecurityContext: { }
+
+# -- set securityContext
+# Example
+# `{ "capabilities": { "drop": [ "ALL" ] }, "readOnlyRootFilesystem": true, "runAsNonRoot": true, "runAsUser": 1000 }`
+securityContext: { }
+
+# -- set podAnnotations
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/path: "/metrics"
+  prometheus.io/port: "8080"
+
+serviceMonitor:
+  # -- Specifies whether to create a ServiceMonitor resource for collecting Prometheus metrics
+  enabled: false
+
+# -- configure the agent
+config:
+  # -- The user-facing URL for the in-cluster `agentk`
+  kasAddress: 'wss://gitlab.inria.fr/-/kubernetes-agent/'
+  # -- add kas-headers
+  # Example:
+  # `[ "Cookie: gitlab-canary" ]`
+  kasHeaders: [ ]
+  # -- put your agent token here
+  token: glagent-i1_LrEk8_ZAkm7GBPoUkzDX2VNLHxVpzodPgzBKmehoqfxzzAA
+  # -- name of the secret storing the token
+  secretName:
+  # -- PEM certificate file to use to verify config.kasAddress. Useful if config.kasAddress is self-signed.
+  kasCaCert:
+
+  observability:
+    enabled: true
+    # -- Application-level TLS configuration for the observability service
+    tls:
+      # -- enable application-level TLS for the observability service
+      enabled: false
+      # -- Public key for the TLS certificate for the observability service
+      cert:
+      # -- Private key for the TLS certificate for the observability service
+      key:
+      secret:
+        # -- when true, creates a certificate with values cert and key from  for the observability service
+        create: false
+        # -- secret name for the observability service
+        name: "gitlab-agent-observability"
+
+  operational_container_scanning:
+    # -- enables automatic RBAC creation for the operational container scanning feature
+    enabled: true
+
+  receptive:
+    # -- Enable receptive agent
+    enabled: false
+
+  api:
+    # -- API network to listen on
+    listenNetwork: tcp
+    # -- API address to listen on
+    listenAddress: :8082
+    # -- Base64-encoded EdDSA public key to validate JWT tokens from kas. Used for api endpoint
+    jwtPublicKey:
+    # -- API TLS configuration
+    tls:
+      # -- Enable TLS for the api endpoint
+      enabled: false
+      # -- X.509 certificate in PEM format for api endpoint TLS
+      cert:
+      # -- X.509 key in PEM format for api endpoint TLS
+      key:
+
+  privateApi:
+    # -- Private API network to listen on
+    listenNetwork: tcp
+    # -- Private API address to listen on
+    listenAddress: :8081
+    # -- Private API TLS configuration
+    tls:
+      # -- Enable TLS for the private API endpoint
+      enabled: false
+      # -- X.509 certificate in PEM format for private API endpoint TLS
+      cert:
+      # -- X.509 key in PEM format for private API endpoint TLS
+      key:
+      # -- X.509 certificate authority certificate in PEM format for private API endpoint TLS
+      caCert:
+
+service:
+  # -- Set the service type
+  type: ClusterIP
+  # -- Set the external port
+  externalPort: 8182
+  # -- Set the internal port
+  internalPort: 8082
+  # -- Set the private api port
+  privateApiPort: 8081
+
+ingress:
+  # -- enabled specifies whether to create an Ingress resource
+  enabled: true
+  # -- Ingress provider
+  provider: nginx
+  # -- annotations to add to the Ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /
+  # -- hostname for the Ingress
+  hostname: gitlab-agent.scalehub.local
+  # -- TLS configuration for the Ingress
+  tls:
+    # -- enable TLS for the Ingress
+    enabled: false
+
+ingress-nginx:
+  # -- enabled specifies whether to create an Ingress-Nginx resource
+  enabled: false
+  # -- Ingress-Nginx controller settings
+  controller:
+    ingressClassResource:
+      # -- Ingress class resource name
+      name: "gitlab-agent-nginx"
+
+
+
+# -- Add additional environment settings to the pod. Can be useful in
+# proxy environments
+extraEnv: [ ]
+
+# -- Add additional args settings to the pod.
+extraArgs: [ ]
+
+# -- Add extra volume mounts
+extraVolumeMounts: [ ]
+
+# -- Add extra volumes
+extraVolumes: [ ]
+
+# -- set resource parameters
+# Example:
+# `{ "limits": { "cpu": "100m", "memory": "128Mi" }, "requests": { "cpu": "100m", "memory": "128Mi" }}`
+resources: { }
+
+# -- nodeSelector
+nodeSelector:
+  node-role.kubernetes.io/control-plane: "true"
+
+# -- tolerations
+tolerations: [ ]
+
+# -- set affinity
+affinity: { }
+
+# -- set priorityClassName
+priorityClassName: ""
+
+# -- set runtimeClassName
+runtimeClassName: ""
+
+# -- list of hosts and IPs that will be injected into the pod's hosts file
+# Example:
+# `[{ "ip": "127.0.0.1", "hostnames": [ "foo.local", "bar.local" ]}, { "ip": "10.1.2.3", "hostnames": [ "foo.remote", "bar.remote" ]}]`
+hostAliases: [ ]
+
+# -- Labels to be added to each agent pod
+# Example:
+# `role: developer`
+podLabels: { }
+
+# -- Additional labels to be added to all created objects
+additionalLabels: { }
+
+# -- Optional initContainers definition
+initContainers: [ ]
+
+# --
+# Show the last 80 lines or 2048 bytes (whichever is smaller) of pod logs in kubectl describe output when
+# container exits with non-zero exit code # Useful for when pod logs are cycled out of a node post-crash
+# before an operator can capture the logs
+# Valid values are 'File' which is the Kubernetes API default, or 'FallbackToLogsOnError'
+# See <https://kubernetes.io/docs/tasks/debug/debug-application/determine-reason-pod-failure/> for more information
+terminationMessagePolicy: FallbackToLogsOnError

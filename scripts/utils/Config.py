@@ -49,7 +49,7 @@ class Config:
             with open(_param, "r") as f:
                 file_config = json.load(f)
                 if "config" in file_config:
-                    self.__config = file_config["config"]
+                    self.__config = json.loads(file_config["config"])
                 else:
                     self.__config = file_config
         except Exception as e:

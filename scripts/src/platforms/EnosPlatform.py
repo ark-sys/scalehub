@@ -10,6 +10,8 @@ from scripts.utils.Logger import Logger
 class EnosPlatform(Platform):
     def __init__(self, log: Logger, platform_config: dict, verbose: bool = True):
         super().__init__()
+        self.username = None
+        self.password = None
         _ = en.init_logging()
         self.__log = log
         self.config = platform_config

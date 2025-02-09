@@ -48,10 +48,12 @@ class Logger:
 
         self.debug_level = 0
 
-    def new_line(self):
+    @staticmethod
+    def new_line():
         print()
 
-    def date_time(self) -> str:
+    @staticmethod
+    def date_time() -> str:
         return "[" + datetime.now().isoformat() + "]"
 
     def info(self, message: str, **kwargs) -> None:
@@ -94,6 +96,7 @@ class Logger:
         self.debug_level = new_level
         self.info(f"[LOGGER] New debug level: {self.debug_level}")
 
-    def thousands_formatter(self, x, pos=None):
-        "The two args are the value and tick position"
+    @staticmethod
+    def thousands_formatter(x):
+        # The two args are the value and tick position
         return "%1.0fk" % (x * 1e-3)
