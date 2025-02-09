@@ -97,6 +97,6 @@ class Logger:
         self.info(f"[LOGGER] New debug level: {self.debug_level}")
 
     @staticmethod
-    def thousands_formatter(x):
+    def thousands_formatter(x, pos):
         # The two args are the value and tick position
         return "%1.0fk" % (x * 1e-3)
