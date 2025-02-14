@@ -105,11 +105,13 @@ class GroupedDataEval:
             )
             exp_name = exp_name.replace("single_node_", "").replace("_", " ").title()
             plot_data[exp_name] = new_df["Throughput"]
+
+        ylabels_dict = {"Throughput": "Throughput (records/s)"}
         if single_node:
             self.plotter.generate_single_frame_multiple_series_plot(
                 ax1_data=plot_data,
                 xlabel="Number of TaskManagers",
-                ylabels_dict={"Throughput (records/s)"},
+                ylabels_dict=ylabels_dict,
                 filename=os.path.join(self.base_path, "single_node_throughput.png"),
                 ylim=(0, 400000),
                 axhline=350000,
@@ -119,7 +121,7 @@ class GroupedDataEval:
             self.plotter.generate_single_frame_multiple_series_plot(
                 ax1_data=plot_data,
                 xlabel="Number of Machines",
-                ylabels_dict={"Throughput (records/s)"},
+                ylabels_dict=ylabels_dict,
                 filename=os.path.join(self.base_path, "multi_node_throughput.png"),
                 ylim=(0, 400000),
                 axhline=350000,
@@ -187,6 +189,10 @@ class GroupedDataEval:
             axis=1,
         )
         final_df["exp_tpt_full"] = final_df["throughput"] * final_df["inst_full"]
+
+        # Sort by cpu,mem
+        final_df.sort_values(by=["cpu", "mem"], inplace=True)
+
         final_df.to_csv(
             os.path.join(self.base_path, "resource_core_info.csv"), index=False
         )
