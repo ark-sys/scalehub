@@ -3,7 +3,11 @@ controller:
   # -- Optionally customize the pod dnsConfig.
   dnsConfig: { }
   # -- Optionally customize the pod hostAliases.
-  hostAliases: [ ]
+  hostAliases:
+    - ip: 0.0.0.0
+      hostnames:
+        - "ingress.k3s.scalehub.dev"
+        - "ingress.scalehub.dev"
   # - ip: 127.0.0.1
   #   hostnames:
   #   - foo.local

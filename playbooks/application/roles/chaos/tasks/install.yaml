@@ -24,7 +24,7 @@
               ingressClassName: nginx
               hosts:
                 - host:
-                  name: chaos-mesh.scalehub.local
+                  name: chaos-mesh.k3s.scalehub.dev
                   paths:
                     - /
               pathType: Prefix

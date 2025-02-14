@@ -1,12 +1,14 @@
 version: "3.6"
 
+volumes:
+  scalehub_ingress_conf:
+    driver: local
+
 secrets:
+
   g5k_creds:
     # Fill this file with personal Grid5000 credentials
     file: secrets/Grid5000_creds.yaml
-  fit_creds:
-    # Fill this file with personal FIT credentials
-    file: secrets/iotlab_creds.yaml
   # Setup correct path for grid5000 private key in `source` field
   ssh_key:
     file: secrets/grid5000.pk
@@ -14,28 +16,28 @@ secrets:
     file: secrets/grid5000.pub
 
 networks:
-  ipv6_net:
-##TODO fix this. Activating IPv6 breaks nginx reverse proxy
-    enable_ipv6: true
+  local_net:
+    #    enable_ipv6: true
     driver: bridge
     ipam:
       driver: default
       config:
-        ##        - subnet: 2001:ca::/64
-        #        - subnet: fd00:ca::/100
-        - subnet: 2001:cafe:43::/112
+        #        - subnet: 2001:cafe:43::/112
+        #          ip_range: 2001:cafe:43::/113
+        - subnet: 10.10.0.0/16
+          ip_range: 10.10.10.0/24
+
 services:
   scalehub:
     container_name: scalehub
     depends_on:
-      - vpn
+      vpn:
+        condition: service_started
     # Use network stack from vpn service
     network_mode: service:vpn
     secrets:
       - source: g5k_creds
         target: .python-grid5000.yaml
-      - source: fit_creds
-        target: .iotlabrc
       - source: ssh_key
         target: id_rsa
       - source: grid_pub
@@ -73,17 +75,15 @@ services:
   vpn:
     image: dperson/openvpn-client
     container_name: vpn
-    # cap_add, security_opt, and volume required for the image to function
     hostname: scalehub
+    extra_hosts:
+      # Initialize host entry for upstream service. This will be updated by the ingress ansible role
+      - "ingress-upstream.k3s.scalehub.dev:127.1.1.1"
     cap_add:
       - NET_ADMIN
-    extra_hosts:
-      # Initialize ingreess.scalehub.local in /etc/hosts with dummy IP
-      - "ingress.scalehub.local:127.0.0.1"
     networks:
-      - ipv6_net
-    ports:
-      - "80:80"
+      local_net:
+        ipv4_address: 10.10.10.3
     tmpfs:
       - /run
       - /tmp
@@ -101,3 +101,26 @@ services:
     command:
       - -D
     # Option description of -D : Don't use the connection as the default route -> don't break ssh connections from scalehub to g5k
+
+  # Local DNS to ease host's access to endpoints behind reverse-poxy
+  # To properly work, host's dns settings must be overridden to use this container's IP as first DNS server
+  # If host uses systemd-resolved, it can be done by editing /etc/systemd/resolved.conf and setting DNS=10.10.10.53 and fallbackDNS=1.1.1.1 8.8.8.8(or any other public DNS) ; then restart systemd-resolved with `sudo systemctl restart systemd-resolved`
+  scalehub_dns:
+    build:
+      context: ${SCALEHUB_BASEDIR}/setup/shub/dns
+      dockerfile: Dockerfile
+    container_name: dns
+    restart: always
+    networks:
+      local_net:
+        ipv4_address: 10.10.10.53
+    cap_add:
+      - NET_ADMIN
+  nginx_reverse:
+    container_name: nginx_reverse
+    network_mode: service:vpn
+    build:
+      context: ${SCALEHUB_BASEDIR}/setup/shub/nginx
+      dockerfile: Dockerfile
+    restart: unless-stopped
+

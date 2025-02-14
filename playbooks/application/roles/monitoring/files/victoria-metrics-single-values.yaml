@@ -234,7 +234,7 @@ server:
     extraLabels: { }
     # -- Array of host objects
     hosts:
-      - name: victoriametrics.scalehub.local
+      - name: vm.k3s.scalehub.dev
         path: /
 
     #   - name: vmselect.local

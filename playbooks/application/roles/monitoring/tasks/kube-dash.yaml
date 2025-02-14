@@ -30,7 +30,7 @@
                 kubernetes.io/ingress.class: nginx
                 nginx.ingress.kubernetes.io/rewrite-target: /
               hosts:
-                - kubernetes-dashboard.scalehub.local
+                - kubernetes-dashboard.k3s.scalehub.dev
               pathType: Prefix
             nodeSelector:
               node-role.kubernetes.io/control-plane: "true"
