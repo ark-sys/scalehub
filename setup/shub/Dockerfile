@@ -17,9 +17,9 @@ ARG GID=1000
 # Eric B. is on the cut and my name is
 ARG USER=rakim
 # Parametrize MITOGEN_VERSION
-ARG MITOGEN_VERSION=0.3.14
+ARG MITOGEN_VERSION=0.3.22
 # Parametrize K9S_VERSION
-ARG K9S_VERSION=v0.32.5
+ARG K9S_VERSION=v0.32.7
 
 
 # Create working directory for the scripts at the root. This easily allows to mount a volume to this directory
@@ -42,7 +42,6 @@ RUN apt-get update && apt-get install -y \
     fish \
     iputils-ping \
     tk \
-    nginx \
     sudo \
     rsync \
     cron  \
@@ -70,9 +69,6 @@ ADD fish/shub.fish /usr/share/fish/vendor_completions.d/shub.fish
 
 # Install some custom functions to enhance prompt
 ADD fish/functions/* /usr/share/fish/functions/
-
-# Copy reverse-proxy config
-ADD nginx/nginx.conf /etc/nginx/conf.d/scalehub.conf
 
 # Copy history file from /app/conf to initialize some command history autocomplete
 ADD --chown=$UID:$GID fish/fish_history /home/$USER/.local/share/fish/

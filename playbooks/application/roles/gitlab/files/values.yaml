@@ -152,7 +152,7 @@ ingress:
     kubernetes.io/ingress.class: nginx
     nginx.ingress.kubernetes.io/rewrite-target: /
   # -- hostname for the Ingress
-  hostname: gitlab-agent.scalehub.local
+  hostname: gitlab-agent.k3s.scalehub.dev
   # -- TLS configuration for the Ingress
   tls:
     # -- enable TLS for the Ingress
@@ -166,8 +166,6 @@ ingress-nginx:
     ingressClassResource:
       # -- Ingress class resource name
       name: "gitlab-agent-nginx"
-
-
 
 # -- Add additional environment settings to the pod. Can be useful in
 # proxy environments

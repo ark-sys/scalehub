@@ -9,7 +9,7 @@ metadata:
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
     rules:
-    - host: flink.scalehub.local
+      - host: flink.k3s.scalehub.dev
       http:
         paths:
           - path: /

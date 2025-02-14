@@ -12,22 +12,18 @@ generate_config() {
         cp $SECRETS_PATH/.python-grid5000.yaml $HOME_PATH/.python-grid5000.yaml
     fi
 
-    if [ -f $SECRETS_PATH/.iotlabrc ]; then
-        cp $SECRETS_PATH/.iotlabrc $HOME_PATH/.iotlabrc
-    fi
-
     # Create .ssh directory if it doesn't exist
     if [ ! -d $HOME_PATH/.ssh ]; then
         mkdir $HOME_PATH/.ssh
     fi
 
-    # Copy SSH key to ~/.ssh directory from secrets folder
+    # Copy SSH key to ~/.ssh directory from secrets folder. Required by Enoslib's VMonG5k provider
     if [ -f $SECRETS_PATH/id_rsa ]; then
         cp $SECRETS_PATH/id_rsa $HOME_PATH/.ssh/id_rsa
         chmod 600 $HOME_PATH/.ssh/id_rsa
     fi
 
-    # Copy ssh pub key to ~/.ssh directory from secrets folder
+    # Copy ssh pub key to ~/.ssh directory from secrets folder. Required by Enoslib's VMonG5k provider
     if [ -f $SECRETS_PATH/id_rsa.pub ]; then
         cp $SECRETS_PATH/id_rsa.pub $HOME_PATH/.ssh/id_rsa.pub
         chmod 600 $HOME_PATH/.ssh/id_rsa.pub
@@ -52,17 +48,6 @@ Host pico2-* pico2-*.rennes.inria.fr
   ProxyJump ssh-rba.inria.fr
   PreferredAuthentications publickey
   StrictHostKeyChecking no
-  ForwardAgent yes
-
-Host node-*.grenoble.iot-lab.info
-  ProxyCommand ssh -q -W %h:%p grenoble.iot-lab.info
-  User root
-  ForwardAgent yes
-  StrictHostKeyChecking no
-
-Host *.iot-lab.info
-  User arsalane
-  IdentityFile ~/.ssh/fit.pk
   ForwardAgent yes
 
 Host access.grid5000.fr g5k
@@ -108,9 +93,6 @@ generate_config
 
 # Add keys from ssh-agent
 ssh-add -l
-
-# Start nginx service in background
-sudo service nginx start
 
 # Keep the container running
 tail -f /dev/null
