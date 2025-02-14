@@ -78,7 +78,12 @@ class DataManager:
 
     def __process_date_folder(self, date_folder: str, **kwargs):
         try:
-            for subfolder in os.listdir(date_folder):
+            subdirs = [
+                d
+                for d in os.listdir(date_folder)
+                if os.path.isdir(os.path.join(date_folder, d))
+            ]
+            for subfolder in subdirs:
                 subfolder_path = os.path.join(date_folder, subfolder)
                 if self.__get_folder_type(subfolder_path) == "multi_run":
                     self.__process_multi_run_folder(subfolder_path, **kwargs)
@@ -109,13 +114,15 @@ class DataManager:
 
     def __process_multi_run_folder(self, multi_run_folder: str, **kwargs):
         try:
-            for subfolder in os.listdir(multi_run_folder):
-                subfolder_path = os.path.join(multi_run_folder, subfolder)
-                if (
-                    os.path.isdir(subfolder_path)
-                    and self.__get_folder_type(subfolder_path) == "single_run"
-                ):
-                    self.__process_single_run_folder(subfolder_path, **kwargs)
+            subdirs = [
+                d
+                for d in os.listdir(multi_run_folder)
+                if os.path.isdir(os.path.join(multi_run_folder, d))
+            ]
+            for subdir in subdirs:
+                subdir_path = os.path.join(multi_run_folder, subdir)
+                if self.__get_folder_type(subdir_path) == "single_run":
+                    self.__process_single_run_folder(subdir_path, **kwargs)
             if not kwargs.get("dry_run", False):
                 self.__generate_grouped_data_eval(multi_run_folder)
         except Exception as e:
@@ -135,20 +142,23 @@ class DataManager:
 
     def __process_multi_exp_folder(self, multi_exp_folder: str, **kwargs):
         try:
-            for subfolder in os.listdir(multi_exp_folder):
-                subfolder_path = os.path.join(multi_exp_folder, subfolder)
-                if self.__get_folder_type(subfolder_path) == "multi_run":
-                    self.__process_multi_run_folder(subfolder_path, **kwargs)
+            subdirs = [
+                d
+                for d in os.listdir(multi_exp_folder)
+                if os.path.isdir(os.path.join(multi_exp_folder, d))
+            ]
+            for subdir in subdirs:
+                subdir_path = os.path.join(multi_exp_folder, subdir)
+                if self.__get_folder_type(subdir_path) == "multi_run":
+                    self.__process_multi_run_folder(subdir_path, **kwargs)
             if not kwargs.get("dry_run", False):
                 grouped_data_eval = GroupedDataEval(
                     log=self.__log, exp_path=multi_exp_folder
                 )
-
-                if "single_node" in multi_exp_folder:
+                if "single_node" in subdirs[0]:
                     grouped_data_eval.generate_multi_exp_plot()
                 else:
                     grouped_data_eval.generate_multi_exp_plot(False)
-
         except Exception as e:
             self.__log.error(f"Error processing multi exp folder: {e}")
             raise e

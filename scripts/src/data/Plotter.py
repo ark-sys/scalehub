@@ -58,6 +58,7 @@ class Plotter:
         if not filename:
             filename = f"{title}.png"
         plt.savefig(os.path.join(self.plots_path, filename))
+        plt.close()
 
     def generate_stacked_plot(
         self,
@@ -90,6 +91,7 @@ class Plotter:
         if not filename:
             filename = f"{title}.png"
         plt.savefig(os.path.join(self.plots_path, filename))
+        plt.close()
 
     def generate_single_frame_multiple_series_plot(
         self,

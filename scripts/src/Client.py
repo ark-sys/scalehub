@@ -32,7 +32,7 @@ class Client:
 
         self.setup_mqtt()
 
-    def on_message(self, message):
+    def on_message(self, client, userdata, message):
 
         match message.topic:
             case "experiment/ack":
@@ -42,7 +42,7 @@ class Client:
                 self.state = message.payload.decode("utf-8")
                 self.__log.info(f"Received state {self.state}")
 
-    def on_connect(self, rc):
+    def on_connect(self, client, userdata, flags, rc):
         self.__log.info(f"Connected with result code {rc}")
 
         # Subscribe to experiment topics
