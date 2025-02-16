@@ -1,0 +1,46 @@
+---
+# Setup Ingress
+- name: Setting up Ingress
+  tags: [ create ]
+  block:
+    - name: Add Ingress repo
+      kubernetes.core.helm_repository:
+        name: ingress-nginx
+        repo_url: https://kubernetes.github.io/ingress-nginx
+        state: present
+    - name: Install Ingress
+      kubernetes.core.helm:
+        chart_ref: ingress-nginx/ingress-nginx
+        name: ingress-nginx
+        release_namespace: ingress-nginx
+        create_namespace: true
+        wait: true
+        release_state: present
+        values: "{{ lookup('file', 'ingress/values.yaml' ) | from_yaml}}"
+    - name: Get cluster info
+      kubernetes.core.k8s_cluster_info:
+        kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
+      register: cluster_info
+
+    - name: Retrieve IP address from host url (connection.host from cluster_info returns the url. extract IP address)
+      set_fact:
+        ingress_ip: "{{ cluster_info.connection.host | regex_replace('https://', '') | regex_replace(':6443', '') }}"
+
+    - name: Update ingress-upstream.k3s.scalehub.dev entry in /etc/hosts with the IP address
+      become: true
+      ansible.builtin.shell: awk -v domain="ingress-upstream.k3s.scalehub.dev" -v new_ip="{{ ingress_ip }}" '$2 == domain {$1 = new_ip; found = 1} {print $0} END {if (found != 1) print new_ip, domain}' /etc/hosts | tee /etc/hosts > /dev/null
+
+    - name: Perform nginx reload on reverse-proxy container
+      become: true
+      ansible.builtin.shell: nginx -s reload
+
+- name: Delete Ingress
+  tags: [ delete ]
+  block:
+    - name: Remove chart
+      kubernetes.core.helm:
+        chart_ref: ingress-nginx/ingress-nginx
+        name: ingress-nginx
+        release_namespace: ingress-nginx
+        release_state: absent
+

@@ -12,22 +12,18 @@ generate_config() {
         cp $SECRETS_PATH/.python-grid5000.yaml $HOME_PATH/.python-grid5000.yaml
     fi
 
-    if [ -f $SECRETS_PATH/.iotlabrc ]; then
-        cp $SECRETS_PATH/.iotlabrc $HOME_PATH/.iotlabrc
-    fi
-
     # Create .ssh directory if it doesn't exist
     if [ ! -d $HOME_PATH/.ssh ]; then
         mkdir $HOME_PATH/.ssh
     fi
 
-    # Copy SSH key to ~/.ssh directory from secrets folder
+    # Copy SSH key to ~/.ssh directory from secrets folder. Required by Enoslib's VMonG5k provider
     if [ -f $SECRETS_PATH/id_rsa ]; then
         cp $SECRETS_PATH/id_rsa $HOME_PATH/.ssh/id_rsa
         chmod 600 $HOME_PATH/.ssh/id_rsa
     fi
 
-    # Copy ssh pub key to ~/.ssh directory from secrets folder
+    # Copy ssh pub key to ~/.ssh directory from secrets folder. Required by Enoslib's VMonG5k provider
     if [ -f $SECRETS_PATH/id_rsa.pub ]; then
         cp $SECRETS_PATH/id_rsa.pub $HOME_PATH/.ssh/id_rsa.pub
         chmod 600 $HOME_PATH/.ssh/id_rsa.pub
@@ -52,17 +48,6 @@ Host pico2-* pico2-*.rennes.inria.fr
   ProxyJump ssh-rba.inria.fr
   PreferredAuthentications publickey
   StrictHostKeyChecking no
-  ForwardAgent yes
-
-Host node-*.grenoble.iot-lab.info
-  ProxyCommand ssh -q -W %h:%p grenoble.iot-lab.info
-  User root
-  ForwardAgent yes
-  StrictHostKeyChecking no
-
-Host *.iot-lab.info
-  User arsalane
-  IdentityFile ~/.ssh/fit.pk
   ForwardAgent yes
 
 Host access.grid5000.fr g5k
@@ -99,6 +84,31 @@ EOF"
         echo "Username not found in ~/.python-grid5000.yaml"
     fi
 }
+
+check_running_k3s() {
+    if kubectl cluster-info > /dev/null 2>&1; then
+      cluster_ip=$(kubectl cluster-info | grep -oP 'https://\K[^:]+' | head -n 1)
+      if [ -n "$cluster_ip" ]; then
+        echo "K3s cluster is running at $cluster_ip"
+        # Save copy of /etc/hosts
+        sudo cp /etc/hosts /etc/hosts.bak
+        # Use awk to update entry for ingress-upstream.k3s.scalehub.dev in /etc/hosts
+        sudo awk -v domain="ingress-upstream.k3s.scalehub.dev" -v new_ip="$cluster_ip" '$2 == domain {$1 = new_ip; found = 1} {print $0} END {if (found != 1) print new_ip, domain}' /etc/hosts | sudo tee /etc/hosts > /dev/null
+        echo "Updated entry 'ingress-upstream.k3s.scalehub.dev' with $cluster_ip in /etc/hosts"
+
+        # If the file only has one line, prepend /etc/hosts.bak to it and remove the backup file
+        if [ $(wc -l < /etc/hosts) -eq 1 ]; then
+          sudo cat /etc/hosts.bak | sudo tee /etc/hosts > /dev/null
+          sudo rm /etc/hosts.bak
+        fi
+
+      else
+        echo "Failed to get cluster IP"
+      fi
+    else
+      echo "K3s cluster is not running"
+    fi
+}
 ############# Script entrypoint #############
 # Change default shell to fish
 sudo chsh -s /usr/bin/fish
@@ -109,8 +119,8 @@ generate_config
 # Add keys from ssh-agent
 ssh-add -l
 
-# Start nginx service in background
-sudo service nginx start
+# Check if k3s cluster is running and update /etc/hosts if so
+check_running_k3s
 
-# Keep the container running
-tail -f /dev/null
+# Start nginx server
+sudo nginx -g "daemon off;"

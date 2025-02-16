@@ -30,38 +30,21 @@
     - name: Deploy ingress for Flink
       kubernetes.core.k8s:
         state: present
-        definition: "{{ lookup('ansible.builtin.file', 'flink-ingress.yaml') | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.file', 'ingress.yaml') | from_yaml }}"
 
     - name: Deploy jobmanager
       kubernetes.core.k8s:
         state: present
-        definition: "{{ lookup('ansible.builtin.template', 'jobmanager-deployment.yaml.j2') | from_yaml }}"
-
-    - name: Deploy taskmanager
+        definition: "{{ lookup('ansible.builtin.template', 'jobmanager-deployment.yaml.j2') | from_yaml_all }}"
+        wait: yes
+    - name: Deploy taskmanagers
       kubernetes.core.k8s:
         state: present
-        definition: "{{ lookup('ansible.builtin.template', 'taskmanager-deployment.yaml.j2') | from_yaml_all }}"
+        definition: "{{ lookup('ansible.builtin.template', item) | from_yaml_all }}"
+      with_fileglob:
+        - "../templates/taskmanagers/*.yaml.j2"
 
-    - name: Scale instances of taskmanager-vm_small to 0
-      kubernetes.core.k8s_scale:
-        kind: Deployment
-        namespace: flink
-        name: flink-taskmanager-vm-small
-        replicas: 0
 
-    - name: Scale instances of taskmanager-vm_medium to 0
-      kubernetes.core.k8s_scale:
-        kind: Deployment
-        name: flink-taskmanager-vm-medium
-        namespace: flink
-        replicas: 0
-
-    - name: Scale instances of taskmanager-pico to 0
-      kubernetes.core.k8s_scale:
-        kind: Deployment
-        name: flink-taskmanager-pico
-        namespace: flink
-        replicas: 0
 - name: Delete Flink
   tags: [ delete ]
   block:
@@ -75,12 +58,14 @@
     - name: Delete jobmanager
       kubernetes.core.k8s:
         state: absent
-        definition: "{{ lookup('ansible.builtin.template', 'jobmanager-deployment.yaml.j2') | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.template', 'jobmanager-deployment.yaml.j2') | from_yaml_all}}"
 
-    - name: Delete taskmanager
+    - name: Delete taskmanagers
       kubernetes.core.k8s:
         state: absent
-        definition: "{{ lookup('ansible.builtin.template', 'taskmanager-deployment.yaml.j2') | from_yaml_all }}"
+        definition: "{{ lookup('ansible.builtin.template', item) | from_yaml_all }}"
+      with_fileglob:
+        - "../templates/taskmanagers/*.yaml.j2"
 
     - name: Delete pre-pull daemon-set
       kubernetes.core.k8s:
@@ -90,4 +75,4 @@
     - name: Delete Ingress for Flink
       kubernetes.core.k8s:
         state: absent
-        definition: "{{ lookup('ansible.builtin.file', 'flink-ingress.yaml') | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.file', 'ingress.yaml') | from_yaml }}"

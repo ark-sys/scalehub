@@ -18,6 +18,7 @@
 - name: Run post-install configuration tasks (these are kubectl tasks run on localhost, but reflected on the cluster nodes joinable with the kubeconfig)
   hosts: localhost
   become: true
+  gather_facts: false
   roles:
     - role: post_install
       dependencies:

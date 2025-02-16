@@ -1,0 +1,5 @@
+- node: pico
+  taskmanager:
+    - number: 2
+      type: pico
+      method: linear

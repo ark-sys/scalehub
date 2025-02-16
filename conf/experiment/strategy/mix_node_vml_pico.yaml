@@ -1,0 +1,22 @@
+- node: vm_grid5000
+  type: large
+  taskmanager:
+    - number: 8
+      type: m
+      method: block
+- node: vm_grid5000
+  type: large
+  taskmanager:
+    - number: 8
+      type: m
+      method: block
+- node: pico
+  taskmanager:
+    - number: 2
+      type: pico
+      method: block
+- node: pico
+  taskmanager:
+    - number: 2
+      type: pico
+      method: block

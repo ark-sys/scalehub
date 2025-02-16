@@ -1,0 +1,12 @@
+operator:
+  nodeSelector:
+    node-role.kubernetes.io/control-plane: "true"
+  env:
+    - name: MINIO_PROMETHEUS_URL
+      value: "http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090"
+    - name: PROMETHEUS_NAMESPACE
+      value: "monitoring"
+    - name: PROMETHEUS_NAME
+      value: "prometheus-kube-prometheus-prometheus"
+    - name: MINIO_PROMETHEUS_AUTH_TYPE
+      value: "public"

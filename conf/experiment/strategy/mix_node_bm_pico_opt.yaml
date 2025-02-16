@@ -1,0 +1,20 @@
+- node: grid5000
+  taskmanager:
+    - number: 52
+      type: s
+      method: block
+- node: grid5000
+  taskmanager:
+    - number: 52
+      type: s
+      method: block
+- node: pico
+  taskmanager:
+    - number: 3
+      type: s
+      method: block
+- node: pico
+  taskmanager:
+    - number: 3
+      type: s
+      method: block

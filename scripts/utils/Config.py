@@ -1,139 +1,211 @@
 import configparser as cp
 import json
+import os.path
+from dataclasses import dataclass
 from inspect import getmembers, isclass
-from os.path import exists
 
-from scripts.utils.Defaults import (
-    DefaultValues as Value,
-    DefaultKeys as Key,
-)
-from .Logger import Logger
+import yaml
+
+from scripts.utils.Defaults import DefaultKeys as Key, ConfigKey
+from scripts.utils.Logger import Logger
 
 
+@dataclass
 class Config:
-    __config = {}
+    RUNTIME_PATH = "/app/runtime/runtime.json"
+    DEFAULTS_PATH = "/app/conf/defaults.ini"
 
-    def __init__(self, log: Logger, conf):
+    def __init__(self, log: Logger, _param: str | dict):
+        self.__config = {}
         self.__log = log
-        # Initialize default values
-        self.__init_defaults()
-
-        # Initialize the configuration parser
-        self.cp = cp.ConfigParser()
-
-        # Check the type of the configuration file
-        if isinstance(conf, dict):
-            # If the configuration is a dictionary, load it directly in self.__config
-            self.__config = conf
-        elif isinstance(conf, str):
-            # If the configuration is a string, lets assume it is a path to a configuration file
-
-            # Now check if the file matches the .ini format
-            if conf.endswith(".ini"):
-                self.validate(conf)
-                self.__read_config_file(conf)
-            # Otherwise we might be reading a .txt log file with the configuration
-            elif "log" in conf:
-                self.load_from_log(conf)
+        if isinstance(_param, dict):
+            self.__config = _param
+        elif isinstance(_param, str):
+            self.__load_from_file(_param)
         else:
             self.__log.error(
-                f"Invalid type for conf: {type(conf)}. Expected path (str) or dict."
+                f"Invalid type for conf: {type(_param)}. Expected path (str) or dict."
             )
-            exit(1)
+            raise ValueError(f"Invalid type for conf: {type(_param)}")
+
+    def __load_from_file(self, _param: str):
+        if not os.path.exists(_param):
+            self.__log.error(
+                f"Configuration file {_param} not found or does not exist."
+            )
+            raise FileNotFoundError(f"Configuration file {_param} not found.")
+        if _param.endswith(".ini"):
+            self.__load_ini_file(_param)
+        elif _param.endswith(".json"):
+            self.__load_json_file(_param)
+        else:
+            self.__log.error(
+                f"Invalid configuration file {_param}. Expected .ini file or log file."
+            )
+            raise ValueError(f"Invalid configuration file {_param}")
+
+    def __load_json_file(self, _param: str):
+        try:
+            with open(_param, "r") as f:
+                file_config = json.load(f)
+                if "config" in file_config:
+                    if isinstance(file_config["config"], str):
+                        self.__config = json.loads(file_config["config"])
+                    else:
+                        self.__config = file_config["config"]
+                else:
+                    self.__config = file_config
+        except Exception as e:
+            self.__log.error(f"Error while loading json file: {str(e)}")
+            raise e
+
+    def __load_ini_file(self, _param: str):
+        self.__init_defaults()
+        if _param != self.DEFAULTS_PATH:
+            parser = cp.ConfigParser()
+            parser.read(_param)
+            if parser.has_section("experiment"):
+                ignore_keys = ["steps", "generators"]
+                self.__validate_and_read_sections(
+                    parser, "experiment", Key.Experiment, ignore_keys
+                )
+                if parser.has_section("experiment.scaling"):
+                    self.__config[
+                        Key.Experiment.Scaling.steps.key
+                    ] = self.__parse_scaling_strategy()
+
+                if parser.has_section("experiment.generators"):
+                    self.__config[
+                        Key.Experiment.Generators.generators.key
+                    ] = self.__parse_load_generators(parser)
+
+            if parser.has_section("platforms"):
+                self.__validate_and_read_sections(parser, "platforms", Key.Platforms)
 
     def __init_defaults(self):
-        self.__config[Key.Scalehub.playbook] = Value.Scalehub.playbooks
-        self.__config[Key.Scalehub.inventory] = Value.Scalehub.inventory
-        self.__config[Key.Scalehub.experiments] = Value.Scalehub.experiments
-        self.__config[Key.Scalehub.debug_level] = Value.Scalehub.Debug.level
+        parser = cp.ConfigParser()
+        parser.read(self.DEFAULTS_PATH)
+        for section in parser.sections():
+            for key in parser[section]:
+                dict_key = f"{section}.{key}"
+                self.__config[dict_key] = parser[section][key]
+        self.__config[
+            Key.Experiment.Generators.generators.key
+        ] = self.__parse_load_generators(parser)
 
-        self.__config[Key.Platforms.platforms] = Value.Platforms.platforms
+    def __validate_and_read_sections(self, parser, section_base, key_class, *args):
+        ignored_keys = args[0] if args else []
 
-        self.__config[Key.Experiment.name] = Value.Experiment.name
-        self.__config[Key.Experiment.job_file] = Value.Experiment.job_file
-        self.__config[Key.Experiment.task_name] = Value.Experiment.task_name
-        self.__config[Key.Experiment.output_skip_s] = Value.Experiment.output_skip_s
-        self.__config[Key.Experiment.output_plot] = Value.Experiment.output_plot
-        self.__config[Key.Experiment.output_stats] = Value.Experiment.output_stats
-        self.__config[
-            Key.Experiment.broker_mqtt_host
-        ] = Value.Experiment.broker_mqtt_host
-        self.__config[
-            Key.Experiment.broker_mqtt_port
-        ] = Value.Experiment.broker_mqtt_port
-        self.__config[
-            Key.Experiment.kafka_partitions
-        ] = Value.Experiment.kafka_partitions
-        self.__config[Key.Experiment.first_node] = Value.Experiment.first_node
-        self.__config[Key.Experiment.unchained_tasks] = Value.Experiment.unchained_tasks
-        self.__config[Key.Experiment.Chaos.enable] = Value.Experiment.Chaos.enable
+        # Get class representations of the keys
+        subclasses = [
+            member
+            for member in getmembers(key_class, isclass)
+            if member[1].__module__ == key_class.__module__
+        ]
 
-        self.__config[
-            Key.Experiment.Chaos.affected_nodes_percentage
-        ] = Value.Experiment.Chaos.affected_nodes_percentage
+        # Special handling for platforms section
+        if section_base == "platforms":
+            platform_names = parser[section_base].get("platforms").split()
+            self.__config[Key.Platforms.platforms.key] = platform_names
+            platform_dicts = []
+            for platform_name in platform_names:
+                platform_name = platform_name.strip()
+                section_name = f"{section_base}.{platform_name}"
+                platform_dict = {"name": platform_name}
+                if parser.has_section(section_name):
+                    self.__config[f"{section_name}.name"] = platform_name
+                    for key, value in parser.items(section_name):
+                        dict_key = f"{section_name}.{key}"
+                        self.__config[dict_key] = value
+                        platform_dict[key] = value
+                    platform_dicts.append(platform_dict)
+                else:
+                    raise ValueError(
+                        f"Section {section_name} not found in config file."
+                    )
+            self.__config[Key.Platforms.platforms.key] = platform_dicts
+        else:
+            # Read base section parameters
+            if parser.has_section(section_base):
+                for key, value in parser.items(section_base):
+                    dict_key = f"{section_base}.{key}"
+                    if dict_key not in ignored_keys:
+                        self.__config[dict_key] = value
+            # Read subclass section parameters
+            for subclass in subclasses:
+                subclass_name = subclass[0].lower()
+                section_name = f"{section_base}.{subclass_name}"
+                if parser.has_section(section_name):
+                    for key, value in parser.items(section_name):
+                        dict_key = f"{section_name}.{key}"
+                        if dict_key not in ignored_keys:
+                            self.__config[dict_key] = value
 
-        self.__config[
-            Key.Experiment.Chaos.delay_latency_ms
-        ] = Value.Experiment.Chaos.latency_ms
-        self.__config[
-            Key.Experiment.Chaos.delay_jitter_ms
-        ] = Value.Experiment.Chaos.jitter_ms
-        self.__config[
-            Key.Experiment.Chaos.delay_correlation
-        ] = Value.Experiment.Chaos.correlation
+        # Validate mandatory parameters
+        self.__validate_mandatory_parameters(key_class)
 
-        self.__config[
-            Key.Experiment.Chaos.bandwidth_rate_mbps
-        ] = Value.Experiment.Chaos.bandwidth_rate_mbps
+    def __validate_mandatory_parameters(self, key_class):
+        def __get_class_attributes(class_name, attr_type=ConfigKey) -> dict:
+            return {
+                pkey: pval
+                for pkey, pval in vars(class_name).items()
+                if isinstance(pval, attr_type)
+            }
 
-        self.__config[
-            Key.Experiment.Chaos.bandwidth_limit
-        ] = Value.Experiment.Chaos.bandwidth_limit
+        # Get class representations of the keys
+        subclasses = [
+            member
+            for member in getmembers(key_class, isclass)
+            if member[1].__module__ == key_class.__module__
+        ]
 
-        self.__config[
-            Key.Experiment.Chaos.bandwidth_buffer
-        ] = Value.Experiment.Chaos.bandwidth_buffer
+        # Check base class mandatory parameters
+        for key, value in __get_class_attributes(key_class).items():
+            if (
+                not value.is_optional
+                and f"{key_class.__name__.lower()}.{key}" not in self.__config
+            ):
+                raise ValueError(
+                    f"Mandatory parameter {key} is missing in section {key_class.__name__.lower()}"
+                )
 
-        self.__config[
-            Key.Experiment.Generators.generators
-        ] = Value.Experiment.Generators
+        # Special handling for platforms section
+        if key_class == Key.Platforms and Key.Platforms.platforms.key in self.__config:
+            platforms = self.__config[Key.Platforms.platforms.key]
 
-        self.__config[
-            Key.Experiment.Transscale.max_parallelism
-        ] = Value.Experiment.Transscale.max_parallelism
-
-        self.__config[
-            Key.Experiment.Transscale.monitoring_warmup_s
-        ] = Value.Experiment.Transscale.monitoring_warmup_s
-        self.__config[
-            Key.Experiment.Transscale.monitoring_interval_s
-        ] = Value.Experiment.Transscale.monitoring_interval_s
-
-        self.__config[
-            Key.Experiment.Flink.checkpoint_interval_ms
-        ] = Value.Experiment.Flink.checkpoint_interval_ms
-        self.__config[
-            Key.Experiment.Flink.window_size_ms
-        ] = Value.Experiment.Flink.window_size_ms
-        self.__config[
-            Key.Experiment.Flink.fibonacci_value
-        ] = Value.Experiment.Flink.fibonacci_value
-
-    def __str__(self):
-        return self.to_str()
+            for platform in platforms:
+                for key, value in __get_class_attributes(
+                    Key.Platforms.Platform
+                ).items():
+                    if not value.is_optional:
+                        if value.kwargs.get("for_types"):
+                            if platform["type"] not in value.kwargs.get("for_types"):
+                                continue
+                        if f"platforms.{platform['name']}.{key}" not in self.__config:
+                            raise ValueError(
+                                f"Mandatory parameter {key} is missing in section {key_class.__name__.lower()}.{platform['name']}"
+                            )
+        else:
+            # Check subclass mandatory parameters
+            for subclass in subclasses:
+                for key, value in __get_class_attributes(subclass[1]).items():
+                    if (
+                        not value.is_optional
+                        and f"{key_class.__name__.lower()}.{subclass[0].lower()}.{key}"
+                        not in self.__config
+                    ):
+                        raise ValueError(
+                            f"Mandatory parameter {key} is missing in section {key_class.__name__.lower()}.{subclass[0].lower()}"
+                        )
 
     def get(self, key) -> any:
-        if key in self.__config:
-            return self.__config[key]
+        return self.__config.get(key)
 
     def get_int(self, key) -> int:
         return int(self.get(key))
 
     def get_bool(self, key) -> bool:
-        if self.get_str(key).lower() == "true":
-            return True
-        else:
-            return False
+        return self.get_str(key).lower() == "true"
 
     def get_float(self, key) -> float:
         return float(self.get(key))
@@ -142,360 +214,81 @@ class Config:
         return str(self.get(key))
 
     def get_list_str(self, key):
-        return [str(value) for value in self.get_str(key).split(",")]
+        return [str(value) for value in self.get_str(key).split()]
 
     def get_list_int(self, key):
-        return [int(value) for value in self.get_str(key).split(",")]
+        return [int(value) for value in self.get(key).split()]
 
-    def parse_platform(self):
-        # Get platform names
-        platform_str = []
-        for value in self.cp[Key.Platforms.platforms].values():
-            platform_str = value.split(",")
-        platforms = []
-        for platform_name in platform_str:
-            name = platform_name.strip()
-
-            # Get section name for platform
-            platform_section = f"platforms.{name}"
-
-            # Get values for platform
-            type = self.cp[platform_section]["type"]
-
-            # If type is RaspberryPi, Required fields are "cluster", "contro", "producers", "consumers", "kubernetes_type". Otherwise, require everything else.
-            if type == "RaspberryPi":
-                cluster = self.cp[platform_section]["cluster"]
-                producers = self.cp[platform_section]["producers"]
-                consumers = self.cp[platform_section]["consumers"]
-                kubernetes_type = self.cp[platform_section]["kubernetes_type"]
-                control = self.cp[platform_section]["control"]
-                # Create platform dictionary
-                platform = {
-                    "name": name,
-                    "type": type,
-                    "cluster": cluster,
-                    "producers": int(producers),
-                    "consumers": int(consumers),
-                    "kubernetes_type": kubernetes_type,
-                    "control": True if control.lower() == "true" else False,
-                }
-            # If type is FIT, Required fields are "reservation_name", "site", "archi", "producers", "consumers", "walltime". Otherwise, require everything else.
-            elif type == "FIT":
-                reservation_name = self.cp[platform_section]["reservation_name"]
-                site = self.cp[platform_section]["site"]
-                archi = self.cp[platform_section]["archi"]
-                producers = self.cp[platform_section]["producers"]
-                consumers = self.cp[platform_section]["consumers"]
-                walltime = self.cp[platform_section]["walltime"]
-                start_time = (
-                    self.cp[platform_section]["start_time"]
-                    if self.cp.has_option(platform_section, "start_time")
-                    else None
-                )
-                control = self.cp[platform_section]["control"]
-                # Create platform dictionary
-                platform = {
-                    "name": name,
-                    "type": type,
-                    "reservation_name": reservation_name,
-                    "site": site,
-                    "archi": archi,
-                    "producers": int(producers),
-                    "consumers": int(consumers),
-                    "walltime": walltime,
-                    "start_time": start_time,
-                    "control": True if control.lower() == "true" else False,
-                }
-            elif type == "VM_on_Grid5000":
-                reservation_name = self.cp[platform_section]["reservation_name"]
-                site = self.cp[platform_section]["site"]
-                cluster = self.cp[platform_section]["cluster"]
-                producers = self.cp[platform_section]["producers"]
-                consumers = self.cp[platform_section]["consumers"]
-                core_per_vm = self.cp[platform_section]["core_per_vm"]
-                memory_per_vm = self.cp[platform_section]["memory_per_vm"]
-                disk_per_vm = self.cp[platform_section]["disk_per_vm"]
-                queue = self.cp[platform_section]["queue"]
-                walltime = self.cp[platform_section]["walltime"]
-                start_time = (
-                    self.cp[platform_section]["start_time"]
-                    if self.cp.has_option(platform_section, "start_time")
-                    else None
-                )
-                control = self.cp[platform_section]["control"]
-                # Create platform dictionary
-                platform = {
-                    "name": name,
-                    "type": type,
-                    "reservation_name": reservation_name,
-                    "site": site,
-                    "cluster": cluster,
-                    "producers": int(producers),
-                    "consumers": int(consumers),
-                    "core_per_vm": int(core_per_vm),
-                    "memory_per_vm": int(memory_per_vm),
-                    "disk_per_vm": int(disk_per_vm),
-                    "queue": queue,
-                    "walltime": walltime,
-                    "start_time": start_time,
-                    "control": True if control.lower() == "true" else False,
-                }
-
+    def update_runtime_file(self, create=False):
+        try:
+            if os.path.exists(self.RUNTIME_PATH):
+                with open(self.RUNTIME_PATH, "r+") as f:
+                    file_config = json.load(f)
+                    file_config.update(self.__config)
+                    f.seek(0)
+                    f.truncate()
+                    json.dump(file_config, f, indent=4)
+            elif create:
+                with open(self.RUNTIME_PATH, "w") as f:
+                    json.dump(self.__config, f, indent=4)
             else:
-                reservation_name = self.cp[platform_section]["reservation_name"]
-                site = self.cp[platform_section]["site"]
-                cluster = self.cp[platform_section]["cluster"]
-                producers = self.cp[platform_section]["producers"]
-                consumers = self.cp[platform_section]["consumers"]
-                queue = self.cp[platform_section]["queue"]
-                walltime = self.cp[platform_section]["walltime"]
-                kubernetes_type = self.cp[platform_section]["kubernetes_type"]
-                control = self.cp[platform_section]["control"]
-                start_time = (
-                    self.cp[platform_section]["start_time"]
-                    if self.cp.has_option(platform_section, "start_time")
-                    else None
-                )
-                # Create platform dictionary
-                platform = {
-                    "name": name,
-                    "type": type,
-                    "reservation_name": reservation_name,
-                    "site": site,
-                    "cluster": cluster,
-                    "producers": int(producers),
-                    "consumers": int(consumers),
-                    "kubernetes_type": kubernetes_type,
-                    "control": True if control.lower() == "true" else False,
-                    "queue": queue,
-                    "walltime": walltime,
-                    "start_time": start_time,
-                }
-            # Add platform to list
-            platforms.append(platform)
-        return platforms
-
-    def parse_load_generators(self):
-        # Get load_generators names
-        load_generators_str = []
-        for value in self.cp[Key.Experiment.Generators.generators].values():
-            load_generators_str = value.split(",")
-        load_generators = []
-        for generator_name in load_generators_str:
-            name = generator_name.strip()
-            # Get section name for generator
-            generator_section = f"experiment.generators.{name}"
-
-            # Get values for generator
-            topic = self.cp[generator_section]["topic"]
-            lg_type = self.cp[generator_section]["type"]
-            num_sensors = self.cp[generator_section]["num_sensors"]
-            interval_ms = self.cp[generator_section]["interval_ms"]
-            replicas = self.cp[generator_section]["replicas"]
-            value = self.cp[generator_section]["value"]
-
-            # Create generator dictionary
-            generator = {
-                "name": name,
-                "type": lg_type,
-                "topic": topic,
-                "num_sensors": num_sensors,
-                "interval_ms": interval_ms,
-                "replicas": replicas,
-                "value": value,
-            }
-            # Add generator to list
-            load_generators.append(generator)
-        return load_generators
-
-    def __validate_experiment(self, conf_path: str):
-        section_base = "experiment"
-        # Validate subclasses of Experiment
-        for name, cls in getmembers(Key.Experiment, isclass):
-            # Skip private attributes, the Generators class in this step
-            if name.startswith("__") and name.endswith("__") or name == "Generators":
-                continue
-            section = f"{section_base}.{name.lower()}"
-            if not self.cp.has_section(section):
                 self.__log.error(
-                    f"[CONF] Section [{section}] is missing in configuration file {conf_path}"
+                    f"Runtime file {self.RUNTIME_PATH} does not exist. Create flag is set to False."
                 )
-                exit(1)
-            else:
-                # For each subclass of cls get keys and filter out the private ones.
-                keys = [
-                    key
-                    for key, value in getmembers(cls)
-                    if not key.startswith("__") and not key.endswith("__")
-                ]
+        except Exception as e:
+            self.__log.error(f"Error while updating runtime file: {str(e)}")
+            raise e
 
-                # Check that all keys are defined in the configuration file for this section
-                for key in keys:
-                    if not self.cp.has_option(section, key):
-                        self.__log.error(
-                            f"[CONF] Key [{key}] is missing in section [{section}] in configuration file {conf_path}"
-                        )
-                        exit(1)
-        # Validate the Generators class
-        section = f"{section_base}.generators"
-        if not self.cp.has_section(section):
-            self.__log.error(
-                f"[CONF] Section [{section}] is missing in configuration file {conf_path}"
-            )
-            exit(1)
+    def delete_runtime_file(self):
+        try:
+            if os.path.exists(self.RUNTIME_PATH):
+                os.remove(self.RUNTIME_PATH)
+        except Exception as e:
+            self.__log.error(f"Error while deleting runtime file: {str(e)}")
+            raise e
+
+    def __parse_load_generators(self, parser):
+        load_generators_names = parser.get(
+            Key.Experiment.Generators.generators.key, "generators"
+        ).split()
+        if not load_generators_names:
+            self.__log.error("No load generators found in config file.")
+
         else:
-            # Get the list of generators defined in the configuration file; this is a comma separated list
-            generators = self.cp[section]["generators"].split(",")
-            # For each generator, check that the section exists
-            for generator in generators:
-                section = f"{section_base}.generators.{generator.strip()}"
-                if not self.cp.has_section(section):
+            load_generators = []
+            for name in load_generators_names:
+                generator_section = f"{Key.Experiment.Generators.generators.key}.{name}"
+                try:
+                    generator = {
+                        "name": name,
+                        "type": parser[generator_section]["type"],
+                        "topic": parser[generator_section]["topic"],
+                        "num_sensors": int(parser[generator_section]["num_sensors"]),
+                        "interval_ms": int(parser[generator_section]["interval_ms"]),
+                        "replicas": int(parser[generator_section]["replicas"]),
+                        "value": int(parser[generator_section]["value"]),
+                    }
+                    load_generators.append(generator)
+                except KeyError as e:
                     self.__log.error(
-                        f"[CONF] Section [{section}] is missing in configuration file {conf_path}"
+                        f"Error while parsing load generator {name}: {str(e)}"
                     )
-                    exit(1)
-                else:
-                    # For each subclass of cls get keys and filter out the private ones.
-                    keys = [
-                        key
-                        for key, value in getmembers(
-                            Key.Experiment.Generators.Generator
-                        )
-                        if not key.startswith("__") and not key.endswith("__")
-                    ]
+                    raise e
+            return load_generators
 
-                    # Check that all keys are defined in the configuration file for this section
-                    for key in keys:
-                        if not self.cp.has_option(section, key):
-                            self.__log.error(
-                                f"[CONF] Key [{key}] is missing in section [{section}] in configuration file {conf_path}"
-                            )
-                            exit(1)
-        # Validate the Platform sections
-        platform_str = []
-        for value in self.cp[Key.Platforms.platforms].values():
-            platform_str = value.split(",")
-        for platform_name in platform_str:
-            name = platform_name.strip()
-            platform_section = f"platforms.{name}"
+    def __parse_scaling_strategy(self):
+        strategy_path = self.get_str(Key.Experiment.Scaling.strategy_path.key)
+        try:
+            with open(strategy_path, "r") as file:
+                strategy = yaml.safe_load(file)
+                return strategy
+        except FileNotFoundError as e:
+            self.__log.error(f"File not found: {strategy_path} - {str(e)}")
+            raise e
 
-            if not self.cp.has_section(platform_section):
-                self.__log.error(
-                    f"[CONF] Section [{platform_section}] is missing in configuration file {conf_path}"
-                )
-                exit(1)
-            else:
-                # Get values for platform
-                type = self.cp[platform_section]["type"]
-
-                # If type is RaspberryPi, Required fields are "cluster", "producers", "consumers", "kubernetes_type". Otherwise, require everything else.
-                if type == "RaspberryPi":
-                    required_keys = [
-                        "cluster",
-                        "control",
-                        "producers",
-                        "consumers",
-                        "kubernetes_type",
-                    ]
-                # If type is FIT, Required fields are "reservation_name", "site", "archi", "producers", "consumers", "control". Otherwise, require everything else.
-                elif type == "FIT":
-                    required_keys = [
-                        "reservation_name",
-                        "control",
-                        "site",
-                        "archi",
-                        "producers",
-                        "consumers",
-                    ]
-                elif type == "VM_on_Grid5000":
-                    required_keys = [
-                        "reservation_name",
-                        "control",
-                        "site",
-                        "cluster",
-                        "producers",
-                        "consumers",
-                        "core_per_vm",
-                        "memory_per_vm",
-                        "queue",
-                        "walltime",
-                    ]
-                else:
-                    required_keys = [
-                        "reservation_name",
-                        "control",
-                        "site",
-                        "cluster",
-                        "producers",
-                        "consumers",
-                        "queue",
-                        "walltime",
-                    ]
-
-                # Check that all keys are defined in the configuration file for this section
-                for key in required_keys:
-                    if not self.cp.has_option(platform_section, key):
-                        self.__log.error(
-                            f"[CONF] Key [{key}] is missing in section [{platform_section}] in configuration file {conf_path}"
-                        )
-                        exit(1)
-
-    def validate(self, conf_path: str):
-        # Check that the configuration file exists
-        if not exists(conf_path):
-            self.__log.error(f"[CONF] Config file [{conf_path}] does not exist.")
-            exit(1)
-        else:
-            self.__log.debugg(f"[CONF] Config file [{conf_path}] found.")
-
-            # Read the configuration file
-            self.cp.read(conf_path)
-
-            # Check that the main sections are defined
-            for name, cls in getmembers(Key, isclass):
-                if name.startswith("__") and name.endswith("__"):
-                    continue
-                section = name.lower()
-                if not self.cp.has_section(section):
-                    self.__log.error(
-                        f"[CONF] Section [{section}] is missing in configuration file {conf_path}"
-                    )
-                    exit(1)
-            # Validate subclasses of Experiment
-            self.__validate_experiment(conf_path)
-
-    def __read_config_file(self, conf_path: str):
-        # Read the configuration file
-        self.cp.read(conf_path)
-
-        for section in self.cp.sections():
-            for key in self.cp[section]:
-                dict_key = f"{section}.{key}"
-                self.__config[dict_key] = self.cp[section][key]
-
-        self.__config[Key.Platforms.platforms] = self.parse_platform()
-
-        self.__config[
-            Key.Experiment.Generators.generators
-        ] = self.parse_load_generators()
-
-    # Serialize the configuration to a JSON string
     def to_json(self):
-        return json.dumps(self.__config)
-
-    def load_from_log(self, log_path: str):
-        with open(log_path, "r") as f:
-            lines = f.readlines()
-
-        # Find the line number where [CONFIG] starts
-        start_line = lines.index("[CONFIG]\n") + 1
-
-        # Find the line number where [TIMESTAMPS] starts
-        end_line = lines.index("[TIMESTAMPS]\n")
-
-        # Join the lines between [CONFIG] and [TIMESTAMPS] and load as JSON
-        config_content = "".join(lines[start_line:end_line])
-        self.__config = json.loads(config_content)
-
-    def to_str(self):
-        return json.dumps(self.__config, indent=4)
+        try:
+            return json.dumps(self.__config, indent=4)
+        except Exception as e:
+            self.__log.error(f"Error while converting config to json: {str(e)}")
+            raise e

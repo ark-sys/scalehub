@@ -1,3 +1,6 @@
+from datetime import datetime
+
+
 class Color:
     pure_red = "\033[0;31m"
     dark_green = "\033[0;32m"
@@ -37,6 +40,7 @@ class Color:
 
 class Logger:
     def __init__(self):
+        self.info_color = Color.dull_white
         self.warning_color = Color.yellow
         self.error_color = Color.pure_red
         self.debug_color = Color.light_cyan
@@ -44,38 +48,55 @@ class Logger:
 
         self.debug_level = 0
 
-    def new_line(self):
+    @staticmethod
+    def new_line():
         print()
 
+    @staticmethod
+    def date_time() -> str:
+        return "[" + datetime.now().isoformat() + "]"
+
     def info(self, message: str, **kwargs) -> None:
-        print(self.reset_color + message, **kwargs)
+        print(self.reset_color + f"{self.date_time()} {message}", **kwargs)
 
     def debug(self, message: str, **kwargs) -> None:
         if self.debug_level > 0:
-            print(f"{self.debug_color}[DEBUG] + {message} {self.reset_color}", **kwargs)
+            print(
+                f"{self.debug_color}{self.date_time()} [DEBUG] + {message} {self.reset_color}",
+                **kwargs,
+            )
 
     def debugg(self, message: str, **kwargs) -> None:
         if self.debug_level > 1:
             print(
-                f"{self.debug_color}[DEBUG] ++ {message} {self.reset_color} ", **kwargs
+                f"{self.debug_color}{self.date_time()} [DEBUG] ++ {message} {self.reset_color} ",
+                **kwargs,
             )
 
     def debuggg(self, message: str, **kwargs) -> None:
         if self.debug_level > 2:
             print(
-                f"{self.debug_color}[DEBUG] +++ {message} {self.reset_color} ", **kwargs
+                f"{self.debug_color}{self.date_time()} [DEBUG] +++ {message} {self.reset_color} ",
+                **kwargs,
             )
 
     def warning(self, message: str, **kwargs) -> None:
-        print(f"{self.warning_color}[WARNING] {message}{self.reset_color}", **kwargs)
+        print(
+            f"{self.warning_color}{self.date_time()} [WARNING] {message}{self.reset_color}",
+            **kwargs,
+        )
 
     def error(self, message: str, **kwargs) -> None:
-        print(f"{self.error_color}[ERROR] {message}{self.reset_color}", **kwargs)
+        print(
+            f"{self.error_color}{self.date_time()} [ERROR] {message}{self.reset_color}",
+            **kwargs,
+        )
 
     def set_debug_level(self, new_level):
         self.debug_level = new_level
         self.info(f"[LOGGER] New debug level: {self.debug_level}")
 
-    def thousands_formatter(self, x, pos=None):
-        "The two args are the value and tick position"
+    @staticmethod
+    def thousands_formatter(x, pos):
+        # The two args are the value and tick position
         return "%1.0fk" % (x * 1e-3)

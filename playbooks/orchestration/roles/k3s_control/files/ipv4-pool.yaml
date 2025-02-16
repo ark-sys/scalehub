@@ -1,0 +1,9 @@
+apiVersion: crd.projectcalico.org/v1
+kind: IPPool
+metadata:
+  name: ipv4-ippool
+spec:
+  cidr: 10.42.0.0/16
+  ipipMode: Always
+  natOutgoing: true
+  disabled: false

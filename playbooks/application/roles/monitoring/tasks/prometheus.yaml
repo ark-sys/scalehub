@@ -1,6 +1,5 @@
 # Setup task for Prometheus
 - name: Setup Prometheus - Creation block
-  delegate_to: localhost
   tags: [ create ]
   block:
     - name: Deploy latest version of Prometheus Stack in monitoring namespace
@@ -13,15 +12,29 @@
         release_name: prometheus
         release_state: present
         wait: true
-        values: "{{ lookup('ansible.builtin.file', 'kube-prometheus-stack-values.yaml') | from_yaml }}"
+        values: "{{ lookup('ansible.builtin.file', 'prometheus/values.yaml') | from_yaml }}"
 
     - name: Deploying Flink rules
       kubernetes.core.k8s:
         state: present
-        definition: "{{ lookup('ansible.builtin.file', 'flinkrules.yaml') | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.file', 'prometheus/rules/flink.yaml') | from_yaml }}"
 
+    - name: Deploying Service Monitors
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('ansible.builtin.file', item) | from_yaml }}"
+      with_fileglob: [ "prometheus/sm/*.yaml" ]
+
+    - name: Deploy Grafana Ingress
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('ansible.builtin.file', 'prometheus/grafana/ingress.yaml') | from_yaml }}"
+
+    - name: Deploy Prometheus Ingress
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('ansible.builtin.file', 'prometheus/ingress.yaml') | from_yaml }}"
 - name: Setup Prometheus - Deletion block
-  delegate_to: localhost
   tags: [ delete ]
   block:
     - name: Delete Prometheus chart
@@ -33,9 +46,24 @@
         create_namespace: true
         release_name: prometheus
         release_state: absent
-        values: "{{ lookup('ansible.builtin.file', 'kube-prometheus-stack-values.yaml') | from_yaml }}"
 
     - name: Delete Flink rules
       kubernetes.core.k8s:
         state: absent
-        definition: "{{ lookup('ansible.builtin.file', 'flinkrules.yaml') | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.file', 'prometheus/rules/flink.yaml') | from_yaml }}"
+
+    - name: Delete Service Monitors
+      kubernetes.core.k8s:
+        state: absent
+        definition: "{{ lookup('ansible.builtin.file', item) | from_yaml }}"
+      with_fileglob: [ "prometheus/sm/*.yaml" ]
+
+    - name: Delete Grafana Ingress
+      kubernetes.core.k8s:
+        state: absent
+        definition: "{{ lookup('ansible.builtin.file', 'prometheus/grafana/ingress.yaml') | from_yaml }}"
+
+    - name: Delete Prometheus Ingress
+      kubernetes.core.k8s:
+        state: absent
+        definition: "{{ lookup('ansible.builtin.file', 'prometheus/ingress.yaml') | from_yaml }}"

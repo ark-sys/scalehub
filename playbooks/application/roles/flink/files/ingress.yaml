@@ -1,0 +1,21 @@
+# Ingress resource for Flink UI
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: flink-ingress
+  namespace: flink
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: flink.k3s.scalehub.dev
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: flink-jobmanager-webui
+                port:
+                  number: 8081

@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: "{{ lg_name }}"
+  name: "{{ lg_name}}-service"
   namespace: default
   labels:
     app: "{{ lg_name }}"
@@ -10,6 +10,9 @@ metadata:
 spec:
   type: ClusterIP
   clusterIP: None
+  ipFamilies:
+    - IPv4
+  ipFamilyPolicy: SingleStack
   selector:
     app: "{{ lg_name }}"
     type: load-generator

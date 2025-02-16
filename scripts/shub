@@ -1,91 +1,37 @@
 #!/usr/bin/env python3
 import argparse
-import configparser
 import os
-import re
-from datetime import datetime
-from time import sleep
 
-from ansible.inventory.manager import InventoryManager
-from ansible.parsing.dataloader import DataLoader
-
-from scripts.src.Client import Client, Playbooks
-from scripts.src.FIT import FIT
-from scripts.src.G5k import G5k, G5k_VM
-from scripts.src.Platform import Platform, merge_inventories
-from scripts.src.RaspberryPi import RaspberryPi
+from scripts.src.Client import Client
+from scripts.src.data.DataManager import DataManager
+from scripts.src.platforms.ProvisionManager import ProvisionManager
+from scripts.src.resources.KubernetesManager import KubernetesManager
 from scripts.utils.Config import Config
-from scripts.utils.DataEval import DataEval
-from scripts.utils.DataExporter import DataExporter
-from scripts.utils.Defaults import DefaultKeys as Key, DefaultValues as Value
-from scripts.utils.KubernetesManager import KubernetesManager
+from scripts.utils.Defaults import DefaultKeys as Key
 from scripts.utils.Logger import Logger
-from scripts.utils.Tools import Tools
+from scripts.utils.Tools import Tools, Playbooks
 
 
 # Build cluster and install dependencies
 def provision(config: Config):
-    def __setup_platform(platform_info):
-        platform_type = platform_info["type"]
-        log.info(
-            f"Provisioning platform {platform_info['name']} of type {platform_type}"
-        )
-        if platform_type == "Grid5000":
-            p: Platform = G5k(log, platform_info, verbose=False)
-            return p.setup()
-        elif platform_type == "VM_on_Grid5000":
-            p: Platform = G5k_VM(log, platform_info, verbose=False)
-            return p.setup()
-        elif platform_type == "RaspberryPi":
-            p: Platform = RaspberryPi(log, platform_info)
-            return p.setup()
-        elif platform_type == "FIT":
-            p: Platform = FIT(log, platform_info)
-            return p.setup()
-        else:
-            platform_name = platform_info["name"]
-            log.error(
-                f"Provision is not implemented for platform {platform_name}, which is of type {platform_type}"
-            )
-            return None
-
-    final_inventory = InventoryManager(loader=DataLoader(), sources=[])
-    platforms = config.get(Key.Platforms.platforms)
+    platforms = config.get(Key.Platforms.platforms.key)
 
     if platforms is not None:
         log.info(f"Found {len(platforms)} platforms to provision.")
+        pm: ProvisionManager = ProvisionManager(log, config, platforms)
 
-        # Deploy platforms iteratively
-        for platform_info in platforms:
-            i: InventoryManager = __setup_platform(platform_info)
-            if i is not None:
-                final_inventory = merge_inventories(final_inventory, i)
+        # Initialize inventory file with requested nodes from config
+        pm.provision()
 
-        # Create ConfigParser object
-        config_parser = configparser.ConfigParser(allow_no_value=True)
+        # Platforms are provisioned, create runtime file
+        config.update_runtime_file(create=True)
 
-        # Add inventory to ConfigParser object
-        for group in final_inventory.get_groups_dict():
-            config_parser.add_section(group)
-            for host in final_inventory.get_hosts(group):
-                config_parser.set(group, host.name)
-
-        # Write final inventory to file
-        final_inventory_path = os.path.join(config.get_str(Key.Scalehub.inventory))
-
-        with open(final_inventory_path, "w") as f:
-            config_parser.write(f)
-
-        log.info(f"Inventory file written to {final_inventory_path}")
-
-        # Setup Kubernetes
+        # Provision should be complete, deploy infrastructure
         p: Playbooks = Playbooks(log)
-
-        # Run infrastructure playbook
         try:
             p.run("infrastructure/setup", tag="create", config=config)
         except Exception as e:
-            log.error(f"Error during infrastructure setup: {e}")
+            log.error(f"Error during infrastructure setup: {str(e)}")
             exit(1)
     else:
         log.error("No platforms are specified in the configuration file.")
@@ -93,28 +39,17 @@ def provision(config: Config):
 
 # Destroy cluster
 def destroy(config: Config):
-    platforms = config.get(Key.Platforms.platforms)
-    for platform_info in platforms:
-        platform_type = platform_info["type"]
-        match platform_type:
-            case "Grid5000":
-                # Initiate oardel request
-                p: Platform = G5k(log, platform_info, verbose=False)
-                p.destroy()
-            case "VM_on_Grid5000":
-                # Initiate oardel request
-                p: Platform = G5k_VM(log, platform_info, verbose=False)
-                p.destroy()
-            case "RaspberryPi":
-                log.info("Destroying RaspberryPi...")
-                p: Platform = RaspberryPi(log, platform_info)
-                p.destroy()
-            case "FIT":
-                log.info("Destroying FIT...")
-                p: Platform = FIT(log, platform_info)
-                p.destroy()
-            case _:
-                log.error(f"Destroy is not implemented for platform {platform_type}")
+    platforms = config.get(Key.Platforms.platforms.key)
+
+    if platforms is not None:
+        log.info(f"Found {len(platforms)} platforms to destroy.")
+        pm: ProvisionManager = ProvisionManager(log, config, platforms)
+        pm.destroy()
+    else:
+        log.error("No platforms are specified in the configuration file.")
+
+    # Delete runtime file
+    config.delete_runtime_file()
 
 
 # Execute tasks with "deploy" tag for a given playbook
@@ -124,28 +59,12 @@ def deploy(playbook, config: Config):
     tag = "create"
     try:
         if playbook == "application/load_generators":
-            for lg_config in config.get(Key.Experiment.Generators.generators):
-                load_generator_params = {
-                    "lg_name": lg_config["name"],
-                    "lg_topic": lg_config["topic"],
-                    "lg_type": lg_config["type"],
-                    "lg_numsensors": int(lg_config["num_sensors"]),
-                    "lg_intervalms": int(lg_config["interval_ms"]),
-                    "lg_replicas": int(lg_config["replicas"]),
-                    "lg_value": int(lg_config["value"]),
-                }
-                p.run(
-                    playbook,
-                    config=config,
-                    tag=tag,
-                    extra_vars=load_generator_params,
-                )
+            p.role_load_generators(config, tag)
         else:
             p.run(playbook, config=config, tag=tag)
     except Exception as e:
-        log.error(f"Error during deployment: {e}")
+        log.error(f"Error during deployment: {str(e)}")
         exit(1)
-    return
 
 
 # Execute tasks with "delete" tag for a given playbook
@@ -155,52 +74,35 @@ def delete(playbook, config: Config):
     tag = "delete"
     try:
         if playbook == "application/load_generators":
-            for lg_config in config.get(Key.Experiment.Generators.generators):
-                load_generator_params = {
-                    "lg_name": lg_config["name"],
-                    "lg_topic": lg_config["topic"],
-                    "lg_type": lg_config["type"],
-                    "lg_numsensors": int(lg_config["num_sensors"]),
-                    "lg_intervalms": int(lg_config["interval_ms"]),
-                    "lg_replicas": int(lg_config["replicas"]),
-                    "lg_value": int(lg_config["value"]),
-                }
-                p.run(
-                    playbook,
-                    config=config,
-                    tag=tag,
-                    extra_vars=load_generator_params,
-                )
-
+            p.role_load_generators(config, tag)
         else:
             p.run(playbook, config=config, tag=tag)
     except Exception as e:
-        log.error(f"Error during deletion: {e}")
+        log.error(f"Error during deletion: {str(e)}")
         exit(1)
-    return
 
 
 # Delete and re-deploy 'playbook' parameter
 def reload(playbook, config: Config):
-    # Delete running playbook
-    delete(playbook, config)
-    # Give some time for tasks to execute
-    sleep(5)
-    # Deploy again playbook
-    deploy(playbook, config)
+    p: Playbooks = Playbooks(log)
+    try:
+        p.reload_playbook(playbook, config)
+    except Exception as e:
+        log.error(f"Error during reload: {str(e)}")
+        exit(1)
 
 
-def experiment(action, config: Config):
-    e: Client = Client(log, config)
+def experiment(action, configs: list):
+    c: Client = Client(log, configs)
     match action:
         case "start":
-            e.start()
+            c.start()
         case "stop":
-            e.stop()
+            c.stop()
         case "clean":
-            e.clean()
+            c.clean()
         case "check":
-            e.check()
+            c.check()
         case _:
             log.error(f"Action {action} is not implemented for command 'experiment'.")
 
@@ -218,300 +120,93 @@ def tokens():
     log.info(f"Kubernetes Dashboard Token : \n{kubernetes_dashboard_token}\n\n")
 
 
-# Quick action commands
-def run(action, attr, type, config: Config, export_dir):
-    def validate_scale_params(num_replicas, type_of_node):
-        help_message = (
-            "Usage: scale <number_of_replicas> <type_of_node> \n"
-            "number_of_replicas: Number of replicas to scale to. \n"
-            "type_of_node: Type of node to be added or removed after the rescale. {baremetal | small_vm | medium_vm | pico }"
-        )
-        valid_node_types = ["bm", "vm-small", "vm-medium", "pico"]
-        if not isinstance(num_replicas, int):
-            log.warning(help_message)
-            raise ValueError("num_replicas must be an integer.")
-        if type_of_node not in valid_node_types:
-            log.warning(help_message)
-            raise ValueError(f"type_of_node must be one of {valid_node_types}.")
+def export(config: Config, exp_path):
+    log.info("Exporting...")
 
-    log.debug(f"Running action {action} ...")
-    k: KubernetesManager = KubernetesManager(log)
-    p: Playbooks = Playbooks(log)
-    t: Tools = Tools(log)
-    if export_dir and action == "job":
-        start_ts = int(datetime.now().timestamp())
-        exp_path = t.create_exp_folder(
-            config.get_str(Key.Scalehub.experiments),
-            datetime.fromtimestamp(start_ts).strftime("%Y-%m-%d"),
-        )
-        log_file = os.path.join(exp_path, "exp_log.txt")
-        # Dump running configuration to file
-        with open(log_file, "w") as file:
-            file.write(f"[CONFIG]\n")
-            file.write(f"{config.to_str()}\n\n")
-            file.write(f"[TIMESTAMPS]\n")
-            file.write(f"Experiment start at : {start_ts}\n")
+    dm: DataManager = DataManager(log, config)
 
-    match action:
-        case "job":
-            return k.execute_command_on_pod(
-                deployment_name="flink-jobmanager",
-                command=f"flink run -d -j /tmp/jobs/{config.get_str(Key.Experiment.job_file)}",
-            )
-        case "job-scale":
-            # Scale only the job to the specified number of replicas
-            job_file = config.get_str(Key.Experiment.job_file)
-            monitored_task = config.get_str(Key.Experiment.task_name)
-            num_replicas = attr
-
-            # Stop current job and get scaling info
-            job_id, operator_names, savepoint_path = k.prepare_scaling(
-                config, monitored_task, job_file
-            )
-            if savepoint_path is None:
-                return
-
-            # Wait some time
-            sleep(5)
-
-            # Build new operator list with operator_name and new parallelism
-            par_map = []
-            for operator in operator_names:
-                if monitored_task in operator:
-                    par_map.append(f"{operator}:{num_replicas}")
-                else:
-                    par_map.append(f"{operator}:1")
-
-            # Run job with option --parmap
-            return k.execute_command_on_pod(
-                deployment_name="flink-jobmanager",
-                command=f"flink run -d -s {savepoint_path} -j /tmp/jobs/{job_file} --parmap '{';'.join(par_map)}'",
-            )
-        case "scale":
-            try:
-                # Check parameters
-                validate_scale_params(attr, type)
-            except ValueError as e:
-                log.error(str(e))
-                return
-
-            # Simple scale involves scaling up and down taskmanagers and operators
-            # of the running job to the specified number of replicas
-            monitored_task = config.get_str(Key.Experiment.task_name)
-            job_file = config.get_str(Key.Experiment.job_file)
-            num_replicas = attr
-
-            # Stop current job and get scaling info
-            job_id, operator_names, savepoint_path = k.prepare_scaling(
-                config, monitored_task, job_file
-            )
-            if savepoint_path is None:
-                return
-
-            # Rescale taskmanagers
-            type_of_node = type
-            tm_full_name = f"flink-taskmanager-{type_of_node}"
-
-            k.scale_deployment(tm_full_name, int(num_replicas), "flink")
-
-            par_map = []
-
-            log.info(
-                f"Scaling operator {monitored_task} to parallelism {num_replicas}."
-            )
-
-            # Build new operator list with operator_name and new parallelism
-
-            for operator in operator_names:
-                if monitored_task in operator:
-                    par_map.append(f"{operator}:{num_replicas}")
-                else:
-                    par_map.append(f"{operator}:1")
-
-            # Run job with option --parmap
-            return k.execute_command_on_pod(
-                deployment_name="flink-jobmanager",
-                command=f"flink run -d -s {savepoint_path} -j /tmp/jobs/{job_file} --parmap '{';'.join(par_map)}'",
-            )
-
-        case "node-scale":
-            # Check parameters
-            type_of_node = type
-
-            # Scale up taskmanagers and the operator of the running job to the specified number of replicas
-            monitored_task = config.get_str(Key.Experiment.task_name)
-            job_file = config.get_str(Key.Experiment.job_file)
-            num_replicas = int(attr)
-
-            try:
-                validate_scale_params(num_replicas, type_of_node)
-            except ValueError as e:
-                log.error(str(e))
-                return
-            # Stop current job and get scaling info
-            job_id, operator_names, savepoint_path = k.prepare_scaling(
-                config, monitored_task, job_file
-            )
-            if savepoint_path is None:
-                return
-
-            # Rescale taskmanagers
-            ret, par = k.rescale_taskmanagers_heterogeneous(num_replicas, type_of_node)
-            match ret:
-                case 0:
-                    log.info("Rescale successful.")
-                case 1:
-                    log.info("Rescale not needed.")
-                case _:
-                    log.error("Rescale failed.")
-                    exit(1)
-
-            par_map = []
-
-            log.info(f"Scaling operator {monitored_task} to parallelism {par}.")
-
-            # Build new operator list with operator_name and new parallelism
-            for operator in operator_names:
-                if monitored_task in operator:
-                    par_map.append(f"{operator}:{par}")
-                else:
-                    par_map.append(f"{operator}:1")
-
-            # Run job with option --parmap
-            return k.execute_command_on_pod(
-                deployment_name="flink-jobmanager",
-                command=f"flink run -d -s {savepoint_path} -j /tmp/jobs/{job_file} --parmap '{';'.join(par_map)}'",
-            )
-
-        case "chaos":
-            # Check if chaos has to be created or deleted
-            match attr:
-                case "create":
-                    experiment = {
-                        "run_experiment": "true",
-                    }
-                    p.run(
-                        "chaos",
-                        config=config,
-                        tag=["experiment"],
-                        extra_vars=experiment,
-                    )
-                case "delete":
-                    experiment = {
-                        "delete_experiment": "true",
-                    }
-                    p.run(
-                        "chaos",
-                        config=config,
-                        tag=["experiment"],
-                        extra_vars=experiment,
-                    )
-                case _:
-                    log.warning(f"default case, nothing happened")
-
-        case "clean":
-
-            # Delete load generators
-            delete("load_generators", config)
-            # Restart Flink
-            reload("flink", config)
-            # Remove chaos
-            run("chaos", "delete", None, config)
-
-        case "test":
-            # base_path = "/app/info/paper-plots3/Join-kk/latency_70"
-            # g: GroupedDataEval = GroupedDataEval(log, base_path)
-            # g.eval_mean_with_backpressure_multiple()
-            pass
-        case "dump":
-            # Dump running configuration
-            log.info(f"Running configuration : \n{config.to_json()}")
-        case "time":
-            # Get current timestamp
-            log.info(f"Current timestamp : {int(datetime.now().timestamp())}")
-        case _:
-            log.error(f"Action {action} is not implemented.")
+    dm.export(exp_path, dry_run=False, single_export=False, single_eval=False)
 
 
 def sync_experiment_data(config: Config):
     log.info("Syncing experiment data...")
-    p: Platform = G5k(config, log, verbose=False)
-    p.sync_data()
+    t: Tools = Tools(log)
+    t.sync_data(config.get_str(Key.Scalehub.experiments.key))
 
 
-# Export data for a given date
-def export(config: Config, exp_path, action_type):
-    log.info("Exporting...")
-    # Build full path from exp_path name
-    # exp_path should be 'DD-MM-YYYY/N' where or 'DD-MM-YYYY' :
-    #   DD-MM-YYYY is the date of the experiments
-    #   N is the number of the experiment
-
-    # Define regular expression patterns for 'YYYY-MM-DD' and 'YYYY-MM-DD/N' formats
-    exact_format_pattern = r"^\d{4}-\d{2}-\d{2}$"
-    with_integer_pattern = r"^\d{4}-\d{2}-\d{2}/(\d+)$"
-
-    # Try to match the 'DD-MM-YYYY' format
-    exact_match = re.match(exact_format_pattern, exp_path)
-    # If it doesn't match the exact format, try the 'DD-MM-YYYY/N' format
-    with_integer_match = re.match(with_integer_pattern, exp_path)
-
-    if exact_match:
-        base_exp_path: str = os.path.join(
-            config.get_str(Key.Scalehub.experiments), exp_path
-        )
-        log.info(f"Exporting experiments for {base_exp_path}.")
-        # Iterate through each experiment folder of the base exp path
-        for exp in os.listdir(base_exp_path):
-            full_exp_path = os.path.join(base_exp_path, exp)
-            # Retrieve timestamps from logs
-            data_exp: DataExporter = DataExporter(
-                log=log,
-                exp_path=full_exp_path,
-            )
-
-            match action_type:
-                case "plots":
-                    # Evaluate some plots
-                    data_eval: DataEval = DataEval(log, full_exp_path)
-                    data_eval.eval_summary_plot()
-                    data_eval.eval_experiment_plot()
-                case _:
-                    # Default option is to retrieve experiment data from DataBase and save it in a joined_output.csv for stats and plot generation
-                    data_exp.export()
-    elif with_integer_match:
-        log.info(f"Exporting {exp_path} experiment.")
-        full_exp_path = os.path.join(config.get_str(Key.Scalehub.experiments), exp_path)
-        # Retrieve timestamps from logs
-        data_exp: DataExporter = DataExporter(
-            log=log,
-            exp_path=full_exp_path,
-        )
-        match action_type:
-            case "plots":
-                # Evaluate some plots
-                data_eval: DataEval = DataEval(log, full_exp_path)
-                data_eval.eval_summary_plot()
-                data_eval.eval_experiment_plot()
-                data_eval.eval_mean_stderr()
-            case _:
-                # Default option is to retrieve experiment data from DataBase and save it in a joined_output.csv for stats and plot generation
-                data_exp.export()
+def load_config(command, conf_paths=None) -> Config | list[Config] | None:
+    # Load configuration from provided path. If multiple paths are provided, we will use the first one.
+    if conf_paths is None:
+        conf_paths = None
+    elif "," in conf_paths:
+        conf_paths = conf_paths.split(",")
     else:
-        log.error("Error during export.")
+        conf_paths = [conf_paths]
+
+    if command != "experiment":
+        if conf_paths is None:
+            try:
+                # Try to load configuration from RUNTIME_PATH
+                config = Config(log, Config.RUNTIME_PATH)
+                return config
+            except FileNotFoundError as e:
+                # If RUNTIME_PATH is not provided and the command is not "destroy", we will use DEFAULTS_PATH
+                if command != "destroy":
+                    config = Config(log, Config.DEFAULTS_PATH)
+                    return config
+                else:
+                    log.error(f"Error while parsing configuration file: {str(e)}")
+                    raise e
+
+        else:
+            # Handle the case when a custom path is provided
+            conf_path = conf_paths[0]
+            if os.path.exists(conf_path):
+                try:
+                    log.info(f"Loading configuration from {conf_path}")
+                    config = Config(log, conf_path)
+                    if command in ["deploy", "delete", "reload"]:
+                        config.update_runtime_file()
+                    return config
+                except Exception as e:
+                    log.error(
+                        f"Error while parsing configuration file {conf_path} : {str(e)}"
+                    )
+                    raise e
+            else:
+                raise FileNotFoundError(
+                    f"Configuration file {conf_path} does not exist."
+                )
+    else:
+        log.info("Handling multiple configuration files for 'experiment' command.")
+        configs = []
+        for path in conf_paths:
+            if os.path.exists(path):
+                log.info(f"Loading configuration from {path}")
+                try:
+                    config = Config(log, path)
+                    configs.append(config)
+                except Exception as e:
+                    log.error(f"Error while parsing configuration file: {str(e)}")
+                    raise e
+            else:
+                raise FileNotFoundError(f"Configuration file {path} does not exist.")
+
+        return configs
 
 
-def main(log: Logger):
+def main():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="command")
 
     parser.add_argument(
         "-c",
-        "--conf",
-        dest="conf_file",
+        "--confs",
+        dest="conf_files",
         action="store",
-        default=Value.conf_path,
-        help="Specify a custom path for the configuration file of scalehub.",
+        default=None,
+        help="Specify a custom path for the configuration used for either provisioning or experiment running.\n"
+        "Separate multiple paths with a comma. e.g. -c /app/conf/experiment/exp1.yaml,/app/conf/experiment/exp2.yaml",
     )
     # Provision command
     subparsers.add_parser(
@@ -555,33 +250,6 @@ def main(log: Logger):
     # Sync command
     subparsers.add_parser("sync", help="Sync experiment data from remote to local")
 
-    # Run command
-    run_parser = subparsers.add_parser("run", help="Run action.")
-    run_parser.add_argument(
-        "action",
-        help="Specify the action to be run. {job | transscale | chaos | scale }",
-    )
-    run_parser.add_argument(
-        "--ed",
-        "--export_dir",
-        dest="export_dir",
-        help="Create export directory for the experiment data.",
-        action="store_true",
-    )
-    run_parser.add_argument(
-        "action_arg_1",
-        help="Specify if {create | delete} action should be run (default 'create'). Only for 'chaos', 'transscale', and 'job' actions. If 'run scale', the this parameter is the number of replicas.",
-        nargs="?",
-        default="create",
-    )
-
-    run_parser.add_argument(
-        "action_arg_2",
-        help="Only for 'scale' action. Specify the type of node to be added or removed after the rescale. {baremetal | small_vm | medium_vm | pico }",
-        nargs="?",
-        default="baremetal",
-    )
-
     # Reservation time command
     subparsers.add_parser("reservation_time", help="Get remaining reservation time")
 
@@ -590,54 +258,47 @@ def main(log: Logger):
     export_subparser.add_argument(
         "date", help="Provide experiment path in format 'DD-MM-YYYY/N'"
     )
-    export_subparser.add_argument(
-        "type",
-        help="Choose what to export between 'stats', 'plot' or 'all'",
-        nargs="?",
-        default=None,
-    )
 
     # Parse command line arguments
     args = parser.parse_args()
 
-    # Parse configuration file values
-    configuration_file = args.conf_file
+    # Parse configuration file's values
+    configuration_files = args.conf_files
 
-    # Store configuration file values in Config struct
-    config = Config(log, configuration_file)
+    try:
+        config = load_config(args.command, configuration_files)
+    except Exception as e:
+        log.error(f"Error while loading configuration file: {str(e)}")
+        exit(1)
 
-    if args.command == "provision":
-        provision(config)
-    elif args.command == "deploy":
-        deploy(args.playbook, config)
-    elif args.command == "delete":
-        delete(args.playbook, config)
-    elif args.command == "reload":
-        reload(args.playbook, config)
-    elif args.command == "destroy":
-        destroy(config)
-    elif args.command == "experiment":
-        action = args.action
-        experiment(action, config)
-    elif args.command == "tokens":
-        tokens()
-    elif args.command == "sync":
-        sync_experiment_data(config)
-    elif args.command == "run":
-        action = args.action
-        attr = args.action_arg_1
-        type = args.action_arg_2
-        export_dir = args.export_dir
-
-        run(action, attr, type, config, export_dir)
-    elif args.command == "export":
-        date = args.date
-        type = args.type
-        export(config, date, type)
-    else:
-        parser.print_help()
+    match args.command:
+        case "destroy":
+            destroy(config)
+        case "provision":
+            provision(config)
+        case "deploy":
+            deploy(args.playbook, config)
+        case "delete":
+            delete(args.playbook, config)
+        case "reload":
+            reload(args.playbook, config)
+        case "experiment":
+            # Check if we have one path or multiple paths separated by comma
+            assert (
+                len(config) > 0
+            ), "No valid configuration files found. 'experiment' command requires at least one configuration file."
+            experiment(args.action, config)
+        case "tokens":
+            tokens()
+        case "sync":
+            sync_experiment_data(config)
+        case "export":
+            date = args.date
+            export(config, date)
+        case _:
+            parser.print_help()
 
 
 if __name__ == "__main__":
     log = Logger()
-    main(log)
+    main()

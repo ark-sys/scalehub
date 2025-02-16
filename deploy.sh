@@ -26,6 +26,7 @@ function display_help() {
     echo "  create            Create the Docker container"
     echo "  remove            Remove the Docker container"
     echo "  restart           Restart the Docker container"
+    echo "  restart_ss <service_name>       Restart a specific service"
     echo "  shell             Spawn an interactive shell in the container"
     echo "  push <registry>   Push the Docker image to a private registry"
     echo "  help              Display this help message"
@@ -61,6 +62,13 @@ function generate_secret() {
 
 }
 
+function restart_service_ss(){
+  service_name="$1"
+
+  docker compose -p scalehub -f $SCALEHUB_BASEDIR/setup/shub/docker-compose.yaml up --build --no-deps -d --force-recreate $service_name
+
+}
+
 function restart_service(){
     if is_service_running; then
         remove_service
@@ -72,11 +80,11 @@ function restart_service(){
 
 # Function to create the Docker container
 function create_service() {
-  docker-compose -p scalehub -f $SCALEHUB_BASEDIR/setup/shub/docker-compose.yaml up --build -d
+  docker compose -p scalehub -f $SCALEHUB_BASEDIR/setup/shub/docker-compose.yaml up --build -d
 }
 
 function remove_service() {
-  docker-compose -p scalehub -f $SCALEHUB_BASEDIR/setup/shub/docker-compose.yaml down --rmi all --remove-orphans
+  docker compose -p scalehub -f $SCALEHUB_BASEDIR/setup/shub/docker-compose.yaml down --rmi all --remove-orphans
 }
 
 # Function to check if the service is running
@@ -121,6 +129,9 @@ case "$1" in
         ;;
     restart)
         restart_service
+        ;;
+    restart_ss)
+        restart_service_ss "$2"
         ;;
     shell)
         get_shell

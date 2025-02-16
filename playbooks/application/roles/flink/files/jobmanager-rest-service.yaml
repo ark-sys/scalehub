@@ -1,18 +1,20 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: flink-jobmanager-rest
+  name: flink-jobmanager-webui
   namespace: flink
   labels:
     app: flink
     component: jobmanager
 spec:
-  type: NodePort
+  type: ClusterIP
+  ipFamilyPolicy: SingleStack
+  ipFamilies:
+    - IPv6
   ports:
-    - name: rest
+    - name: webui
       port: 8081
       targetPort: 8081
-      nodePort: 30081
   selector:
     app: flink
     component: jobmanager

@@ -1,0 +1,32 @@
+- name: Goldpinger tasks
+  tags: [ create ]
+  hosts: localhost
+  tasks:
+    - name: Install chart
+      kubernetes.core.helm:
+        chart_ref: "goldpinger"
+        chart_repo_url: https://bloomberg.github.io/goldpinger
+        release_name: goldpinger
+        release_state: present
+        release_namespace: default
+        values:
+          extraEnv:
+            - name: "IP_VERSIONS"
+              value: "6"
+          serviceMonitor:
+            enabled: true
+            selector:
+              prometheus: "kube-prometheus-stack"
+            namespace: monitoring
+            interval: 10s
+            # honorLabels: true
+
+- name: Delete Goldpinger
+  tags: [ delete ]
+  hosts: localhost
+  tasks:
+    - name: Remove chart
+      kubernetes.core.helm:
+        release_name: goldpinger
+        release_state: absent
+        release_namespace: default
