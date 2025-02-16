@@ -2,7 +2,6 @@
 # Setup NFS
 - name : Setting up NFS - Creation block
   tags: [ create ]
-  delegate_to: localhost
   # Path to g5k credential files in container's home directory
   vars:
     # TODO Hardcoding the NFS server address for now
@@ -26,16 +25,26 @@
       kubernetes.core.helm:
        name: csi-driver-nfs
        chart_ref: "csi-driver-nfs"
-       chart_version: 4.1.0
+       chart_version: 4.9.0
        chart_repo_url: https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
        release_namespace: csi-driver-nfs
        create_namespace: true
        wait: true
+       values:
+         controller:
+           nodeSelector:
+             node-role.kubernetes.io/control-plane: "true"
+             # This fixes an issue with the controller unable to query an IPv6 address
+           dnsPolicy: Default
+         node:
+           nodeSelector:
+             node-role.kubernetes.io/control-plane: "true"
       register: csi_driver
 
     - name: Install NFS Storage class
       kubernetes.core.k8s:
        state: present
+       wait: true
        definition:
           apiVersion: storage.k8s.io/v1
           kind: StorageClass
@@ -49,7 +58,6 @@
 
 - name : Setting up NFS - Deletion block
   tags: [ delete ]
-  delegate_to: localhost
   block:
     - name: Delete NFS Storage class
       kubernetes.core.k8s:

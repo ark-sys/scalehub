@@ -1,71 +1,29 @@
 import json
-import os
 import time
+from time import sleep
 
-import enoslib as en
 import paho.mqtt.client as mqtt
+# noinspection PyUnresolvedReferences
 from paho.mqtt.enums import CallbackAPIVersion
 
 from scripts.utils.Config import Config
 from scripts.utils.Defaults import DefaultKeys as Key
 from scripts.utils.Logger import Logger
+from scripts.utils.Tools import Playbooks
 
 
 # 1. Create MQTT client
 # 2. Connect to MQTT broker
 # 3. Publish "start" or "stop" message on experiment topic
-
-
-class Playbooks:
-    def __init__(self, log: Logger):
-        self.__log = log
-
-    def run(self, playbook, config: Config, tag=None, extra_vars=None):
-        if extra_vars is None:
-            extra_vars = {}
-        inventory = config.get_str(Key.Scalehub.inventory)
-        playbook_filename = f"{config.get_str(Key.Scalehub.playbook)}/{playbook}.yaml"
-        if not os.path.exists(playbook_filename):
-            # Raise an error with the file path
-            raise FileNotFoundError(f"The file doesn't exist: {playbook_filename}")
-
-        playbook_vars = {
-            "shub_config": config.to_json(),
-        }
-        playbook_vars.update(extra_vars)
-
-        match tag:
-            case "create":
-                arg_tags = ["create"]
-            case "delete":
-                arg_tags = ["delete"]
-            case "experiment":
-                arg_tags = ["experiment"]
-            case _:
-                arg_tags = []
-
-        # Run the playbook with additional tags and extra vars
-        try:
-            en.run_ansible(
-                playbooks=[playbook_filename],
-                tags=arg_tags,
-                extra_vars=playbook_vars,
-                inventory_path=inventory,
-            )
-        except Exception as e:
-            self.__log.error(e.__str__())
-            return e
-
-
 class Client:
-    def __init__(self, log: Logger, config: Config):
+    def __init__(self, log: Logger, configs: list[Config]):
         self.__log = log
         self.p: Playbooks = Playbooks(log)
 
         self.client = mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION1)
-        self.config = config
-        self.broker_host = config.get_str(Key.Experiment.broker_mqtt_host)
-        self.broker_port = config.get_int(Key.Experiment.broker_mqtt_port)
+        self.configs = configs
+        self.broker_host = configs[0].get_str(Key.Experiment.broker_mqtt_host.key)
+        self.broker_port = configs[0].get_int(Key.Experiment.broker_mqtt_port.key)
         self.mqtt_user = "scalehub"
         self.mqtt_pass = "s_password"
         self.ack = None
@@ -102,15 +60,17 @@ class Client:
                 60,
             )
         except ConnectionRefusedError as e:
-            self.__log.error(f"MQTT connection failed: {e}")
+            self.__log.error(f"MQTT connection failed: {str(e)}")
             exit(1)
         self.client.loop_start()
 
     def start(self):
         self.__log.info("Starting experiment")
-
-        # Create START payload with experiment config
-        payload = {"command": "START", "config": self.config.to_json()}
+        # Generate payload
+        configs_json = [config.to_json() for config in self.configs]
+        # Serialize payload
+        ser_payload = json.dumps(configs_json)
+        payload = {"command": "START", "configs": ser_payload}
         # Get string representation of payload
         payload = json.dumps(payload)
 
@@ -128,11 +88,6 @@ class Client:
         if self.ack == "INVALID_COMMAND":
             self.__log.error(f"Command START failed. State is {self.state}")
             exit(1)
-        # Wait for state change
-        self.__log.info("Waiting for state change...")
-        while self.state != "RUNNING":
-            time.sleep(1)
-        self.__log.info(f"Experiment state changed to {self.state}.")
 
     def stop(self):
 
@@ -152,10 +107,6 @@ class Client:
         if self.ack == "INVALID_COMMAND":
             self.__log.error(f"Command STOP failed. State is {self.state}")
             exit(1)
-        self.__log.info("Waiting for state change...")
-        while self.state != "IDLE":
-            time.sleep(1)
-        self.__log.info(f"Experiment state changed to {self.state}.")
 
     def clean(self):
         self.__log.info("Cleaning experiment")
@@ -173,11 +124,8 @@ class Client:
         self.__log.info("Waiting for ack...")
         while self.ack != "ACK_CLEAN":
             time.sleep(1)
-        self.__log.info("Waiting for state change...")
-        while self.state != "IDLE":
-            time.sleep(1)
-        self.__log.info(f"Experiment state changed to {self.state}.")
 
     # Check last experiment state
     def check(self):
+        sleep(3)
         self.__log.info(f"Current experiment state is {self.state}.")

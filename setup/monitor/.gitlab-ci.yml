@@ -1,8 +1,8 @@
 # Create a ci/cd pipeline for experiment-monitor to build and push the image to the registry
+image: docker:27.3
 
-image: docker:latest
 stages:
-  - build-and-push
+  - work
 
 before_script:
   # login to the registry
@@ -10,13 +10,13 @@ before_script:
 
 build-and-push:
   # build and push the image to the registry
-  stage: build-and-push
+  stage: work
   tags:
     - ci.inria.fr
     - small
   script:
-    # build the image of experiment-monitor context
+    # build the image for experiment-monitor using current context
     - docker build -t "$CI_REGISTRY/$CI_REGISTRY_PROJECT/scalehub/monitor" -f setup/monitor/Dockerfile .
-    # push the image to the registry
+    # Create artifact
+    - echo "Creating artifact"
     - docker push "$CI_REGISTRY/$CI_REGISTRY_PROJECT/scalehub/monitor"
-

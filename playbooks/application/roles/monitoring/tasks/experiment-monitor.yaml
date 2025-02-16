@@ -2,24 +2,10 @@
 - name: Deploy experiment-monitor
   tags: [ create ]
   block:
-    - name: Create experiment-monitor namespace
-      kubernetes.core.k8s:
-        name: experiment-monitor
-        kind: Namespace
-        state: present
-        wait: true
-    - name: Create PVC for experiment-monitor
+    - name: Create service account for experiment-monitor
       kubernetes.core.k8s:
         state: present
-        definition: "{{ lookup('ansible.builtin.file', 'experiment-monitor/experiments-pvc.yaml') | from_yaml }}"
-    - name: Deploy configmaps for mqtt-broker
-      kubernetes.core.k8s:
-        state: present
-        definition: "{{ lookup('ansible.builtin.file', 'experiment-monitor/mqtt-configmaps.yaml') | from_yaml }}"
-    - name: Deploy mqtt-broker
-      kubernetes.core.k8s:
-        state: present
-        definition: "{{ lookup('ansible.builtin.file', 'experiment-monitor/mqtt-broker.yaml') | from_yaml_all }}"
+        definition: "{{ lookup('ansible.builtin.file', 'experiment-monitor/experiment-monitor-role.yaml') | from_yaml_all }}"
     - name: Copy gitlab-scalehub secret from default namespace to experiment-monitor namespace
       block:
         - name: Get gitlab-scalehub secret from default namespace
@@ -41,38 +27,30 @@
               type: kubernetes.io/dockerconfigjson
               data:
                 .dockerconfigjson: "{{ gitlab_scalehub_secret.resources[0].data['.dockerconfigjson'] }}"
-    - name: Copy kubeconfig secret from default namespace to experiment-monitor namespace
-      block:
-        - name: Get kubeconfig secret from default namespace
-          kubernetes.core.k8s_info:
-            api_version: v1
-            kind: Secret
-            name: kube-secret
-            namespace: default
-          register: kubeconfig_secret
-        - name: Create kubeconfig secret in experiment-monitor namespace
-          kubernetes.core.k8s:
-            state: present
-            definition:
-              apiVersion: v1
-              kind: Secret
-              metadata:
-                name: kube-secret
-                namespace: experiment-monitor
-              type: Opaque
-              data:
-                kubeconfig: "{{ kubeconfig_secret.resources[0].data['kubeconfig'] }}"
+
+    - name: Create PVC for experiment-monitor
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('ansible.builtin.file', 'experiment-monitor/experiments-pvc.yaml') | from_yaml }}"
+    - name: Deploy configmaps for mqtt-broker
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('ansible.builtin.file', 'experiment-monitor/mqtt-configmaps.yaml') | from_yaml }}"
+    - name: Deploy mqtt-broker
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('ansible.builtin.file', 'experiment-monitor/mqtt-broker.yaml') | from_yaml_all }}"
     - name: Deploy experiment-monitor
       kubernetes.core.k8s:
         state: present
-        definition: "{{ lookup('ansible.builtin.file', 'experiment-monitor/experiment-monitor.yaml') | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.file', 'experiment-monitor/experiment-monitor-deployment.yaml') | from_yaml }}"
 - name: Delete experiment-monitor
   tags: [ delete ]
   block:
     - name: Delete experiment-monitor
       kubernetes.core.k8s:
         state: absent
-        definition: "{{ lookup('ansible.builtin.file', 'experiment-monitor/experiment-monitor.yaml') | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.file', 'experiment-monitor/experiment-monitor-deployment.yaml') | from_yaml }}"
     - name: Delete mqtt-broker
       kubernetes.core.k8s:
         state: absent
@@ -81,17 +59,13 @@
       kubernetes.core.k8s:
         state: absent
         definition: "{{ lookup('ansible.builtin.file', 'experiment-monitor/mqtt-configmaps.yaml') | from_yaml }}"
-    - name: Delete secrets
-      block:
-        - name: Delete kube-secret
-          kubernetes.core.k8s:
-            name: kube-secret
-            kind: Secret
-            namespace: experiment-monitor
-            state: absent
-        - name: Delete gitlab-scalehub secret
-          kubernetes.core.k8s:
-            name: gitlab-scalehub
-            kind: Secret
-            namespace: experiment-monitor
-            state: absent
+    - name: Delete ServiceAccount for experiment-monitor
+      kubernetes.core.k8s:
+        state: absent
+        definition: "{{ lookup('ansible.builtin.file', 'experiment-monitor/experiment-monitor-role.yaml') | from_yaml_all }}"
+    - name: Delete gitlab-scalehub secret
+      kubernetes.core.k8s:
+        name: gitlab-scalehub
+        kind: Secret
+        namespace: experiment-monitor
+        state: absent

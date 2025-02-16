@@ -1,0 +1,6 @@
+- node: grid5000
+  taskmanager:
+    - number: 52
+      type: l
+      method: exponential
+

@@ -1,0 +1,14 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: minio-tenant
+  namespace: minio-operator
+  labels:
+    v1.min.io/tenant: scalehub-tenant
+spec:
+  selector:
+    matchLabels:
+      v1.min.io/tenant: scalehub-tenant
+  endpoints:
+    - port: http-minio
+

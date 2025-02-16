@@ -19,6 +19,7 @@ spec:
         app: "{{ lg_name }}"
         type: load-generator
     spec:
+      dnsPolicy: ClusterFirst
       nodeSelector:
         node-role.kubernetes.io/worker: producer
       terminationGracePeriodSeconds: 0
@@ -36,11 +37,11 @@ spec:
                 fieldRef:
                   fieldPath: metadata.namespace
             - name: KUBERNETES_DNS_NAME
-              value: "{{ lg_name }}.$(KUBERNETES_NAMESPACE).svc.cluster.local"
+              value: "{{ lg_name }}-service.$(KUBERNETES_NAMESPACE).svc.cluster.local"
             - name: KAFKA_BOOTSTRAP_SERVERS
-              value: "kafka-service.kafka.svc.cluster.local:9092"
+              value: "kafka-service.kafka:9092"
             - name: SCHEMA_REGISTRY_URL
-              value: "http://schema-registry-service.kafka.svc.cluster.local:8081"
+              value: "http://schema-registry-service.kafka:8081"
             - name: KAFKA_INPUT_TOPIC
               value: "{{lg_topic}}"
             - name: NUM_SENSORS
@@ -55,5 +56,5 @@ spec:
               value: "{{ lg_name }}"
           resources:
             limits:
-              memory: 2Gi
+              memory: 1Gi
               cpu: 500m
