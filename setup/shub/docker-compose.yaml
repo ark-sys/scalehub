@@ -3,12 +3,12 @@ version: "3.9"
 secrets:
   g5k_creds:
     # Fill this file with personal Grid5000 credentials
-    file: secrets/Grid5000_creds.yaml
+    file: secrets/enos/Grid5000_creds.yaml
   # Setup correct path for grid5000 private key in `source` field
   ssh_key:
-    file: secrets/grid5000.pk
+    file: secrets/enos/grid5000.pk
   grid_pub:
-    file: secrets/grid5000.pub
+    file: secrets/enos/grid5000.pub
 
 networks:
   local_net:
@@ -106,7 +106,7 @@ services:
     tty: true
     volumes:
       - /dev/net:/dev/net:z
-      - ./secrets:/vpn
+      - ${SCALEHUB_BASEDIR}/setup/shub/secrets/vpn:/vpn
     environment:
       - DNS
       - TZ=Europe/Paris
@@ -120,7 +120,6 @@ services:
   scalehub_dns:
     build:
       context: ${SCALEHUB_BASEDIR}/setup/shub/dns
-
       dockerfile: Dockerfile
       tags:
         - "registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/dns:latest"
