@@ -2,7 +2,6 @@
 # Setup PVC
 - name: Setting up PrivateVolumeClaims - Creation block
   tags: [ create ]
-  delegate_to: localhost
   block:
     - name: Deploy PVC for Grafana
       kubernetes.core.k8s:
@@ -21,8 +20,7 @@
 
 - name: Setting up PrivateVolumeClaims - Deletion block
   tags: [ delete ]
-  delegate_to: localhost
-  block:
+œ  block:
     - name: Delete PVC for Grafana
       kubernetes.core.k8s:
         state: absent

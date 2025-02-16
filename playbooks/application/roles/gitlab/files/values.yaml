@@ -144,7 +144,7 @@ service:
 
 ingress:
   # -- enabled specifies whether to create an Ingress resource
-  enabled: true
+  enabled: false
   # -- Ingress provider
   provider: nginx
   # -- annotations to add to the Ingress

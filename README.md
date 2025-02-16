@@ -1,4 +1,4 @@
-![Logo](images/scalehub_logo.png)
+![Logo](setup/images/scalehub_logo.png)
 
 Scalehub is a tool that allows you to provision a cluster and deploy K3S on top of it. 
 The cluster hosts a set of applications that can be deployed with Ansible playbooks.
@@ -125,7 +125,7 @@ The scalehub container will use the network stack from the VPN container to inte
 
 By mounting `script/`, `playbooks/`, `experiments-data/` and `conf/`, the user can quickly modify the deployment description, execute tests and retrieve experiment data. 
 
-![Scalehub Setup](images/scalehub_setup.png)
+![Scalehub Setup](setup/images/scalehub_setup.png)
 
 
 ## Usage
@@ -226,7 +226,7 @@ deletion of the applications with the `shub delete` command.
 
 The deployment of all playbooks will lead the cluster at this state:
 
-![cluster_state](images/cluster-full-deployment.png)
+![cluster_state](setup/images/cluster-full-deployment.png)
 #TODO update final setup
 
 :point_up: You may want to run one of the applications with a different image. For that, you can modify **vars/main.yaml** file located in the role folder of the application.

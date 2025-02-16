@@ -1,0 +1,21 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: scalehub-dev
+  namespace: cert-manager
+spec:
+  isCA: true
+  commonName: scalehub-dev-ca
+  secretName: scalehub-dev-ca-secret
+  subject:
+    organizations:
+      - ScaleHub
+    organizationalUnits:
+      - Dev
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: scalehub-issuer
+    kind: ClusterIssuer
+    group: cert-manager.io

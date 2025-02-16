@@ -1,0 +1,15 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: scalehub-dev
+  namespace: cert-manager
+spec:
+  secretName: scalehub-dev-tls
+  isCA: false
+  usages:
+    - server auth
+    - client auth
+  dnsNames:
+    - "scalehub.dev"
+  issuerRef:
+    name: scalehub-issuer

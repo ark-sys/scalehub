@@ -1,11 +1,6 @@
-version: "3.6"
-
-volumes:
-  scalehub_ingress_conf:
-    driver: local
+version: "3.9"
 
 secrets:
-
   g5k_creds:
     # Fill this file with personal Grid5000 credentials
     file: secrets/Grid5000_creds.yaml
@@ -26,7 +21,6 @@ networks:
         #          ip_range: 2001:cafe:43::/113
         - subnet: 10.10.0.0/16
           ip_range: 10.10.10.0/24
-
 services:
   scalehub:
     container_name: scalehub
@@ -43,39 +37,57 @@ services:
       - source: grid_pub
         target: id_rsa.pub
     build:
-      context: ${SCALEHUB_BASEDIR}/setup/shub
-      dockerfile: Dockerfile
+      context: ${SCALEHUB_BASEDIR}/
+      dockerfile: setup/shub/Dockerfile
       args:
         - UID=${UID}
         - GID=${GID}
         - USER=${USER}
-    # Source paths refer to scalehub root path
+      tags:
+        - "registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/scalehub:latest"
     volumes:
+      # In the future these directories will only be added via Dockerfile. For now, they are mounted to ease development.
       - type: bind
         source: ${SCALEHUB_BASEDIR}/conf
         target: /app/conf
+        bind:
+          selinux: z
       - type: bind
+        bind:
+          selinux: z
         source: ${SCALEHUB_BASEDIR}/playbooks
         target: /app/playbooks
       - type: bind
+        bind:
+          selinux: z
         source: ${SCALEHUB_BASEDIR}/scripts
         target: /app/scripts
+      # Mount experiments-data to process and plot data with scalehub tools
       - type: bind
+        bind:
+          selinux: z
         source: ${SCALEHUB_BASEDIR}/experiments-data
         target: /app/experiments-data
+      # Cache directory for scalehub, in case of container restart...
       - type: bind
-        source: ${SCALEHUB_BASEDIR}/info
-        target: /app/info
+        source: ${SCALEHUB_BASEDIR}/runtime
+        target: /app/runtime
+        bind:
+          selinux: z
+          create_host_path: true
+
+      # This is used to share the ssh-agent socket with the container thus allowing ssh connections through host's ssh-agent
       - type: bind
         source: $SSH_AUTH_SOCK
         target: /ssh-agent
     environment:
       - SSH_AUTH_SOCK=/ssh-agent
+
   # OpenVPN client service to connect to Grid5000
   vpn:
     image: dperson/openvpn-client
     container_name: vpn
-    hostname: scalehub
+    hostname: scalehub.dev
     extra_hosts:
       # Initialize host entry for upstream service. This will be updated by the ingress ansible role
       - "ingress-upstream.k3s.scalehub.dev:127.1.1.1"
@@ -108,7 +120,10 @@ services:
   scalehub_dns:
     build:
       context: ${SCALEHUB_BASEDIR}/setup/shub/dns
+
       dockerfile: Dockerfile
+      tags:
+        - "registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/dns:latest"
     container_name: dns
     restart: always
     networks:
@@ -116,11 +131,3 @@ services:
         ipv4_address: 10.10.10.53
     cap_add:
       - NET_ADMIN
-  nginx_reverse:
-    container_name: nginx_reverse
-    network_mode: service:vpn
-    build:
-      context: ${SCALEHUB_BASEDIR}/setup/shub/nginx
-      dockerfile: Dockerfile
-    restart: unless-stopped
-

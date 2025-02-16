@@ -1,2 +1,0 @@
-Parallelism,Throughput,ThroughputStdErr,BusyTime,BusyTimeStdErr,BackpressureTime,BackpressureTimeStdErr
-1,28813.755208330625,924.9154070499745,995.09375,2.358230009837224,985.796875,7.8319089960844925
