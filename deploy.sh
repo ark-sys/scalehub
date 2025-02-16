@@ -65,7 +65,7 @@ function generate_secret() {
 function restart_service_ss(){
   service_name="$1"
 
-  docker-compose -p scalehub -f $SCALEHUB_BASEDIR/setup/shub/docker-compose.yaml up --build --no-deps -d --force-recreate $service_name
+  docker compose -p scalehub -f $SCALEHUB_BASEDIR/setup/shub/docker-compose.yaml up --build --no-deps -d --force-recreate $service_name
 
 }
 
@@ -80,11 +80,11 @@ function restart_service(){
 
 # Function to create the Docker container
 function create_service() {
-  docker-compose -p scalehub -f $SCALEHUB_BASEDIR/setup/shub/docker-compose.yaml up --build -d
+  docker compose -p scalehub -f $SCALEHUB_BASEDIR/setup/shub/docker-compose.yaml up --build -d
 }
 
 function remove_service() {
-  docker-compose -p scalehub -f $SCALEHUB_BASEDIR/setup/shub/docker-compose.yaml down --rmi all --remove-orphans
+  docker compose -p scalehub -f $SCALEHUB_BASEDIR/setup/shub/docker-compose.yaml down --rmi all --remove-orphans
 }
 
 # Function to check if the service is running

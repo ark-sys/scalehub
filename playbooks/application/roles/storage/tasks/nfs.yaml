@@ -2,7 +2,6 @@
 # Setup NFS
 - name : Setting up NFS - Creation block
   tags: [ create ]
-  delegate_to: localhost
   # Path to g5k credential files in container's home directory
   vars:
     # TODO Hardcoding the NFS server address for now
@@ -59,7 +58,6 @@
 
 - name : Setting up NFS - Deletion block
   tags: [ delete ]
-  delegate_to: localhost
   block:
     - name: Delete NFS Storage class
       kubernetes.core.k8s:

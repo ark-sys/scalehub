@@ -1,7 +1,6 @@
 ---
 - name: Setting up MinIO - Creation block
   tags: [ create ]
-  delegate_to: localhost
   block:
     - name: Add chart for local-path-provisioner from containeroo
       kubernetes.core.helm_repository:
@@ -79,7 +78,6 @@
 
 - name: MinIO - Deletion block
   tags: [ delete ]
-  delegate_to: localhost
   block:
     - name: Delete MinIO tenant
       kubernetes.core.helm:

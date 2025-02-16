@@ -1,7 +1,6 @@
 # Setup task for Kubernetes dashboard
 ---
 - name: Setup Kubernetes dashboard
-  delegate_to: localhost
   tags: [ create ]
   block:
     - name: Add Kubernetes dashboard repo
@@ -18,37 +17,29 @@
         release_name: kubernetes-dashboard
         release_state: present
         wait: true
-        values:
-            app:
-              settings:
-                global:
-                  cluster-name: "Scalehub cluster"
-                  itemsPerPage: 20
-            ingress:
-              enabled: true
-              annotations:
-                kubernetes.io/ingress.class: nginx
-                nginx.ingress.kubernetes.io/rewrite-target: /
-              hosts:
-                - kubernetes-dashboard.k3s.scalehub.dev
-              pathType: Prefix
-            nodeSelector:
-              node-role.kubernetes.io/control-plane: "true"
-            nginx:
-              enabled: false
-            cert-manager:
-              enabled: false
+        values: "{{ lookup('ansible.builtin.file', 'kube-dash/values.yaml') | from_yaml }}"
+
     - name: Deploy account setup for dashboard
       kubernetes.core.k8s:
           state: present
-          definition: "{{ lookup('ansible.builtin.file', 'kubernetes-dashboard-setup.yaml') | from_yaml_all }}"
+          definition: "{{ lookup('ansible.builtin.file', 'kube-dash/kubernetes-dashboard-setup.yaml') | from_yaml_all }}"
+
+    - name: Deploy Kubernetes dashboard Ingress
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('ansible.builtin.file', 'kube-dash/ingress.yaml') | from_yaml }}"
+
 - name: Setup Kubernetes dashboard - Deletion block
-  delegate_to: localhost
   tags: [ delete ]
   block:
-      - name: Delete Kubernetes dashboard
-        kubernetes.core.helm:
-            chart_ref: "kubernetes-dashboard/kubernetes-dashboard"
-            release_namespace: kubernetes-dashboard
-            release_name: kubernetes-dashboard
-            release_state: absent
+    - name: Delete Kubernetes dashboard
+      kubernetes.core.helm:
+        chart_ref: "kubernetes-dashboard/kubernetes-dashboard"
+        release_namespace: kubernetes-dashboard
+        release_name: kubernetes-dashboard
+        release_state: absent
+
+    - name: Delete Kubernetes dashboard Ingress
+      kubernetes.core.k8s:
+        state: absent
+        definition: "{{ lookup('ansible.builtin.file', 'kube-dash/ingress.yaml') | from_yaml }}"

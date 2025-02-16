@@ -1,0 +1,89 @@
+html {
+    color-scheme: light dark;
+}
+
+body {
+    background-color: #f0f0f0;
+    color: #333;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+.container {
+    text-align: center;
+    background-color: #fff;
+    padding: 2em;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    max-width: 90%;
+    margin: 1em;
+    box-sizing: border-box;
+}
+
+.logo {
+    width: 70%;
+    height: auto;
+    max-width: 1395px;
+    max-height: 642px;
+    margin-bottom: 1em;
+}
+
+.title {
+    color: #001f3f;
+    font-size: 3em;
+    margin-bottom: 0.5em;
+}
+
+h1 {
+    margin-bottom: 1em;
+    color: #001f3f;
+}
+
+.section {
+    margin-bottom: 2em;
+}
+
+h2 {
+    color: #001f3f;
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+li {
+    margin: 0.5em 0;
+}
+
+.button {
+    display: inline-block;
+    padding: 0.5em 1em;
+    text-decoration: none;
+    color: #fff;
+    background-color: #001f3f;
+    border-radius: 10px;
+    transition: background-color 0.3s ease;
+}
+
+.button:hover {
+    background-color: #001a33;
+}
+
+/* Media Queries for Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        padding: 1em;
+    }
+
+    .button {
+        padding: 0.5em;
+        font-size: 0.9em;
+    }
+}

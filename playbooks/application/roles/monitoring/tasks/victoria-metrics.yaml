@@ -1,7 +1,6 @@
 ---
 # Setup task for VictoriaMetrics database
 - name: Setup VM - Creation block
-  delegate_to: localhost
   tags: [ create ]
   block:
     - name: Add VictoriaMetrics repo
@@ -17,10 +16,12 @@
         chart_repo_url: https://victoriametrics.github.io/helm-charts/
         release_namespace: default
         # Supply custom values for chart to fix issues with IPv6
-        values: "{{ lookup('ansible.builtin.file', 'victoria-metrics-single-values.yaml') | from_yaml }}"
-
+        values: "{{ lookup('ansible.builtin.file', 'victoria-metrics/values.yaml') | from_yaml }}"
+    - name: Deploy VictoriaMetrics Ingress
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('ansible.builtin.file', 'victoria-metrics/ingress.yaml') | from_yaml }}"
 - name: Setup VM - Deletion block
-  delegate_to: localhost
   tags: [ delete ]
   block:
     - name: Delete VictoriaMetrics
@@ -30,3 +31,7 @@
         chart_repo_url: https://victoriametrics.github.io/helm-charts/
         release_namespace: default
         release_state: absent
+    - name: Delete VictoriaMetrics Ingress
+      kubernetes.core.k8s:
+        state: absent
+        definition: "{{ lookup('ansible.builtin.file', 'victoria-metrics/ingress.yaml') | from_yaml }}"

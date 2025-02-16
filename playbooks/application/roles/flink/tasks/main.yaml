@@ -30,7 +30,7 @@
     - name: Deploy ingress for Flink
       kubernetes.core.k8s:
         state: present
-        definition: "{{ lookup('ansible.builtin.file', 'flink-ingress.yaml') | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.file', 'ingress.yaml') | from_yaml }}"
 
     - name: Deploy jobmanager
       kubernetes.core.k8s:
@@ -75,4 +75,4 @@
     - name: Delete Ingress for Flink
       kubernetes.core.k8s:
         state: absent
-        definition: "{{ lookup('ansible.builtin.file', 'flink-ingress.yaml') | from_yaml }}"
+        definition: "{{ lookup('ansible.builtin.file', 'ingress.yaml') | from_yaml }}"

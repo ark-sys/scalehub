@@ -12,7 +12,7 @@ from scripts.utils.Logger import Logger
 
 @dataclass
 class Config:
-    RUNTIME_PATH = "/app/conf/runtime/runtime.json"
+    RUNTIME_PATH = "/app/runtime/runtime.json"
     DEFAULTS_PATH = "/app/conf/defaults.ini"
 
     def __init__(self, log: Logger, _param: str | dict):
