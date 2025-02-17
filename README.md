@@ -12,22 +12,21 @@ Playbooks will help set up an environment for data stream processing experiments
 - Consul is used to estimate the network latency between nodes.
 - Transscale is used to scale Flink Taskmanagers and specific job operators, based on the load and the network latency estimations.
 
-
-:exclamation: TODO:
-
-- [x] Update the documentation with the latest changes.
-- [ ] Update the images in the README.
-- [x] Update the list of playbooks.
-- [ ] Update the final cluster setup image.
-- [x] Review basic requirements for scalehub setup.
-- [x] Review script commands and options.
-
 ## Table of Contents
 
 - [Introduction](#introduction)
 - [Folder Structure](#folder-structure)
 - [Getting Started](#getting-started)
+    - [Prerequisites](#prerequisites)
+- [Installation](#installation)
+    - [Deployment Script](#deployment-script)
 - [Usage](#usage)
+    - [Scalehub Script](#scalehub-script)
+    - [Nominal execution order for playbooks](#nominal-execution-order-for-playbooks)
+    - [Access dashboards and services](#access-dashboards-and-services)
+    - [Running an experiment](#running-an-experiment)
+        - [Scaling strategy](#scaling-strategy)
+        - [Starting an experiment](#starting-an-experiment)
 - [Configuration](#configuration)
 - [Contributing](#contributing)
 
@@ -61,7 +60,9 @@ scalehub/
 - **playbooks**: Contains the Ansible playbooks to provision the environment and install arbitrary applications.
 - **scripts**: Contains the shub Python script, that handles api connections, experiment execution and data processing
   and retrieval.
-- **setup**: Contains the Dockerfile for setting up the development environment **scalehub** and the annex configuration
+- **setup**: Contains the Dockerfile for setting up the development environment **scalehub** and the annex
+  configuration. Here you can find the secrets folder that needs to be updated with the VPN files and the ssh key for
+  Grid5000. If necessary, you can also update the main docker-compose.yaml file.
 - **deploy.sh**:  Helps building, running, updating the Scalehub environment.
 
 
