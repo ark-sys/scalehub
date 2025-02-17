@@ -193,6 +193,15 @@ To setup Kubernetes on the cluster, you can execute the following playbooks:
 shub deploy orchestration/setup
 ```
 
+<details>
+<summary>OVERVIEW Orchestration setup</summary>
+
+> After a correct setup of `orchestration`, the cluster should look like this:
+
+![cluster_orchestration](setup/images/scalehub_orchestration.png)
+
+</details>
+
 At this point the cluster is ready for the deployment of the applications. The following playbook can be executed to
 deploy all applications:
 
@@ -200,11 +209,17 @@ deploy all applications:
 shub deploy application/setup
 ```
 
-Otherwise, the each application can be deployed individually with the `shub deploy` command. The same applies for the
-deletion of the applications with the `shub delete` command.
+<details>
+<summary>OVERVIEW Application setup</summary>
 
-![cluster_state](setup/images/cluster-full-deployment.png)
-#TODO update final setup
+> After a correct setup of `application`, the cluster should look like this:
+
+![cluster_application](setup/images/scalehub_application.png)
+
+</details>
+
+Otherwise, each application can be deployed individually with the `shub deploy` command. The same applies for the
+deletion of the applications with the `shub delete` command.
 
 :point_up: You may want to run one of the applications with a different image. For that, you can modify **vars/main.yaml** file located in the role folder of the application.
 

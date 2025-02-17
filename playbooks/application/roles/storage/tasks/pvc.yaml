@@ -20,7 +20,7 @@
 
 - name: Setting up PrivateVolumeClaims - Deletion block
   tags: [ delete ]
-œ  block:
+  block:
     - name: Delete PVC for Grafana
       kubernetes.core.k8s:
         state: absent
