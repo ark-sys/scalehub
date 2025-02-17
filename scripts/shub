@@ -112,11 +112,9 @@ def tokens():
     k: KubernetesManager = KubernetesManager(log)
 
     # Retrieve token for minio console
-    minio_console_token = k.get_token("console-sa-secret", "minio-operator")
     kubernetes_dashboard_token = k.get_token("admin-user", "kubernetes-dashboard")
 
     # Print tokens in a readable format and easy to copy-paste
-    log.info(f"Minio Console Token : \n{minio_console_token}\n\n")
     log.info(f"Kubernetes Dashboard Token : \n{kubernetes_dashboard_token}\n\n")
 
 
