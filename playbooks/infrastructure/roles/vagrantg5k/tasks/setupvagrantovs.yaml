@@ -1,0 +1,15 @@
+- name: Setup Open vSwitch between host system and Vagrant nodes
+  tags: [ create ]
+  become: true
+  block:
+    - name: List interfaces that start with vnet
+      ansible.builtin.shell: "ip -o link show | awk -F': ' '{print $2}' | grep vnet"
+      register: vnet_interfaces
+      changed_when: false
+
+    - name: Attach vnet interfaces to OvS bridge
+      ansible.builtin.command:
+        cmd: ovs-vsctl add-port {{ ovs_bridge }} {{ item }}
+      with_items: "{{ vnet_interfaces.stdout_lines }}"
+      ignore_errors: yes
+

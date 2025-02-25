@@ -1,0 +1,19 @@
+---
+
+# Who owns the serial console logs in console_log_path
+libvirt_vm_log_owner: qemu
+
+# The environment passed to virt_volume.sh
+libvirt_vm_script_env_redhat:
+  VOLUME_GROUP: qemu
+  VOLUME_OWNER: qemu
+
+libvirt_vm_script_env: >-
+  {{ libvirt_vm_script_env_redhat | combine(libvirt_vm_virsh_default_env) }}
+
+# Path to template OVMF efi variable store. A copy will be created
+# for each VM created.
+libvirt_vm_ovmf_efi_variable_store_path: /usr/share/edk2/ovmf/OVMF_VARS.fd
+
+# Path to OVMF efi firmware
+libvirt_vm_ovmf_efi_firmware_path: /usr/share/edk2/ovmf/OVMF_CODE.cc.fd

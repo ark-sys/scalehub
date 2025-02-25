@@ -1,0 +1,36 @@
+---
+# The destroyed state does not seem to be idempotent, so check whether the VM
+# exists before destroying it.
+- name: Check the VM's status
+  community.libvirt.virt:
+    name: "{{ vm.name }}"
+    command: list_vms
+    uri: "{{ libvirt_vm_uri | default(omit, true) }}"
+  register: result
+  become: true
+
+- name: Destory the VM is existing
+  block:
+    - name: Ensure the VM is absent
+      community.libvirt.virt:
+        name: "{{ vm.name }}"
+        state: destroyed
+        uri: "{{ libvirt_vm_uri | default(omit, true) }}"
+      become: true
+
+    # note(wszumski): the virt module does not seem to support
+    # removing vms with nvram defined - as a workaround, use the
+    # virsh cli directly. It may be better to detect if dumpxml
+    # actually contains an nvram element rather than relying on
+    # boot_firmware having the correct value.
+    - name: Ensure the VM is undefined
+      ansible.builtin.command:
+        cmd: >-
+          virsh
+          {% if libvirt_vm_uri %}-c {{ libvirt_vm_uri }}{% endif %}
+          undefine
+          {% if boot_firmware == 'efi' %} --nvram{% endif %}
+          {{ vm.name }}
+      become: true
+      changed_when: true
+  when: vm.name in result.list_vms

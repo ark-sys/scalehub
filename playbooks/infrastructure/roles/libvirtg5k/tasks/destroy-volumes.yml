@@ -1,0 +1,14 @@
+---
+- name: Ensure the VM volumes do not exist
+  ansible.builtin.script: >
+    destroy_virt_volume.sh
+    {{ item.name }}
+    {{ item.pool | default('default') }}
+  with_items: "{{ volumes }}"
+  when: item.type | default(libvirt_volume_default_type) == 'volume'
+  register: volume_result
+  environment: "{{ libvirt_vm_script_env }}"
+  changed_when:
+    - volume_result is success
+    - (volume_result.stdout | from_json).changed | default(True)
+  become: true

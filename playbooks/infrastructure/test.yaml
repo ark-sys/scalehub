@@ -1,0 +1,6 @@
+- name: Virtual machines setup
+  hosts: vagrant
+  gather_facts: true
+  become: true
+  roles:
+    - role: vagrantg5k

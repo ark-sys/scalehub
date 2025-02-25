@@ -7,13 +7,21 @@
   roles:
     - role: grid5000
 
-# Apply vm_on_grid5000 specific configuration
-- name: Apply vm_on_grid5000 specific configuration
+# Apply vagrant specific configuration
+- name: Apply vagrant specific configuration
+  hosts: vagrant
+  gather_facts: true
+  become: true
+  roles:
+    - role: vagrantg5k
+
+# Apply vmong5k specific configuration
+- name: Apply vmong5k specific configuration
   hosts: VMonG5k
   gather_facts: true
   become: true
   roles:
-    - role: vm_on_grid5000
+    - role: vmong5k
 
 # Apply picocluster specific configuration
 - name: Apply picocluster specific configuration

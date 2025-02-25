@@ -12,11 +12,11 @@
       method: block
 - node: pico
   taskmanager:
-    - number: 2
+    - number: 1
       type: pico
       method: block
 - node: pico
   taskmanager:
-    - number: 2
+    - number: 1
       type: pico
       method: block

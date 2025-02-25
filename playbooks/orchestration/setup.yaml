@@ -7,7 +7,7 @@
     - role: k3s_control
 
 - name: Install k3s on worker nodes
-  hosts: consumers, producers
+  hosts: agents
   become: true
   gather_facts: true
   roles:
