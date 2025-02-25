@@ -1,0 +1,43 @@
+---
+- name: Setup Open vSwitch
+  tags: [ create ]
+  become: true
+
+  block:
+    - name: Install openvswitch
+      ansible.builtin.package:
+        name:
+          - openvswitch-switch
+        state: present
+
+    - name: Create Open vSwitch Bridge
+      ansible.builtin.command:
+        cmd: ovs-vsctl add-br {{ ovs_bridge }}
+      ignore_errors: yes
+
+    - name: Assign IPv6 address to OvS bridge
+      ansible.builtin.command:
+        cmd: ip -6 addr add {{ ipv6_gateway }}/{{ ipv6_netmask }} dev {{ ovs_bridge }}
+      ignore_errors: yes
+
+
+    - name: Enable IPv6 forwarding on the host
+      ansible.builtin.command:
+        cmd: sysctl -w net.ipv6.conf.all.forwarding=1
+
+
+- name: Remove Open vSwitch
+  tags: [ delete ]
+  become: true
+
+  block:
+    - name: Remove Open vSwitch Bridge
+      ansible.builtin.command:
+        cmd: ovs-vsctl del-br {{ ovs_bridge }}
+      ignore_errors: yes
+
+    - name: Remove Open vSwitch
+      ansible.builtin.package:
+        name:
+          - openvswitch-switch
+        state: absent

@@ -3,8 +3,6 @@ import time
 from time import sleep
 
 import paho.mqtt.client as mqtt
-# noinspection PyUnresolvedReferences
-from paho.mqtt.enums import CallbackAPIVersion
 
 from scripts.utils.Config import Config
 from scripts.utils.Defaults import DefaultKeys as Key
@@ -20,7 +18,7 @@ class Client:
         self.__log = log
         self.p: Playbooks = Playbooks(log)
 
-        self.client = mqtt.Client(callback_api_version=CallbackAPIVersion.VERSION1)
+        self.client = mqtt.Client()
         self.configs = configs
         self.broker_host = configs[0].get_str(Key.Experiment.broker_mqtt_host.key)
         self.broker_port = configs[0].get_int(Key.Experiment.broker_mqtt_port.key)

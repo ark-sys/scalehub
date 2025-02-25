@@ -1,0 +1,7 @@
+vm_memory: 4096
+vm_cpus: 2
+vm_distro: "debian/stretch64"
+ovs_bridge: "br-ovs"
+ipv6_prefix: "2001:db8:100::"
+ipv6_netmask: "64"
+ipv6_gateway: "2001:db8:100::1"

@@ -1,0 +1,19 @@
+Vagrant.configure("2") do |config|
+config.vm.box_check_update = false
+config.vm.synced_folder ".", "/vagrant", disabled: true
+{% for vm in hosted_vms %}
+    config.vm.define "{{ vm.ansible_host }}" do |vm_config|
+    vm_config.vm.box = "debian/stretch64"
+    vm_config.vm.hostname = "{{ vm.ansible_host }}"
+    vm_config.ssh.username = "vagrant"
+
+    vm_config.vm.provider "libvirt" do |libvirt|
+    libvirt.memory = {{ vm.memory_per_vm }}
+    libvirt.cpus = {{ vm.core_per_vm }}
+    libvirt.nic_model_type = "virtio"
+    end
+
+    vm_config.vm.network "private_network", type: "dhcp"
+    end
+{% endfor %}
+end

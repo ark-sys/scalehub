@@ -122,5 +122,8 @@ ssh-add -l
 # Check if k3s cluster is running and update /etc/hosts if so
 check_running_k3s
 
+# Start ssh server
+sudo /etc/init.d/ssh start
+
 # Start nginx server
 sudo nginx -g "daemon off;"

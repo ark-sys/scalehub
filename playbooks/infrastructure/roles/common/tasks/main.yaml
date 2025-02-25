@@ -2,25 +2,6 @@
 - name: Common setup for all nodes
   tags: [ create ]
   block:
-    #    - name: Install required system packages
-    #      ansible.builtin.apt:
-    #        name:
-    #          - apt-transport-https
-    #          - ca-certificates
-    #          - curl
-    #          - lsb-release
-    #          - gnupg
-    #          - ncdu # Disk usage monitoringxœ
-    #        state: latest
-    #        update_cache: true
-
-    #    - name: Set accept_ra to 2 for all interfaces ( https://github.com/docker/for-linux/issues/844#issuecomment-555168811 )
-    #      ansible.posix.sysctl:
-    #        name: net.ipv6.conf.all.accept_ra
-    #        value: 2
-    #        sysctl_set: true
-    #        state: present
-
     - name: Create tmp folder for experiment data
       ansible.builtin.file:
         path: /tmp/experiment-data/

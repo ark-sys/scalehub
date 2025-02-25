@@ -38,7 +38,7 @@ services:
         target: id_rsa.pub
     build:
       context: ${SCALEHUB_BASEDIR}/
-      dockerfile: setup/shub/Dockerfile
+      dockerfile: setup/scalehub/Dockerfile
       args:
         - UID=${UID}
         - GID=${GID}
@@ -46,26 +46,7 @@ services:
       tags:
         - "registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/scalehub:latest"
     volumes:
-      # In the future these directories will only be added via Dockerfile. For now, they are mounted to ease development.
       - type: bind
-        source: ${SCALEHUB_BASEDIR}/conf
-        target: /app/conf
-        bind:
-          selinux: z
-      - type: bind
-        bind:
-          selinux: z
-        source: ${SCALEHUB_BASEDIR}/playbooks
-        target: /app/playbooks
-      - type: bind
-        bind:
-          selinux: z
-        source: ${SCALEHUB_BASEDIR}/scripts
-        target: /app/scripts
-      # Mount experiments-data to process and plot data with scalehub tools
-      - type: bind
-        bind:
-          selinux: z
         source: ${SCALEHUB_BASEDIR}/experiments-data
         target: /app/experiments-data
       # Cache directory for scalehub, in case of container restart...
@@ -73,9 +54,7 @@ services:
         source: ${SCALEHUB_BASEDIR}/runtime
         target: /app/runtime
         bind:
-          selinux: z
           create_host_path: true
-
       # This is used to share the ssh-agent socket with the container thus allowing ssh connections through host's ssh-agent
       - type: bind
         source: $SSH_AUTH_SOCK
@@ -106,7 +85,7 @@ services:
     tty: true
     volumes:
       - /dev/net:/dev/net:z
-      - ${SCALEHUB_BASEDIR}/setup/shub/secrets/vpn:/vpn
+      - ${SCALEHUB_BASEDIR}/setup/scalehub/secrets/vpn:/vpn
     environment:
       - DNS
       - TZ=Europe/Paris
@@ -119,7 +98,7 @@ services:
   # If host uses systemd-resolved, it can be done by editing /etc/systemd/resolved.conf and setting DNS=10.10.10.53 and fallbackDNS=1.1.1.1 8.8.8.8(or any other public DNS) ; then restart systemd-resolved with `sudo systemctl restart systemd-resolved`
   scalehub_dns:
     build:
-      context: ${SCALEHUB_BASEDIR}/setup/shub/dns
+      context: ${SCALEHUB_BASEDIR}/setup/scalehub/dns
       dockerfile: Dockerfile
       tags:
         - "registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/dns:latest"

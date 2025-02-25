@@ -54,11 +54,10 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-
 ####### Base python modules #######
 
 # Install python requirements. Mounting the file helps with caching
-RUN --mount=type=bind,source=setup/shub/requirements.txt,target=requirements.txt pip install -r requirements.txt
+RUN --mount=type=bind,source=setup/scalehub/requirements.txt,target=requirements.txt pip install -r requirements.txt
 
 ####### Kubernetes stuff #######
 # Install kubectl
@@ -73,7 +72,7 @@ ADD --chmod=755  https://github.com/derailed/k9s/releases/download/$K9S_VERSION/
 RUN apt install /tmp/k9s_linux_amd64.deb && rm /tmp/k9s_linux_amd64.deb
 
 # Install auto-complete for kubectl
-ADD setup/shub/fish/kubectl.fish /usr/share/fish/vendor_completions.d/kubectl.fish
+ADD setup/scalehub/fish/kubectl.fish /usr/share/fish/vendor_completions.d/kubectl.fish
 
 ENV KREW_ROOT="/app/.krew"
 
@@ -90,7 +89,7 @@ RUN kubectl krew index add netshoot https://github.com/nilic/kubectl-netshoot.gi
 RUN kubectl krew install netshoot/netshoot
 
 # Install auto-completion for kubectl netshoot
-ADD setup/shub/fish/netshoot.fish /usr/share/fish/vendor_completions.d/kubectl_netshoot.fish
+ADD setup/scalehub/fish/netshoot.fish /usr/share/fish/vendor_completions.d/kubectl_netshoot.fish
 
 ######## Scalehub environment setup ########
 # Modify .bashrc to jump directly into fish at container spawn
@@ -100,39 +99,61 @@ RUN echo 'if [[ $(ps --no-header --pid=$PPID --format=comm) != "fish" && -z ${BA
 fi' >> ~/.bashrc
 
 # Install auto-completion for shub
-ADD setup/shub/fish/shub.fish /usr/share/fish/vendor_completions.d/shub.fish
+ADD setup/scalehub/fish/shub.fish /usr/share/fish/vendor_completions.d/shub.fish
 
 # Install some custom functions to enhance prompt
-ADD setup/shub/fish/functions/* /usr/share/fish/functions/
+ADD setup/scalehub/fish/functions/* /usr/share/fish/functions/
 
 # Copy history file from /app/conf to initialize some command history autocomplete
-ADD setup/shub/fish/fish_history /root/.local/share/fish/
+ADD setup/scalehub/fish/fish_history /root/.local/share/fish/
 
 ####### Nginx stuff #######
 EXPOSE 80 443
 # ADD nginx configuration
-ADD setup/shub/nginx/nginx.conf /etc/nginx/nginx.conf
-ADD setup/shub/nginx/conf.d/http /etc/nginx/conf.d/http
-ADD setup/shub/nginx/conf.d/upstreams /etc/nginx/conf.d/upstreams
-ADD setup/shub/nginx/home/* /usr/share/nginx/html/*
-
+ADD setup/scalehub/nginx/nginx.conf /etc/nginx/nginx.conf
+ADD setup/scalehub/nginx/conf.d/http /etc/nginx/conf.d/http
+ADD setup/scalehub/nginx/conf.d/upstreams /etc/nginx/conf.d/upstreams
+ADD setup/scalehub/nginx/home/ /usr/share/nginx/html/
 
 # Generate ssl certificates
-ADD setup/shub/nginx/conf.d/ssl/openssl.cnf /etc/nginx/openssl.cnf
+ADD setup/scalehub/nginx/conf.d/ssl/openssl.cnf /etc/nginx/openssl.cnf
 RUN openssl req -new -newkey rsa:2048 -days 10950 -nodes -x509 -keyout /etc/ssl/private/nginx-selfsigned.key -out /etc/ssl/certs/nginx-selfsigned.crt -subj "/C=FR/ST=Breizh/L=Roazhon/O=Magellan/CN=scalehub.dev" --reqexts SAN --extensions SAN -config /etc/nginx/openssl.cnf
 
 # Add healtcheck on nginx
 HEALTHCHECK --interval=5s --timeout=3s --retries=3 CMD curl -f http://localhost/ || exit 1
 
+# Create user for IDE remote development
+
+#RUN groupadd -g 1010 ide && \
+#    useradd -m -u 1010 -g 1010 -o -s /usr/bin/bash ide \
+#    && echo "ide ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers \
+#    && echo "ide:ide" | chpasswd \
+#    && mkdir -p /home/ide/.ssh \
+#    && chown -R ide:ide /home/ide/.ssh \
+#    && chmod 700 /home/ide/.ssh
+
+# Install ssh server and allow passwordless anonymous login
+RUN apt-get update && apt-get install -y openssh-server
+# Configure SSH server
+
+ADD setup/scalehub/secrets/scalehub.pub /home/$USER/.ssh/authorized_keys
+
+# Expose SSH port
+EXPOSE 22
+
 ############ Switch to user to not break ssh ############
 RUN groupadd -g $GID $USER && \
-    useradd -m -u $UID -g $GID -o -s /usr/bin/fish $USER && \
+    useradd -m -u $UID -g $GID -o -s /usr/bin/bash $USER && \
     echo "$USER ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+# Ownership of the /app directory and home
+RUN chown -R $USER:$USER /app
+RUN chown -R $USER:$USER /home/$USER
 
 USER $USER
 
 # Setup the entrypoint
-ADD --chmod=755 setup/shub/entrypoint.sh /entrypoint.sh
+ADD --chmod=755 setup/scalehub/entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
 # ADD scripts data
 ADD scripts /app/scripts
@@ -154,5 +175,3 @@ RUN tar -xzf /app/ansible/mitogen-plugin.tar.gz -C /app/ansible && \
 
 # Install additional Ansible collections
 RUN ansible-galaxy collection install bitwarden.secrets kubernetes.core
-
-

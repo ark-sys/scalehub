@@ -8,7 +8,13 @@ SERVICE_NAME="scalehub"
 ## Retrieve the current user IDs and name
 export UID=$(id -u)
 export GID=$(id -g)
-#export username=$(whoami)
+
+function gen_env_file(){
+  echo "SCALEHUB_BASEDIR=$SCALEHUB_BASEDIR" > $SCALEHUB_BASEDIR/setup/scalehub/.env
+  echo "UID=$UID" >> $SCALEHUB_BASEDIR/setup/scalehub/.env
+  echo "GID=$GID" >> $SCALEHUB_BASEDIR/setup/scalehub/.env
+  echo "USER=$USER" >> $SCALEHUB_BASEDIR/setup/scalehub/.env
+}
 
 # Set credentials path
 export g5k_creds_path="$SCALEHUB_BASEDIR/setup/shub/secrets/Grid5000_creds.yaml"
@@ -65,7 +71,7 @@ function generate_secret() {
 function restart_service_ss(){
   service_name="$1"
 
-  docker compose -p scalehub -f $SCALEHUB_BASEDIR/setup/shub/docker-compose.yaml up --build --no-deps -d --force-recreate $service_name
+  docker compose -p scalehub -f $SCALEHUB_BASEDIR/setup/scalehub/docker-compose.yml up --build --no-deps -d --force-recreate $service_name
 
 }
 
@@ -80,11 +86,12 @@ function restart_service(){
 
 # Function to create the Docker container
 function create_service() {
-  docker compose -p scalehub -f $SCALEHUB_BASEDIR/setup/shub/docker-compose.yaml up --build -d
+  gen_env_file
+  docker compose -p scalehub -f $SCALEHUB_BASEDIR/setup/scalehub/docker-compose.yml up --build -d
 }
 
 function remove_service() {
-  docker compose -p scalehub -f $SCALEHUB_BASEDIR/setup/shub/docker-compose.yaml down --rmi all --remove-orphans
+  docker compose -p scalehub -f $SCALEHUB_BASEDIR/setup/scalehub/docker-compose.yml down --rmi all --remove-orphans
 }
 
 # Function to check if the service is running

@@ -64,6 +64,8 @@ class Config:
         if _param != self.DEFAULTS_PATH:
             parser = cp.ConfigParser()
             parser.read(_param)
+            if parser.has_section("scalehub"):
+                self.__validate_and_read_sections(parser, "scalehub", Key.Scalehub)
             if parser.has_section("experiment"):
                 ignore_keys = ["steps", "generators"]
                 self.__validate_and_read_sections(
@@ -118,6 +120,16 @@ class Config:
                         dict_key = f"{section_name}.{key}"
                         self.__config[dict_key] = value
                         platform_dict[key] = value
+
+                    # Check if platform has special firewall configuration
+                    firewall_section = f"{section_name}.enos_firewall"
+                    if parser.has_section(firewall_section):
+                        firewall_dict = {}
+                        for key, value in parser.items(firewall_section):
+                            dict_key = f"{firewall_section}.{key}"
+                            self.__config[dict_key] = value
+                            firewall_dict[key] = value
+                        platform_dict["enos_firewall"] = firewall_dict
                     platform_dicts.append(platform_dict)
                 else:
                     raise ValueError(
@@ -199,6 +211,7 @@ class Config:
                         )
 
     def get(self, key) -> any:
+
         return self.__config.get(key)
 
     def get_int(self, key) -> int:

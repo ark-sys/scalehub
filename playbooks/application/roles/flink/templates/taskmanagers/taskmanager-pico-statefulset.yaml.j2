@@ -19,7 +19,7 @@ data:
 
     taskmanager.rpc.port: 6122
     taskmanager.numberOfTaskSlots: 1
-    taskmanager.memory.process.size: 1536mb
+    taskmanager.memory.process.size: 3700mb
     taskmanager.memory.managed.fraction: 0.4
     taskmanager.network.memory.buffer-debloat.enabled: true
     taskmanager.network.detailed-metrics: true
@@ -124,8 +124,8 @@ spec:
           image: "{{image}}:{{tag}}"
           resources:
             limits:
-              memory: 1536Mi
-              cpu: 2000m
+              memory: 3700Mi
+              cpu: 4000m
           args: [ "taskmanager" ]
           ports:
             - containerPort: 6122

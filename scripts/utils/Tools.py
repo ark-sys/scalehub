@@ -116,7 +116,7 @@ class Tools:
         # Execute the command
         subprocess.run(cmd, shell=True)
 
-    def generate_grafana_quicklink(self, start_ts, end_ts) -> str:
+    def generate_grafana_quicklink(self, start_ts, end_ts) -> (str, str):
         grafana_cluster_url = "http://grafana.monitoring.svc.cluster.local"
         start_ts = int(start_ts) * 1000
         end_ts = int(end_ts) * 1000
@@ -140,16 +140,23 @@ class Tools:
             raise e
 
         # Create the quicklink for localhost/grafana instead of grafana.monitoring.svc.cluster.local
-        quicklink = f"http://localhost/{dashboard_url}?from={start_ts}&to={end_ts}"
-        return quicklink
+        quicklink_local = (
+            f"http://localhost/{dashboard_url}?from={start_ts}&to={end_ts}"
+        )
+        quicklink_remote = (
+            f"http://grafana.scalehub.dev/{dashboard_url}?from={start_ts}&to={end_ts}"
+        )
+        return quicklink_local, quicklink_remote
 
     def create_log_file(self, config, exp_path, start_ts, end_ts, run_number=None):
         log_file_path = os.path.join(exp_path, "exp_log.json")
+        q1, q2 = self.generate_grafana_quicklink(start_ts, end_ts)
         json_logs = {
             "run_number": run_number if run_number else "N/A",
             "config": config,
             "timestamps": {"start": start_ts, "end": end_ts},
-            "quicklink": self.generate_grafana_quicklink(start_ts, end_ts),
+            "quicklink_local": q1,
+            "quicklink_remote": q2,
         }
         try:
             import json

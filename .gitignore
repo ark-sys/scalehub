@@ -4,7 +4,7 @@ __pycache__/
 .idea/
 experiments-data
 conf/kubeconfig
-setup/shub/secrets/
+setup/scalehub/secrets/
 conf/
 info/
 runtime
