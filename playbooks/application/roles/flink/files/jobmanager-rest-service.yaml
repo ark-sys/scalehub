@@ -8,9 +8,6 @@ metadata:
     component: jobmanager
 spec:
   type: ClusterIP
-  ipFamilyPolicy: SingleStack
-  ipFamilies:
-    - IPv6
   ports:
     - name: webui
       port: 8081

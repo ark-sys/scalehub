@@ -5,12 +5,12 @@
     - name: Get content of shub_config and read it as json
       set_fact:
         shub_config_content: "{{ shub_config | from_json }}"
-    - name: Extract checkpoint_interval and window_size from shub_config
+    - name: Extract flink params
       set_fact:
-        checkpoint_interval: "{{shub_config_content['experiment.flink.checkpoint_interval_ms']}}"
-        window_size: "{{shub_config_content['experiment.flink.window_size_ms']}}"
-        fibonacci_value: "{{shub_config_content['experiment.flink.fibonacci_value']}}"
-        unchained_tasks: "{{shub_config_content['experiment.unchained_tasks']}}"
+        checkpoint_interval: "{{ shub_config_content['experiment.flink.checkpoint_interval_ms'] }}"
+        window_size: "{{ shub_config_content['experiment.flink.window_size_ms'] }}"
+        fibonacci_value: "{{ shub_config_content['experiment.flink.fibonacci_value'] }}"
+        unchained_tasks: "{{ shub_config_content['experiment.unchained_tasks'] }}"
 
 - name: Deploy Flink
   tags: [ create ]

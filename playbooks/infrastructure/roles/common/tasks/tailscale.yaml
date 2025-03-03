@@ -1,0 +1,24 @@
+---
+- name: Setup tailscale an all nodes
+  vars:
+    api_url: "https://vault.bitwarden.eu/api"
+    identity_url: "https://vault.bitwarden.eu/identity"
+    base_url: "https://vault.bitwarden.eu"
+
+    secret_id: "fd1a051e-1240-4178-b69a-b29200acdb56"
+    organization_id: "985abad4-c16c-4766-b2f0-b1ca011fca5b"
+    access_token: "0.7243b14c-c06a-44be-bce6-b1d100cfeca1.A4zUP09cDsRRGldFUYlsUAB9Zk8QGd:Ew5kaEhn3SAiDgkhMVzDmw=="
+    tailscale_auth_key: "{{ lookup('bitwarden.secrets.lookup', secret_id, base_url=base_url, access_token=access_token, organization_id=organization_id) }}"
+  block:
+    - name: Install tailscale
+      ansible.builtin.shell: "curl -fsSL https://tailscale.com/install.sh | sh"
+      register: install_tailscale_result
+
+    - name: Stop any old running tailscale instances
+      ansible.builtin.shell: "tailscale down"
+      register: stop_tailscale_result
+      ignore_errors: yes
+
+    - name: Run tailscale
+      ansible.builtin.shell: "tailscale up --authkey {{ tailscale_auth_key }} --reset"
+      register: run_tailscale_result

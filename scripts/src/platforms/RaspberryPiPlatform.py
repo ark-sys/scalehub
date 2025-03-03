@@ -34,7 +34,12 @@ class RaspberryPiPlatform(Platform):
         required_producers = int(self.platform_config.get("producers", 0))
         required_consumers = int(self.platform_config.get("consumers", 0))
 
-        inventory = {"producers": {"hosts": {}}, "consumers": {"hosts": {}}}
+        inventory = {
+            "producers": {"hosts": {}},
+            "consumers": {"hosts": {}},
+            "pico": {"hosts": {}},
+            "agents": {"hosts": {}},
+        }
 
         alive_hosts = [
             host for host in hosts if self.test_ssh(hosts[host]["ansible_ssh_host"])
@@ -48,10 +53,16 @@ class RaspberryPiPlatform(Platform):
 
         for i, host in enumerate(alive_hosts):
             if i < required_producers:
+                inventory["pico"]["hosts"][host] = hosts[host]
+                inventory["agents"]["hosts"][host] = hosts[host]
                 inventory["producers"]["hosts"][host] = hosts[host]
+                inventory["pico"]["hosts"][host]["cluster_role"] = "producer"
                 self.__log.debugg(f"[PI_PLT] Adding producer {host}")
             elif i < required_producers + required_consumers:
+                inventory["pico"]["hosts"][host] = hosts[host]
+                inventory["agents"]["hosts"][host] = hosts[host]
                 inventory["consumers"]["hosts"][host] = hosts[host]
+                inventory["pico"]["hosts"][host]["cluster_role"] = "consumer"
                 self.__log.debugg(f"[PI_PLT] Adding consumer {host}")
 
         self.__log.debugg(f"[PI_PLT] Final pi Inventory: {inventory}")

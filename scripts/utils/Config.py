@@ -107,6 +107,12 @@ class Config:
 
         # Special handling for platforms section
         if section_base == "platforms":
+            # Load keys from base section
+            for key, value in parser.items(section_base):
+                dict_key = f"{section_base}.{key}"
+                self.__config[dict_key] = value
+
+            # Load platform names
             platform_names = parser[section_base].get("platforms").split()
             self.__config[Key.Platforms.platforms.key] = platform_names
             platform_dicts = []

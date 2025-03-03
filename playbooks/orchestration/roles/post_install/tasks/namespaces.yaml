@@ -4,7 +4,6 @@
   block:
     - name: Create monitoring namespace
       kubernetes.core.k8s:
-        kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
         name: monitoring
         api_version: v1
         kind: Namespace
@@ -12,7 +11,6 @@
 
     - name: Create flink namespace
       kubernetes.core.k8s:
-        kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
         name: flink
         api_version: v1
         kind: Namespace
@@ -20,7 +18,6 @@
 
     - name: Create kafka namespace
       kubernetes.core.k8s:
-        kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
         name: kafka
         api_version: v1
         kind: Namespace
@@ -28,8 +25,38 @@
 
     - name: Create experiment-monitor namespace
       kubernetes.core.k8s:
-        kubeconfig: "{{ lookup('env', 'KUBECONFIG') }}"
         name: experiment-monitor
         api_version: v1
         kind: Namespace
         state: present
+
+- name: Remove namespaces
+  tags: [ delete ]
+  block:
+    - name: Delete monitoring namespace
+      kubernetes.core.k8s:
+        name: monitoring
+        api_version: v1
+        kind: Namespace
+        state: absent
+
+    - name: Delete flink namespace
+      kubernetes.core.k8s:
+        name: flink
+        api_version: v1
+        kind: Namespace
+        state: absent
+
+    - name: Delete kafka namespace
+      kubernetes.core.k8s:
+        name: kafka
+        api_version: v1
+        kind: Namespace
+        state: absent
+
+    - name: Delete experiment-monitor namespace
+      kubernetes.core.k8s:
+        name: experiment-monitor
+        api_version: v1
+        kind: Namespace
+        state: absent

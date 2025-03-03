@@ -55,7 +55,7 @@ complete -c shub -n "__fish_seen_subcommand_from deploy delete reload" -a '(__fi
 
 # Autocompletion for 'export' command
 # This function returns the names of the directories in SHUB_EXPERIMENTS_DATA_PATH
-    function __fish_shub_export_complete
+function __fish_shub_export_complete
     for dir in $SHUB_EXPERIMENTS_DATA_PATH/*
         if test -d $dir
             set dirname (basename $dir)

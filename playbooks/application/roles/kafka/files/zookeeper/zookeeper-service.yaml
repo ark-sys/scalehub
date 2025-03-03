@@ -10,6 +10,6 @@ spec:
     - name: client
       port: 2181
       protocol: TCP
-  clusterIP: None
+  ipFamilyPolicy: PreferDualStack
   selector:
     app: zookeeper

@@ -245,7 +245,9 @@ class Playbooks:
         )
         if not os.path.exists(playbook_filename):
             # Raise an error with the file path
-            raise FileNotFoundError(f"The file doesn't exist: {playbook_filename}")
+            raise FileNotFoundError(
+                f"[PLAY] The file doesn't exist: {playbook_filename}"
+            )
         if not os.path.exists(inventory):
             # This can happen when running in experiment-monitor. Just create a dummy inventory file with localhost
             inventory = "/tmp/inventory"
@@ -259,6 +261,10 @@ class Playbooks:
 
         tags = tag if tag else ""
 
+        self.__log.debug(f"[PLAY] Running playbook: {playbook_filename}, tags: {tags}")
+        self.__log.debug(f"[PLAY] Inventory: {inventory}")
+        self.__log.debug(f"[PLAY] Extra vars: {playbook_vars}")
+
         # Run the playbook with additional tags and extra vars
         try:
             r = ansible_runner.run(
@@ -271,13 +277,13 @@ class Playbooks:
             )
             if r.rc != 0:
                 self.__log.error(
-                    f"Failed to run playbook: {playbook_filename}: {r.status}"
+                    f"[PLAY] Failed to run playbook: {playbook_filename}: {r.status}"
                 )
                 self.__log.error(r.stdout.read())
                 return
             else:
                 self.__log.info(
-                    f"Playbook {playbook_filename} with tag {tags} executed successfully."
+                    f"[PLAY] Playbook {playbook_filename} with tag {tags} executed successfully."
                 )
         except Exception as e:
             self.__log.error(e.__str__())

@@ -1,26 +1,36 @@
 ---
+- name: Retrieve values from shub dict
+  tags: [ always ]
+  hosts: all
+  gather_facts: true
+  run_once: true
+  tasks:
+    - name: Get content of shub_config and read it as json
+      set_fact:
+        shub_config_content: "{{ shub_config | from_json }}"
+    - name: Extract checkpoint_interval and window_size from shub_config
+      set_fact:
+        enable_ipv6: "{{ shub_config_content['platforms.enable_ipv6']  }}"
+        tailscale_backend: "{{ shub_config_content['platforms.tailscale_backend'] }}"
+        k3s_version: "{{ shub_config_content['scalehub.k3s_version'] }}"
+
+
 - name: Install k3s on control node
   hosts: control
   become: true
-  gather_facts: true
+  gather_facts: false
   roles:
     - role: k3s_control
 
 - name: Install k3s on worker nodes
   hosts: agents
   become: true
-  gather_facts: true
+  gather_facts: false
   roles:
     - role: k3s_worker
-      dependencies:
-        - role: k3s_control
 
-- name: Run post-install configuration tasks (these are kubectl tasks run on localhost, but reflected on the cluster nodes joinable with the kubeconfig)
+- name: Run post-install configuration tasks
   hosts: localhost
-  become: true
   gather_facts: false
   roles:
     - role: post_install
-      dependencies:
-        - role: k3s_control
-

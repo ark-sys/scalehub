@@ -54,9 +54,17 @@ class DefaultKeys:
         provision_infrastructure = ConfigKey(
             "scalehub.provision_infrastructure", is_optional=True, default_value=True
         )
+        k3s_version = ConfigKey("scalehub.k3s_version", is_optional=True)
 
     class Platforms:
         platforms = ConfigKey("platforms", is_optional=True)
+        enable_ipv6 = ConfigKey(
+            "platforms.enable_ipv6", is_optional=True, default_value=False
+        )
+        tailscale_backed = ConfigKey(
+            "platforms.tailscale_backed", is_optional=True, default_value=True
+        )
+        tailscale_auth_key = ConfigKey("platforms.tailscale_auth_key", is_optional=True)
 
         class Platform:
             name = ConfigKey("platforms.name", is_optional=False)

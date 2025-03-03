@@ -135,7 +135,7 @@ def export(config: Config, exp_path):
 
     dm: DataManager = DataManager(log, config)
 
-    dm.export(exp_path, dry_run=False, single_export=False, single_eval=False)
+    dm.export(exp_path, dry_run=False, single_export=True, single_eval=True)
 
 
 def sync_experiment_data(config: Config):
@@ -286,7 +286,12 @@ def main():
         exit(1)
 
     log.debuggg(f"Command: {args.command}")
-    log.debuggg(f"Configuration: {config.to_json()}")
+    # Debug configuration, this can either be a single one or a list of config
+    if isinstance(config, Config):
+        log.debuggg(f"Configuration: {config.to_json()}")
+    elif isinstance(config, list):
+        for c in config:
+            log.debuggg(f"Configuration: {c.to_json()}")
 
     match args.command:
         case "destroy":

@@ -17,7 +17,7 @@ function gen_env_file(){
 }
 
 # Set credentials path
-export g5k_creds_path="$SCALEHUB_BASEDIR/setup/shub/secrets/Grid5000_creds.yaml"
+export g5k_creds_path="$SCALEHUB_BASEDIR/setup/scalehub/secrets/enos/Grid5000_creds.yaml"
 
 # Function to display help message
 function display_help() {
@@ -88,6 +88,8 @@ function restart_service(){
 function create_service() {
   gen_env_file
   docker compose -p scalehub -f $SCALEHUB_BASEDIR/setup/scalehub/docker-compose.yml up --build -d
+  # Prune docker image to clean unnecessary cached layers
+  docker image prune -f
 }
 
 function remove_service() {
