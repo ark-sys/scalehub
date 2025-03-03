@@ -1,7 +1,24 @@
 ---
+
+# Before running the post-install tasks, we need to ensure that the k3s cluster is up and all agents are connected to the control node.
+- name: Run post-install configuration tasks
+  tags: [ always ]
+  block:
+    - name: For each agent in the inventory, check if the agent is connected to the control node
+      k8s_info:
+        kind: Node
+        api_version: v1
+      register: k8s_nodes
+
+    - name: Fail if any agent is not connected to the control node
+      fail:
+        msg: "Agent {{ item }} is not connected to the control node"
+      with_items: "{{ groups['agents'] }}"
+      when: "item not in k8s_nodes.resources | map(attribute='metadata.name') | list"
+
 - import_tasks: namespaces.yaml
 
-#- import_tasks: labeling.yaml
+- import_tasks: labeling.yaml
 
 - import_tasks: secrets.yaml
 

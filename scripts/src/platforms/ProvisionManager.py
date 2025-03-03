@@ -82,13 +82,13 @@ class ProvisionManager:
                     enos_inventory,
                     inventory_file,
                     default_flow_style=False,
-                    Dumper=NoAliasDumper,
                 )
 
             self.inventory_dict[inventory_path] = enos_inventory
 
             # Enable firewall
-            enos_providers.post_setup()
+            if self.__config.get_bool(Key.Platforms.enable_ipv6.key):
+                enos_providers.post_setup()
         # Retrieve pi nodes "statically"
         if self.raspberry_pis:
             self.__log.debug(

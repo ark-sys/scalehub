@@ -189,6 +189,10 @@ class EnosPlatforms(Platform):
                             inventory[group]["hosts"][host]["cluster_role"] = role[:-1]
                 inventory.pop(role)
 
+        if "control" in inventory:
+            for host in inventory["control"]["hosts"]:
+                inventory["control"]["hosts"][host]["cluster_role"] = "control"
+
         # Create agents group
         inventory["agents"] = {"hosts": {}}
         if "vms" in inventory:

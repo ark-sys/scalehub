@@ -473,7 +473,7 @@ controller:
     ipFamilyPolicy: "PreferDualStack"
     # -- List of IP families (e.g. IPv4, IPv6) assigned to the external controller service. This field is usually assigned automatically based on cluster configuration and the `ipFamilyPolicy` field.
     # Ref: https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services
-    ipFamilies: [ IPv4, IPv6 ]
+    ipFamilies: [ ]
     # -- Enable the HTTP listener on both controller services or not.
     enableHttp: true
     # -- Enable the HTTPS listener on both controller services or not.
@@ -549,11 +549,10 @@ controller:
       # -- Represents the dual-stack capabilities of the internal controller service. Possible values are SingleStack, PreferDualStack or RequireDualStack.
       # Fields `ipFamilies` and `clusterIP` depend on the value of this field.
       # Ref: https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services
-      ipFamilyPolicy: SingleStack
+      ipFamilyPolicy: PreferDualStack
       # -- List of IP families (e.g. IPv4, IPv6) assigned to the internal controller service. This field is usually assigned automatically based on cluster configuration and the `ipFamilyPolicy` field.
       # Ref: https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services
-      ipFamilies:
-        - IPv6
+      ipFamilies: [ ]
       ports: { }
       # -- Port the internal HTTP listener is published with.
       # Defaults to the value of `controller.service.ports.http`.

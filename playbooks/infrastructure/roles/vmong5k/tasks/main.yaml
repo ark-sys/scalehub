@@ -1,47 +1,12 @@
 ---
 # Here we are going to do some plumbings because when VMs are reserved with the enoslib vmonG5K provider, they are not automatically configured with IPv6 addresses.
 
-#- name: Enable IPv6 on host nodes
-#  tags: [ create ]
-#  delegate_to: localhost
-#  run_once: true
-#  block:
-#    - name: Set grid_node fact
-#      set_fact:
-#        vm_host_inventory: "{{ groups['VMonG5k'] | map('extract', hostvars) | map(attribute='grid_node') | list | unique }}"
-#
-#    - name: Enable IPv6 forwarding on each host node
-#      ansible.posix.sysctl:
-#        name: net.ipv6.conf.all.forwarding
-#        value: 1
-#        sysctl_set: true
-#        state: present
-#      delegate_to: "{{ item }}"
-#      with_items: "{{ vm_host_inventory }}"
-#
-#    - name: Enable IPv6 on each host node
-#      command: dhclient -6 br0
-#      become: true
-#      delegate_to: "{{ item }}"
-#      with_items: "{{ vm_host_inventory }}"
-#
-#    - name: Retrieve host node IPv6 address on br0
-#      shell: ip -6 -br addr show dev br0 scope global | awk '{print $3}'
-#      register: host_ipv6
-#      delegate_to: "{{ item }}"
-#      with_items: "{{ vm_host_inventory }}"
-#      changed_when: false
-#
-#    - name: Create dictionary of hostnames and their IPv6 addresses
-#      set_fact:
-#        host_ipv6_dict: "{{ host_ipv6_dict | default({}) | combine({item.item: item.stdout}) }}"
-#      with_items: "{{ host_ipv6.results }}"
-#
 # Disable all firewall rules for IPv6 on each node hosting VMs (https://www.grid5000.fr/w/Reconfigurable_Firewall)
 - name: Setup IPv6 in VMs' hosts
   run_once: true
   tags: [ create ]
   become: false
+  when: enable_ipv6 == True
   block:
     - name: Retrieve list of nodes hosting VMs
       set_fact:
@@ -71,6 +36,11 @@
       with_items: "{{ oar_job_id.results }}"
       delegate_to: localhost
 
+    - name: Get the IPv6 address of the node
+      shell: ip -6 -br addr show dev ens3 | awk '{print $3}' | cut -d'/' -f1
+      register: grid_node_ipv6
+      changed_when: false
+
     - name: Disable firewall rules for each node hosting VMs
       uri:
         url: "https://api.grid5000.fr/stable/sites/{{ site }}/firewall/{{ job_id }}"
@@ -98,6 +68,7 @@
 
 - name: Generate and set unique IPv6 addresses for VMs
   tags: [ create ]
+  when: enable_ipv6 == True
   block:
     - name: Install dig
       apt:

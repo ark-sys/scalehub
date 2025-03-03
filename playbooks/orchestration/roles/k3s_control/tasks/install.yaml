@@ -1,0 +1,116 @@
+---
+- name: Define and configure INSTALL_K3S_EXEC
+  block:
+    - name: Set initial INSTALL_K3S_EXEC
+      set_fact:
+        INSTALL_K3S_EXEC: "--disable=traefik,local-storage --data-dir=/tmp/k3s"
+
+    - name: Configure dual or single stack based on IPv6
+      set_fact:
+        INSTALL_K3S_EXEC: "{{ INSTALL_K3S_EXEC }} {{ net_config }}"
+      vars:
+        net_config: >-
+          {% if enable_ipv6 %}
+            --flannel-ipv6-masq=true --cluster-cidr=2001:cafe:42::/56,10.42.0.0/16 --service-cidr=2001:cafe:43::/112,10.43.0.0/16 --node-ip={{ ansible_default_ipv6.address }},{{ ansible_default_ipv4.address }} --node-external-ip={{ ansible_default_ipv6.address }}
+          {% else %}
+            --cluster-cidr=10.42.0.0/16 --service-cidr=10.43.0.0/16 --node-ip={{ ansible_default_ipv4.address }} --node-external-ip={{ ansible_default_ipv4.address }}
+          {% endif %}
+
+    - name: Setup default labels
+      block:
+        - name: Set cluster role label
+          set_fact:
+            cluster_role_labels: "cluster-role/control=true"
+          when: cluster_role is defined
+
+        - name: Set node type label
+          ignore_errors: yes
+          set_fact:
+            node_type_labels: >-
+              {% if inventory_hostname in groups['VMonG5k'] %}
+                node-type=vm_grid5000
+              {% elif inventory_hostname in groups['G5k'] %}
+                node-type=grid5000
+              {% endif %}
+
+        - name: Add labels to INSTALL_K3S_EXEC
+          set_fact:
+            INSTALL_K3S_EXEC: "{{ INSTALL_K3S_EXEC }} --node-label {{ cluster_role_labels | default('') }} {{ node_type_labels | default('') }}"
+
+        - name: Clean newlines from INSTALL_K3S_EXEC
+          set_fact:
+            INSTALL_K3S_EXEC: "{{ INSTALL_K3S_EXEC | regex_replace('\n', '') }}"
+    - name: Debug INSTALL_K3S_EXEC
+      debug:
+        var: INSTALL_K3S_EXEC
+
+    - name: Fail if --node-ip is empty
+      fail:
+        msg: "The --node-ip parameter in INSTALL_K3S_EXEC must not be empty."
+      when: INSTALL_K3S_EXEC.find("--node-ip=") != -1 and INSTALL_K3S_EXEC.find("--node-ip=") == INSTALL_K3S_EXEC.find("--node-ip=") + 2
+
+- name: Gather IPv6 facts
+  when: enable_ipv6 == True
+  block:
+    - name: Get control node's IPv6 default route
+      ansible.builtin.shell:
+        cmd: ip -6 route show default
+      register: control_ipv6_default_route_with_via
+
+    - name: Extract control node's IPv6 default route
+      set_fact:
+        control_ipv6_default_route: "{{ control_ipv6_default_route_with_via.stdout.split(' ')[2] }}"
+      when: control_ipv6_default_route_with_via.stdout != ""
+
+    - name: Debug control node's IPv6 default route
+      debug:
+        var: control_ipv6_default_route
+
+- name: Install K3S and setup kubeconfig
+  block:
+    - name: Install k3s on controller
+      environment:
+        INSTALL_K3S_EXEC: "{{ INSTALL_K3S_EXEC }}"
+        INSTALL_K3S_VERSION: "{{ k3s_version }}"
+      shell:
+        cmd: "curl -sfL https://get.k3s.io | sh -s -"
+
+    - name: Fix server address on control node with api_endpoint
+      ansible.builtin.shell:
+        kubectl config set-cluster default --server=https://{{ ansible_default_ipv4.address }}:6443
+
+    - name: Get kubeconfig from controller
+      ansible.builtin.shell:
+        cmd: cat /etc/rancher/k3s/k3s.yaml
+      register: kubeconfig_content
+
+    - name: Get kubeconfig path
+      set_fact:
+        kubeconfig_path: "{{ lookup('env', 'KUBECONFIG') }}"
+
+    - name: Save kubeconfig to localhost
+      delegate_to: localhost
+      ansible.builtin.copy:
+        content: "{{ kubeconfig_content.stdout }}"
+        dest: "{{ kubeconfig_path }}"
+        mode: '644'
+
+    - name: Wait for k3s to be ready
+      ansible.builtin.wait_for:
+        host: "{{ ansible_default_ipv4.address }}"
+        port: 6443
+        delay: 5
+        timeout: 300
+
+- name: Apply quickfixes if we are using IPv6 or dual stack
+  when: enable_ipv6 == True
+  block:
+    - name: Check if we still have a default route for IPv6
+      command: ip -6 route show default
+      register: control_ipv6_default_route_check
+
+    - name: Quickfix default route for IPv6
+      ansible.builtin.shell:
+        cmd: ip -6 route add default via {{ control_ipv6_default_route }} dev br0
+      when: control_ipv6_default_route_check.stdout == ""
+

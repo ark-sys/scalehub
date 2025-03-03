@@ -9,3 +9,5 @@
         mode: "0777"
 
 #- include_tasks: docker.yaml
+- import_tasks: tailscale.yaml
+  tags: [ create ]

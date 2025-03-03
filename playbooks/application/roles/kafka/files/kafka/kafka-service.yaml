@@ -13,7 +13,8 @@ spec:
       protocol: TCP
     - name: metrics
       port: 5556
-  clusterIP: None
+
+  ipFamilyPolicy: PreferDualStack
   selector:
     app: kafka
 
