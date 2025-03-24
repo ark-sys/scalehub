@@ -73,11 +73,6 @@ class ProvisionManager:
                 self.__config.get(Key.Scalehub.inventory.key), "enos_inventory.yaml"
             )
             with open(inventory_path, "w") as inventory_file:
-
-                class NoAliasDumper(yaml.SafeDumper):
-                    def ignore_aliases(self, data):
-                        return True
-
                 yaml.dump(
                     enos_inventory,
                     inventory_file,

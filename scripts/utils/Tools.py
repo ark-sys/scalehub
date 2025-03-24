@@ -274,6 +274,7 @@ class Playbooks:
                 extravars=playbook_vars,
                 tags=tags,
                 quiet=quiet,
+                # verbosity=3,
             )
             if r.rc != 0:
                 self.__log.error(

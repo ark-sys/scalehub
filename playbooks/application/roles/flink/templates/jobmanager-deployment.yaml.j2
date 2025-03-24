@@ -124,12 +124,14 @@ spec:
         - name: jobmanager
           image: "{{image}}:{{tag}}"
           env:
+            - name: CHECKPOINTING
+              value: "{% if checkpoint_interval is defined and checkpoint_interval != '0' %}true{% else %}false{% endif %}"
+            - name: CHECKPOINTING_INTERVAL_MS
+              value: "{{ checkpoint_interval }}"
             - name: KAFKA_BOOTSTRAP_SERVERS
               value: "kafka-service.kafka.svc.cluster.local:9092"
             - name: SCHEMA_REGISTRY_URL
               value: "http://schema-registry-service.kafka.svc.cluster.local:8081"
-            - name: CHECKPOINTING
-              value: "true"
             - name: KAFKA_INPUT_TOPIC1
               value: "input-topic1"
             - name: KAFKA_INPUT_TOPIC2
@@ -142,8 +144,6 @@ spec:
               value: "redis-service"
             - name: ZOOKEEPER_SERVER
               value: "zookeeper-service"
-            - name: CHECKPOINTING_INTERVAL_MS
-              value: "{{ checkpoint_interval }}"
             - name: JOB_WINDOW_SIZE
               value: "{{ window_size }}"
             - name: FIB_INPUT

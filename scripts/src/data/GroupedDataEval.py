@@ -76,9 +76,9 @@ class GroupedDataEval:
             labels=labels,
             workload_objective=workload_objective,
             ylim_val=ylim_val,
-            comment=Config(
-                self.__log, os.path.join(self.base_path, "1", "exp_log.json")
-            ).get(Key.Experiment.comment.key),
+            # comment=Config(
+            #     self.__log, os.path.join(self.base_path, "1", "exp_log.json")
+            # ).get(Key.Experiment.comment.key),
         )
 
     def _get_multi_exp_data(self):
@@ -115,16 +115,16 @@ class GroupedDataEval:
                 filename=os.path.join(self.base_path, "single_node_throughput.png"),
                 ylim=(0, 400000),
                 axhline=350000,
-                zoom_region=(0, 4, 0, 60000),
+                zoom_region=(0, 3, 0, 40000),
             )
         else:
             self.plotter.generate_single_frame_multiple_series_plot(
                 ax1_data=plot_data,
-                xlabel="Number of Machines",
+                xlabel="Number of TaskManagers",
                 ylabels_dict=ylabels_dict,
                 filename=os.path.join(self.base_path, "multi_node_throughput.png"),
-                ylim=(0, 400000),
-                axhline=350000,
+                ylim=(0, 100000),
+                # axhline=350000,
             )
 
     def process_resource_data(self):
