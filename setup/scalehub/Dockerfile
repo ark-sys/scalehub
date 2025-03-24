@@ -175,3 +175,7 @@ RUN tar -xzf /app/ansible/mitogen-plugin.tar.gz -C /app/ansible && \
 
 # Install additional Ansible collections
 RUN ansible-galaxy collection install bitwarden.secrets kubernetes.core
+
+
+# Fix permissions on /app directory
+RUN sudo chown -R $USER:$USER /app

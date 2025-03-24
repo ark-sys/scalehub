@@ -11,6 +11,7 @@
     - name: Extract checkpoint_interval and window_size from shub_config
       set_fact:
         enable_ipv6: "{{ shub_config_content['platforms.enable_ipv6']  }}"
+        tailscale_backend: "{{ shub_config_content['platforms.tailscale_backend'] }}"
 
 # Apply grid5000 specific configuration
 - name: Apply grid5000 specific configuration

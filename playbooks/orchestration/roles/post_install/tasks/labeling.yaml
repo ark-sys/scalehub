@@ -1,19 +1,6 @@
 - name: Post-install configuration
   tags: [ create ]
   block:
-    #    - name: Set worker label for agents
-    #      kubernetes.core.k8s:
-    #        name: "{{ item }}"
-    #        api_version: v1
-    #        kind: Node
-    #        definition:
-    #          metadata:
-    #            labels:
-    #              node-role.kubernetes.io/worker: "{{ hostvars[item].cluster_role }}"
-    #        state: present
-    #      loop: "{{ groups['agents'] }}"
-    #      when: hostvars[item].cluster_role is defined
-
     - name: Label nodes with a score based on their allocatable resources
       block:
         - name: Get node info
@@ -63,6 +50,18 @@
           loop: "{{ final_node_info | dict2items }}"
           loop_control:
             label: "{{ item.key }}"
+    - name: Set worker label for agents
+      kubernetes.core.k8s:
+        name: "{{ item }}"
+        api_version: v1
+        kind: Node
+        definition:
+          metadata:
+            labels:
+              node-role.kubernetes.io/worker: "{{ hostvars[item].cluster_role }}"
+        state: present
+      loop: "{{ groups['agents'] }}"
+      when: hostvars[item].cluster_role is defined
 
     - name: Apply grid5000 role label to grid5000 nodes
       kubernetes.core.k8s:

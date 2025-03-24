@@ -1,10 +1,9 @@
 ---
 - name: Define and configure INSTALL_K3S_EXEC
   block:
-    - name: Set initial INSTALL_K3S_EXEC
+    - name: Disable traefik and local-storage
       set_fact:
-        INSTALL_K3S_EXEC: "--disable=traefik,local-storage --data-dir=/tmp/k3s"
-
+        INSTALL_K3S_EXEC: "{{ INSTALL_K3S_EXEC }} --disable=traefik,local-storage"
     - name: Configure dual or single stack based on IPv6
       set_fact:
         INSTALL_K3S_EXEC: "{{ INSTALL_K3S_EXEC }} {{ net_config }}"

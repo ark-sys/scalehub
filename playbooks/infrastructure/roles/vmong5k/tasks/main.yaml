@@ -22,7 +22,6 @@
       delegate_to: "{{ item }}"
       with_items: "{{ vm_host_inventory }}"
 
-
     - name: Retrieve OAR_JOB_ID from each host
       shell: echo $OAR_JOB_ID
       register: oar_job_id
@@ -36,16 +35,17 @@
       with_items: "{{ oar_job_id.results }}"
       delegate_to: localhost
 
-    - name: Get the IPv6 address of the node
-      shell: ip -6 -br addr show dev ens3 | awk '{print $3}' | cut -d'/' -f1
-      register: grid_node_ipv6
-      changed_when: false
+    - name: Extend oar_job_id_dict with IPv6 addresses
+      set_fact:
+        oar_job_id_dict: "{{ oar_job_id_dict | combine({item: {'ipv6': item.split('.')[0] + '-ipv6.' + item.split('.')[1] + '.' + item.split('.')[2] + '.' + item.split('.')[3], 'job_id': oar_job_id_dict[item]}}) }}"
+      with_items: "{{ vm_host_inventory }}"
+      delegate_to: localhost
 
     - name: Disable firewall rules for each node hosting VMs
       uri:
         url: "https://api.grid5000.fr/stable/sites/{{ site }}/firewall/{{ job_id }}"
         method: POST
-        body: '[{"addr": "{{ ipv6node }}", "proto": "all"}]'
+        body: '[{"addr": "{{ item.value.ipv6 }}", "proto": "all"}]'
         body_format: json
         status_code:
           - 200
@@ -53,13 +53,12 @@
           - 202
         headers:
           Content-Type: "application/json"
-      with_items: "{{ oar_job_id_dict }}"
+      with_dict: "{{ oar_job_id_dict }}"
       loop_control:
         loop_var: item
       vars:
-        site: "{{ item.split('.')[1] }}"
-        ipv6node: "{{ grid_node_ipv6 }}"
-        job_id: "{{ oar_job_id_dict[item] }}"
+        site: "{{ item.key.split('.')[1] }}"
+        job_id: "{{ item.value.job_id }}"
       register: curl_result
       delegate_to: "{{ site }}.g5k"
       failed_when: >
@@ -74,6 +73,16 @@
       apt:
         name: dnsutils
         state: present
+
+    - name: Retrieve hypervisor address for current node
+      set_fact:
+        grid_node: "{{ hostvars[inventory_hostname].hypervisor }}"
+      changed_when: false
+
+    - name: Build ipv6 address for each VM
+      set_fact:
+        grid_node_ipv6: "{{ grid_node.split('.',1)[0] + '-ipv6.' + grid_node.split('.',1)[1] }}"
+      changed_when: false
 
     - name: Resolve ip address of attribute grid_node_ipv6
       shell: "dig AAAA +short {{ grid_node_ipv6 }}"

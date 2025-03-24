@@ -1,17 +1,13 @@
 ---
 - name: Define and configure INSTALL_K3S_EXEC
   block:
-    - name: Set initial INSTALL_K3S_EXEC
-      set_fact:
-        INSTALL_K3S_EXEC: "--data-dir=/tmp/k3s"
-
     - name: Configure dual or single stack based on IPv6
       set_fact:
         INSTALL_K3S_EXEC: "{{ INSTALL_K3S_EXEC }} {{ net_config }}"
       vars:
         net_config: >-
           {% if enable_ipv6 %}
-            --flannel-ipv6-masq=true --node-ip={{ ansible_default_ipv6.address }},{{ ansible_default_ipv4.address }} --node-external-ip={{ ansible_default_ipv6.address }} 
+            --node-ip={{ ansible_default_ipv6.address }},{{ ansible_default_ipv4.address }} --node-external-ip={{ ansible_default_ipv6.address }} 
           {% else %}
             --node-ip={{ ansible_default_ipv4.address }} --node-external-ip={{ ansible_default_ipv4.address }}
           {% endif %}
