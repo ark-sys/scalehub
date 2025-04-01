@@ -1,0 +1,65 @@
+- name: Setup Docker
+  tags: [ create ]
+  become: true
+  block:
+    - name: Install required packages
+      ansible.builtin.apt:
+        name:
+          - ca-certificates
+          - curl
+        state: present
+
+    - name: Add Docker GPG apt Key
+      ansible.builtin.apt_key:
+        url: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
+        state: present
+
+    - name: Add Docker Repository
+      ansible.builtin.apt_repository:
+        repo: "deb https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+        state: present
+        filename: docker
+
+    - name: Install Docker packages
+      ansible.builtin.apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: yes
+      with_items:
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
+        - docker-buildx-plugin
+        - docker-compose-plugin
+
+
+    - name: Create Docker daemon configuration file with size limits for the logging
+      ansible.builtin.copy:
+        content: |
+          {
+            "log-driver": "local",
+            "log-opts": {
+              "max-size": "200m"
+            },
+            "data-root": "/tmp/docker-data",
+            "registry-mirrors": [
+              "http://docker-cache.grid5000.fr"
+            ]
+            }
+        dest: /etc/docker/daemon.json
+
+    - name: Restart Docker service
+      ansible.builtin.service:
+        name: docker
+        state: restarted
+
+    - name: Add user to docker group
+      ansible.builtin.user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
+
+    - name: Install ansible plugin for docker
+      delegate_to: localhost
+      ansible.builtin.shell: ansible-galaxy collection install community.docker
+

@@ -116,7 +116,7 @@ class Tools:
         # Execute the command
         subprocess.run(cmd, shell=True)
 
-    def generate_grafana_quicklink(self, start_ts, end_ts) -> str:
+    def generate_grafana_quicklink(self, start_ts, end_ts) -> (str, str):
         grafana_cluster_url = "http://grafana.monitoring.svc.cluster.local"
         start_ts = int(start_ts) * 1000
         end_ts = int(end_ts) * 1000
@@ -140,16 +140,23 @@ class Tools:
             raise e
 
         # Create the quicklink for localhost/grafana instead of grafana.monitoring.svc.cluster.local
-        quicklink = f"http://localhost/{dashboard_url}?from={start_ts}&to={end_ts}"
-        return quicklink
+        quicklink_local = (
+            f"http://localhost/{dashboard_url}?from={start_ts}&to={end_ts}"
+        )
+        quicklink_remote = (
+            f"http://grafana.scalehub.dev/{dashboard_url}?from={start_ts}&to={end_ts}"
+        )
+        return quicklink_local, quicklink_remote
 
     def create_log_file(self, config, exp_path, start_ts, end_ts, run_number=None):
         log_file_path = os.path.join(exp_path, "exp_log.json")
+        q1, q2 = self.generate_grafana_quicklink(start_ts, end_ts)
         json_logs = {
             "run_number": run_number if run_number else "N/A",
             "config": config,
             "timestamps": {"start": start_ts, "end": end_ts},
-            "quicklink": self.generate_grafana_quicklink(start_ts, end_ts),
+            "quicklink_local": q1,
+            "quicklink_remote": q2,
         }
         try:
             import json
@@ -238,7 +245,9 @@ class Playbooks:
         )
         if not os.path.exists(playbook_filename):
             # Raise an error with the file path
-            raise FileNotFoundError(f"The file doesn't exist: {playbook_filename}")
+            raise FileNotFoundError(
+                f"[PLAY] The file doesn't exist: {playbook_filename}"
+            )
         if not os.path.exists(inventory):
             # This can happen when running in experiment-monitor. Just create a dummy inventory file with localhost
             inventory = "/tmp/inventory"
@@ -252,6 +261,10 @@ class Playbooks:
 
         tags = tag if tag else ""
 
+        self.__log.debug(f"[PLAY] Running playbook: {playbook_filename}, tags: {tags}")
+        self.__log.debug(f"[PLAY] Inventory: {inventory}")
+        self.__log.debug(f"[PLAY] Extra vars: {playbook_vars}")
+
         # Run the playbook with additional tags and extra vars
         try:
             r = ansible_runner.run(
@@ -261,16 +274,17 @@ class Playbooks:
                 extravars=playbook_vars,
                 tags=tags,
                 quiet=quiet,
+                # verbosity=3,
             )
             if r.rc != 0:
                 self.__log.error(
-                    f"Failed to run playbook: {playbook_filename}: {r.status}"
+                    f"[PLAY] Failed to run playbook: {playbook_filename}: {r.status}"
                 )
                 self.__log.error(r.stdout.read())
                 return
             else:
                 self.__log.info(
-                    f"Playbook {playbook_filename} with tag {tags} executed successfully."
+                    f"[PLAY] Playbook {playbook_filename} with tag {tags} executed successfully."
                 )
         except Exception as e:
             self.__log.error(e.__str__())

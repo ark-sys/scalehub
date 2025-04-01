@@ -25,7 +25,7 @@ spec:
         image: "{{zookeeper_image}}:{{zookeeper_tag}}"
         name: zookeeper
         ports:
-        - containerPort: 2081
+          - containerPort: 2181
         resources:
           limits:
             memory: 2Gi

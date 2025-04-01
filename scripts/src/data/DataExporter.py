@@ -35,7 +35,7 @@ class DataExporter:
             raise e
 
         self.db_url = "victoria-metrics-single-server.default.svc.cluster.local:8428"
-        self.db_url_local = "localhost/vm"
+        self.db_url_local = "vm.scalehub.dev"
 
     def load_json(self, file_path) -> [dict]:
         try:
@@ -212,6 +212,7 @@ class DataExporter:
             df.to_csv(output_file)
         return res
 
+    # TODO de-spaghettify this
     def export(self):
         try:
             job_name = self.config.get(Key.Experiment.name.key)

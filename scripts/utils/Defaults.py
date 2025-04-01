@@ -1,7 +1,10 @@
 class ConfigKey:
-    def __init__(self, key: str, is_optional: bool = False, *args, **kwargs):
+    def __init__(
+        self, key: str, is_optional: bool = False, default_value=None, *args, **kwargs
+    ):
         self.key = key
         self.is_optional = is_optional
+        self.default_value = default_value
         self.args = args
         self.kwargs = kwargs
 
@@ -45,9 +48,23 @@ class DefaultKeys:
         playbook = ConfigKey("scalehub.playbook", is_optional=False)
         experiments = ConfigKey("scalehub.experiments", is_optional=False)
         debug_level = ConfigKey("scalehub.debug_level", is_optional=False)
+        lazy_setup = ConfigKey(
+            "scalehub.lazy_setup", is_optional=True, default_value=False
+        )
+        provision_infrastructure = ConfigKey(
+            "scalehub.provision_infrastructure", is_optional=True, default_value=True
+        )
+        k3s_version = ConfigKey("scalehub.k3s_version", is_optional=True)
 
     class Platforms:
         platforms = ConfigKey("platforms", is_optional=True)
+        enable_ipv6 = ConfigKey(
+            "platforms.enable_ipv6", is_optional=True, default_value=False
+        )
+        tailscale_backed = ConfigKey(
+            "platforms.tailscale_backed", is_optional=True, default_value=True
+        )
+        tailscale_auth_key = ConfigKey("platforms.tailscale_auth_key", is_optional=True)
 
         class Platform:
             name = ConfigKey("platforms.name", is_optional=False)
@@ -55,49 +72,59 @@ class DefaultKeys:
             reservation_name = ConfigKey(
                 "platforms.name.reservation_name",
                 is_optional=False,
-                for_types=["Grid5000", "FIT", "VM_on_Grid5000"],
+                for_types=["Grid5000", "FIT", "VMonG5k"],
             )
             site = ConfigKey(
                 "platforms.name.site",
                 is_optional=False,
-                for_types=["Grid5000", "FIT", "VM_on_Grid5000"],
+                for_types=["Grid5000", "FIT", "VMonG5k"],
             )
             cluster = ConfigKey(
                 "platforms.name.cluster",
                 is_optional=False,
-                for_types=["Grid5000", "FIT", "VM_on_Grid5000"],
+                for_types=["Grid5000", "FIT", "VMonG5k"],
             )
-            producers = ConfigKey("platforms.name.producers", is_optional=False)
-            consumers = ConfigKey("platforms.name.consumers", is_optional=False)
+            control = ConfigKey(
+                "platforms.name.control",
+                is_optional=False,
+                for_types=["VMonG5k", "Grid5000"],
+                default_value=0,
+            )
+            producers = ConfigKey(
+                "platforms.name.producers", is_optional=False, default_value=0
+            )
+            consumers = ConfigKey(
+                "platforms.name.consumers", is_optional=False, default_value=0
+            )
             core_per_vm = ConfigKey(
                 "platforms.name.core_per_vm",
                 is_optional=False,
-                for_types=["VM_on_Grid5000"],
+                for_types=["VMonG5k"],
             )
             memory_per_vm = ConfigKey(
                 "platforms.name.memory_per_vm",
                 is_optional=False,
-                for_types=["VM_on_Grid5000"],
+                for_types=["VMonG5k"],
             )
             disk_per_vm = ConfigKey(
                 "platforms.name.disk_per_vm",
                 is_optional=False,
-                for_types=["VM_on_Grid5000"],
+                for_types=["VMonG5k"],
             )
             queue = ConfigKey(
                 "platforms.name.queue",
                 is_optional=False,
-                for_types=["VM_on_Grid5000", "Grid5000", "FIT"],
+                for_types=["VMonG5k", "Grid5000", "FIT"],
             )
             walltime = ConfigKey(
                 "platforms.name.walltime",
                 is_optional=False,
-                for_types=["VM_on_Grid5000", "Grid5000", "FIT"],
+                for_types=["VMonG5k", "Grid5000", "FIT"],
             )
             start_time = ConfigKey(
                 "platforms.name.start_time",
                 is_optional=False,
-                for_types=["VM_on_Grid5000", "Grid5000", "FIT"],
+                for_types=["VMonG5k", "Grid5000", "FIT"],
             )
             kubernetes_type = ConfigKey(
                 "platforms.name.kubernetes_type", is_optional=True
@@ -105,11 +132,20 @@ class DefaultKeys:
             archi = ConfigKey(
                 "platforms.name.archi", is_optional=False, for_types=["FIT"]
             )
-            control = ConfigKey(
-                "platforms.name.control",
-                is_optional=False,
-                for_types=["VM_on_Grid5000", "Grid5000"],
-            )
+
+            class EnosFirewall:
+                proto = ConfigKey(
+                    "platforms.name.enos_firewall.proto",
+                    is_optional=True,
+                    default_value="all",
+                )
+                src_addr = ConfigKey(
+                    "platforms.name.enos_firewall.src_addr", is_optional=True
+                )
+                port = ConfigKey("platforms.name.enos_firewall.port", is_optional=True)
+                hosts = ConfigKey(
+                    "platforms.name.enos_firewall.hosts", is_optional=True
+                )
 
     class Experiment:
         name = ConfigKey("experiment.name", is_optional=False)

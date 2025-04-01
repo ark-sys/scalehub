@@ -32,13 +32,7 @@ prometheus-node-exporter:
       portName: metrics
       listenOnAllInterfaces: true
       port: 19100
-      ipDualStack:
-        enabled: true
-        ipFamilyPolicy: PreferDualStack
-        IpFamilies: [ "IPv6", "IPv4" ]
 grafana:
-  service:
-    ipFamilyPolicy: PreferDualStack
   ingress:
     enabled: false
     annotations:

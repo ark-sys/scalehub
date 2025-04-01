@@ -1,0 +1,4 @@
+---
+- name: Uninstall k3s server
+  shell:
+    cmd: "/usr/local/bin/k3s-uninstall.sh"

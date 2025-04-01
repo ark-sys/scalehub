@@ -93,7 +93,7 @@ class Experiment:
                 file.write(monitor_logs)
 
             dm = DataManager(self.__log, self.config)
-            dm.export(multi_run_folder_path)
+            dm.export(multi_run_folder_path, single_export=True, single_eval=True)
         except Exception as e:
             self.__log.error(f"[EXPERIMENT] Error during finishing: {str(e)}")
 

@@ -76,6 +76,11 @@
         path: /tmp/tenant-values.yaml
         state: absent
 
+    - name: Deploy ingress
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('file', 'minio/ingress.yaml') | from_yaml }}"
+
 - name: MinIO - Deletion block
   tags: [ delete ]
   block:
@@ -96,3 +101,8 @@
         name: minio-operator
         repo_url: https://operator.min.io/
         state: absent
+
+    - name: Delete ingress
+      kubernetes.core.k8s:
+        state: absent
+        definition: "{{ lookup('file', 'minio/ingress.yaml') | from_yaml }}"

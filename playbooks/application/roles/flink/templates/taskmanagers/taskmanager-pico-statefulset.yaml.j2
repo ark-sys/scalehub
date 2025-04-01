@@ -19,7 +19,7 @@ data:
 
     taskmanager.rpc.port: 6122
     taskmanager.numberOfTaskSlots: 1
-    taskmanager.memory.process.size: 1536mb
+    taskmanager.memory.process.size: 1500mb
     taskmanager.memory.managed.fraction: 0.4
     taskmanager.network.memory.buffer-debloat.enabled: true
     taskmanager.network.detailed-metrics: true
@@ -116,7 +116,6 @@ spec:
       nodeSelector:
         node-role.kubernetes.io/worker: consumer
         node-role.kubernetes.io/scaling: SCHEDULABLE
-        node-role.kubernetes.io/tnode: pico
       imagePullSecrets:
         - name: gitlab-scalehub
       containers:
@@ -124,7 +123,7 @@ spec:
           image: "{{image}}:{{tag}}"
           resources:
             limits:
-              memory: 1536Mi
+              memory: 1800Mi
               cpu: 2000m
           args: [ "taskmanager" ]
           ports:

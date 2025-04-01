@@ -1,0 +1,14 @@
+---
+# Setup Open vSwitch on Hypervisor nodes
+#- import_tasks: ovs.yaml
+#- import_tasks: docker.yaml
+## Setup VMs with Vagrant
+#- import_tasks: vagrant.yaml
+
+# Setup VMs with Vagrant on Docker
+- import_tasks: vagrantondocker.yaml
+
+
+
+
+

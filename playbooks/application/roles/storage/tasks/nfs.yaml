@@ -4,17 +4,38 @@
   tags: [ create ]
   # Path to g5k credential files in container's home directory
   vars:
-    # TODO Hardcoding the NFS server address for now
     job_site: "rennes"
   block:
+    #    - name: Get control group hosts
+    #      set_fact:
+    #        control_hosts: "{{ groups['control'] | map('extract', hostvars, 'ansible_host') | list }}"
+    #
+    #
+    #    - name: Create access to NFS
+    #      delegate_to: rennes.g5k
+    #      shell: |
+    #        curl -X POST "https://api.grid5000.fr/stable/sites/{{ home_site }}/storage/home/{{ username }}/access" \
+    #        -H "Content-Type: application/json" \
+    #        -d '{"hosts": {{ control_hosts | to_json }}}'
+    #      register: response
+
     - name: Include credentials file
       include_vars: "~/.python-grid5000.yaml"
     - name: retrieve JSON content
       shell: curl -u "{{ username }}:{{ password }}" -k "https://api.grid5000.fr/3.0/sites/{{ job_site }}/storage/home/{{ username }}/access"
       register: response
+
+    - name: Debug
+      debug:
+        var: response.stdout
+
     - name: From dict response, get value of key "nfs_address"
       set_fact:
         nfs_server: "{{ response.stdout | from_yaml | dict2items | json_query('[0].value.nfs_address') }}"
+
+    - name: Debug
+      debug:
+        var: nfs_server
 
     - name: Get content of nfs_server
       set_fact:
@@ -23,29 +44,28 @@
 
     - name: Install NFS Storage provisioner
       kubernetes.core.helm:
-       name: csi-driver-nfs
-       chart_ref: "csi-driver-nfs"
-       chart_version: 4.9.0
-       chart_repo_url: https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
-       release_namespace: csi-driver-nfs
-       create_namespace: true
-       wait: true
-       values:
-         controller:
-           nodeSelector:
-             node-role.kubernetes.io/control-plane: "true"
-             # This fixes an issue with the controller unable to query an IPv6 address
-           dnsPolicy: Default
-         node:
-           nodeSelector:
-             node-role.kubernetes.io/control-plane: "true"
+        name: csi-driver-nfs
+        chart_ref: "csi-driver-nfs"
+        chart_version: 4.9.0
+        chart_repo_url: https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
+        release_namespace: csi-driver-nfs
+        create_namespace: true
+        wait: true
+        values:
+          controller:
+            nodeSelector:
+              node-role.kubernetes.io/control-plane: "true"
+            dnsPolicy: Default
+          node:
+            nodeSelector:
+              node-role.kubernetes.io/control-plane: "true"
       register: csi_driver
 
     - name: Install NFS Storage class
       kubernetes.core.k8s:
-       state: present
-       wait: true
-       definition:
+        state: present
+        wait: true
+        definition:
           apiVersion: storage.k8s.io/v1
           kind: StorageClass
           metadata:
@@ -55,21 +75,23 @@
             server: "{{ server_address }}"
             share: "{{ server_share }}/scalehub-pvc"
             subDir: "${pvc.metadata.namespace}-${pvc.metadata.name}"
+          onDelete: retain
 
-- name : Setting up NFS - Deletion block
+- name: Setting up NFS - Deletion block
   tags: [ delete ]
   block:
     - name: Delete NFS Storage class
       kubernetes.core.k8s:
-       state: absent
-       definition:
-         apiVersion: storage.k8s.io/v1
-         kind: StorageClass
-         metadata:
-           name: nfs-csi
+        state: absent
+        definition:
+          apiVersion: storage.k8s.io/v1
+          kind: StorageClass
+          metadata:
+            name: nfs-csi
+
     - name: Delete NFS Storage provisioner
       kubernetes.core.helm:
-       release_namespace: csi-driver-nfs
-       release_state: absent
-       release_name: csi-driver-nfs
-       chart_ref: "csi-driver-nfs"
+        release_namespace: csi-driver-nfs
+        release_state: absent
+        release_name: csi-driver-nfs
+        chart_ref: "csi-driver-nfs"
