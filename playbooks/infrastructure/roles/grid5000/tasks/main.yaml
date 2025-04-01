@@ -3,3 +3,4 @@
   block:
     - name: Enable ipv6
       command: dhclient -6 br0
+      when: enable_ipv6 == True

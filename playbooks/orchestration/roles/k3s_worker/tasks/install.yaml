@@ -1,0 +1,80 @@
+---
+- name: Define and configure INSTALL_K3S_EXEC
+  block:
+    - name: Configure dual or single stack based on IPv6
+      set_fact:
+        INSTALL_K3S_EXEC: "{{ INSTALL_K3S_EXEC }} {{ net_config }}"
+      vars:
+        net_config: >-
+          {% if enable_ipv6 %}
+            --node-ip={{ ansible_default_ipv6.address }},{{ ansible_default_ipv4.address }} --node-external-ip={{ ansible_default_ipv6.address }} 
+          {% else %}
+            --node-ip={{ ansible_default_ipv4.address }} --node-external-ip={{ ansible_default_ipv4.address }}
+          {% endif %}
+
+    - name: Setup default labels
+      block:
+        - name: Set cluster role label
+          set_fact:
+            cluster_role_labels: "cluster-role/worker={{ cluster_role }}"
+          when: cluster_role is defined
+
+        - name: Set node type label
+          ignore_errors: yes
+          set_fact:
+            node_type_labels: >-
+              {% if inventory_hostname in groups['VMonG5k'] %}
+                node-type=vm_grid5000
+              {% elif inventory_hostname in groups['G5k'] %}
+                node-type=grid5000
+              {% elif inventory_hostname in groups['pico'] %}
+                node-type=pico
+              {% endif %}
+
+        - name: Add labels to INSTALL_K3S_EXEC
+          set_fact:
+            INSTALL_K3S_EXEC: "{{ INSTALL_K3S_EXEC }} --node-label {{ cluster_role_labels | default('') }} {{ node_type_labels | default('') }}"
+
+        - name: Clean newlines from INSTALL_K3S_EXEC
+          set_fact:
+            INSTALL_K3S_EXEC: "{{ INSTALL_K3S_EXEC | regex_replace('\n', '') }}"
+    - name: Debug INSTALL_K3S_EXEC
+      debug:
+        var: INSTALL_K3S_EXEC
+
+    - name: Fail if --node-ip is empty
+      fail:
+        msg: "The --node-ip parameter in INSTALL_K3S_EXEC must not be empty."
+      when: INSTALL_K3S_EXEC.find("--node-ip=") != -1 and INSTALL_K3S_EXEC.find("--node-ip=") == INSTALL_K3S_EXEC.find("--node-ip=") + 2
+
+- name: Install K3S on worker nodes
+  block:
+    - name: Get the control node IP
+      set_fact:
+        control_node_ip: "{{ groups['control'][0] }}"
+
+    - name: If we are running with tailscale, only get the server name
+      set_fact:
+        control_node_ip: "{{ control_node_ip.split('.')[0] }}"
+      when: tailscale_backend is defined and tailscale_backend == True
+
+    - name: Get node token from controller for workers hosts
+      delegate_to: "{{ groups['control'][0] }}"
+      shell: "cat /tmp/k3s/server/node-token"
+      register: node_token
+      run_once: true
+    - name: Install k3s on workers
+      environment:
+        K3S_URL: "https://{{ control_node_ip }}:6443"
+        K3S_TOKEN: "{{ node_token.stdout }}"
+        INSTALL_K3S_VERSION: "{{ k3s_version }}"
+        INSTALL_K3S_EXEC: "{{ INSTALL_K3S_EXEC }}"
+      shell:
+        cmd: "curl -sfL https://get.k3s.io | sh -s -"
+      # Skip this task if the consumers nodes or the producers nodes are the same as the control node. This is a single node cluster.
+      register: install_k3s_result
+      failed_when: install_k3s_result.rc != 0
+      retries: 3
+      delay: 10
+
+

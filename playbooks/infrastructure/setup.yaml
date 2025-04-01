@@ -1,4 +1,18 @@
 ---
+- name: Retrieve values from scalehub configuration file
+  hosts: all
+  gather_facts: true
+  run_once: true
+  tags: [ always ]
+  tasks:
+    - name: Get content of shub_config and read it as json
+      set_fact:
+        shub_config_content: "{{ shub_config | from_json }}"
+    - name: Extract checkpoint_interval and window_size from shub_config
+      set_fact:
+        enable_ipv6: "{{ shub_config_content['platforms.enable_ipv6']  }}"
+        tailscale_backend: "{{ shub_config_content['platforms.tailscale_backend'] }}"
+
 # Apply grid5000 specific configuration
 - name: Apply grid5000 specific configuration
   hosts: G5k
@@ -7,18 +21,26 @@
   roles:
     - role: grid5000
 
-# Apply vm_on_grid5000 specific configuration
-- name: Apply vm_on_grid5000 specific configuration
-  hosts: VMonG5k
-  gather_facts: true
+# Apply vagrant specific configuration
+- name: Apply vagrant specific configuration
+  hosts: vagrant
+  gather_facts: false
   become: true
   roles:
-    - role: vm_on_grid5000
+    - role: vagrantg5k
+
+# Apply vmong5k specific configuration
+- name: Apply vmong5k specific configuration
+  hosts: VMonG5k
+  gather_facts: false
+  become: true
+  roles:
+    - role: vmong5k
 
 # Apply picocluster specific configuration
 - name: Apply picocluster specific configuration
   hosts: pico
-  gather_facts: true
+  gather_facts: false
   become: true
   roles:
     - role: picocluster
@@ -26,7 +48,7 @@
 # Common setup to all nodes
 - name: Do common setup for all nodes
   hosts: all
-  gather_facts: true
+  gather_facts: false
   become: true
   roles:
     - common

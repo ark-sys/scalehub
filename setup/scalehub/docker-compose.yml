@@ -1,0 +1,112 @@
+version: "3.9"
+
+secrets:
+  g5k_creds:
+    # Fill this file with personal Grid5000 credentials
+    file: secrets/enos/Grid5000_creds.yaml
+  # Setup correct path for grid5000 private key in `source` field
+  ssh_key:
+    file: secrets/enos/grid5000.pk
+  grid_pub:
+    file: secrets/enos/grid5000.pub
+
+networks:
+  local_net:
+    #    enable_ipv6: true
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        #        - subnet: 2001:cafe:43::/112
+        #          ip_range: 2001:cafe:43::/113
+        - subnet: 10.10.0.0/16
+          ip_range: 10.10.10.0/24
+services:
+  scalehub:
+    container_name: scalehub
+    depends_on:
+      vpn:
+        condition: service_started
+    # Use network stack from vpn service
+    network_mode: service:vpn
+    secrets:
+      - source: g5k_creds
+        target: .python-grid5000.yaml
+      - source: ssh_key
+        target: id_rsa
+      - source: grid_pub
+        target: id_rsa.pub
+    build:
+      context: ${SCALEHUB_BASEDIR}/
+      dockerfile: setup/scalehub/Dockerfile
+      args:
+        - UID=${UID}
+        - GID=${GID}
+        - USER=${USER}
+      tags:
+        - "registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/scalehub:latest"
+    volumes:
+      - type: bind
+        source: ${SCALEHUB_BASEDIR}/experiments-data
+        target: /app/experiments-data
+      # Cache directory for scalehub, in case the container restarts...
+      - type: bind
+        source: ${SCALEHUB_BASEDIR}/runtime
+        target: /app/runtime
+        bind:
+          create_host_path: true
+      # This is used to share the ssh-agent socket with the container thus allowing ssh connections through host's ssh-agent
+      - type: bind
+        source: $SSH_AUTH_SOCK
+        target: /ssh-agent
+    # Signal to the container that the ssh-agent socket is available
+    environment:
+      - SSH_AUTH_SOCK=/ssh-agent
+
+  # OpenVPN client service to connect to Grid5000
+  vpn:
+    image: dperson/openvpn-client
+    container_name: vpn
+    hostname: scalehub.dev
+    extra_hosts:
+      # Initialize host entry for upstream service. This will be updated by the ingress ansible role
+      - "ingress-upstream.k3s.scalehub.dev:127.1.1.1"
+    cap_add:
+      - NET_ADMIN
+    networks:
+      local_net:
+        ipv4_address: 10.10.10.3
+    tmpfs:
+      - /run
+      - /tmp
+    restart: unless-stopped
+    security_opt:
+      - label:disable
+    stdin_open: true
+    tty: true
+    volumes:
+      - /dev/net:/dev/net:z
+      - ${SCALEHUB_BASEDIR}/setup/scalehub/secrets/vpn:/vpn
+    environment:
+      - DNS
+      - TZ=Europe/Paris
+    command:
+      - -D
+    # Option description of -D : Don't use the connection as the default route -> don't break ssh connections from scalehub to g5k
+
+  # Local DNS to ease host's access to endpoints behind reverse-poxy
+  # To properly work, host's dns settings must be overridden to use this container's IP as first DNS server
+  # If host uses systemd-resolved, it can be done by editing /etc/systemd/resolved.conf and setting DNS=10.10.10.53 and fallbackDNS=1.1.1.1 8.8.8.8(or any other public DNS) ; then restart systemd-resolved with `sudo systemctl restart systemd-resolved`
+  scalehub_dns:
+    build:
+      context: ${SCALEHUB_BASEDIR}/setup/scalehub/dns
+      dockerfile: Dockerfile
+      tags:
+        - "registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/dns:latest"
+    container_name: dns
+    restart: always
+    networks:
+      local_net:
+        ipv4_address: 10.10.10.53
+    cap_add:
+      - NET_ADMIN

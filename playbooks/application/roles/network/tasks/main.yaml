@@ -1,3 +1,3 @@
 ---
-- import_tasks: cert-manager.yaml
+#- import_tasks: cert-manager.yaml
 - import_tasks: ingress.yaml

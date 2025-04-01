@@ -49,7 +49,7 @@ class FlinkManager:
                     self.__log.info(f"[FLK_MGR] Job plan response: {r.text}")
                     return r.json()
                 retry -= 1
-                sleep(5)
+                sleep(3)
             return None
         except Exception as e:
             self.__log.error(f"[FLK_MGR] Error while getting job plan: {str(e)}")
@@ -97,7 +97,6 @@ class FlinkManager:
 
     def __stop_job(self):
         try:
-
             if self.job_id is None:
                 self.__log.error("[FLK_MGR] Job id not found.")
                 return None
@@ -106,6 +105,13 @@ class FlinkManager:
                 savepoint_path = None
                 sleep_time = 3
                 while retries > 0 and savepoint_path is None:
+
+                    # Check if job has failed
+                    job_state = self.__get_job_state()
+                    if job_state == "FAILED":
+                        self.__log.error("[FLK_MGR] Job failed.")
+                        return None
+
                     resp = self.k.pod_manager.execute_command_on_pod(
                         deployment_name="flink-jobmanager",
                         command=f"flink stop -p -d {self.job_id}",
@@ -116,15 +122,13 @@ class FlinkManager:
                             self.__log.info(
                                 f"[FLK_MGR] Savepoint path: {savepoint_path}"
                             )
-                            break
+                            return savepoint_path
                     retries -= 1
                     # At each iteration increase sleep time
                     sleep_time += 1
                     sleep(sleep_time)
                 if savepoint_path is None:
                     self.__log.error("[FLK_MGR] Savepoint failed.")
-                    return None
-                sleep(5)
                 return savepoint_path
         except Exception as e:
             self.__log.error(f"[FLK_MGR] Error while stopping job: {str(e)}")
@@ -147,11 +151,19 @@ class FlinkManager:
             self.__log.info("[FLK_MGR] Running job.")
             if new_parallelism is not None:
                 self.__log.info(f"[FLK_MGR] Rescaling job to {new_parallelism}.")
-                self.savepoint_path = self.__stop_job()
-                if self.savepoint_path is None:
-                    self.__log.error("[FLK_MGR] Savepoint failed.")
-                    return 1
-                sleep(10)
+                savepoint_path = self.__stop_job()
+                if savepoint_path is not None:
+                    self.savepoint_path = savepoint_path
+                    self.__log.info(f"[FLK_MGR] Savepoint path: {self.savepoint_path}")
+                else:
+                    self.__log.warning("[FLK_MGR] Savepoint failed.")
+                    self.__log.warning(
+                        f"[FLK_MGR] Using last valid savepoint: {self.savepoint_path}"
+                    )
+                    if self.savepoint_path is None:
+                        self.__log.error("[FLK_MGR] No savepoint found.")
+                        return 1
+
                 par_map = self.__build_par_map(new_parallelism)
                 res = self.k.pod_manager.execute_command_on_pod(
                     deployment_name="flink-jobmanager",
@@ -257,7 +269,7 @@ class FlinkManager:
                 if job_state == "RUNNING":
                     return 0
                 retries -= 1
-                sleep(5)
+                sleep(3)
             if job_state != "RUNNING":
                 self.__log.error("[FLK_MGR] Job did not start.")
                 return 1

@@ -1,0 +1,11 @@
+kubernetes
+enoslib==10.0.0rc3
+ansible-runner==2.4.0
+jmespath==1.0.1
+paho-mqtt==2.1.0
+numpy==2.0.0
+pandas==2.2.2
+matplotlib==3.9.1
+seaborn==0.13.2
+networkx==3.3
+bitwarden-sdk

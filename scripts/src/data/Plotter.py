@@ -417,7 +417,7 @@ class Plotter:
         ylim_val,
         comment="",
         workload_objective=None,
-        xlabel="Number of slots",
+        xlabel="Number of TaskManagers",
         ylabel="Throughput (records/s)",
     ):
 

@@ -1,0 +1,15 @@
+services:
+  vagrant-libvirt:
+    container_name: vagrant-libvirt
+    volumes:
+      - /var/run/libvirt:/var/run/libvirt
+      - ~/.vagrant.d:/.vagrant.d
+      - ./Vagrantfile:/Vagrantfile
+    environment:
+      - IGNORE_RUN_AS_ROOT=1
+    network_mode: host
+    image: vagrantlibvirt/vagrant-libvirt:latest
+    command: [ "tail", "-f", "/dev/null" ]
+
+
+

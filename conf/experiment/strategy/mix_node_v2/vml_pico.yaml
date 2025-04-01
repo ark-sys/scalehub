@@ -1,0 +1,21 @@
+- node: vm_grid5000
+  type: medium
+  taskmanager:
+    - number: 4
+      type: pico
+      method: block
+- node: pico
+  taskmanager:
+    - number: 2
+      type: pico
+      method: block
+- node: pico
+  taskmanager:
+    - number: 2
+      type: pico
+      method: block
+- node: pico
+  taskmanager:
+    - number: 2
+      type: pico
+      method: block

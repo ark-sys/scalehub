@@ -1,0 +1,15 @@
+---
+- name: Setup tailscale an all nodes
+  block:
+    - name: Install tailscale
+      ansible.builtin.shell: "curl -fsSL https://tailscale.com/install.sh | sh"
+      register: install_tailscale_result
+
+    - name: Stop any old running tailscale instances
+      ansible.builtin.shell: "tailscale down"
+      register: stop_tailscale_result
+      ignore_errors: yes
+
+#    - name: Run tailscale
+#      ansible.builtin.shell: "tailscale up --authkey {{ tailscale_auth_key }} --reset"
+#      register: run_tailscale_result

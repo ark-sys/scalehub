@@ -1,0 +1,67 @@
+- name: Setup Vagrant on docker env
+  tags: [ create ]
+  become: true
+  block:
+    - name: Create directory for Vagrant
+      ansible.builtin.file:
+        dest: /tmp/vagrantondocker
+        state: directory
+
+    - name: Filter vms on this hypervisor using inventory_hostname
+      set_fact:
+        hosted_vms: "{{ groups['vms'] | map('extract', hostvars) | list | selectattr('hypervisor', 'equalto', inventory_hostname) | list }}"
+
+    - name: Render Vagrantfile template
+      template:
+        src: templates/Vagrantfile.j2
+        dest: /tmp/vagrantondocker/Vagrantfile
+      vars:
+        vm_distro: "debian/stretch64"
+
+    - name: Copy vagrant-compose.yaml
+      ansible.builtin.copy:
+        src: files/vagrant-compose.yaml
+        dest: /tmp/vagrantondocker/vagrant-compose.yaml
+        mode: '0644'
+
+    - name: Start compose
+      community.docker.docker_compose_v2:
+        project_src: /tmp/vagrantondocker
+        project_name: vagrantondocker
+        files:
+          - vagrant-compose.yaml
+        state: present
+      register: vagrantondocker
+
+    - name: Debug
+      ansible.builtin.debug:
+        var: vagrantondocker
+
+    - name: Do Vagrant up in the container
+      community.docker.docker_container_exec:
+        container: vagrant-libvirt
+        command: vagrant up
+      register: vagrantup
+
+    - name: Debug
+      ansible.builtin.debug:
+        var: vagrantup.stdout
+
+- name: Destroy VMs
+  tags: [ delete ]
+  become: true
+  block:
+    - name: Destroy Vms
+      community.docker.docker_container_exec:
+        container: vagrant-libvirt
+        command: vagrant destroy -f
+      register: vagrantdestroy
+
+    - name: Debug
+      ansible.builtin.debug:
+        var: vagrantdestroy.stdout
+
+
+
+
+

@@ -1,26 +1,54 @@
 ---
+- name: Retrieve values from shub dict
+  tags: [ always ]
+  hosts: all
+  gather_facts: true
+  run_once: true
+  vars:
+    api_url: "https://vault.bitwarden.eu/api"
+    identity_url: "https://vault.bitwarden.eu/identity"
+    base_url: "https://vault.bitwarden.eu"
+    secret_id: "fd1a051e-1240-4178-b69a-b29200acdb56"
+    organization_id: "985abad4-c16c-4766-b2f0-b1ca011fca5b"
+    access_token: "0.7243b14c-c06a-44be-bce6-b1d100cfeca1.A4zUP09cDsRRGldFUYlsUAB9Zk8QGd:Ew5kaEhn3SAiDgkhMVzDmw=="
+
+  tasks:
+    - name: Get content of shub_config and read it as json
+      set_fact:
+        shub_config_content: "{{ shub_config | from_json }}"
+    - name: Extract checkpoint_interval and window_size from shub_config
+      set_fact:
+        enable_ipv6: "{{ shub_config_content['platforms.enable_ipv6']  }}"
+        tailscale_backend: "{{ shub_config_content['platforms.tailscale_backend'] }}"
+        k3s_version: "{{ shub_config_content['scalehub.k3s_version'] }}"
+        tailscale_auth_key: "{{ lookup('bitwarden.secrets.lookup', secret_id, base_url=base_url, access_token=access_token, organization_id=organization_id) }}"
+    - name: Define INSTALL_K3S_EXEC
+      set_fact:
+        INSTALL_K3S_EXEC: "--data-dir=/tmp/k3s"
+
+    - name: Configure tailscale
+      vars:
+        tailscale_args: "name=tailscale,joinKey={{ tailscale_auth_key }}"
+      set_fact:
+        INSTALL_K3S_EXEC: "{{ INSTALL_K3S_EXEC }} --vpn-auth={{ tailscale_args }}"
+      when: tailscale_backend is defined and tailscale_backend == True
+
 - name: Install k3s on control node
   hosts: control
   become: true
-  gather_facts: true
+  gather_facts: false
   roles:
     - role: k3s_control
 
 - name: Install k3s on worker nodes
-  hosts: consumers, producers
-  become: true
-  gather_facts: true
-  roles:
-    - role: k3s_worker
-      dependencies:
-        - role: k3s_control
-
-- name: Run post-install configuration tasks (these are kubectl tasks run on localhost, but reflected on the cluster nodes joinable with the kubeconfig)
-  hosts: localhost
+  hosts: agents
   become: true
   gather_facts: false
   roles:
-    - role: post_install
-      dependencies:
-        - role: k3s_control
+    - role: k3s_worker
 
+- name: Run post-install configuration tasks
+  hosts: localhost
+  gather_facts: false
+  roles:
+    - role: post_install
