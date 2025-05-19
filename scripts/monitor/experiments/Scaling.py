@@ -321,6 +321,12 @@ class Scaling:
             else "taskmanager"
         )
 
+        parallelism = (
+            self.steps[0]["taskmanager"][0]["parallelism"]
+            if "parallelism" in self.steps[0]["taskmanager"][0]
+            else taskmanager_number
+        )
+
         # Get the name of the stateful set to scale
         tm_name = self.__get_tm_name(taskmanager_type)
         if not tm_name:
@@ -328,7 +334,7 @@ class Scaling:
             return 1
 
         # If method is block, scale up taskmanagers at once
-        if taskmanager_method == "block" and taskmanager_scope == "taskmanager":
+        if taskmanager_method == "block":  # and taskmanager_scope == "taskmanager":
             self.__log.debug(
                 f"[SCALING] Block method on taskmanagers detected. Scaling {taskmanager_number} taskmanagers at once"
             )
@@ -336,13 +342,6 @@ class Scaling:
             self.k.statefulset_manager.scale_statefulset(
                 statefulset_name=tm_name, replicas=taskmanager_number, namespace="flink"
             )
-
-            parallelism = (
-                self.steps[0]["taskmanager"][0]["parallelism"]
-                if "parallelism" in self.steps[0]["taskmanager"][0]
-                else taskmanager_number
-            )
-
             self.__log.info(f"[SCALING] Starting job with parallelism {parallelism}.")
             # Start the job
             ret = self.f.run_job(start_par=parallelism)
