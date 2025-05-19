@@ -113,6 +113,7 @@ class Scaling:
         if ret == 1:
             self.__log.error("[SCALING] __scale_w_tm: Error scaling operator.")
             return 1
+        return None
 
     # Add replicas linearly
     def __scale_linear(self, number, tm_type, scope):
@@ -137,6 +138,8 @@ class Scaling:
                 if ret == 1:
                     self.__log.error("[SCALING] Error scaling linearly.")
                     return 1
+                return None
+            return None
 
     # Add replicas exponentially
     def __scale_exponential(self, number, tm_type, scope):
@@ -173,6 +176,8 @@ class Scaling:
                 if ret == 1:
                     self.__log.error("[SCALING] Error scaling exponentially.")
                     return 1
+                return None
+            return None
 
     # Add replicas at once
     def __scale_block(self, number, tm_type, scope):
@@ -190,7 +195,11 @@ class Scaling:
             return self.__scale_w_tm(number, tm_type)
 
     def __scale(self, taskmanager):
-        number = taskmanager["number"]
+        number = (
+            taskmanager["parallelism"]
+            if "parallelism" in taskmanager
+            else taskmanager["number"]
+        )
         tm_type = taskmanager["type"]
         scaling_method = taskmanager["method"]
         scope = taskmanager["scope"] if "scope" in taskmanager else "taskmanager"
@@ -210,6 +219,7 @@ class Scaling:
         if ret == 1:
             self.__log.error("[SCALING] Error scaling.")
             return 1
+        return None
 
     def __scale_step(self, step):
         self.__log.info(
@@ -224,6 +234,8 @@ class Scaling:
             if ret == 1:
                 self.__log.error("[SCALING] Error scaling step.")
                 return 1
+            return None
+        return None
 
     def __get_scaling_node(self, step, node_name):
 
@@ -325,8 +337,15 @@ class Scaling:
                 statefulset_name=tm_name, replicas=taskmanager_number, namespace="flink"
             )
 
+            parallelism = (
+                self.steps[0]["taskmanager"][0]["parallelism"]
+                if "parallelism" in self.steps[0]["taskmanager"][0]
+                else taskmanager_number
+            )
+
+            self.__log.info(f"[SCALING] Starting job with parallelism {parallelism}.")
             # Start the job
-            ret = self.f.run_job(start_par=taskmanager_number)
+            ret = self.f.run_job(start_par=parallelism)
         else:
             self.__log.debug(f"[SCALING] Scaling up {tm_name} to 1")
 
@@ -383,3 +402,4 @@ class Scaling:
                 self.k.node_manager.mark_node_as_full(node_name)
                 self.__sleep(5)
         self.__log.info("[SCALING] Scaling finished.")
+        return None
