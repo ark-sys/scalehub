@@ -22,6 +22,7 @@
         tailscale_backend: "{{ shub_config_content['platforms.tailscale_backend'] }}"
         k3s_version: "{{ shub_config_content['scalehub.k3s_version'] }}"
         tailscale_auth_key: "{{ lookup('bitwarden.secrets.lookup', secret_id, base_url=base_url, access_token=access_token, organization_id=organization_id) }}"
+      no_log: true
     - name: Define INSTALL_K3S_EXEC
       set_fact:
         INSTALL_K3S_EXEC: "--data-dir=/tmp/k3s"
@@ -31,6 +32,7 @@
         tailscale_args: "name=tailscale,joinKey={{ tailscale_auth_key }}"
       set_fact:
         INSTALL_K3S_EXEC: "{{ INSTALL_K3S_EXEC }} --vpn-auth={{ tailscale_args }}"
+      no_log: true
       when: tailscale_backend is defined and tailscale_backend == True
 
 - name: Install k3s on control node

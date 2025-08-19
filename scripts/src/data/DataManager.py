@@ -155,10 +155,16 @@ class DataManager:
                 grouped_data_eval = GroupedDataEval(
                     log=self.__log, exp_path=multi_exp_folder
                 )
+
+                # Also generate the existing multi_exp plots if appropriate
                 if "single_node" in subdirs[0]:
                     grouped_data_eval.generate_multi_exp_plot()
                 else:
                     grouped_data_eval.generate_multi_exp_plot(False)
+
+                # If any subpath contains "p2", generate box_plot of multiple exps
+                if any("ts_per_tm" in d for d in subdirs):
+                    grouped_data_eval.generate_box_plot_multi_exp()
         except Exception as e:
             self.__log.error(f"Error processing multi exp folder: {e}")
             raise e

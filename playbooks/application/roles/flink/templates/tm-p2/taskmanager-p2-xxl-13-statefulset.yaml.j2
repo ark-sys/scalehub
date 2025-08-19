@@ -1,14 +1,14 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: flink-config-tm-m
+  name: flink-config-tm-p2-xxl-13
   namespace: flink
   labels:
     app: flink
     component: taskmanager
-    size: m
+    size: p2-xxl-13
 data:
-  flink-conf-taskmanager-m.yaml: |+
+  flink-conf-taskmanager-p2-xxl-13.yaml: |+
     akka.framesize: 104857600b
     blob.server.port: 6124
     rest.profiling.enabled: true
@@ -18,8 +18,8 @@ data:
     queryable-state.proxy.ports: 6125
     
     taskmanager.rpc.port: 6122
-    taskmanager.numberOfTaskSlots: 1
-    taskmanager.memory.process.size: 3500mb
+    taskmanager.numberOfTaskSlots: 13
+    taskmanager.memory.process.size: 350Gb
     taskmanager.memory.managed.fraction: 0.4
     taskmanager.network.memory.buffer-debloat.enabled: true
     taskmanager.network.detailed-metrics: true
@@ -78,21 +78,16 @@ data:
     # Suppress the irrelevant (wrong) warnings from the Netty channel handler
     logger.netty.name=org.apache.flink.shaded.akka.org.jboss.netty.channel.DefaultChannelPipeline
     logger.netty.level=OFF
-    # Add logs for resource-aware weighted partitioner
-    logger.weightedRouter.name=org.apache.flink.streaming.runtime.partitioner.WeightedKeyGroupStreamPartitioner
-    logger.weightedRouter.level=DEBUG
-    logger.weightsOp.name=org.apache.flink.streaming.api.operators.weights.UpstreamWeightsOperator
-    logger.weightsOp.level=DEBUG
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: flink-taskmanager-m
+  name: flink-taskmanager-p2-xxl-13
   namespace: flink
   labels:
     app: flink
     component: taskmanager
-    size: m
+    size: p2-xxl-13
 spec:
   replicas: 0
   podManagementPolicy: Parallel
@@ -100,13 +95,13 @@ spec:
     matchLabels:
       app: flink
       component: taskmanager
-      size: m
+      size: p2-xxl-13
   template:
     metadata:
       labels:
         app: flink
         component: taskmanager
-        size: m
+        size: p2-xxl-13
     spec:
       affinity:
         nodeAffinity:
@@ -127,8 +122,8 @@ spec:
           image: "{{image}}:{{tag}}"
           resources:
             limits:
-              memory: 3500Mi
-              cpu: 1000m
+              memory: 350Gi
+              cpu: 52000m
           args: [ "taskmanager" ]
           ports:
             - containerPort: 6122
@@ -150,9 +145,9 @@ spec:
       volumes:
         - name: flink-config-volume
           configMap:
-            name: flink-config-tm-m
+            name: flink-config-tm-p2-xxl-13
             items:
-              - key: flink-conf-taskmanager-m.yaml
+              - key: flink-conf-taskmanager-p2-xxl-13.yaml
                 path: flink-conf.yaml
               - key: log4j-console.properties
                 path: log4j-console.properties

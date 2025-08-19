@@ -28,7 +28,7 @@
           nodePathMap:
             - node: DEFAULT_PATH_FOR_NON_LISTED_NODES
               paths:
-                - /var/local-path-provisioner
+                - /tmp/local-path-provisioner
 
     - name: Add MinIo chart
       kubernetes.core.helm_repository:

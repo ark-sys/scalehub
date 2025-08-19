@@ -135,7 +135,7 @@ def export(config: Config, exp_path):
 
     dm: DataManager = DataManager(log, config)
 
-    dm.export(exp_path, dry_run=False, single_export=True, single_eval=True)
+    dm.export(exp_path, dry_run=False, single_export=False, single_eval=False)
 
 
 def sync_experiment_data(config: Config):
@@ -263,10 +263,13 @@ def main():
     # Reservation time command
     subparsers.add_parser("reservation_time", help="Get remaining reservation time")
 
-    # Export command
+    # Export command with updated help text
     export_subparser = subparsers.add_parser("export", help="Export data")
     export_subparser.add_argument(
-        "date", help="Provide experiment path in format 'DD-MM-YYYY/N'"
+        "date",
+        help="Provide experiment path in format 'YYYY-MM-DD/N' for single experiment, "
+        "'YYYY-MM-DD' for all experiments in a day, or a path containing "
+        "multiple multi_run folders for taskmanager configuration comparison",
     )
 
     # Parse command line arguments

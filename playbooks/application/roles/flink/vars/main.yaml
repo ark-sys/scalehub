@@ -1,4 +1,4 @@
 ---
 # vim: set ft=yaml:
 image: registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/flink
-tag: 1.20-java11-presto
+tag: adapt-data

@@ -28,11 +28,37 @@ class GroupedDataEval:
                         data = pd.read_csv(file_path)
 
                         dfs.append(data)
-
             return dfs
         except Exception as e:
             self.__log.error(f"Error loading mean_stderr files: {e}")
             raise e
+
+    def __load_final_df_files(self):
+        dfs = {}
+        try:
+            # Get the immediate subdirectories
+            immediate_subdirs = [
+                d
+                for d in os.listdir(self.base_path)
+                if os.path.isdir(os.path.join(self.base_path, d))
+            ]
+
+            # Process each immediate subdirectory
+            for subdir in immediate_subdirs:
+                subdir_path = os.path.join(self.base_path, subdir)
+                final_df_path = os.path.join(subdir_path, "final_df.csv")
+
+                # Check if final_df.csv exists in this subdirectory
+                if os.path.isfile(final_df_path):
+                    data = pd.read_csv(final_df_path)
+                    dfs[subdir] = data
+                    self.__log.info(f"Loaded {subdir} at {final_df_path}")
+
+        except Exception as e:
+            self.__log.error(f"Error loading final_df files from {self.base_path}: {e}")
+            raise
+
+        return dfs
 
     @staticmethod
     def __aggregate_data(dfs):
@@ -81,6 +107,97 @@ class GroupedDataEval:
             # ).get(Key.Experiment.comment.key),
         )
 
+    def generate_box_plot_multi_exp(self):
+        """
+        Generate a box plot comparing multiple experiments in a multi_exp folder.
+        Each experiment (subfolder) contains a final_df.csv with min, max, mean throughput.
+        """
+        # Load all final_df files from subfolders
+        final_dfs = self.__load_final_df_files()
+
+        if not final_dfs:
+            self.__log.error("No final_df.csv files found for box plot")
+            return
+
+        # Process data for box plot
+        boxplot_data = []
+        labels = []
+
+        # Sort the keys to ensure consistent ordering in the plot
+        sorted_keys = sorted(final_dfs.keys())
+        # If key is in the format "x" where x is a number, filter it
+
+        self.__log.info(
+            f"Generating box plot for {len(final_dfs)} experiments: {final_dfs}"
+        )
+
+        for exp_name in sorted_keys:
+            df = final_dfs[exp_name]
+
+            # Check if the required columns are present
+            required_cols = ["Throughput_min", "Throughput_max", "Throughput_mean"]
+            if not all(col in df.columns for col in required_cols):
+                self.__log.warning(f"Missing required columns in {exp_name}, skipping")
+                continue
+
+            # Extract the min, max, mean values for the box plot
+            # Each "box" consists of [min, mean, max] values
+            values = [
+                df["Throughput_min"].values[0],
+                df["Throughput_mean"].values[0],
+                df["Throughput_max"].values[0],
+            ]
+
+            boxplot_data.append(values)
+
+            # # Clean the label by removing the "p2_" prefix
+            # clean_label = exp_name.replace("p2_", "")
+
+            # Parse the experiment name format "X_tm_Y_ts_per_tm"
+            # where X is the number of task managers and Y is the number of task slots per task manager
+            tm_match = re.match(r"(\d+)_tm_(\d+)_ts_per_tm", exp_name)
+            if tm_match:
+                num_tm = int(tm_match.group(1))
+                num_ts_per_tm = int(tm_match.group(2))
+                clean_label = f"{num_tm} TM,\n{num_ts_per_tm} TS/TM"
+            else:
+                clean_label = (
+                    exp_name  # Default to original name if pattern doesn't match
+                )
+
+            labels.append(clean_label)
+
+        if not boxplot_data:
+            self.__log.error("No valid data found for box plot")
+            return
+
+        boxplot_data = [boxplot_data[1], boxplot_data[0], boxplot_data[2]]
+        labels = [labels[1], labels[0], labels[2]]
+
+        for i, label in enumerate(labels):
+            exp_index = f"({'i' * (i + 1)})"
+            # Prepend the experiment index to the label
+            labels[i] = f"{exp_index} {label}"
+
+        # Determine appropriate y-axis limit
+        max_throughput = max(max(box) for box in boxplot_data)
+
+        # Generate the box plot
+        self.plotter.generate_whisker_plot(
+            boxplot_data=boxplot_data,
+            labels=labels,
+            ylim_val=400000,
+            xlabel="TaskManager Configuration",
+            ylabel="Throughput (records/s)",
+            # comment="Comparison of Experiment Throughputs",
+            filename="multi_experiment_box_plot.png",
+            workload_objective=350000,
+        )
+
+        self.__log.info(
+            f"Generated multi-experiment box plot at {self.plotter.plots_path}"
+        )
+
     def _get_multi_exp_data(self):
         multi_exp_data = {}
         for folder in os.listdir(self.base_path):
@@ -94,38 +211,171 @@ class GroupedDataEval:
         return multi_exp_data
 
     def generate_multi_exp_plot(self, single_node=True):
+        # Centralized style definition for machine types
+        machine_styles = {
+            "BM": {"marker": "o", "color": "#1f77b4"},  # Blue circle
+            "VM-L": {"marker": "s", "color": "#d62728"},  # Red square
+            "VM-S": {"marker": "D", "color": "#2ca02c"},  # Green diamond
+            "Pico": {"marker": "^", "color": "#9467bd"},  # Purple triangle
+        }
+
         experiment_data = self._get_multi_exp_data()
         plot_data = {}
+        custom_markers = {}
+        custom_colors = {}
+        custom_legends = {}
+        custom_point_colors = {}
+
+        # Process each experiment
         for exp_name, (config, final_df) in experiment_data.items():
+            # Extract throughput data
             new_df = final_df.loc[:, ["Parallelism", "Throughput_mean"]].copy()
             new_df.rename(columns={"Throughput_mean": "Throughput"}, inplace=True)
-            new_df.set_index("Parallelism", inplace=True)
+
+            # Determine if this is a mixed node experiment
+            is_mixed_node = "mix_node" in exp_name.lower()
+
+            # WORKAROUND: Special handling for the problematic VM-S mixed node experiment (mix_node_vms_pico)
+            if is_mixed_node and "vms" in exp_name.lower():
+                self.__log.warning(
+                    f"Applying workaround for VM-S mixed node experiment: {exp_name}"
+                )
+                if len(new_df) > 1:
+                    new_df = new_df.drop(index=1).reset_index(drop=True)
+                    self.__log.info(
+                        f"Removed problematic second row from {exp_name} data"
+                    )
+
+            # Format index based on an experiment type
+            if single_node:
+                new_df.set_index("Parallelism", inplace=True)
+            else:
+                new_df.reset_index(drop=True, inplace=True)
+                new_df.index = new_df.index + 1
+
+            # Export data CSV
             new_df.to_csv(
                 os.path.join(self.base_path, f"{exp_name}_plot_data.csv"), index=True
             )
-            exp_name = exp_name.replace("single_node_", "").replace("_", " ").title()
-            plot_data[exp_name] = new_df["Throughput"]
 
+            # Parse experiment name to identify machine types
+            machine_types = []
+            if is_mixed_node:
+                parts = exp_name.lower().split("_")
+                if len(parts) >= 4:
+                    first_type = self._get_machine_type(parts[2])
+                    second_type = self._get_machine_type(parts[3])
+                    machine_types = [first_type, second_type]
+                    display_name = f"{first_type} + {second_type}"
+            else:
+                machine_type = self._get_machine_type(exp_name)
+                machine_types = [machine_type]
+                display_name = machine_type
+
+            # Store data
+            plot_data[display_name] = new_df["Throughput"]
+
+            # Set visualization properties based on machine types
+            if is_mixed_node and len(machine_types) == 2:
+                # For mixed nodes, create point-specific markers based on index
+                point_markers = {}
+                point_colors = {}
+
+                for idx in new_df.index:
+                    # For multi_node plots, maintain consistent marker and color mapping
+                    if not single_node:
+                        # Always use the machine type's assigned marker and color
+                        marker_type = machine_types[0] if idx == 1 else machine_types[1]
+                    else:
+                        # For single_node, follow the existing pattern
+                        marker_type = machine_types[0] if idx == 1 else machine_types[1]
+
+                    point_markers[idx] = machine_styles.get(
+                        marker_type, {"marker": "o"}
+                    )["marker"]
+
+                    # Always use the correct machine type color for its marker
+                    point_colors[idx] = machine_styles.get(
+                        marker_type, {"color": "#000000"}
+                    )["color"]
+
+                custom_markers[display_name] = point_markers
+                custom_point_colors[display_name] = point_colors
+
+                # Use the FIRST machine type's color for the connecting line (for grayscale this will be overridden)
+                custom_colors[display_name] = machine_styles.get(
+                    machine_types[0], {"color": "#000000"}
+                )["color"]
+
+                # Set custom legend to show both markers with their proper colors
+                custom_legends[display_name] = {
+                    "markers": [
+                        machine_styles.get(machine_types[0], {"marker": "o"})["marker"],
+                        machine_styles.get(machine_types[1], {"marker": "s"})["marker"],
+                    ],
+                    "colors": [
+                        machine_styles.get(machine_types[0], {"color": "#000000"})[
+                            "color"
+                        ],
+                        machine_styles.get(machine_types[1], {"color": "#000000"})[
+                            "color"
+                        ],
+                    ],
+                    "label": display_name,
+                }
+                # Ensure the display_name is also added to custom_colors
+                if display_name not in custom_colors:
+                    custom_colors[display_name] = machine_styles.get(
+                        machine_types[0], {"color": "#000000"}
+                    )["color"]
+            else:
+                # For single machine type, use consistent marker and color
+                machine_type = machine_types[0]
+                custom_markers[display_name] = machine_styles.get(
+                    machine_type, {"marker": "o"}
+                )["marker"]
+                custom_colors[display_name] = machine_styles.get(
+                    machine_type, {"color": "#000000"}
+                )["color"]
+
+        # Set up plot parameters
         ylabels_dict = {"Throughput": "Throughput (records/s)"}
-        if single_node:
-            self.plotter.generate_single_frame_multiple_series_plot(
-                ax1_data=plot_data,
-                xlabel="Number of TaskManagers",
-                ylabels_dict=ylabels_dict,
-                filename=os.path.join(self.base_path, "single_node_throughput.png"),
-                ylim=(0, 400000),
-                axhline=350000,
-                zoom_region=(0, 3, 0, 40000),
-            )
+
+        # Generate the plot
+        self.plotter.generate_single_frame_multiple_series_plot(
+            ax1_data=plot_data,
+            xlabel="Number of TaskManagers" if single_node else "Number of Machines",
+            ylabels_dict=ylabels_dict,
+            filename=os.path.join(
+                self.base_path,
+                "single_node_throughput.png"
+                if single_node
+                else "multi_node_throughput.png",
+            ),
+            ylim=(0, 400000),
+            axhline=350000,
+            zoom_region=(0, 3, 0, 40000) if single_node else None,
+            custom_markers=custom_markers,
+            custom_colors=custom_colors,
+            custom_point_colors=custom_point_colors,
+            custom_legends=custom_legends,
+        )
+
+    @staticmethod
+    def _get_machine_type(name):
+        """Extract standardized machine name from a string."""
+        name = name.lower()
+        if "bm" in name:
+            return "BM"
+        elif "vml" in name or "vm-l" in name:
+            return "VM-L"
+        elif "vms" in name or "vm-s" in name:
+            return "VM-S"
+        elif "pico" in name:
+            return "Pico"
         else:
-            self.plotter.generate_single_frame_multiple_series_plot(
-                ax1_data=plot_data,
-                xlabel="Number of TaskManagers",
-                ylabels_dict=ylabels_dict,
-                filename=os.path.join(self.base_path, "multi_node_throughput.png"),
-                ylim=(0, 100000),
-                # axhline=350000,
-            )
+            # If no match, return a cleaned version of the original name
+            return name.replace("single_node_", "").replace("_", " ").title()
 
     def process_resource_data(self):
         resource_data = {}
