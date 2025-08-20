@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 import argparse
 import os
+import sys
 
 from scripts.src.Client import Client
 from scripts.src.data.DataManager import DataManager
-from scripts.src.platforms.ProvisionManager import ProvisionManager
+from scripts.src.platforms.ProvisionManager import ProvisionManager, ProvisionManagerError
 from scripts.src.resources.KubernetesManager import KubernetesManager
 from scripts.utils.Config import Config
 from scripts.utils.Defaults import DefaultKeys as Key
@@ -12,56 +13,67 @@ from scripts.utils.Logger import Logger
 from scripts.utils.Tools import Tools, Playbooks
 
 
-# Build cluster and install dependencies
 def provision(config: Config):
-    if config.get(Key.Platforms.platforms.key) is not None:
-        log.debug(
-            f"Found {len(config.get(Key.Platforms.platforms.key))} platforms to provision."
-        )
-        pm: ProvisionManager = ProvisionManager(log, config)
+    """Build cluster and install dependencies."""
+    platforms = config.get(Key.Platforms.platforms.key)
+    if not platforms:
+        log.error("No platforms are specified in the configuration file.")
+        return
 
-        # Initialize inventory file with requested nodes from config
+    log.debug(f"Found {len(platforms)} platforms to provision.")
+
+    try:
+        pm = ProvisionManager(log, config)
         pm.provision()
 
         # Platforms are provisioned, create runtime file
         config.update_runtime_file(create=True)
 
         # Check if we should provision infrastructure
-        if config.get_bool(
-            Key.Scalehub.provision_infrastructure.key
-        ) or config.get_bool(Key.Scalehub.lazy_setup.key):
-            # Provision should be complete, deploy infrastructure
-            p: Playbooks = Playbooks(log)
-            try:
-                p.run("infrastructure/setup", tag="create", config=config)
+        if (config.get_bool(Key.Scalehub.provision_infrastructure.key) or
+            config.get_bool(Key.Scalehub.lazy_setup.key)):
+            _provision_infrastructure(config)
 
-                # Fast setup is enabled, deploy orchestration and application setup in sequence
-                if config.get_bool(Key.Scalehub.lazy_setup.key):
-                    log.info(
-                        "Lazy setup is enabled. Deploying orchestration and application setup in sequence."
-                    )
-                    p.run("orchestration/setup", tag="create", config=config)
-                    p.run("application/setup", tag="create", config=config)
-            except Exception as e:
-                log.error(f"Error during provision setup: {str(e)}")
-                exit(1)
-    else:
-        log.error("No platforms are specified in the configuration file.")
+    except ProvisionManagerError as e:
+        log.error(f"Provisioning failed: {str(e)}")
+        sys.exit(1)
+    except Exception as e:
+        log.error(f"Unexpected error during provisioning: {str(e)}")
+        sys.exit(1)
 
 
-# Destroy cluster
+def _provision_infrastructure(config: Config):
+    """Provision infrastructure components."""
+    p = Playbooks(log)
+    try:
+        p.run("infrastructure/setup", tag="create", config=config)
+
+        # Fast setup is enabled, deploy orchestration and application setup in sequence
+        if config.get_bool(Key.Scalehub.lazy_setup.key):
+            log.info("Lazy setup is enabled. Deploying orchestration and application setup in sequence.")
+            p.run("orchestration/setup", tag="create", config=config)
+            p.run("application/setup", tag="create", config=config)
+    except Exception as e:
+        log.error(f"Error during infrastructure provision: {str(e)}")
+        sys.exit(1)
+
+
 def destroy(config: Config):
-    if config.get(Key.Platforms.platforms.key) is not None:
-        log.info(
-            f"Found {len(config.get(Key.Platforms.platforms.key))} platforms to destroy."
-        )
-        pm: ProvisionManager = ProvisionManager(log, config)
-        pm.destroy()
-    else:
+    """Destroy cluster."""
+    platforms = config.get(Key.Platforms.platforms.key)
+    if not platforms:
         log.error("No platforms are specified in the configuration file.")
+        return
 
-    # Delete runtime file
-    config.delete_runtime_file()
+    log.info(f"Found {len(platforms)} platforms to destroy.")
+
+    try:
+        pm = ProvisionManager(log, config)
+        pm.destroy()
+        config.delete_runtime_file()
+    except Exception as e:
+        log.error(f"Error during destruction: {str(e)}")
+        sys.exit(1)
 
 
 # Execute tasks with "deploy" tag for a given playbook
@@ -286,7 +298,7 @@ def main():
                 log.set_debug_level(debug_level)
     except Exception as e:
         log.error(f"Error while loading configuration file: {str(e)}")
-        exit(1)
+        sys.exit(1)
 
     log.debuggg(f"Command: {args.command}")
     # Debug configuration, this can either be a single one or a list of config

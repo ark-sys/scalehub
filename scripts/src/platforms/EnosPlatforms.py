@@ -35,6 +35,7 @@ class EnosPlatforms(Platform):
                 self.__log.error(
                     f"[ENOS_PLTS] Invalid start_time format for {platform_type}. Expected format: HH:MM:SS"
                 )
+                return None
             else:
                 time_tag = "_late" if int(time_parts[0]) >= 19 else "_day"
                 reservation_name = f"{reservation_name}{time_tag}"
@@ -231,7 +232,7 @@ class EnosPlatforms(Platform):
         self.__log.debug(f"[ENOS_PLTS] Final enos Inventory: {inventory}")
         return inventory
 
-    def setup(self) -> dict:
+    def setup(self) -> dict | None:
         # Request nodes with enoslib
         if self.enos_providers:
             self.__log.debug("[ENOS_PLTS] Found Enos platforms. Provisioning...")
@@ -312,6 +313,7 @@ class EnosPlatforms(Platform):
             inventory = self.__reformat_inventory(inventory)
 
             return inventory
+        return None
 
     def post_setup(self):
         # Apply firewall rules

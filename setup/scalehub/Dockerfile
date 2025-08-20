@@ -104,8 +104,6 @@ ADD setup/scalehub/fish/shub.fish /usr/share/fish/vendor_completions.d/shub.fish
 # Install some custom functions to enhance prompt
 ADD setup/scalehub/fish/functions/* /usr/share/fish/functions/
 
-# Copy history file from /app/conf to initialize some command history autocomplete
-ADD setup/scalehub/fish/fish_history /root/.local/share/fish/
 
 ####### Nginx stuff #######
 EXPOSE 80 443
