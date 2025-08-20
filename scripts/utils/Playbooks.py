@@ -3,9 +3,9 @@ from time import sleep
 
 import ansible_runner
 
-from utils.Config import Config
-from utils.Defaults import DefaultKeys as Key
-from utils.Logger import Logger
+from scripts.utils.Config import Config
+from scripts.utils.Defaults import DefaultKeys as Key
+from scripts.utils.Logger import Logger
 
 
 class Playbooks:
