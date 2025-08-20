@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from scripts.monitor.experiments.Experiment import Experiment
-from scripts.src.data.DataManager import DataManager
+from scripts.src.data.manager import DataManager
 from scripts.utils.Defaults import DefaultKeys as Key
 from scripts.utils.Tools import FolderManager
 

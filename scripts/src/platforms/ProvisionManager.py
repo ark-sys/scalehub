@@ -3,17 +3,18 @@ from typing import Dict, List, Any
 
 import yaml
 
-from scripts.src.platforms.Platform import Platform
 from scripts.src.platforms.EnosPlatform import EnosPlatform
 from scripts.src.platforms.EnosPlatforms import EnosPlatforms
-from scripts.src.platforms.RaspberryPiPlatform import RaspberryPiPlatform
+from scripts.src.platforms.Platform import Platform
 from scripts.src.platforms.PlatformFactory import PlatformFactory, PlatformCreationError
+from scripts.src.platforms.RaspberryPiPlatform import RaspberryPiPlatform
 from scripts.utils.Defaults import DefaultKeys as Key
 from scripts.utils.Logger import Logger
 
 
 class ProvisionManagerError(Exception):
     """Raised when provisioning fails."""
+
     pass
 
 
@@ -36,7 +37,13 @@ class ProvisionManager:
         """Create platform instances from configuration."""
         platforms = []
         # Get platforms list from config - this is already parsed as dictionaries
-        platform_configs = self._config.get(Key.Platforms.platforms.key, [])
+        platform_configs = self._config.get(Key.Platforms.platforms.key)
+
+        if not platform_configs:
+            self._log.info(
+                "No platforms configured. Using default platform configurations."
+            )
+            platform_configs = []
 
         for platform_config in platform_configs:
             try:
@@ -59,7 +66,8 @@ class ProvisionManager:
     def _filter_custom_platforms(self) -> List[Platform]:
         """Filter custom platforms (non-Enos, non-RaspberryPi) from all platforms."""
         return [
-            p for p in self._platforms
+            p
+            for p in self._platforms
             if not isinstance(p, (EnosPlatform, RaspberryPiPlatform))
         ]
 
@@ -121,7 +129,9 @@ class ProvisionManager:
             pi_inventory = self._raspberry_pis[0].setup()
             self._save_inventory(pi_inventory, "pi_inventory.yaml")
         except Exception as e:
-            raise ProvisionManagerError(f"Failed to provision Raspberry Pi platforms: {str(e)}")
+            raise ProvisionManagerError(
+                f"Failed to provision Raspberry Pi platforms: {str(e)}"
+            )
 
     def _provision_custom_platforms(self) -> None:
         """Provision custom platforms."""
@@ -132,7 +142,9 @@ class ProvisionManager:
 
         for i, platform in enumerate(self._custom_platforms):
             try:
-                self._log.info(f"Provisioning custom platform: {platform.platform_name} ({platform.platform_type})")
+                self._log.info(
+                    f"Provisioning custom platform: {platform.platform_name} ({platform.platform_type})"
+                )
                 custom_inventory = platform.setup()
 
                 # Use platform type and name for filename
@@ -157,7 +169,9 @@ class ProvisionManager:
         self._provision_custom_platforms()
 
         if not self._inventory_dict:
-            raise ProvisionManagerError("No platforms are specified in the configuration file.")
+            raise ProvisionManagerError(
+                "No platforms are specified in the configuration file."
+            )
 
         self._log.info("Provisioning completed.")
         return self._inventory_dict
@@ -180,7 +194,9 @@ class ProvisionManager:
                 self._log.info(f"Destroying custom platform: {platform.platform_name}")
                 platform.destroy()
             except Exception as e:
-                self._log.error(f"Error destroying custom platform {platform.platform_name}: {str(e)}")
+                self._log.error(
+                    f"Error destroying custom platform {platform.platform_name}: {str(e)}"
+                )
 
         # Raspberry Pi platforms don't need explicit destruction
         self._log.info("Platform destruction completed.")

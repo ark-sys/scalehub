@@ -15,7 +15,7 @@ class Config:
     RUNTIME_PATH = "/app/runtime/runtime.json"
     DEFAULTS_PATH = "/app/conf/defaults.ini"
 
-    def __init__(self, log: Logger, _param: str | dict):
+    def __init__(self, log: Logger, _param: object):
         self.__config = {}
         self.__log = log
         if isinstance(_param, dict):
@@ -27,6 +27,9 @@ class Config:
                 f"Invalid type for conf: {type(_param)}. Expected path (str) or dict."
             )
             raise ValueError(f"Invalid type for conf: {type(_param)}")
+
+    def __str__(self):
+        return f"Config: {self.__config}"
 
     def __load_from_file(self, _param: str):
         if not os.path.exists(_param):
@@ -216,7 +219,7 @@ class Config:
                             f"Mandatory parameter {key} is missing in section {key_class.__name__.lower()}.{subclass[0].lower()}"
                         )
 
-    def get(self, key) -> any:
+    def get(self, key):
 
         return self.__config.get(key)
 
@@ -272,6 +275,7 @@ class Config:
         ).split()
         if not load_generators_names:
             self.__log.error("No load generators found in config file.")
+            return None
 
         else:
             load_generators = []

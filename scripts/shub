@@ -4,13 +4,17 @@ import os
 import sys
 
 from scripts.src.Client import Client
-from scripts.src.data.DataManager import DataManager
-from scripts.src.platforms.ProvisionManager import ProvisionManager, ProvisionManagerError
+from scripts.src.data.manager import DataManager
+from scripts.src.platforms.ProvisionManager import (
+    ProvisionManager,
+    ProvisionManagerError,
+)
 from scripts.src.resources.KubernetesManager import KubernetesManager
 from scripts.utils.Config import Config
 from scripts.utils.Defaults import DefaultKeys as Key
 from scripts.utils.Logger import Logger
-from scripts.utils.Tools import Tools, Playbooks
+from scripts.utils.Tools import Tools
+from utils.Playbooks import Playbooks
 
 
 def provision(config: Config):
@@ -21,7 +25,6 @@ def provision(config: Config):
         return
 
     log.debug(f"Found {len(platforms)} platforms to provision.")
-
     try:
         pm = ProvisionManager(log, config)
         pm.provision()
@@ -30,8 +33,9 @@ def provision(config: Config):
         config.update_runtime_file(create=True)
 
         # Check if we should provision infrastructure
-        if (config.get_bool(Key.Scalehub.provision_infrastructure.key) or
-            config.get_bool(Key.Scalehub.lazy_setup.key)):
+        if config.get_bool(
+            Key.Scalehub.provision_infrastructure.key
+        ) or config.get_bool(Key.Scalehub.lazy_setup.key):
             _provision_infrastructure(config)
 
     except ProvisionManagerError as e:
@@ -50,7 +54,9 @@ def _provision_infrastructure(config: Config):
 
         # Fast setup is enabled, deploy orchestration and application setup in sequence
         if config.get_bool(Key.Scalehub.lazy_setup.key):
-            log.info("Lazy setup is enabled. Deploying orchestration and application setup in sequence.")
+            log.info(
+                "Lazy setup is enabled. Deploying orchestration and application setup in sequence."
+            )
             p.run("orchestration/setup", tag="create", config=config)
             p.run("application/setup", tag="create", config=config)
     except Exception as e:

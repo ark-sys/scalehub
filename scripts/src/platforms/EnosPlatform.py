@@ -1,8 +1,8 @@
 import json
 import os
 import subprocess
-from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
+from typing import Dict, Any, List, Optional
 
 import enoslib as en
 import yaml
@@ -14,6 +14,7 @@ from scripts.utils.Logger import Logger
 @dataclass
 class VMGroup:
     """Configuration for a VM group."""
+
     role: str
     conf: Dict[str, Any]
     count: int
@@ -22,6 +23,7 @@ class VMGroup:
 
 class EnosConfigurationError(Exception):
     """Raised when Enos configuration is invalid."""
+
     pass
 
 
@@ -63,22 +65,28 @@ class EnosPlatform(Platform):
         """Create Grid5000 configuration."""
         provider_conf = self._base_conf.copy()
         provider_conf["resources"] = self.PROD_NETWORK.copy()
-        provider_conf["resources"]["networks"][0]["site"] = self._platform_config["site"]
+        provider_conf["resources"]["networks"][0]["site"] = self._platform_config[
+            "site"
+        ]
         provider_conf["resources"]["machines"] = []
 
         for role in roles:
             node_count = int(self._platform_config.get(role, 0))
             if node_count > 0:
                 extended_roles = [role, self._platform_config["name"]]
-                platform_type = "vagrant" if self.platform_type == "VagrantG5k" else "baremetal"
+                platform_type = (
+                    "vagrant" if self.platform_type == "VagrantG5k" else "baremetal"
+                )
                 extended_roles.append(platform_type)
 
-                provider_conf["resources"]["machines"].append({
-                    "roles": extended_roles,
-                    "cluster": self._platform_config["cluster"],
-                    "nodes": node_count,
-                    "primary_network": "default",
-                })
+                provider_conf["resources"]["machines"].append(
+                    {
+                        "roles": extended_roles,
+                        "cluster": self._platform_config["cluster"],
+                        "nodes": node_count,
+                        "primary_network": "default",
+                    }
+                )
 
         return provider_conf
 
@@ -91,39 +99,47 @@ class EnosPlatform(Platform):
             node_count = int(self._platform_config.get(role, 0))
             if node_count > 0:
                 extended_roles = [role, "virtualmachine", self._platform_config["name"]]
-                provider_conf["resources"]["machines"].append({
-                    "roles": extended_roles,
-                    "cluster": self._platform_config["cluster"],
-                    "number": node_count,
-                    "vcore_type": "core",
-                    "flavour_desc": {
-                        "core": int(self._platform_config["core_per_vm"]),
-                        "mem": int(self._platform_config["memory_per_vm"]),
-                        "disk": int(self._platform_config["disk_per_vm"]),
-                    },
-                })
+                provider_conf["resources"]["machines"].append(
+                    {
+                        "roles": extended_roles,
+                        "cluster": self._platform_config["cluster"],
+                        "number": node_count,
+                        "vcore_type": "core",
+                        "flavour_desc": {
+                            "core": int(self._platform_config["core_per_vm"]),
+                            "mem": int(self._platform_config["memory_per_vm"]),
+                            "disk": int(self._platform_config["disk_per_vm"]),
+                        },
+                    }
+                )
         return provider_conf
 
     def _create_fit_config(self, roles: List[str]) -> Dict[str, Any]:
         """Create FIT configuration."""
         provider_conf = self._base_conf.copy()
         provider_conf["resources"] = self.PROD_NETWORK.copy()
-        provider_conf["resources"]["networks"][0]["site"] = self._platform_config["site"]
+        provider_conf["resources"]["networks"][0]["site"] = self._platform_config[
+            "site"
+        ]
         provider_conf["resources"]["machines"] = []
 
         for role in roles:
             node_count = int(self._platform_config.get(role, 0))
             if node_count > 0:
                 extended_roles = [role, "iot", self._platform_config["name"]]
-                provider_conf["resources"]["machines"].append({
-                    "roles": extended_roles,
-                    "cluster": self._platform_config["cluster"],
-                    "number": node_count,
-                    "archi": self._platform_config["archi"],
-                })
+                provider_conf["resources"]["machines"].append(
+                    {
+                        "roles": extended_roles,
+                        "cluster": self._platform_config["cluster"],
+                        "number": node_count,
+                        "archi": self._platform_config["archi"],
+                    }
+                )
         return provider_conf
 
-    def _estimate_required_nodes(self, vm_groups: List[VMGroup], site: str, cluster: str) -> None:
+    def _estimate_required_nodes(
+        self, vm_groups: List[VMGroup], site: str, cluster: str
+    ) -> None:
         """Estimate required nodes for VM groups."""
         nodes_url = f"{self.GRID5000_API}/sites/{site}/clusters/{cluster}/nodes"
 
@@ -136,22 +152,27 @@ class EnosPlatform(Platform):
             # Assume all nodes have the same resources
             node = nodes_dict["items"][0]
             node_cpu = node["architecture"]["nb_cores"]
-            node_memory = node["main_memory"]["ram_size"]
+            node_memory_kb = node["main_memory"]["ram_size"]
+            node_memory_mb = node_memory_kb // 1024  # Convert kB to MB
 
             for vm_group in vm_groups:
                 vm_conf = vm_group.conf
                 count = vm_group.count
 
                 total_vm_cpu = vm_conf["core_per_vm"] * count
-                total_vm_memory = vm_conf["memory_per_vm"] * 1024 * 1024 * count
+                total_vm_memory_mb = vm_conf["memory_per_vm"] * count  # Already in MB
 
                 required_nodes_cpu = (total_vm_cpu + node_cpu - 1) // node_cpu
-                required_nodes_memory = (total_vm_memory + node_memory - 1024) // node_memory
+                required_nodes_memory = (
+                    total_vm_memory_mb + node_memory_mb - 1
+                ) // node_memory_mb
 
                 vm_group.required_nodes = max(required_nodes_cpu, required_nodes_memory)
 
         except Exception as e:
-            raise EnosConfigurationError(f"Error fetching node data from {nodes_url}: {str(e)}")
+            raise EnosConfigurationError(
+                f"Error fetching node data from {nodes_url}: {str(e)}"
+            )
 
     def _create_custom_vagrantong5k_config(self, roles: List[str]) -> Dict[str, Any]:
         """Create custom Vagrant on Grid5000 configuration."""
@@ -159,20 +180,24 @@ class EnosPlatform(Platform):
 
         vm_groups = []
         for role in roles:
-            vm_groups.append(VMGroup(
-                role=role,
-                conf={
-                    "name": self._platform_config["name"],
-                    "site": self._platform_config["site"],
-                    "cluster": self._platform_config["cluster"],
-                    "core_per_vm": int(self._platform_config["core_per_vm"]),
-                    "memory_per_vm": int(self._platform_config["memory_per_vm"]),
-                    "disk_per_vm": int(self._platform_config["disk_per_vm"]),
-                },
-                count=int(self._platform_config.get(role, 0))
-            ))
+            vm_groups.append(
+                VMGroup(
+                    role=role,
+                    conf={
+                        "name": self._platform_config["name"],
+                        "site": self._platform_config["site"],
+                        "cluster": self._platform_config["cluster"],
+                        "core_per_vm": int(self._platform_config["core_per_vm"]),
+                        "memory_per_vm": int(self._platform_config["memory_per_vm"]),
+                        "disk_per_vm": int(self._platform_config["disk_per_vm"]),
+                    },
+                    count=int(self._platform_config.get(role, 0)),
+                )
+            )
 
-        self._estimate_required_nodes(vm_groups, self._platform_config["site"], self._platform_config["cluster"])
+        self._estimate_required_nodes(
+            vm_groups, self._platform_config["site"], self._platform_config["cluster"]
+        )
         self._vm_groups = vm_groups
 
         # Create new platform config with required nodes
@@ -187,10 +212,18 @@ class EnosPlatform(Platform):
         self._log.debugg(f"Getting provider for: {platform_type}")
 
         provider_map = {
-            "Grid5000": lambda: en.G5k(en.G5kConf.from_dictionary(conf_dict).finalize()),
-            "VagrantG5k": lambda: en.G5k(en.G5kConf.from_dictionary(conf_dict).finalize()),
-            "VMonG5k": lambda: en.VMonG5k(en.VMonG5kConf.from_dictionary(conf_dict).finalize()),
-            "FIT": lambda: en.Iotlab(en.IotlabConf.from_dictionary(conf_dict).finalize()),
+            "Grid5000": lambda: en.G5k(
+                en.G5kConf.from_dictionary(conf_dict).finalize()
+            ),
+            "VagrantG5k": lambda: en.G5k(
+                en.G5kConf.from_dictionary(conf_dict).finalize()
+            ),
+            "VMonG5k": lambda: en.VMonG5k(
+                en.VMonG5kConf.from_dictionary(conf_dict).finalize()
+            ),
+            "FIT": lambda: en.Iotlab(
+                en.IotlabConf.from_dictionary(conf_dict).finalize()
+            ),
         }
 
         provider_factory = provider_map.get(platform_type)
@@ -226,12 +259,16 @@ class EnosPlatform(Platform):
             "Grid5000": lambda: self._create_g5k_config(self.BASE_ROLES),
             "VMonG5k": lambda: self._create_vmong5k_config(self.BASE_ROLES),
             "FIT": lambda: self._create_fit_config(self.BASE_ROLES),
-            "VagrantG5k": lambda: self._create_custom_vagrantong5k_config(self.BASE_ROLES),
+            "VagrantG5k": lambda: self._create_custom_vagrantong5k_config(
+                self.BASE_ROLES
+            ),
         }
 
         config_factory = config_map.get(self.platform_type)
         if not config_factory:
-            raise EnosConfigurationError(f"Unsupported platform type: {self.platform_type}")
+            raise EnosConfigurationError(
+                f"Unsupported platform type: {self.platform_type}"
+            )
 
         return config_factory()
 
