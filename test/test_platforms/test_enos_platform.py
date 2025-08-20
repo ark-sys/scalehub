@@ -1,7 +1,12 @@
-import pytest
 from unittest.mock import patch, MagicMock
-from scripts.src.platforms.EnosPlatform import EnosPlatform, EnosConfigurationError
-from scripts.src.platforms.Platform import Platform
+
+import pytest
+
+from scripts.src.platforms.EnosPlatform import (
+    EnosPlatform,
+    EnosConfigurationError,
+    VMGroup,
+)
 
 
 @pytest.fixture
@@ -42,7 +47,9 @@ def test_enosplatform_validate_config_success(valid_config, logger_mock):
 def test_enosplatform_validate_config_failure(logger_mock):
     """Test validation failure when required fields are missing."""
     invalid_config = {"type": "Grid5000", "reservation_name": "test_reservation"}
-    with pytest.raises(EnosConfigurationError, match="Missing required field: walltime"):
+    with pytest.raises(
+        EnosConfigurationError, match="Missing required field: walltime"
+    ):
         EnosPlatform(log=logger_mock, platform_config=invalid_config)
 
 
@@ -57,24 +64,32 @@ def test_enosplatform_create_base_config(valid_config, logger_mock):
 
 
 @patch("scripts.src.platforms.EnosPlatform.subprocess.check_output")
-def test_enosplatform_estimate_required_nodes(mock_subprocess, valid_config, logger_mock):
+def test_enosplatform_estimate_required_nodes(
+    mock_subprocess, valid_config, logger_mock
+):
     """Test estimation of required nodes for VM groups."""
-    mock_subprocess.return_value = b'{"items": [{"architecture": {"nb_cores": 16}, "main_memory": {"ram_size": 128000}}]}'
+    mock_subprocess.return_value = b'{"items": [{"architecture": {"nb_cores": 16}, "main_memory": {"ram_size": 134217728}}]}'
     platform = EnosPlatform(log=logger_mock, platform_config=valid_config)
 
     vm_groups = [
-        {"role": "producers", "conf": {"core_per_vm": 4, "memory_per_vm": 8192}, "count": 2},
-        {"role": "consumers", "conf": {"core_per_vm": 2, "memory_per_vm": 4096}, "count": 3},
+        VMGroup(
+            role="producers", conf={"core_per_vm": 4, "memory_per_vm": 8192}, count=2
+        ),
+        VMGroup(
+            role="consumers", conf={"core_per_vm": 2, "memory_per_vm": 4096}, count=3
+        ),
     ]
     platform._estimate_required_nodes(vm_groups, "rennes", "paradoxe")
 
-    assert vm_groups[0]["required_nodes"] == 1
-    assert vm_groups[1]["required_nodes"] == 1
+    assert vm_groups[0].required_nodes == 1
+    assert vm_groups[1].required_nodes == 1
 
 
 @patch("scripts.src.platforms.EnosPlatform.en.init_logging")
 @patch("scripts.src.platforms.EnosPlatform.EnosPlatform._create_base_config")
-def test_enosplatform_setup(mock_create_base_config, mock_init_logging, valid_config, logger_mock):
+def test_enosplatform_setup(
+    mock_create_base_config, mock_init_logging, valid_config, logger_mock
+):
     """Test the setup method of the EnosPlatform class."""
     mock_create_base_config.return_value = {"job_name": "test_job"}
     platform = EnosPlatform(log=logger_mock, platform_config=valid_config)

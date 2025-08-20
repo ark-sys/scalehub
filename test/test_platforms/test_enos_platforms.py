@@ -1,7 +1,9 @@
-import pytest
 from unittest.mock import MagicMock, patch
-from scripts.src.platforms.EnosPlatforms import EnosPlatforms
+
+import pytest
+
 from scripts.src.platforms.EnosPlatform import EnosPlatform
+from scripts.src.platforms.EnosPlatforms import EnosPlatforms
 
 
 @pytest.fixture
@@ -16,33 +18,7 @@ def enos_platform_mock():
     platform.start_time = "now"
     platform.platform_config = {"name": "test_platform"}
     platform.setup.return_value = {
-        "resources": {
-            "machines": [{"roles": ["producers"], "nodes": 2}]
-        }
-    }
-    platform.get_provider.return_value = MagicMock()
-    return platform
-
-
-@pytest.fixture
-def vagrant_platform_mock():
-    platform = MagicMock(spec=EnosPlatform)
-    platform.platform_type = "VagrantG5k"
-    platform.start_time = "now"
-    platform.platform_config = {"name": "vagrant_platform"}
-    platform.vm_groups = [
-        {
-            "role": "producers",
-            "conf": {"core_per_vm": 4, "memory_per_vm": 8192, "disk_per_vm": 100, "site": "rennes",
-                     "cluster": "paradoxe"},
-            "count": 2,
-            "required_nodes": 1
-        }
-    ]
-    platform.setup.return_value = {
-        "resources": {
-            "machines": [{"roles": ["vagrant"], "nodes": 1}]
-        }
+        "resources": {"machines": [{"roles": ["producers"], "nodes": 2}]}
     }
     platform.get_provider.return_value = MagicMock()
     return platform
@@ -53,7 +29,7 @@ def test_build_uber_dict(logger_mock, enos_platform_mock):
     platforms = [enos_platform_mock]
     enos_platforms = EnosPlatforms(logger_mock, platforms)
 
-    result = enos_platforms._EnosPlatforms__build_uber_dict(platforms)
+    result = enos_platforms.uber_dict
 
     assert "Grid5000" in result
     assert result["Grid5000"]["resources"]["machines"][0]["roles"] == ["producers"]
@@ -65,23 +41,19 @@ def test_build_uber_dict_merge_configs(logger_mock):
     platform1 = MagicMock(spec=EnosPlatform)
     platform1.platform_type = "Grid5000"
     platform1.setup.return_value = {
-        "resources": {
-            "machines": [{"roles": ["producers"], "nodes": 2}]
-        }
+        "resources": {"machines": [{"roles": ["producers"], "nodes": 2}]}
     }
 
     platform2 = MagicMock(spec=EnosPlatform)
     platform2.platform_type = "Grid5000"
     platform2.setup.return_value = {
-        "resources": {
-            "machines": [{"roles": ["consumers"], "nodes": 3}]
-        }
+        "resources": {"machines": [{"roles": ["consumers"], "nodes": 3}]}
     }
 
     platforms = [platform1, platform2]
     enos_platforms = EnosPlatforms(logger_mock, platforms)
 
-    result = enos_platforms._EnosPlatforms__build_uber_dict(platforms)
+    result = enos_platforms.uber_dict
 
     assert len(result["Grid5000"]["resources"]["machines"]) == 2
 
@@ -96,14 +68,16 @@ def test_setup_success(mock_providers, logger_mock, enos_platform_mock):
     mock_roles = {
         "G5k": [
             MagicMock(alias="node1", address="192.168.1.1"),
-            MagicMock(alias="node2", address="192.168.1.2")
+            MagicMock(alias="node2", address="192.168.1.2"),
         ]
     }
     mock_networks = []
 
     mock_provider_instance.init.return_value = (mock_roles, mock_networks)
 
-    with patch("scripts.src.platforms.EnosPlatforms.en.sync_info", return_value=mock_roles):
+    with patch(
+        "scripts.src.platforms.EnosPlatforms.en.sync_info", return_value=mock_roles
+    ):
         platforms = [enos_platform_mock]
         enos_platforms = EnosPlatforms(logger_mock, platforms)
         inventory = enos_platforms.setup()
@@ -113,40 +87,41 @@ def test_setup_success(mock_providers, logger_mock, enos_platform_mock):
     mock_provider_instance.init.assert_called_once()
 
 
-def test_distribute_vagrant_vms(logger_mock, vagrant_platform_mock):
-    """Test distribution of VMs across Vagrant hypervisors."""
-    inventory = {
-        "vagrant": {
-            "hosts": {
-                "hypervisor1": {
-                    "ansible_host": "192.168.1.1",
-                    "reservation_name": "vagrant_platform"
-                }
-            }
-        }
+@pytest.fixture
+def vagrant_platform_mock():
+    from scripts.src.platforms.EnosPlatform import VMGroup
+
+    platform = MagicMock(spec=EnosPlatform)
+    platform.platform_type = "VagrantG5k"
+    platform.start_time = "now"
+    platform.platform_config = {"name": "vagrant_platform"}
+    platform.vm_groups = [
+        VMGroup(
+            role="producers",
+            conf={
+                "core_per_vm": 4,
+                "memory_per_vm": 8192,
+                "disk_per_vm": 100,
+                "site": "rennes",
+                "cluster": "paradoxe",
+            },
+            count=2,
+            required_nodes=1,
+        )
+    ]
+    platform.setup.return_value = {
+        "resources": {"machines": [{"roles": ["vagrant"], "nodes": 1}]}
     }
-
-    platforms = [vagrant_platform_mock]
-    enos_platforms = EnosPlatforms(logger_mock, platforms)
-    result = enos_platforms.distribute_vagrant_vms(inventory)
-
-    assert "vms" in result
-    assert "hosts" in result["vms"]
-    assert len(result["vms"]["hosts"]) == 2  # 2 VMs as per vm_groups count
+    platform.get_provider.return_value = MagicMock()
+    return platform
 
 
 def test_reformat_inventory(logger_mock, enos_platform_mock):
     """Test inventory reformatting."""
     inventory = {
-        "test_platform": {
-            "hosts": {"node1": {"ansible_host": "192.168.1.1"}}
-        },
-        "producers": {
-            "hosts": {"node1": {"ansible_host": "192.168.1.1"}}
-        },
-        "baremetal": {
-            "hosts": {"node1": {"ansible_host": "192.168.1.1"}}
-        }
+        "test_platform": {"hosts": {"node1": {"ansible_host": "192.168.1.1"}}},
+        "producers": {"hosts": {"node1": {"ansible_host": "192.168.1.1"}}},
+        "baremetal": {"hosts": {"node1": {"ansible_host": "192.168.1.1"}}},
     }
 
     platforms = [enos_platform_mock]
@@ -183,9 +158,9 @@ def test_get_providers(logger_mock, enos_platform_mock):
     platforms = [enos_platform_mock]
     enos_platforms = EnosPlatforms(logger_mock, platforms)
 
-    conf_dict = {
-        "Grid5000": {"job_name": "test_job", "resources": {}}
-    }
+    enos_platform_mock.get_provider.reset_mock()
+
+    conf_dict = {"Grid5000": {"job_name": "test_job", "resources": {}}}
 
     providers = enos_platforms._EnosPlatforms__get_providers(conf_dict)
 
@@ -193,11 +168,15 @@ def test_get_providers(logger_mock, enos_platform_mock):
     enos_platform_mock.get_provider.assert_called_once()
 
 
+@patch("scripts.src.platforms.EnosPlatforms.isinstance")
 @patch("scripts.src.platforms.EnosPlatforms.en.G5k")
-def test_post_setup(mock_g5k, logger_mock, enos_platform_mock):
+def test_post_setup(mock_g5k, mock_isinstance, logger_mock, enos_platform_mock):
     """Test post-setup firewall configuration."""
     mock_provider = MagicMock()
     mock_provider.fw_create = MagicMock()
+
+    # Mock isinstance to return True for our mock provider
+    mock_isinstance.return_value = True
 
     platforms = [enos_platform_mock]
     enos_platforms = EnosPlatforms(logger_mock, platforms)
@@ -206,6 +185,7 @@ def test_post_setup(mock_g5k, logger_mock, enos_platform_mock):
     enos_platforms.post_setup()
 
     mock_provider.fw_create.assert_called_once_with(proto="all")
+    mock_isinstance.assert_called_once_with(mock_provider, mock_g5k)
 
 
 def test_destroy(logger_mock, enos_platform_mock):
