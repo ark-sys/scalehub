@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script location
-export SCALEHUB_BASEDIR=$(dirname $0)
+export SCALEHUB_BASEDIR=$(cd "$(dirname "$0")"; pwd)
 IMAGE_NAME="scalehub"
 SERVICE_NAME="scalehub"
 
@@ -52,12 +52,12 @@ function generate_secret() {
         echo "username: $username" > "$g5k_creds_path"
         echo -e "\npassword: $password" >> "$g5k_creds_path"
 
-        if [ -f "$g5k_creds_path" ]; then
-            echo -e "\nFile modified successfully."
-            git update-index --assume-unchanged $g5k_creds_path
-        else
-            echo -e "\nFile created successfully."
-        fi
+#        if [ -f "$g5k_creds_path" ]; then
+#            echo -e "\nFile modified successfully."
+#            git update-index --assume-unchanged $g5k_creds_path
+#        else
+#            echo -e "\nFile created successfully."
+#        fi
     else
         if [ -f "$g5k_creds_path" ]; then
             echo "No modifications made."
@@ -89,7 +89,7 @@ function create_service() {
   gen_env_file
   docker compose -p scalehub -f $SCALEHUB_BASEDIR/setup/scalehub/docker-compose.yml up --build -d
   # Prune docker image to clean unnecessary cached layers
-  docker image prune -f
+#  docker image prune -f
 }
 
 function remove_service() {

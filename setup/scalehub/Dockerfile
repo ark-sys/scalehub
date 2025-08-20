@@ -120,21 +120,12 @@ RUN openssl req -new -newkey rsa:2048 -days 10950 -nodes -x509 -keyout /etc/ssl/
 # Add healtcheck on nginx
 HEALTHCHECK --interval=5s --timeout=3s --retries=3 CMD curl -f http://localhost/ || exit 1
 
-# Create user for IDE remote development
-
-#RUN groupadd -g 1010 ide && \
-#    useradd -m -u 1010 -g 1010 -o -s /usr/bin/bash ide \
-#    && echo "ide ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers \
-#    && echo "ide:ide" | chpasswd \
-#    && mkdir -p /home/ide/.ssh \
-#    && chown -R ide:ide /home/ide/.ssh \
-#    && chmod 700 /home/ide/.ssh
 
 # Install ssh server and allow passwordless anonymous login
 RUN apt-get update && apt-get install -y openssh-server
 # Configure SSH server
 
-ADD setup/scalehub/secrets/scalehub.pub /home/$USER/.ssh/authorized_keys
+ADD setup/scalehub/secrets/enos/grid5000.pub /home/$USER/.ssh/authorized_keys
 
 # Expose SSH port
 EXPOSE 22

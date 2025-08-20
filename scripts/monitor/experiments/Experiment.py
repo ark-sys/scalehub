@@ -9,7 +9,7 @@ from scripts.utils.Config import Config
 from scripts.utils.Defaults import DefaultKeys as Key
 from scripts.utils.Logger import Logger
 from scripts.utils.Tools import Tools, FolderManager
-from utils.Playbooks import Playbooks
+from scripts.utils.Playbooks import Playbooks
 
 
 class StoppableThread(threading.Thread):
