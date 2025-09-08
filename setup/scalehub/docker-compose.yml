@@ -61,6 +61,7 @@ services:
     environment:
       - SSH_AUTH_SOCK=/ssh-agent
 
+
   # OpenVPN client service to connect to Grid5000
   vpn:
     image: dperson/openvpn-client

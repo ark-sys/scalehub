@@ -147,7 +147,7 @@ class MockExportStrategy(ExportStrategy):
         # Generate mock data
         mock_data = pd.DataFrame(
             {
-                "timestamp": pd.date_range("2024-01-01", periods=100, freq="1min"),
+                "timestamp": pd.date_range("2025-01-01", periods=100, freq="1min"),
                 "throughput": range(100),
                 "latency": [i * 0.1 for i in range(100)],
             }

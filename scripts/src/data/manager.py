@@ -16,6 +16,5 @@ class DataManager:
         single_export: bool = False,
         single_eval: bool = False,
     ):
-        # Implementation using new architecture
         processor = self._processor_factory.create_processor(exp_path)
         processor.process(dry_run, single_export, single_eval)

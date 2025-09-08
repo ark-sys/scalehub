@@ -39,7 +39,7 @@ function display_help() {
 }
 
 # Function to generate Docker secret with credentials
-function generate_secret() {
+function generate_creds() {
     if [ -f "$g5k_creds_path" ]; then
         read -p "File exists at $g5k_creds_path. Do you want to modify it? (y/n): " answer
     else
@@ -68,6 +68,18 @@ function generate_secret() {
 
 }
 
+function generate_scalehub_keys(){
+  # These kays are used to expose the container via SSH to Pycharm or VSCode
+  # This behavior is intended to be used during development to facilitate code editing and debugging with IDEs that support remote development over SSH.
+  if [ ! -f "$SCALEHUB_BASEDIR/setup/scalehub/secrets/scalehub" ]; then
+    echo "Generating SSH keys for ScaleHub..."
+    ssh-keygen -t rsa -b 4096 -f "$SCALEHUB_BASEDIR/setup/scalehub/secrets/scalehub" -N ""
+    echo "SSH keys generated at $SCALEHUB_BASEDIR/setup/scalehub/secrets/scalehub and scalehub.pub"
+  else
+    echo "SSH keys already exist at $SCALEHUB_BASEDIR/setup/scalehub/secrets/scalehub. Skipping generation."
+  fi
+}
+
 function restart_service_ss(){
   service_name="$1"
 
@@ -87,6 +99,7 @@ function restart_service(){
 # Function to create the Docker container
 function create_service() {
   gen_env_file
+  generate_scalehub_keys
   docker compose -p scalehub -f $SCALEHUB_BASEDIR/setup/scalehub/docker-compose.yml up --build -d
   # Prune docker image to clean unnecessary cached layers
 #  docker image prune -f
@@ -128,7 +141,7 @@ case "$1" in
         build_image
         ;;
     generate)
-        generate_secret
+        generate_creds
         ;;
     create)
         create_service

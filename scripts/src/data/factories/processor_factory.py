@@ -13,20 +13,19 @@ class ProcessorFactory:
         self._config = config
 
     def create_processor(self, exp_path: str):
-        """Create appropriate processor based on experiment path structure."""
-        from scripts.src.data.processors.single_experiment_processor import (
-            SingleExperimentProcessor,
-        )
-        from scripts.src.data.processors.grouped_experiment_processor import (
-            GroupedExperimentProcessor,
-        )
-
         path = Path(exp_path)
         folder_type = self._determine_folder_type(path)
 
+        """Create appropriate processor based on experiment path structure."""
         if folder_type in ["single_run"]:
+            from scripts.src.data.processors.single_experiment_processor import (
+                SingleExperimentProcessor,
+            )
             return SingleExperimentProcessor(self._logger, self._config, exp_path)
         elif folder_type in ["multi_run", "res_exp", "multi_exp"]:
+            from scripts.src.data.processors.grouped_experiment_processor import (
+                GroupedExperimentProcessor,
+            )
             return GroupedExperimentProcessor(self._logger, self._config, exp_path)
         else:
             raise ValueError(
