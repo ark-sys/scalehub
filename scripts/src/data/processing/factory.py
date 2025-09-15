@@ -6,7 +6,7 @@ from scripts.utils.Logger import Logger
 
 
 class ProcessorFactory:
-    """Factory class for creating appropriate data processors based on experiment type."""
+    """Factory class for creating appropriate data processing based on experiment type."""
 
     def __init__(self, logger: Logger, config: Config):
         self._logger = logger
@@ -18,12 +18,12 @@ class ProcessorFactory:
 
         """Create appropriate processor based on experiment path structure."""
         if folder_type in ["single_run"]:
-            from scripts.src.data.processors.single_experiment_processor import (
+            from scripts.src.data.processing.single_experiment_processor import (
                 SingleExperimentProcessor,
             )
             return SingleExperimentProcessor(self._logger, self._config, exp_path)
         elif folder_type in ["multi_run", "res_exp", "multi_exp"]:
-            from scripts.src.data.processors.grouped_experiment_processor import (
+            from scripts.src.data.processing.grouped_experiment_processor import (
                 GroupedExperimentProcessor,
             )
             return GroupedExperimentProcessor(self._logger, self._config, exp_path)

@@ -107,6 +107,7 @@ class ResourceExperiment(Experiment):
                     f"[RESOURCE_E] Error in run {run + 1}/{self.runs}: {str(e)}"
                 )
                 raise e
+        return None
 
     def exp(self):
         for c_val in self.cpu_millis:

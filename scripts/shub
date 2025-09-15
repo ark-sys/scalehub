@@ -153,7 +153,7 @@ def export(config: Config, exp_path):
 
     dm: DataManager = DataManager(log, config)
 
-    dm.export(exp_path, dry_run=False, single_export=False, single_eval=False)
+    dm.export(exp_path)
 
 
 def sync_experiment_data(config: Config):

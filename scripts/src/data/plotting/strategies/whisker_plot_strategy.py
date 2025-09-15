@@ -4,7 +4,7 @@ from typing import Dict, Any
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 
-from scripts.src.data.strategies.plot_strategy import PlotStrategy
+from scripts.src.data.plotting.strategies.base_plot_strategy import PlotStrategy
 
 
 class WhiskerPlotStrategy(PlotStrategy):

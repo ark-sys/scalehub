@@ -2,13 +2,11 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Dict, Any
 
-import pandas as pd
-
 from scripts.utils.Logger import Logger
 
 
 class DataProcessor(ABC):
-    """Abstract base class for data processors following Template Method pattern."""
+    """Abstract base class for data processing."""
 
     def __init__(self, logger: Logger, exp_path: str):
         self._logger = logger
@@ -22,25 +20,8 @@ class DataProcessor(ABC):
 
     @abstractmethod
     def process(self) -> Dict[str, Any]:
-        """Main processing method - Template Method."""
+        """Main processing method for the experiment."""
         pass
-
-    @abstractmethod
-    def _load_data(self) -> pd.DataFrame:
-        """Load raw data - to be implemented by subclasses."""
-        pass
-
-    @abstractmethod
-    def _transform_data(self, data: pd.DataFrame) -> pd.DataFrame:
-        """Transform loaded data - to be implemented by subclasses."""
-        pass
-
-    def _save_results(self, data: pd.DataFrame, filename: str) -> Path:
-        """Save processed data to file."""
-        output_path = self._exp_path / filename
-        data.to_csv(output_path)
-        self._logger.info(f"Results saved to: {output_path}")
-        return output_path
 
     @property
     def exp_path(self) -> Path:

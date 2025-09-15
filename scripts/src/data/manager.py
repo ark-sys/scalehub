@@ -1,6 +1,7 @@
 from scripts.utils.Config import Config
 from scripts.utils.Logger import Logger
-from .factories.processor_factory import ProcessorFactory
+from scripts.src.data.processing.factory import ProcessorFactory
+import os
 
 
 class DataManager:
@@ -12,9 +13,10 @@ class DataManager:
     def export(
         self,
         exp_path: str,
-        dry_run: bool = False,
-        single_export: bool = False,
-        single_eval: bool = False,
     ):
+        # Retrieve base experiments directory from config if exp_path is not absolute
+        if not os.path.isabs(exp_path):
+            base_dir = self._config.get_str("scalehub.experiments")
+            exp_path = os.path.join(base_dir, exp_path)
         processor = self._processor_factory.create_processor(exp_path)
-        processor.process(dry_run, single_export, single_eval)
+        processor.process()

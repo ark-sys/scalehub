@@ -3,50 +3,63 @@ from typing import Dict, Any
 import numpy as np
 import pandas as pd
 
-from scripts.src.data.base.data_processor import DataProcessor
-from scripts.src.data.implementations.default_plotter import DefaultPlotter
+from scripts.src.data.exporting.exporter import Exporter
+from scripts.src.data.exporting.strategies.csv_export_strategy import CsvExportStrategy
+from scripts.src.data.loading.loader import Loader
+from scripts.src.data.loading.strategies.file_load_strategy import FileLoadStrategy
+from scripts.src.data.processing.base_processor import DataProcessor
+from scripts.src.data.plotting.default_plotter import DefaultPlotter
 from scripts.utils.Config import Config
 from scripts.utils.Defaults import DefaultKeys as Key
 
 
 class SingleExperimentProcessor(DataProcessor):
-    """Processes data for a single experiment using Strategy pattern."""
+    """Processes data for a single experiment run."""
 
     def __init__(self, logger, config: Config, exp_path: str):
         super().__init__(logger, exp_path)
+        self.config = config
         self._setup_components()
 
     def _setup_components(self) -> None:
         """Initialize required components."""
-        log_file = self.exp_path / "exp_log.json"
-        self.config = Config(self.logger, str(log_file))
-
         plots_path = self.exp_path / "plots"
         plots_path.mkdir(exist_ok=True)
         self.plotter = DefaultPlotter(self.logger, str(plots_path))
+
+        # Setup Loader and Exporter
+        self.loader = Loader(FileLoadStrategy(self.logger))
+        self.exporter = Exporter(CsvExportStrategy(self.logger))
 
         self.start_skip = self.config.get_int(Key.Experiment.output_skip_s.key)
         self.end_skip = 30
 
     def process(self) -> Dict[str, Any]:
-        """Main processing workflow - Template Method implementation."""
+        """Main processing workflow."""
         raw_data = self._load_data()
         transformed_data = self._transform_data(raw_data)
         filtered_data = self._filter_data(transformed_data)
         results = self._calculate_statistics(filtered_data)
 
-        # Save results
-        output_path = self._save_results(results, "mean_stderr.csv")
+        # Save results using the Exporter
+        output_path = self.exp_path / "mean_stderr.csv"
+        self.exporter.export_data(results, output_path)
+        self.logger.info(f"Results saved to: {output_path}")
 
         # Generate plots
         self._generate_plots(raw_data)
 
-        return {"processed_data": results, "output_path": output_path}
+        return {"processed_data": results, "output_path": str(output_path)}
 
     def _load_data(self) -> pd.DataFrame:
-        """Load the final dataframe."""
+        """Load the final dataframe using the Loader."""
         final_df_path = self.exp_path / "final_df.csv"
-        return pd.read_csv(final_df_path, index_col=0, header=[0, 1, 2])
+        # The loader returns a dict; we extract the single DataFrame.
+        df_dict = self.loader.load_data(file_path=final_df_path)
+        df = list(df_dict.values())[0]
+        # Set index and header from the original file format
+        df = pd.read_csv(final_df_path, index_col=0, header=[0, 1, 2])
+        return df
 
     def _transform_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """Transform and format the loaded data."""
@@ -63,6 +76,8 @@ class SingleExperimentProcessor(DataProcessor):
 
         # Convert index to datetime
         df.index = pd.to_datetime(df.index, unit="s")
+
+        self.logger.debug(f"Transforming data to {df.shape}")
 
         return df
 
@@ -104,6 +119,8 @@ class SingleExperimentProcessor(DataProcessor):
             "BackpressureTimeStdErr",
         ]
 
+        self.logger.debug(f"Calculated statistics:\n{df_final.head()}")
+
         return df_final[df_final["Throughput"] > 0]
 
     def _generate_plots(self, raw_data: pd.DataFrame) -> None:
@@ -135,7 +152,6 @@ class SingleExperimentProcessor(DataProcessor):
             "BackpressureTime": "ms/s",
         }
 
-        # Use new strategy-based approach
         self.plotter.generate_plot(
             data,
             plot_type="stacked",
@@ -166,7 +182,6 @@ class SingleExperimentProcessor(DataProcessor):
             },
         }
 
-        # Use new strategy-based approach
         self.plotter.generate_plot(
             plot_data,
             plot_type="single_frame",

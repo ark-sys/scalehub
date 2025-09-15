@@ -1,13 +1,13 @@
-from scripts.src.data.strategies.basic_plot_strategy import BasicPlotStrategy
-from scripts.src.data.strategies.single_frame_plot_strategy import (
+from scripts.src.data.plotting.strategies.basic_plot_strategy import BasicPlotStrategy
+from scripts.src.data.plotting.strategies.single_frame_plot_strategy import (
     SingleFramePlotStrategy,
 )
-from scripts.src.data.strategies.stacked_frames_plot_strategy import (
+from scripts.src.data.plotting.strategies.stacked_frames_plot_strategy import (
     StackedFramesPlotStrategy,
 )
-from scripts.src.data.strategies.stacked_plot_strategy import StackedPlotStrategy
-from scripts.src.data.strategies.three_d_plot_strategy import ThreeDPlotStrategy
-from scripts.src.data.strategies.whisker_plot_strategy import WhiskerPlotStrategy
+from scripts.src.data.plotting.strategies.stacked_plot_strategy import StackedPlotStrategy
+from scripts.src.data.plotting.strategies.three_d_plot_strategy import ThreeDPlotStrategy
+from scripts.src.data.plotting.strategies.whisker_plot_strategy import WhiskerPlotStrategy
 
 
 class PlotStrategyFactory:

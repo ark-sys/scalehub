@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.ticker import FuncFormatter, MaxNLocator
 
-from scripts.src.data.strategies.plot_strategy import PlotStrategy
+from scripts.src.data.plotting.strategies.base_plot_strategy import PlotStrategy
 
 
 class StackedFramesPlotStrategy(PlotStrategy):

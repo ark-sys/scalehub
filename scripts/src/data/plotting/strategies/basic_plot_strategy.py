@@ -3,7 +3,7 @@ from typing import Dict, Any
 
 import matplotlib.pyplot as plt
 
-from scripts.src.data.strategies.plot_strategy import PlotStrategy
+from scripts.src.data.plotting.strategies.base_plot_strategy import PlotStrategy
 
 
 class BasicPlotStrategy(PlotStrategy):

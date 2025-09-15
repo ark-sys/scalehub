@@ -1,8 +1,8 @@
 from pathlib import Path
 from typing import Dict, Any
 
-from scripts.src.data.base.plotter import PlotterInterface
-from scripts.src.data.factories.plot_strategy_factory import PlotStrategyFactory
+from scripts.src.data.plotting.plotter import PlotterInterface
+from scripts.src.data.plotting.factory import PlotStrategyFactory
 
 
 class DefaultPlotter(PlotterInterface):

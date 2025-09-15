@@ -6,7 +6,7 @@ import numpy as np
 from matplotlib import cm
 from matplotlib.ticker import FuncFormatter
 
-from scripts.src.data.strategies.plot_strategy import PlotStrategy
+from scripts.src.data.plotting.strategies.base_plot_strategy import PlotStrategy
 
 
 class ThreeDPlotStrategy(PlotStrategy):
