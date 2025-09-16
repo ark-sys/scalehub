@@ -69,6 +69,7 @@ class GroupedDataEval:
                 Throughput_min=("Throughput", "min"),
                 Throughput_max=("Throughput", "max"),
                 Throughput_mean=("Throughput", "mean"),
+                Throughput_stderr=("ThroughputStdErr", "mean"),
             )
             .reset_index()
         )
@@ -216,11 +217,12 @@ class GroupedDataEval:
             "BM": {"marker": "o", "color": "#1f77b4"},  # Blue circle
             "VM-L": {"marker": "s", "color": "#d62728"},  # Red square
             "VM-S": {"marker": "D", "color": "#2ca02c"},  # Green diamond
-            "Pico": {"marker": "^", "color": "#9467bd"},  # Purple triangle
+            "RPi": {"marker": "^", "color": "#9467bd"},  # Purple triangle
         }
 
         experiment_data = self._get_multi_exp_data()
         plot_data = {}
+        error_data = {}
         custom_markers = {}
         custom_colors = {}
         custom_legends = {}
@@ -232,6 +234,12 @@ class GroupedDataEval:
             new_df = final_df.loc[:, ["Parallelism", "Throughput_mean"]].copy()
             new_df.rename(columns={"Throughput_mean": "Throughput"}, inplace=True)
 
+            # Extract standard error data if available
+            stderr_df = None
+            if "Throughput_stderr" in final_df.columns:
+                stderr_df = final_df.loc[:, ["Parallelism", "Throughput_stderr"]].copy()
+                stderr_df.rename(columns={"Throughput_stderr": "StdErr"}, inplace=True)
+
             # Determine if this is a mixed node experiment
             is_mixed_node = "mix_node" in exp_name.lower()
 
@@ -242,6 +250,8 @@ class GroupedDataEval:
                 )
                 if len(new_df) > 1:
                     new_df = new_df.drop(index=1).reset_index(drop=True)
+                    if stderr_df is not None:
+                        stderr_df = stderr_df.drop(index=1).reset_index(drop=True)
                     self.__log.info(
                         f"Removed problematic second row from {exp_name} data"
                     )
@@ -249,9 +259,14 @@ class GroupedDataEval:
             # Format index based on an experiment type
             if single_node:
                 new_df.set_index("Parallelism", inplace=True)
+                if stderr_df is not None:
+                    stderr_df.set_index("Parallelism", inplace=True)
             else:
                 new_df.reset_index(drop=True, inplace=True)
                 new_df.index = new_df.index + 1
+                if stderr_df is not None:
+                    stderr_df.reset_index(drop=True, inplace=True)
+                    stderr_df.index = stderr_df.index + 1
 
             # Export data CSV
             new_df.to_csv(
@@ -260,6 +275,7 @@ class GroupedDataEval:
 
             # Parse experiment name to identify machine types
             machine_types = []
+            display_name = ""
             if is_mixed_node:
                 parts = exp_name.lower().split("_")
                 if len(parts) >= 4:
@@ -274,6 +290,8 @@ class GroupedDataEval:
 
             # Store data
             plot_data[display_name] = new_df["Throughput"]
+            if stderr_df is not None:
+                error_data[display_name] = stderr_df["StdErr"]
 
             # Set visualization properties based on machine types
             if is_mixed_node and len(machine_types) == 2:
@@ -344,13 +362,14 @@ class GroupedDataEval:
         # Generate the plot
         self.plotter.generate_single_frame_multiple_series_plot(
             ax1_data=plot_data,
+            ax1_error_data=error_data if error_data else None,
             xlabel="Number of TaskManagers" if single_node else "Number of Machines",
             ylabels_dict=ylabels_dict,
             filename=os.path.join(
                 self.base_path,
-                "single_node_throughput.png"
+                "single_node_throughput_new.png"
                 if single_node
-                else "multi_node_throughput.png",
+                else "multi_node_throughput_new.png",
             ),
             ylim=(0, 400000),
             axhline=350000,
@@ -372,7 +391,7 @@ class GroupedDataEval:
         elif "vms" in name or "vm-s" in name:
             return "VM-S"
         elif "pico" in name:
-            return "Pico"
+            return "RPi"
         else:
             # If no match, return a cleaned version of the original name
             return name.replace("single_node_", "").replace("_", " ").title()
