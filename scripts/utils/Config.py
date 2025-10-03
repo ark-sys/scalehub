@@ -219,27 +219,56 @@ class Config:
                             f"Mandatory parameter {key} is missing in section {key_class.__name__.lower()}.{subclass[0].lower()}"
                         )
 
-    def get(self, key):
+    def get(self, key, default=None):
+        return self.__config.get(key, default)
 
-        return self.__config.get(key)
+    def get_int(self, key, default=None) -> int:
+        value = self.get(key, default)
+        if value is None:
+            raise ValueError(
+                f"Configuration key '{key}' not found and no default provided"
+            )
+        return int(value)
 
-    def get_int(self, key) -> int:
-        return int(self.get(key))
+    def get_bool(self, key, default=None) -> bool:
+        value = self.get(key, default)
+        if value is None:
+            raise ValueError(
+                f"Configuration key '{key}' not found and no default provided"
+            )
+        return str(value).lower() == "true"
 
-    def get_bool(self, key) -> bool:
-        return self.get_str(key).lower() == "true"
+    def get_float(self, key, default=None) -> float:
+        value = self.get(key, default)
+        if value is None:
+            raise ValueError(
+                f"Configuration key '{key}' not found and no default provided"
+            )
+        return float(value)
 
-    def get_float(self, key) -> float:
-        return float(self.get(key))
+    def get_str(self, key, default=None) -> str:
+        value = self.get(key, default)
+        if value is None:
+            raise ValueError(
+                f"Configuration key '{key}' not found and no default provided"
+            )
+        return str(value)
 
-    def get_str(self, key) -> str:
-        return str(self.get(key))
+    def get_list_str(self, key, default=None):
+        value = self.get(key, default)
+        if value is None:
+            raise ValueError(
+                f"Configuration key '{key}' not found and no default provided"
+            )
+        return [str(v) for v in str(value).split()]
 
-    def get_list_str(self, key):
-        return [str(value) for value in self.get_str(key).split()]
-
-    def get_list_int(self, key):
-        return [int(value) for value in self.get(key).split()]
+    def get_list_int(self, key, default=None):
+        value = self.get(key, default)
+        if value is None:
+            raise ValueError(
+                f"Configuration key '{key}' not found and no default provided"
+            )
+        return [int(v) for v in str(value).split()]
 
     def update_runtime_file(self, create=False):
         try:

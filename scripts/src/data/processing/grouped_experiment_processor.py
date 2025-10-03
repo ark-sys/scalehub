@@ -1,12 +1,21 @@
 from typing import Dict, Any
 
 from scripts.src.data.processing.base_processor import DataProcessor
-from scripts.src.data.processing.strategies.base_processing_strategy import BaseProcessingStrategy
-from scripts.src.data.processing.strategies.box_plot_processing_strategy import BoxPlotProcessingStrategy
-from scripts.src.data.processing.strategies.resource_analysis_processing_strategy import \
-    ResourceAnalysisProcessingStrategy
-from scripts.src.data.processing.strategies.throughput_comparison_processing_strategy import \
-    ThroughputComparisonProcessingStrategy
+from scripts.src.data.processing.strategies.base_processing_strategy import (
+    BaseProcessingStrategy,
+)
+from scripts.src.data.processing.strategies.box_plot_processing_strategy import (
+    BoxPlotProcessingStrategy,
+)
+from scripts.src.data.processing.strategies.default_multi_run_processing_strategy import (
+    DefaultMultiRunProcessingStrategy,
+)
+from scripts.src.data.processing.strategies.resource_analysis_processing_strategy import (
+    ResourceAnalysisProcessingStrategy,
+)
+from scripts.src.data.processing.strategies.throughput_comparison_processing_strategy import (
+    ThroughputComparisonProcessingStrategy,
+)
 from scripts.utils.Config import Config
 
 
@@ -30,8 +39,13 @@ class GroupedExperimentProcessor(DataProcessor):
         if strategy:
             return strategy.process()
         else:
-            self.logger.warning("No suitable processing strategy found. No action taken.")
-            return {"type": "none", "message": "No suitable data or configuration found."}
+            self.logger.warning(
+                "No suitable processing strategy found. No action taken."
+            )
+            return {
+                "type": "none",
+                "message": "No suitable data or configuration found.",
+            }
 
     def _create_processing_strategy(self) -> BaseProcessingStrategy | None:
         """
@@ -48,7 +62,11 @@ class GroupedExperimentProcessor(DataProcessor):
         elif folder_type == "resource_analysis":
             return ResourceAnalysisProcessingStrategy(self.logger, self.exp_path)
         else:
-            return None
+            # Use default strategy for unknown experiment types
+            self.logger.info("Using default multi-run processing strategy")
+            return DefaultMultiRunProcessingStrategy(
+                self.logger, self.exp_path, self.config
+            )
 
     def _determine_multi_exp_type(self) -> str:
         """
@@ -56,6 +74,14 @@ class GroupedExperimentProcessor(DataProcessor):
         the experiment directory's name and contents.
         """
         basename = self.exp_path.name.lower()
+
+        # Check if this is a multi_run folder with exp_log.json files in subdirectories
+        run_dirs = [
+            d for d in self.exp_path.iterdir() if d.is_dir() and d.name.isdigit()
+        ]
+        if run_dirs and any((d / "exp_log.json").exists() for d in run_dirs):
+            # This is a default multi-run experiment with raw data
+            return "unknown"
 
         # Check for resource analysis first, identified by 'resource' or 'flink' in the name
         if "resource" in basename or "flink" in basename:
@@ -72,7 +98,5 @@ class GroupedExperimentProcessor(DataProcessor):
     def _has_final_df_files(self) -> bool:
         """Check if final_df.csv files exist in any immediate subdirectories."""
         return any(
-            (d / "final_df.csv").exists()
-            for d in self.exp_path.iterdir()
-            if d.is_dir()
+            (d / "final_df.csv").exists() for d in self.exp_path.iterdir() if d.is_dir()
         )

@@ -28,7 +28,33 @@ class BasicPlotStrategy(PlotStrategy):
         filename = kwargs.get("filename", "basic_plot.png")
 
         plt.figure(figsize=self.figsize)
-        plt.plot(data, linewidth=self.linewidth)
+
+        # Handle different data formats
+        if isinstance(data, dict):
+            # Check if data contains x, y coordinates
+            if "x" in data and "y" in data:
+                x_data = data["x"]
+                y_data = data["y"]
+                yerr_data = data.get("yerr", None)
+
+                if yerr_data:
+                    plt.errorbar(
+                        x_data,
+                        y_data,
+                        yerr=yerr_data,
+                        linewidth=self.linewidth,
+                        capsize=5,
+                        marker="o",
+                    )
+                else:
+                    plt.plot(x_data, y_data, linewidth=self.linewidth, marker="o")
+            else:
+                # Plot the data directly (assuming it's plottable)
+                plt.plot(data, linewidth=self.linewidth)
+        else:
+            # Data is already in a format that plt.plot can handle
+            plt.plot(data, linewidth=self.linewidth)
+
         plt.title(title, fontsize=self.fontsize)
         plt.xlabel(xlabel, fontsize=self.fontsize)
         plt.ylabel(ylabel, fontsize=self.fontsize)
@@ -39,7 +65,8 @@ class BasicPlotStrategy(PlotStrategy):
             plt.axhline(axhline)
 
         plt.tick_params(axis="both", labelsize=self.tick_size)
-        plt.legend(loc=self.legend_loc)
+        plt.grid(True, alpha=0.3)
+        plt.xticks(rotation=45, ha="right")
 
         save_path = self._plots_path / filename
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
