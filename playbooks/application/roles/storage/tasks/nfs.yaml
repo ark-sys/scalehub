@@ -22,7 +22,6 @@
     - name: From dict response, get value of key "nfs_address"
       set_fact:
         nfs_server: "{{ response.stdout | from_yaml | dict2items | json_query('[0].value.nfs_address') }}"
-
     - name: Debug
       debug:
         var: nfs_server

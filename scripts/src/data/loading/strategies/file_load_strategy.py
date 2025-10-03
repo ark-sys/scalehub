@@ -4,7 +4,6 @@ from typing import Dict
 import pandas as pd
 
 from scripts.src.data.loading.strategies.base_load_strategy import BaseLoadStrategy
-from scripts.utils.Logger import Logger
 
 
 class FileLoadStrategy(BaseLoadStrategy):

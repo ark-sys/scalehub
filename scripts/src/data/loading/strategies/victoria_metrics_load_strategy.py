@@ -1,7 +1,7 @@
 import pandas as pd
 import requests
 
-from scripts.data.loading.strategies.base_load_strategy import BaseLoadStrategy
+from scripts.src.data.loading.strategies.base_load_strategy import BaseLoadStrategy
 from scripts.utils.Logger import Logger
 
 
@@ -19,11 +19,14 @@ class VictoriaMetricsLoadStrategy(BaseLoadStrategy):
         """Load data from VictoriaMetrics."""
         self._logger.info("Loading from VictoriaMetrics...")
         exported_data = {}
-        time_series_to_load = kwargs.get("time_series", [
-            "flink_taskmanager_job_task_numRecordsInPerSecond",
-            "flink_taskmanager_job_task_busyTimeMsPerSecond",
-            "flink_taskmanager_job_task_hardBackPressuredTimeMsPerSecond",
-        ])
+        time_series_to_load = kwargs.get(
+            "time_series",
+            [
+                "flink_taskmanager_job_task_numRecordsInPerSecond",
+                "flink_taskmanager_job_task_busyTimeMsPerSecond",
+                "flink_taskmanager_job_task_hardBackPressuredTimeMsPerSecond",
+            ],
+        )
 
         for ts_name in time_series_to_load:
             try:
@@ -62,6 +65,7 @@ class VictoriaMetricsLoadStrategy(BaseLoadStrategy):
         if response.status_code == 200:
             # Use a temporary in-memory buffer instead of writing a file
             from io import StringIO
+
             csv_data = StringIO(response.text)
             df = pd.read_csv(csv_data)
             df.columns = ["Series", "Timestamp", "Value"]
