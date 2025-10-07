@@ -8,6 +8,7 @@ from scripts.src.data.processing.strategies.base_processing_strategy import (
     BaseProcessingStrategy,
 )
 
+
 class DefaultMultiRunProcessingStrategy(BaseProcessingStrategy):
     """
     Default strategy for processing multi-run experiments.
@@ -101,10 +102,14 @@ class DefaultMultiRunProcessingStrategy(BaseProcessingStrategy):
         # Check if we need to build final_df.csv from VictoriaMetrics
         final_df_path = run_dir / "final_df.csv"
         if not final_df_path.exists():
-            self.logger.info(f"final_df.csv not found, building from VictoriaMetrics...")
+            self.logger.info(
+                f"final_df.csv not found, building from VictoriaMetrics..."
+            )
             success = self._build_final_df_from_victoriametrics(run_dir)
             if not success:
-                self.logger.warning(f"Failed to build final_df.csv for run {run_dir.name}")
+                self.logger.warning(
+                    f"Failed to build final_df.csv for run {run_dir.name}"
+                )
                 return None
 
         # Process the run using SingleExperimentProcessor
@@ -175,11 +180,15 @@ class DefaultMultiRunProcessingStrategy(BaseProcessingStrategy):
         vm_loader = Loader(vm_strategy)
 
         # Load both CSV (for export) and JSON (for processing)
-        raw_data_csv = vm_loader.load_data(format="csv")  # Returns Dict[str, pd.DataFrame]
+        raw_data_csv = vm_loader.load_data(
+            format="csv"
+        )  # Returns Dict[str, pd.DataFrame]
         raw_data_json = vm_loader.load_data(format="json")  # Returns Dict[str, list]
 
         if not raw_data_json:
-            self.logger.warning(f"No data loaded from VictoriaMetrics for run {run_dir.name}")
+            self.logger.warning(
+                f"No data loaded from VictoriaMetrics for run {run_dir.name}"
+            )
             return False
 
         # Export raw metrics to CSV and JSON files
@@ -291,7 +300,7 @@ class DefaultMultiRunProcessingStrategy(BaseProcessingStrategy):
                 "experiment.db_url",
                 "victoria-metrics.monitoring.svc.cluster.local:8428",
             )
-        except:
+        except (KeyError, AttributeError, ValueError):
             db_url = "victoria-metrics.monitoring.svc.cluster.local:8428"
         return db_url
 
@@ -305,6 +314,8 @@ class DefaultMultiRunProcessingStrategy(BaseProcessingStrategy):
         """
         if not all_runs_data:
             return pd.DataFrame()
+
+        self.logger.info("Aggregating results across runs...")
 
         # Combine all mean_stderr.csv data with run identifiers
         combined_df = pd.concat(all_runs_data, keys=range(1, len(all_runs_data) + 1))
@@ -337,16 +348,20 @@ class DefaultMultiRunProcessingStrategy(BaseProcessingStrategy):
         }
 
         if "BusyTime_mean" in final_df.columns:
-            rename_map.update({
-                "BusyTime_mean": "BusyTime",
-                "BusyTimeStdErr_mean": "BusyTimeStdErr",
-            })
+            rename_map.update(
+                {
+                    "BusyTime_mean": "BusyTime",
+                    "BusyTimeStdErr_mean": "BusyTimeStdErr",
+                }
+            )
 
         if "BackpressureTime_mean" in final_df.columns:
-            rename_map.update({
-                "BackpressureTime_mean": "BackpressureTime",
-                "BackpressureTimeStdErr_mean": "BackpressureTimeStdErr",
-            })
+            rename_map.update(
+                {
+                    "BackpressureTime_mean": "BackpressureTime",
+                    "BackpressureTimeStdErr_mean": "BackpressureTimeStdErr",
+                }
+            )
 
         final_df = final_df.rename(columns=rename_map)
 
@@ -376,12 +391,20 @@ class DefaultMultiRunProcessingStrategy(BaseProcessingStrategy):
         try:
             parallelism_levels = aggregated_results.index.tolist()
             throughput_mean = aggregated_results["Throughput"].tolist()
-            throughput_min = aggregated_results.get("Throughput_min", throughput_mean).tolist()
-            throughput_max = aggregated_results.get("Throughput_max", throughput_mean).tolist()
+            throughput_min = aggregated_results.get(
+                "Throughput_min", throughput_mean
+            ).tolist()
+            throughput_max = aggregated_results.get(
+                "Throughput_max", throughput_mean
+            ).tolist()
 
             # Create error bars from min/max
-            yerr_lower = [mean - min_val for mean, min_val in zip(throughput_mean, throughput_min)]
-            yerr_upper = [max_val - mean for mean, max_val in zip(throughput_mean, throughput_max)]
+            yerr_lower = [
+                mean - min_val for mean, min_val in zip(throughput_mean, throughput_min)
+            ]
+            yerr_upper = [
+                max_val - mean for mean, max_val in zip(throughput_mean, throughput_max)
+            ]
 
             # Calculate ylim: 0 to max_value + 10%
             max_value = max(throughput_max)
@@ -405,7 +428,10 @@ class DefaultMultiRunProcessingStrategy(BaseProcessingStrategy):
 
     def _plot_time_metrics(self, aggregated_results: pd.DataFrame) -> None:
         """Plot busy time and backpressure time with fixed y-scale."""
-        if "BusyTime" not in aggregated_results.columns or "BackpressureTime" not in aggregated_results.columns:
+        if (
+            "BusyTime" not in aggregated_results.columns
+            or "BackpressureTime" not in aggregated_results.columns
+        ):
             return
 
         try:

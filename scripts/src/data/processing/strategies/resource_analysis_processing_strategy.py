@@ -3,7 +3,9 @@ from typing import Dict, Any
 
 import pandas as pd
 
-from scripts.src.data.processing.strategies.base_processing_strategy import BaseProcessingStrategy
+from scripts.src.data.processing.strategies.base_processing_strategy import (
+    BaseProcessingStrategy,
+)
 
 
 class ResourceAnalysisProcessingStrategy(BaseProcessingStrategy):
@@ -13,7 +15,6 @@ class ResourceAnalysisProcessingStrategy(BaseProcessingStrategy):
         self.logger.info("Processing with ResourceAnalysisProcessingStrategy...")
         resource_data = self._process_resource_data()
         self._generate_resource_plot(resource_data)
-        self._generate_resource_core_info(resource_data)
         return {"type": "resource_analysis"}
 
     def _process_resource_data(self) -> Dict[tuple, float]:
@@ -36,9 +37,13 @@ class ResourceAnalysisProcessingStrategy(BaseProcessingStrategy):
 
     def _generate_resource_plot(self, resource_data: Dict[tuple, float]) -> None:
         """Generate resource utilization plots."""
-        if not resource_data: return
+        if not resource_data:
+            return
         df = pd.DataFrame(
-            [{"cpu": cpu, "mem": mem, "throughput": throughput} for (cpu, mem), throughput in resource_data.items()]
+            [
+                {"cpu": cpu, "mem": mem, "throughput": throughput}
+                for (cpu, mem), throughput in resource_data.items()
+            ]
         )
         self.exporter.export_data(df, self.exp_path / "resource_data.csv")
 
@@ -50,11 +55,3 @@ class ResourceAnalysisProcessingStrategy(BaseProcessingStrategy):
             zlabel="Throughput (Records/s)",
             filename="resource_plot_multi_run.png",
         )
-
-    def _generate_resource_core_info(self, resource_data: Dict[tuple, float]) -> None:
-        """Generate resource analysis with core utilization info and LaTeX output."""
-        if not resource_data: return
-        # ... The logic from the original generate_resource_core_info would go here ...
-        # This includes creating the DataFrame, calculating tpt_per_core, inst_full, etc.,
-        # exporting to CSV, and generating the .tex file.
-        self.logger.info("Generating resource core info and LaTeX file.")

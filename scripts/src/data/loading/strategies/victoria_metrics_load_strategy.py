@@ -15,8 +15,8 @@ class VictoriaMetricsLoadStrategy(BaseLoadStrategy):
         self.db_url = db_url
         # Define fallback URLs to try in order
         self.fallback_urls = [
-            "vm.scalehub.dev",
-            "localhost:8428",
+            # "vm.scalehub.dev",
+            "127.0.0.1:8428",
         ]
         self.start_ts = start_ts
         self.end_ts = end_ts

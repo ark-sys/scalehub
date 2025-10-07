@@ -20,11 +20,11 @@ class WhiskerPlotStrategy(PlotStrategy):
     def generate(self, data: Dict[str, Any], **kwargs) -> Path:
         """Generate a whisker/box plot."""
         boxplot_data = data.get("boxplot_data", [])
-        labels = data.get("labels", [])
+        # labels = data.get("labels", [])
 
         ylim_val = kwargs.get("ylim_val", None)
         comment = kwargs.get("comment", "")
-        workload_objective = kwargs.get("workload_objective", None)
+        workload_objective = kwargs.get("workload_objective", -1)
         xlabel = kwargs.get("xlabel", "Number of Slots")
         ylabel = kwargs.get("ylabel", "Throughput (records/s)")
         filename = kwargs.get("filename", "whisker_plot.png")
@@ -33,9 +33,9 @@ class WhiskerPlotStrategy(PlotStrategy):
         fig, ax = plt.subplots(figsize=self.figsize)
 
         # Create boxplot
-        box_plot = ax.boxplot(
+        ax.boxplot(
             boxplot_data,
-            labels=labels,
+            # labels=labels,
             showfliers=False,
             meanline=True,
             whis=0,
@@ -61,7 +61,7 @@ class WhiskerPlotStrategy(PlotStrategy):
         plt.yticks(fontsize=self.tick_size + 14, alpha=0.8)
 
         # Reference line
-        if workload_objective:
+        if workload_objective != -1:
             ax.axhline(
                 y=workload_objective,
                 color="black",

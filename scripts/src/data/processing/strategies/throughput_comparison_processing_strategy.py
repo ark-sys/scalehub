@@ -2,18 +2,20 @@ from typing import Dict, Any
 
 import pandas as pd
 
-from scripts.src.data.processing.strategies.base_processing_strategy import BaseProcessingStrategy
+from scripts.src.data.processing.strategies.base_processing_strategy import (
+    BaseProcessingStrategy,
+)
 
 
 class ThroughputComparisonProcessingStrategy(BaseProcessingStrategy):
     """Strategy for comparing throughput across different experiments."""
 
-    def process(self, single_node: bool = True) -> Dict[str, Any]:
+    def process(self) -> Dict[str, Any]:
         self.logger.info("Processing with ThroughputComparisonProcessingStrategy...")
-        self._generate_multi_exp_plot(single_node)
+        self._generate_multi_exp_plot()
         return {"type": "throughput_comparison"}
 
-    def _generate_multi_exp_plot(self, single_node: bool = True) -> None:
+    def _generate_multi_exp_plot(self) -> None:
         """Generate multi-experiment throughput comparison plots."""
         machine_styles = {
             "BM": {"marker": "o", "color": "#1f77b4"},
@@ -32,13 +34,19 @@ class ThroughputComparisonProcessingStrategy(BaseProcessingStrategy):
             new_df.rename(columns={"Throughput_mean": "Throughput"}, inplace=True)
             new_df.set_index("Parallelism", inplace=True)
 
-            self.exporter.export_data(new_df, self.exp_path / f"{exp_name}_plot_data.csv")
+            self.exporter.export_data(
+                new_df, self.exp_path / f"{exp_name}_plot_data.csv"
+            )
 
             machine_type = self._get_machine_type(exp_name)
             display_name = machine_type
             plot_data[display_name] = new_df["Throughput"]
-            custom_markers[display_name] = machine_styles.get(machine_type, {"marker": "o"})["marker"]
-            custom_colors[display_name] = machine_styles.get(machine_type, {"color": "#000000"})["color"]
+            custom_markers[display_name] = machine_styles.get(
+                machine_type, {"marker": "o"}
+            )["marker"]
+            custom_colors[display_name] = machine_styles.get(
+                machine_type, {"color": "#000000"}
+            )["color"]
 
         self.plotter.generate_plot(
             {
@@ -73,7 +81,10 @@ class ThroughputComparisonProcessingStrategy(BaseProcessingStrategy):
     def _get_machine_type(name: str) -> str:
         """Extract standardized machine name from a string."""
         name = name.lower()
-        if "bm" in name: return "BM"
-        if "vml" in name or "vm-l" in name: return "VM-L"
-        if "vms" in name or "vm-s" in name: return "VM-S"
+        if "bm" in name:
+            return "BM"
+        if "vml" in name or "vm-l" in name:
+            return "VM-L"
+        if "vms" in name or "vm-s" in name:
+            return "VM-S"
         return name.replace("single_node_", "").replace("_", " ").title()
