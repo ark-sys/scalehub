@@ -4,13 +4,6 @@
   hosts: all
   gather_facts: true
   run_once: true
-#  vars:
-#    api_url: "https://vault.bitwarden.eu/api"
-#    identity_url: "https://vault.bitwarden.eu/identity"
-#    base_url: "https://vault.bitwarden.eu"
-#    secret_id: "fd1a051e-1240-4178-b69a-b29200acdb56"
-#    organization_id: "985abad4-c16c-4766-b2f0-b1ca011fca5b"
-#    access_token: "0.7243b14c-c06a-44be-bce6-b1d100cfeca1.A4zUP09cDsRRGldFUYlsUAB9Zk8QGd:Ew5kaEhn3SAiDgkhMVzDmw=="
 
   tasks:
     - name: Get content of shub_config and read it as json
@@ -21,8 +14,8 @@
         enable_ipv6: "{{ shub_config_content['platforms.enable_ipv6']  }}"
         tailscale_backend: "{{ shub_config_content['platforms.tailscale_backend'] }}"
         k3s_version: "{{ shub_config_content['scalehub.k3s_version'] }}"
-#        tailscale_auth_key: "{{ lookup('bitwarden.secrets.lookup', secret_id, base_url=base_url, access_token=access_token, organization_id=organization_id) }}"
       no_log: true
+
     - name: Define INSTALL_K3S_EXEC
       set_fact:
         INSTALL_K3S_EXEC: "--data-dir=/tmp/k3s"
