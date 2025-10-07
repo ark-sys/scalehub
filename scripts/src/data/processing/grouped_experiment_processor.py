@@ -10,6 +10,9 @@ from scripts.src.data.processing.strategies.box_plot_processing_strategy import 
 from scripts.src.data.processing.strategies.default_multi_run_processing_strategy import (
     DefaultMultiRunProcessingStrategy,
 )
+from scripts.src.data.processing.strategies.experiment_group_processing_strategy import (
+    ExperimentGroupProcessingStrategy,
+)
 from scripts.src.data.processing.strategies.resource_analysis_processing_strategy import (
     ResourceAnalysisProcessingStrategy,
 )
@@ -55,7 +58,9 @@ class GroupedExperimentProcessor(DataProcessor):
         folder_type = self._determine_multi_exp_type()
         self.logger.info(f"Determined experiment type: {folder_type}")
 
-        if folder_type == "box_plot_multi":
+        if folder_type == "experiment_group":
+            return ExperimentGroupProcessingStrategy(self.logger, self.exp_path)
+        elif folder_type == "box_plot_multi":
             return BoxPlotProcessingStrategy(self.logger, self.exp_path)
         elif folder_type == "throughput_comparison":
             return ThroughputComparisonProcessingStrategy(self.logger, self.exp_path)
@@ -74,6 +79,19 @@ class GroupedExperimentProcessor(DataProcessor):
         the experiment directory's name and contents.
         """
         basename = self.exp_path.name.lower()
+
+        # Check for experiment group pattern (a1, a2, a3, b1, b2, b3, c1, c2)
+        subdirs = [d.name for d in self.exp_path.iterdir() if d.is_dir()]
+        experiment_group_patterns = ['a1', 'a2', 'a3', 'b1', 'b2', 'b3', 'c1', 'c2']
+        if any(pattern in subdirs for pattern in experiment_group_patterns):
+            # Check if these directories contain multi-run structure (numbered subdirs)
+            for subdir_name in subdirs:
+                if subdir_name in experiment_group_patterns:
+                    subdir_path = self.exp_path / subdir_name
+                    run_dirs = [d for d in subdir_path.iterdir() if d.is_dir() and d.name.isdigit()]
+                    if run_dirs:
+                        self.logger.info("Detected experiment group with multi-run structure")
+                        return "experiment_group"
 
         # Check if this is a multi_run folder with exp_log.json files in subdirectories
         run_dirs = [

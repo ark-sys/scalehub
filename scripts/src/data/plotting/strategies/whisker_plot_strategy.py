@@ -13,7 +13,7 @@ class WhiskerPlotStrategy(PlotStrategy):
     def __init__(self, logger, plots_path: Path, **style_params):
         self._logger = logger
         self._plots_path = plots_path
-        self.figsize = style_params.get("figsize", (14, 10))
+        self.figsize = style_params.get("figsize", (12, 10))
         self.fontsize = style_params.get("fontsize", 24)
         self.tick_size = style_params.get("tick_size", 22)
 

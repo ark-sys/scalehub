@@ -3,34 +3,24 @@ from typing import Dict, Any
 import numpy as np
 import pandas as pd
 
-from scripts.src.data.exporting.exporter import Exporter
-from scripts.src.data.exporting.strategies.csv_export_strategy import CsvExportStrategy
-from scripts.src.data.loading.loader import Loader
-from scripts.src.data.loading.strategies.file_load_strategy import FileLoadStrategy
-from scripts.src.data.processing.base_processor import DataProcessor
-from scripts.src.data.plotting.default_plotter import DefaultPlotter
+from scripts.src.data.processing.base_processor import ProcessorWithComponents
 from scripts.utils.Config import Config
 from scripts.utils.Defaults import DefaultKeys as Key
 
 
-class SingleExperimentProcessor(DataProcessor):
+class SingleExperimentProcessor(ProcessorWithComponents):
     """Processes data for a single experiment run."""
 
     def __init__(self, logger, config: Config, exp_path: str):
-        super().__init__(logger, exp_path)
         self.config = config
-        self._setup_components()
+        super().__init__(logger, exp_path)
 
     def _setup_components(self) -> None:
-        """Initialize required components."""
-        plots_path = self.exp_path / "plots"
-        plots_path.mkdir(exist_ok=True)
-        self.plotter = DefaultPlotter(self.logger, str(plots_path))
+        """Initialize required components and config-specific settings."""
+        # Call parent to setup loader, exporter, plotter
+        super()._setup_components()
 
-        # Setup Loader and Exporter
-        self.loader = Loader(FileLoadStrategy(self.logger))
-        self.exporter = Exporter(CsvExportStrategy(self.logger))
-
+        # Add config-specific setup
         self.start_skip = self.config.get_int(Key.Experiment.output_skip_s.key)
         self.end_skip = 30
 
@@ -155,43 +145,22 @@ class SingleExperimentProcessor(DataProcessor):
         self.plotter.generate_plot(
             data,
             plot_type="stacked",
-            title="Experiment Plot",
-            xlabel="Time (s)",
+            xlabel="Time",
             ylabels_dict=ylabels_dict,
             ylim_dict=ylim_dict,
             filename="experiment_plot.png",
         )
 
     def _generate_summary_plot(self) -> None:
-        """Generate summary statistics plot."""
-        raw_data = self._load_data()
-        transformed_data = self._transform_data(raw_data)
-        filtered_data = self._filter_data(transformed_data)
-        dataset = self._calculate_statistics(filtered_data)
-
-        plot_data = {
-            "ax1_data": {"Throughput": dataset["Throughput"]},
-            "ax1_error_data": {"Throughput": dataset["ThroughputStdErr"]},
-            "ax2_data": {
-                "BusyTime": dataset["BusyTime"],
-                "BackpressureTime": dataset["BackpressureTime"],
-            },
-            "ax2_error_data": {
-                "BusyTime": dataset["BusyTimeStdErr"],
-                "BackpressureTime": dataset["BackpressureTimeStdErr"],
-            },
-        }
+        """Generate summary plot with aggregated metrics."""
+        mean_stderr_path = self.exp_path / "mean_stderr.csv"
+        df_dict = self.loader.load_data(file_path=mean_stderr_path)
+        df = list(df_dict.values())[0]
 
         self.plotter.generate_plot(
-            plot_data,
-            plot_type="single_frame",
-            xlabel="Parallelism Level",
-            ylabels_dict={
-                "Throughput": "Records/s",
-                "BusyTime": "ms/s",
-                "BackpressureTime": "ms/s",
-            },
-            ylim=(0, (dataset["Throughput"].max() // 50000 + 1) * 50000),
-            ylim2=(0, 1200),
+            {"x": df.index, "y": df["Throughput"], "yerr": df["ThroughputStdErr"]},
+            plot_type="basic",
+            xlabel="Parallelism",
+            ylabel="Throughput (records/s)",
             filename="summary_plot.png",
         )

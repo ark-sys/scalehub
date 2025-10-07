@@ -22,7 +22,8 @@ class ProcessorFactory:
                 SingleExperimentProcessor,
             )
             return SingleExperimentProcessor(self._logger, self._config, exp_path)
-        elif folder_type in ["multi_run", "res_exp", "multi_exp"]:
+        elif folder_type in ["multi_run", "res_exp", "multi_exp", "date"]:
+            # Date folders and multi-run/multi-exp folders are all grouped experiments
             from scripts.src.data.processing.grouped_experiment_processor import (
                 GroupedExperimentProcessor,
             )

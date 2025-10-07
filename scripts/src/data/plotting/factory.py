@@ -1,4 +1,5 @@
 from scripts.src.data.plotting.strategies.basic_plot_strategy import BasicPlotStrategy
+from scripts.src.data.plotting.strategies.scientific_plot_strategy import ScientificPlotStrategy
 from scripts.src.data.plotting.strategies.single_frame_plot_strategy import (
     SingleFramePlotStrategy,
 )
@@ -20,6 +21,7 @@ class PlotStrategyFactory:
         "whisker": WhiskerPlotStrategy,
         "3d": ThreeDPlotStrategy,
         "stacked_frames": StackedFramesPlotStrategy,
+        "scientific": ScientificPlotStrategy,
     }
 
     @classmethod

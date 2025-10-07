@@ -307,7 +307,7 @@ def main():
         sys.exit(1)
 
     log.debuggg(f"Command: {args.command}")
-    # Debug configuration, this can either be a single one or a list of config
+    # Debug configuration, this can either be single or a list of config
     if isinstance(config, Config):
         log.debuggg(f"Configuration: {config.to_json()}")
     elif isinstance(config, list):
