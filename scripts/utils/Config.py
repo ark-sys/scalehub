@@ -15,7 +15,7 @@ class Config:
     RUNTIME_PATH = "/app/runtime/runtime.json"
     DEFAULTS_PATH = "/app/conf/defaults.ini"
 
-    def __init__(self, log: Logger, _param: str | dict):
+    def __init__(self, log: Logger, _param: object):
         self.__config = {}
         self.__log = log
         if isinstance(_param, dict):
@@ -27,6 +27,9 @@ class Config:
                 f"Invalid type for conf: {type(_param)}. Expected path (str) or dict."
             )
             raise ValueError(f"Invalid type for conf: {type(_param)}")
+
+    def __str__(self):
+        return f"Config: {self.__config}"
 
     def __load_from_file(self, _param: str):
         if not os.path.exists(_param):
@@ -216,27 +219,56 @@ class Config:
                             f"Mandatory parameter {key} is missing in section {key_class.__name__.lower()}.{subclass[0].lower()}"
                         )
 
-    def get(self, key) -> any:
+    def get(self, key, default=None):
+        return self.__config.get(key, default)
 
-        return self.__config.get(key)
+    def get_int(self, key, default=None) -> int:
+        value = self.get(key, default)
+        if value is None:
+            raise ValueError(
+                f"Configuration key '{key}' not found and no default provided"
+            )
+        return int(value)
 
-    def get_int(self, key) -> int:
-        return int(self.get(key))
+    def get_bool(self, key, default=None) -> bool:
+        value = self.get(key, default)
+        if value is None:
+            raise ValueError(
+                f"Configuration key '{key}' not found and no default provided"
+            )
+        return str(value).lower() == "true"
 
-    def get_bool(self, key) -> bool:
-        return self.get_str(key).lower() == "true"
+    def get_float(self, key, default=None) -> float:
+        value = self.get(key, default)
+        if value is None:
+            raise ValueError(
+                f"Configuration key '{key}' not found and no default provided"
+            )
+        return float(value)
 
-    def get_float(self, key) -> float:
-        return float(self.get(key))
+    def get_str(self, key, default=None) -> str:
+        value = self.get(key, default)
+        if value is None:
+            raise ValueError(
+                f"Configuration key '{key}' not found and no default provided"
+            )
+        return str(value)
 
-    def get_str(self, key) -> str:
-        return str(self.get(key))
+    def get_list_str(self, key, default=None):
+        value = self.get(key, default)
+        if value is None:
+            raise ValueError(
+                f"Configuration key '{key}' not found and no default provided"
+            )
+        return [str(v) for v in str(value).split()]
 
-    def get_list_str(self, key):
-        return [str(value) for value in self.get_str(key).split()]
-
-    def get_list_int(self, key):
-        return [int(value) for value in self.get(key).split()]
+    def get_list_int(self, key, default=None):
+        value = self.get(key, default)
+        if value is None:
+            raise ValueError(
+                f"Configuration key '{key}' not found and no default provided"
+            )
+        return [int(v) for v in str(value).split()]
 
     def update_runtime_file(self, create=False):
         try:
@@ -272,6 +304,7 @@ class Config:
         ).split()
         if not load_generators_names:
             self.__log.error("No load generators found in config file.")
+            return None
 
         else:
             load_generators = []

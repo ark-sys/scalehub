@@ -1,6 +1,7 @@
 ---
-theodolite_lg_image: registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/workload-generator
+# TODO: Replace these with your own load generator images or build and push custom images
+theodolite_lg_image: ghcr.io/your-org/workload-generator
 theodolite_lg_tag: latest
 
-ysb_lg_image: registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/ysb-workload-generator
+ysb_lg_image: ghcr.io/your-org/ysb-workload-generator
 ysb_lg_tag: latest

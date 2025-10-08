@@ -3,12 +3,13 @@ from datetime import datetime
 from time import sleep
 
 from scripts.monitor.experiments.Scaling import Scaling
-from scripts.src.data.DataManager import DataManager
+from scripts.src.data.manager import DataManager
 from scripts.src.resources.KubernetesManager import KubernetesManager
 from scripts.utils.Config import Config
 from scripts.utils.Defaults import DefaultKeys as Key
 from scripts.utils.Logger import Logger
-from scripts.utils.Tools import Tools, Playbooks, FolderManager
+from scripts.utils.Tools import Tools, FolderManager
+from scripts.utils.Playbooks import Playbooks
 
 
 class StoppableThread(threading.Thread):
@@ -93,7 +94,7 @@ class Experiment:
                 file.write(monitor_logs)
 
             dm = DataManager(self.__log, self.config)
-            dm.export(multi_run_folder_path, single_export=True, single_eval=True)
+            dm.export(multi_run_folder_path)
         except Exception as e:
             self.__log.error(f"[EXPERIMENT] Error during finishing: {str(e)}")
 

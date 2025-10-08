@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from scripts.monitor.experiments.Experiment import Experiment
-from scripts.src.data.DataManager import DataManager
+from scripts.src.data.manager import DataManager
 from scripts.utils.Defaults import DefaultKeys as Key
 from scripts.utils.Tools import FolderManager
 
@@ -107,6 +107,7 @@ class ResourceExperiment(Experiment):
                     f"[RESOURCE_E] Error in run {run + 1}/{self.runs}: {str(e)}"
                 )
                 raise e
+        return None
 
     def exp(self):
         for c_val in self.cpu_millis:
