@@ -6,23 +6,13 @@
   vars:
     job_site: "rennes"
   block:
-    #    - name: Get control group hosts
-    #      set_fact:
-    #        control_hosts: "{{ groups['control'] | map('extract', hostvars, 'ansible_host') | list }}"
-    #
-    #
-    #    - name: Create access to NFS
-    #      delegate_to: rennes.g5k
-    #      shell: |
-    #        curl -X POST "https://api.grid5000.fr/stable/sites/{{ home_site }}/storage/home/{{ username }}/access" \
-    #        -H "Content-Type: application/json" \
-    #        -d '{"hosts": {{ control_hosts | to_json }}}'
-    #      register: response
 
+#
     - name: Include credentials file
       include_vars: "~/.python-grid5000.yaml"
     - name: retrieve JSON content
-      shell: curl -u "{{ username }}:{{ password }}" -k "https://api.grid5000.fr/3.0/sites/{{ job_site }}/storage/home/{{ username }}/access"
+      delegate_to: "{{ job_site }}.g5k"
+      shell: curl -k "https://api.grid5000.fr/3.0/sites/{{ job_site }}/storage/home/{{ username }}/access"
       register: response
 
     - name: Debug
@@ -32,7 +22,6 @@
     - name: From dict response, get value of key "nfs_address"
       set_fact:
         nfs_server: "{{ response.stdout | from_yaml | dict2items | json_query('[0].value.nfs_address') }}"
-
     - name: Debug
       debug:
         var: nfs_server

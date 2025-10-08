@@ -38,10 +38,6 @@
         - name: Clean newlines from INSTALL_K3S_EXEC
           set_fact:
             INSTALL_K3S_EXEC: "{{ INSTALL_K3S_EXEC | regex_replace('\n', '') }}"
-    - name: Debug INSTALL_K3S_EXEC
-      debug:
-        var: INSTALL_K3S_EXEC
-
     - name: Fail if --node-ip is empty
       fail:
         msg: "The --node-ip parameter in INSTALL_K3S_EXEC must not be empty."

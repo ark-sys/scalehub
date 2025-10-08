@@ -1,5 +1,3 @@
-version: "3.9"
-
 secrets:
   g5k_creds:
     # Fill this file with personal Grid5000 credentials
@@ -9,6 +7,10 @@ secrets:
     file: secrets/enos/grid5000.pk
   grid_pub:
     file: secrets/enos/grid5000.pub
+
+volumes:
+  scalehub_runtime:
+  experiments_data:
 
 networks:
   local_net:
@@ -37,24 +39,20 @@ services:
       - source: grid_pub
         target: id_rsa.pub
     build:
-      context: ${SCALEHUB_BASEDIR}/
+      context: ${SCALEHUB_BASEDIR}
       dockerfile: setup/scalehub/Dockerfile
       args:
         - UID=${UID}
         - GID=${GID}
         - USER=${USER}
-      tags:
-        - "registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/scalehub:latest"
     volumes:
-      - type: bind
-        source: ${SCALEHUB_BASEDIR}/experiments-data
+      - type: volume
+        source: experiments_data
         target: /app/experiments-data
       # Cache directory for scalehub, in case the container restarts...
-      - type: bind
-        source: ${SCALEHUB_BASEDIR}/runtime
+      - type: volume
+        source: scalehub_runtime
         target: /app/runtime
-        bind:
-          create_host_path: true
       # This is used to share the ssh-agent socket with the container thus allowing ssh connections through host's ssh-agent
       - type: bind
         source: $SSH_AUTH_SOCK
@@ -62,6 +60,7 @@ services:
     # Signal to the container that the ssh-agent socket is available
     environment:
       - SSH_AUTH_SOCK=/ssh-agent
+
 
   # OpenVPN client service to connect to Grid5000
   vpn:
@@ -101,8 +100,6 @@ services:
     build:
       context: ${SCALEHUB_BASEDIR}/setup/scalehub/dns
       dockerfile: Dockerfile
-      tags:
-        - "registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/dns:latest"
     container_name: dns
     restart: always
     networks:
