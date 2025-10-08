@@ -144,7 +144,7 @@ The scalehub container will use the network stack from the VPN container to inte
 
 By mounting `script/`, `playbooks/`, `experiments-data/` and `conf/`, the user can quickly modify the deployment description, execute tests and retrieve experiment data. 
 
-![Scalehub Setup](setup/images/scalehub_setup-v3.png)
+![Scalehub Setup](setup/images/scalehub_setup-v4.png)
 
 
 ## Usage
