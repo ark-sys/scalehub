@@ -1,3 +1,2 @@
-vm_image: registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/victoria-metrics
+vm_image: victoriametrics/victoria-metrics
 vm_tag: v1.86.1
-

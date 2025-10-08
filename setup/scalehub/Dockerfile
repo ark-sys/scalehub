@@ -62,7 +62,7 @@ RUN kubectl krew index add netshoot https://github.com/nilic/kubectl-netshoot.gi
     kubectl krew install netshoot/netshoot
 
 # Install Ansible collections
-RUN ansible-galaxy collection install bitwarden.secrets kubernetes.core --collections-path /home/$USER/.ansible/collections
+RUN ansible-galaxy collection install kubernetes.core --collections-path /home/$USER/.ansible/collections
 
 # Download and install mitogen
 ADD --chmod=644 https://files.pythonhosted.org/packages/source/m/mitogen/mitogen-$MITOGEN_VERSION.tar.gz /app/ansible/mitogen-plugin.tar.gz
