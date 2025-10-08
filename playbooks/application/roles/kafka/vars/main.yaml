@@ -2,15 +2,14 @@
 # vim: set ft=yaml:
 
 # Provide image name and tag for data stream components
-kafka_image: registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/kafka
+kafka_image: confluentinc/cp-kafka
 kafka_tag: latest
 
-jmx_image: registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/kafka-prometheus-jmx-exporter
+jmx_image: bitnami/jmx-exporter
 jmx_tag: latest
 
-zookeeper_image: registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/cp-zookeeper
+zookeeper_image: confluentinc/cp-zookeeper
 zookeeper_tag: latest
 
-redis_image: registry.gitlab.inria.fr/stream-processing-autoscaling/scalehub/redis
+redis_image: redis
 redis_tag: 7.4.0
-

@@ -16,7 +16,7 @@ Here are defined the playbooks that setup the Experimental environment as shown 
 ### 3. Application
 - This playbook installs all the microservices that will be used for the experiments.
 - The applications are:
-    - Network access with Ingress Controller
+    - Service access with Ingress Controller
     - Storage service with MinIO and NFS
     - Monitoring with Prometheus and Grafana
     - Chaos injection with Chaos Mesh

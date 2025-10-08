@@ -78,6 +78,11 @@ data:
     # Suppress the irrelevant (wrong) warnings from the Netty channel handler
     logger.netty.name=org.apache.flink.shaded.akka.org.jboss.netty.channel.DefaultChannelPipeline
     logger.netty.level=OFF
+    # Add logs for resource-aware weighted partitioner
+    logger.weightedRouter.name=org.apache.flink.streaming.runtime.partitioner.WeightedKeyGroupStreamPartitioner
+    logger.weightedRouter.level=DEBUG
+    logger.weightsOp.name=org.apache.flink.streaming.api.operators.weights.UpstreamWeightsOperator
+    logger.weightsOp.level=DEBUG
 ---
 apiVersion: apps/v1
 kind: StatefulSet

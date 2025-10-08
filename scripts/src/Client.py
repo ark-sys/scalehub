@@ -7,7 +7,7 @@ import paho.mqtt.client as mqtt
 from scripts.utils.Config import Config
 from scripts.utils.Defaults import DefaultKeys as Key
 from scripts.utils.Logger import Logger
-from scripts.utils.Tools import Playbooks
+from utils.Playbooks import Playbooks
 
 
 # 1. Create MQTT client
