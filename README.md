@@ -131,20 +131,20 @@ To correctly setup your environment, follow these steps:
     password: <your_grid5000_password>
     ```
 
-5. Run the deployment (or manually start docker-compose.yaml from its directory)
+6. Run the deployment (or manually start docker-compose.yaml from its directory)
     ```shell
    ./deploy.sh create
    
-6. Start an interactive shell with the deployment script
+7. Start an interactive shell with the deployment script
    ```
    ./deploy.sh shell
 
-At this point you should be able to run the *shub* command from within the container.
+At this point, you should be able to run the *shub* command from within the container.
 The scalehub container will use the network stack from the VPN container to interact with Grid5000.
 
 By mounting `script/`, `playbooks/`, `experiments-data/` and `conf/`, the user can quickly modify the deployment description, execute tests and retrieve experiment data. 
 
-![Scalehub Setup](setup/images/scalehub_setup-v3.png)
+![Scalehub Setup](setup/images/scalehub_setup-v4.png)
 
 
 ## Usage
@@ -282,10 +282,234 @@ For a more expedite execution mode, you can start an experiment, based on what i
 The conf folder contains the configuration files for the project, specifically the configuration file for Scalehub. You
 can specify a custom path for the configuration file using the `-c` or `--conf` option when running the shub script.
 
+
+## Extending Scalehub
+
+## With Providers
+
+### Adding EnosLib providers
+Scalehub can be extended to support additional platforms that EnosLib supports. To do so, you can update method `get_provider()` in **src/platforms/EnosPlatform.py** with a new case and add it to the factory registration.
+
+1. Update the `get_provider()` method in `EnosPlatform.py`:
+```python
+def get_provider(self, platform_type: str, conf_dict: Dict[str, Any]):
+    """Get the appropriate provider based on platform type."""
+    provider_map = {
+        "Grid5000": lambda: en.G5k(en.G5kConf.from_dictionary(conf_dict).finalize()),
+        "VagrantG5k": lambda: en.G5k(en.G5kConf.from_dictionary(conf_dict).finalize()),
+        "VMonG5k": lambda: en.VMonG5k(en.VMonG5kConf.from_dictionary(conf_dict).finalize()),
+        "FIT": lambda: en.Iotlab(en.IotlabConf.from_dictionary(conf_dict).finalize()),
+        "Chameleon": lambda: en.Chameleon(en.ChameleonConf.from_dictionary(conf_dict).finalize()),
+    }
+    # ...existing code...
+```
+
+2. Register the new platform type in `PlatformFactory.py`:
+```python
+_PLATFORM_TYPES = {
+    "Grid5000": EnosPlatform,
+    "VMonG5k": EnosPlatform,
+    "FIT": EnosPlatform,
+    "VagrantG5k": EnosPlatform,
+    "Chameleon": EnosPlatform,  # Add your new platform here
+}
+```
+
+### Adding Custom Non-EnosLib Providers
+
+To add a completely custom provider that doesn't use EnosLib, follow these steps:
+
+#### 1. Create Your Custom Platform Class
+
+Create a new file `scripts/src/platforms/YourCustomPlatform.py` that inherits from `Platform`:
+
+```python
+from typing import Dict, Any
+from scripts.src.platforms.Platform import Platform
+from scripts.utils.Logger import Logger
+
+class YourCustomConfigurationError(Exception):
+    """Raised when YourCustom configuration is invalid."""
+    pass
+
+class YourCustomPlatform(Platform):
+    """Custom platform implementation."""
+    
+    def _validate_config(self) -> None:
+        """Validate platform configuration."""
+        required_fields = ["api_endpoint", "region"]  # Define your required fields
+        for field in required_fields:
+            if field not in self._platform_config:
+                raise YourCustomConfigurationError(f"Missing required field: {field}")
+    
+    def _get_instance_count(self) -> int:
+        """Calculate total instance count from INI configuration."""
+        # Get counts from INI configuration (similar to Grid5000 pattern)
+        control_count = int(self._platform_config.get("control", 0))
+        producer_count = int(self._platform_config.get("producers", 0))
+        consumer_count = int(self._platform_config.get("consumers", 0))
+        
+        # If instance_count is explicitly set, use that instead
+        if "instance_count" in self._platform_config:
+            return int(self._platform_config["instance_count"])
+        
+        return control_count + producer_count + consumer_count
+    
+    def setup(self, verbose: bool = False) -> Dict[str, Any]:
+        """Setup the platform and return Ansible inventory."""
+        self._log.info(f"Setting up {self.platform_name}")
+        
+        # Your custom provisioning logic here
+        # This should interact with your platform's API
+        
+        # Get role counts from INI configuration
+        control_count = int(self._platform_config.get("control", 1))
+        producer_count = int(self._platform_config.get("producers", 0))
+        consumer_count = int(self._platform_config.get("consumers", 0))
+        
+        # Return inventory in the expected format
+        inventory = {
+            "control": {"hosts": {}},
+            "agents": {"hosts": {}},
+            "your_platform_group": {"hosts": {}},
+        }
+        
+        # Example host configuration for control nodes
+        for i in range(control_count):
+            hostname = f"control-{i+1}"
+            inventory["control"]["hosts"][hostname] = {
+                "ansible_host": f"192.168.1.{10+i}",
+                "ansible_user": self._platform_config.get("ssh_user", "ubuntu"),
+                "cluster_role": "control",
+                "platform_name": self.platform_name,
+            }
+        
+        # Example host configuration for worker nodes (producers + consumers)
+        worker_index = 0
+        for role, count in [("producer", producer_count), ("consumer", consumer_count)]:
+            for i in range(count):
+                hostname = f"{role}-{i+1}"
+                host_config = {
+                    "ansible_host": f"192.168.1.{20+worker_index}",
+                    "ansible_user": self._platform_config.get("ssh_user", "ubuntu"),
+                    "cluster_role": role,
+                    "platform_name": self.platform_name,
+                }
+                inventory["agents"]["hosts"][hostname] = host_config
+                worker_index += 1
+        
+        # Add all hosts to your platform group
+        inventory["your_platform_group"]["hosts"].update(inventory["control"]["hosts"])
+        inventory["your_platform_group"]["hosts"].update(inventory["agents"]["hosts"])
+        
+        return inventory
+    
+    def destroy(self) -> None:
+        """Destroy platform resources."""
+        self._log.info(f"Destroying {self.platform_name}")
+        # Your cleanup logic here
+```
+
+#### 2. Register Your Custom Platform
+
+Create an initialization file or add to your main script to register the platform:
+
+```python
+# In your initialization code or main script
+from scripts.src.platforms.PlatformFactory import PlatformFactory
+from scripts.src.platforms.YourCustomPlatform import YourCustomPlatform
+
+# Register your custom platform
+PlatformFactory.register_platform("YourCustomType", YourCustomPlatform)
+```
+
+#### 3. Configure Your Platform
+
+Add your platform configuration to your INI config file following the same pattern as other platforms:
+
+```ini
+[platforms]
+platforms = my_custom_platform
+
+[platforms.my_custom_platform]
+type = YourCustomType
+api_endpoint = https://api.yourcloud.com
+region = us-west-1
+instance_type = m5.large
+control = 1
+producers = 2
+consumers = 3
+ssh_user = ubuntu
+ssh_key_path = ~/.ssh/your_key
+# Add any other configuration your platform needs
+```
+
+#### 4. Key Requirements for Custom Platforms
+
+Your custom platform **must**:
+
+1. **Inherit from `Platform`**: Implement the abstract methods `_validate_config()`, `setup()`, and `destroy()`
+
+2. **Handle INI configuration**: Access configuration values using `self._platform_config.get(key, default)`
+
+3. **Follow role-based pattern**: Use `control`, `producers`, `consumers` counts similar to existing platforms
+
+4. **Return proper inventory format**: The `setup()` method must return a dictionary with Ansible inventory structure:
+   ```python
+   {
+       "control": {"hosts": {...}},      # Control plane nodes
+       "agents": {"hosts": {...}},       # Worker nodes 
+       "your_group": {"hosts": {...}},   # Platform-specific grouping
+   }
+   ```
+
+5. **Include required host attributes**: Each host should have at minimum:
+   ```python
+   {
+       "ansible_host": "192.168.1.10",      # IP address or hostname
+       "ansible_user": "ubuntu",            # SSH user
+       "cluster_role": "control|producer|consumer|worker",  # Node role
+       "platform_name": self.platform_name, # Platform identifier
+   }
+   ```
+
+6. **Handle errors gracefully**: Use proper exception handling and custom exception types
+
+7. **Follow logging conventions**: Use `self._log` for consistent logging
+
+#### 5. Advanced Features
+
+For more advanced custom platforms, you can:
+
+- **Support all INI fields**: Handle any field from your platform's INI section
+- **Add validation**: Implement comprehensive configuration validation
+- **Support multiple regions**: Handle multi-region deployments from INI config
+- **Add resource management**: Track and manage cloud resources
+- **Implement health checks**: Verify platform readiness before use
+
+#### 6. Example Configuration Files
+
+See `conf/examples/custom_platform_config.ini` and `scripts/src/platforms/examples/CustomCloudPlatform.py` for complete working examples of custom platform implementations.
+
+## With Ansible Playbooks
+You can extend Scalehub by adding new Ansible playbooks in the `playbooks/` folder. 
+Playbooks are organized in three setup stages:
+1. **infrastructure**: Playbooks that set up the infrastructure, such as installing bare-metal dependencies, configuring
+   the network and base folders.
+2. **orchestration**: Playbooks that set up the orchestration layer, such as installing Kubernetes using `agent` and `control` roles defined in the final platforms inventory. Then it labels the nodes according to their characteristics.
+3. **application**: Playbooks that set up the applications, such as installing Flink, Minio, Kafka, Chaos Mesh, Consul,
+   and Transscale. Playbooks in this stage are run against localhost as they use the local kubeconfig file to connect (with the VPN connection established) to the Kubernetes cluster.
+
+
+## Experiment module
+`monitor/experiments` contains the definition for the Experiment Monitor Operator, a containerized python script that runs within the cluster and manages the lifecycle of experiments. It is responsible for starting, stopping, and monitoring the experiments defined in the `conf/experiments` folder.
+
+To add a custom Experiment. check for examples in `monitor/experiments/exp_types` and how they extend the `Experiment` class.
+
+
 ## Contributing
 
 Contributions are welcome! If you have any ideas, suggestions, or bug reports, please create an issue or submit a pull
 request.
 
 Please follow the contribution guidelines when making contributions.
-

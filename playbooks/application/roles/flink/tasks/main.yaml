@@ -44,6 +44,13 @@
       with_fileglob:
         - "../templates/taskmanagers/*.yaml.j2"
 
+    - name: Deploy P2 taskmanagers
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('ansible.builtin.template', item) | from_yaml_all }}"
+      with_fileglob:
+        - "../templates/tm-p2/*.yaml.j2"
+
 
 - name: Delete Flink
   tags: [ delete ]
@@ -67,6 +74,13 @@
       with_fileglob:
         - "../templates/taskmanagers/*.yaml.j2"
 
+    - name: Delete P2 taskmanagers
+      kubernetes.core.k8s:
+        state: absent
+        definition: "{{ lookup('ansible.builtin.template', item) | from_yaml_all }}"
+      with_fileglob:
+        - "../templates/tm-p2/*.yaml.j2"
+    
     - name: Delete pre-pull daemon-set
       kubernetes.core.k8s:
         state: absent

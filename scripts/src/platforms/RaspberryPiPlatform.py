@@ -1,4 +1,5 @@
 import subprocess
+from typing import Dict, Any
 
 import yaml
 
@@ -6,13 +7,22 @@ from scripts.src.platforms.Platform import Platform
 from scripts.utils.Logger import Logger
 
 
-class RaspberryPiPlatform(Platform):
-    def __init__(self, log: Logger, platform_config: dict):
-        self.__log = log
-        self.platform_config = platform_config
+class RaspberryPiConfigurationError(Exception):
+    """Raised when RaspberryPi configuration is invalid."""
+    pass
 
-    def test_ssh(self, host: str) -> bool:
-        self.__log.debuggg(f"[PI_PLT] Testing SSH connection to {host}")
+
+class RaspberryPiPlatform(Platform):
+    """Platform implementation for Raspberry Pi devices."""
+
+    def _validate_config(self) -> None:
+        """Validate platform configuration."""
+        if "inventory" not in self._platform_config:
+            raise RaspberryPiConfigurationError("Missing 'inventory' field in configuration")
+
+    def _test_ssh_connection(self, host: str) -> bool:
+        """Test SSH connection to a host."""
+        self._log.debuggg(f"Testing SSH connection to {host}")
         try:
             result = subprocess.run(
                 ["ssh", "-o", "BatchMode=yes", host, "echo", "alive"],
@@ -20,19 +30,42 @@ class RaspberryPiPlatform(Platform):
                 stderr=subprocess.PIPE,
                 timeout=5,
             )
-            self.__log.debuggg(f"[PI_PLT] SSH test result: {result}")
             return result.returncode == 0
         except subprocess.TimeoutExpired:
             return False
 
-    def setup(self) -> dict:
-        self.__log.info("[PI_PLT] Setting up Raspberry Pi platform")
-        # Load hosts from yaml file
-        with open(self.platform_config["inventory"], "r") as file:
-            hosts = yaml.safe_load(file)["pico"]["hosts"]
+    def _load_hosts_from_inventory(self) -> Dict[str, Any]:
+        """Load hosts from inventory file."""
+        try:
+            with open(self._platform_config["inventory"], "r") as file:
+                inventory_data = yaml.safe_load(file)
+                return inventory_data.get("pico", {}).get("hosts", {})
+        except (FileNotFoundError, yaml.YAMLError) as e:
+            raise RaspberryPiConfigurationError(f"Error loading inventory file: {str(e)}")
 
-        required_producers = int(self.platform_config.get("producers", 0))
-        required_consumers = int(self.platform_config.get("consumers", 0))
+    def _get_alive_hosts(self, hosts: Dict[str, Any]) -> list[str]:
+        """Get list of hosts that are alive and reachable."""
+        return [
+            host for host in hosts
+            if self._test_ssh_connection(hosts[host]["ansible_ssh_host"])
+        ]
+
+    def _validate_host_requirements(self, alive_hosts: list, required_total: int) -> None:
+        """Validate that we have enough alive hosts."""
+        if len(alive_hosts) < required_total:
+            raise RaspberryPiConfigurationError(
+                f"Not enough alive hosts: need {required_total}, found {len(alive_hosts)}"
+            )
+
+    def setup(self, verbose: bool = False) -> Dict[str, Any]:
+        """Setup Raspberry Pi platform."""
+        self._log.info("Setting up Raspberry Pi platform")
+
+        hosts = self._load_hosts_from_inventory()
+
+        required_producers = int(self._platform_config.get("producers", 0))
+        required_consumers = int(self._platform_config.get("consumers", 0))
+        required_total = required_producers + required_consumers
 
         inventory = {
             "producers": {"hosts": {}},
@@ -41,32 +74,30 @@ class RaspberryPiPlatform(Platform):
             "agents": {"hosts": {}},
         }
 
-        alive_hosts = [
-            host for host in hosts if self.test_ssh(hosts[host]["ansible_ssh_host"])
-        ]
+        alive_hosts = self._get_alive_hosts(hosts)
+        self._validate_host_requirements(alive_hosts, required_total)
 
-        if len(alive_hosts) < required_producers + required_consumers:
-            self.__log.error(
-                "[PI_PLT] Not enough alive hosts to meet the requirements."
-            )
-            raise Exception("[PI_PLT] Not enough alive hosts to meet the requirements.")
+        # Assign roles to hosts
+        for i, host in enumerate(alive_hosts[:required_total]):
+            host_config = hosts[host].copy()
 
-        for i, host in enumerate(alive_hosts):
             if i < required_producers:
-                inventory["pico"]["hosts"][host] = hosts[host]
-                inventory["agents"]["hosts"][host] = hosts[host]
-                inventory["producers"]["hosts"][host] = hosts[host]
-                inventory["pico"]["hosts"][host]["cluster_role"] = "producer"
-                self.__log.debugg(f"[PI_PLT] Adding producer {host}")
-            elif i < required_producers + required_consumers:
-                inventory["pico"]["hosts"][host] = hosts[host]
-                inventory["agents"]["hosts"][host] = hosts[host]
-                inventory["consumers"]["hosts"][host] = hosts[host]
-                inventory["pico"]["hosts"][host]["cluster_role"] = "consumer"
-                self.__log.debugg(f"[PI_PLT] Adding consumer {host}")
+                role = "producer"
+                inventory["producers"]["hosts"][host] = host_config
+            else:
+                role = "consumer"
+                inventory["consumers"]["hosts"][host] = host_config
 
-        self.__log.debugg(f"[PI_PLT] Final pi Inventory: {inventory}")
+            # Add to common inventories
+            host_config["cluster_role"] = role
+            inventory["pico"]["hosts"][host] = host_config
+            inventory["agents"]["hosts"][host] = host_config
+
+            self._log.debugg(f"Added {role} {host}")
+
+        self._log.debugg(f"Final pi Inventory: {inventory}")
         return inventory
 
-    def destroy(self):
+    def destroy(self) -> None:
+        """Destroy Raspberry Pi platform (no-op)."""
         pass

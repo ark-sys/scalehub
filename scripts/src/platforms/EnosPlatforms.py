@@ -1,3 +1,5 @@
+from typing import List, Optional, Dict, Any
+
 import enoslib as en
 
 from scripts.src.platforms.EnosPlatform import EnosPlatform
@@ -10,15 +12,22 @@ class EnosPlatforms(Platform):
     # Advance reservations on enoslib are limited to 2 reservations at a time
     # the goal of this class is to merge enoslib configurations for the same platform type to reduce the number of reservations
 
-    def __init__(self, log: Logger, platforms: [EnosPlatform]):
+    def __init__(self, log: Logger, platforms: List[EnosPlatform]):
+        super().__init__(log, {})
         self.__log = log
         self.platforms = platforms
 
         # If we have multiple enos platforms of the same type. let's merge their dicts
-        enos_platforms_confs = self.__build_uber_dict(platforms)
+        self.uber_dict = self.__build_uber_dict(platforms)
 
         # Create providers
-        self.enos_providers = self.__get_providers(enos_platforms_confs)
+        self.enos_providers = self.__get_providers(self.uber_dict)
+
+    def _validate_config(self) -> None:
+        """Validate platform configuration for EnosPlatforms."""
+        # EnosPlatforms doesn't have its own config validation since it manages
+        # multiple EnosPlatform objects, each with their own validation
+        pass
 
     # gen reservation name based on start_time
     def __gen_reservation_name(self, platform_type, start_time):
@@ -35,6 +44,7 @@ class EnosPlatforms(Platform):
                 self.__log.error(
                     f"[ENOS_PLTS] Invalid start_time format for {platform_type}. Expected format: HH:MM:SS"
                 )
+                return None
             else:
                 time_tag = "_late" if int(time_parts[0]) >= 19 else "_day"
                 reservation_name = f"{reservation_name}{time_tag}"
@@ -46,16 +56,21 @@ class EnosPlatforms(Platform):
 
     def __build_uber_dict(self, platforms) -> dict:
         platform_confs = {}
+        platform_setups = {}
+
         for platform in platforms:
+            # Get setup result once per platform
+            if platform not in platform_setups:
+                platform_setups[platform] = platform.setup()
+
+            setup_result = platform_setups[platform]
+
             if platform.platform_type not in platform_confs:
-                # Create new entry in uber_conf for this platform type
-                platform_confs[platform.platform_type] = platform.setup()
+                platform_confs[platform.platform_type] = setup_result
             else:
                 # Merge confs
                 conf = platform_confs[platform.platform_type]
-                conf["resources"]["machines"] += platform.setup()["resources"][
-                    "machines"
-                ]
+                conf["resources"]["machines"] += setup_result["resources"]["machines"]
                 platform_confs[platform.platform_type] = conf
 
         self.__log.debugg(
@@ -67,17 +82,19 @@ class EnosPlatforms(Platform):
         providers = []
         self.__log.debugg(f"[ENOS_PLTS] Creating providers for {conf_dict}")
 
-        for platform_type, conf in conf_dict.items():
+        processed_types = set()  # Track processed platform types
 
-            # Get provider using a platform of the same type
-            for platform in self.platforms:
-                if platform.platform_type == platform_type:
-                    conf["job_name"] = self.__gen_reservation_name(
-                        platform_type, platform.start_time
-                    )
-                    providers.append(platform.get_provider(platform_type, conf))
-                    # break after finding the first platform of the same type. We may have more platforms than configs after a merge
-                    break
+        for platform_type, conf in conf_dict.items():
+            if platform_type not in processed_types:
+                # Get provider using a platform of the same type
+                for platform in self.platforms:
+                    if platform.platform_type == platform_type:
+                        conf["job_name"] = self.__gen_reservation_name(
+                            platform_type, platform.start_time
+                        )
+                        providers.append(platform.get_provider(platform_type, conf))
+                        processed_types.add(platform_type)
+                        break
 
         return providers
 
@@ -92,23 +109,17 @@ class EnosPlatforms(Platform):
             for platform in self.platforms
             if platform.platform_type == "VagrantG5k"
         ]
-        self.__log.debugg(f"[ENOS_PLTS] Vagrant platforms: {vagrant_platforms}")
 
         for platform in vagrant_platforms:
             platform_vms = platform.vm_groups
             platform_name = platform.platform_config["name"]
             filtered_vagrant_hypervisors = [
-                host
-                for host in vagrant_hypervisors.values()
-                if host["reservation_name"] == platform_name
+                (host_key, host_data)
+                for host_key, host_data in vagrant_hypervisors.items()
+                if host_data["reservation_name"] == platform_name
             ]
 
-            self.__log.debugg(
-                f"[ENOS_PLTS] Platform {platform_name} VM groups: {platform_vms}"
-            )
-            required_nodes = sum(
-                vm_group["required_nodes"] for vm_group in platform_vms
-            )
+            required_nodes = sum(vm_group.required_nodes for vm_group in platform_vms)
 
             if len(filtered_vagrant_hypervisors) != required_nodes:
                 self.__log.error(
@@ -117,46 +128,40 @@ class EnosPlatforms(Platform):
                 exit(1)
 
             for vm_group in platform_vms:
-                vm_count = vm_group["count"]
-                vm_required_nodes = vm_group["required_nodes"]
+                vm_count = vm_group.count
+                vm_required_nodes = vm_group.required_nodes
 
                 if vm_count == 0:
-                    self.__log.debug(
-                        f"[ENOS_PLTS] VM group {vm_group} has a count of 0. Skipping."
-                    )
                     continue
 
-                self.__log.debugg(
-                    f"[ENOS_PLTS] Distributing {vm_count} VMs for VM group {vm_group}"
-                )
                 candidate_hypervisors = [
                     filtered_vagrant_hypervisors.pop() for _ in range(vm_required_nodes)
                 ]
 
                 for i in range(vm_count):
-                    vm_hypervisor = candidate_hypervisors[i % vm_required_nodes][
-                        "ansible_host"
+                    hypervisor_key, hypervisor_data = candidate_hypervisors[
+                        i % vm_required_nodes
                     ]
+                    vm_hypervisor = hypervisor_data["ansible_host"]
                     vm_name = f"vm-{vm_hypervisor.split('.', 1)[0]}-{(i // vm_required_nodes) + 1}"
+
                     inventory["vms"]["hosts"][vm_name] = {
                         "ansible_host": vm_name,
                         "ansible_user": "root",
                         "ansible_connection": "ssh",
                         "hypervisor": vm_hypervisor,
-                        "cluster_role": vm_group["role"][:-1],
+                        "cluster_role": vm_group.role[:-1],
                         "vm_type": "vagrant",
-                        "core_per_vm": vm_group["conf"]["core_per_vm"],
-                        "memory_per_vm": vm_group["conf"]["memory_per_vm"],
-                        "disk_per_vm": vm_group["conf"]["disk_per_vm"],
-                        "site": vm_group["conf"]["site"],
-                        "cluster": vm_group["conf"]["cluster"],
+                        "core_per_vm": vm_group.conf["core_per_vm"],
+                        "memory_per_vm": vm_group.conf["memory_per_vm"],
+                        "disk_per_vm": vm_group.conf["disk_per_vm"],
+                        "site": vm_group.conf["site"],
+                        "cluster": vm_group.conf["cluster"],
                     }
-                    inventory["vagrant"]["hosts"][vm_hypervisor]["vm_count"] = (
-                        inventory["vagrant"]["hosts"][vm_hypervisor].get("vm_count", 0)
+
+                    inventory["vagrant"]["hosts"][hypervisor_key]["vm_count"] = (
+                        inventory["vagrant"]["hosts"][hypervisor_key].get("vm_count", 0)
                         + 1
-                    )
-                    self.__log.debugg(
-                        f"[ENOS_PLTS] Added VM {vm_name} to hypervisor {vm_hypervisor}"
                     )
 
         return inventory
@@ -231,7 +236,7 @@ class EnosPlatforms(Platform):
         self.__log.debug(f"[ENOS_PLTS] Final enos Inventory: {inventory}")
         return inventory
 
-    def setup(self) -> dict:
+    def setup(self, verbose: bool = False) -> Optional[Dict[str, Any]]:
         # Request nodes with enoslib
         if self.enos_providers:
             self.__log.debug("[ENOS_PLTS] Found Enos platforms. Provisioning...")
@@ -312,6 +317,7 @@ class EnosPlatforms(Platform):
             inventory = self.__reformat_inventory(inventory)
 
             return inventory
+        return None
 
     def post_setup(self):
         # Apply firewall rules
