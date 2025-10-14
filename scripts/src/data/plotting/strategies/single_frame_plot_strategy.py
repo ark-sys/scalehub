@@ -1,3 +1,18 @@
+# Copyright (C) 2025 Khaled Arsalane
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import itertools
 from pathlib import Path
 from typing import Dict, Any
@@ -19,9 +34,7 @@ class SingleFramePlotStrategy(PlotStrategy):
         self.tick_size = style_params.get("tick_size", 22)
         self.scientific_linewidth = style_params.get("scientific_linewidth", 4)
         self.scientific_markersize = style_params.get("scientific_markersize", 25)
-        self.scientific_markeredgewidth = style_params.get(
-            "scientific_markeredgewidth", 2.0
-        )
+        self.scientific_markeredgewidth = style_params.get("scientific_markeredgewidth", 2.0)
         self.capsize = style_params.get("capsize", 10)
 
         self.scientific_markers = ["o", "s", "^", "D", "v", "X", "P", "*", "H", "p"]
@@ -156,13 +169,9 @@ class SingleFramePlotStrategy(PlotStrategy):
         ax1.yaxis.set_major_formatter(FuncFormatter(lambda x, p: f"{x:,.0f}"))
 
         if ylabels_dict and "Throughput" in ylabels_dict:
-            ax1.set_ylabel(
-                ylabels_dict["Throughput"], fontsize=self.fontsize + 10, labelpad=10
-            )
+            ax1.set_ylabel(ylabels_dict["Throughput"], fontsize=self.fontsize + 10, labelpad=10)
         if ax2 and ylabels_dict and "BusyTime" in ylabels_dict:
-            ax2.set_ylabel(
-                ylabels_dict["BusyTime"], fontsize=self.fontsize + 10, labelpad=10
-            )
+            ax2.set_ylabel(ylabels_dict["BusyTime"], fontsize=self.fontsize + 10, labelpad=10)
 
         if ylim:
             ax1.set_ylim(ylim)

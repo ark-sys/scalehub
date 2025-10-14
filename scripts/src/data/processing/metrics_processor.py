@@ -1,3 +1,18 @@
+# Copyright (C) 2025 Khaled Arsalane
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 """
 Metrics processor to handle JSON data from VictoriaMetrics and build multi-column DataFrames
 similar to the old DataExporter.py functionality.
@@ -16,9 +31,7 @@ class MetricsProcessor:
         self.logger = logger
 
     @staticmethod
-    def process_metrics(
-        metrics_content: List[Dict], task_name: str
-    ) -> Dict[str, List[tuple]]:
+    def process_metrics(metrics_content: List[Dict], task_name: str) -> Dict[str, List[tuple]]:
         """
         Process metrics content for a specific task name.
         Returns a dict mapping subtask_index to list of (timestamp, value) tuples.
@@ -61,9 +74,7 @@ class MetricsProcessor:
         data = self.process_metrics(metrics_content, task_name)
 
         if not data:
-            self.logger.warning(
-                f"No data found for metric {metric_name} and task {task_name}"
-            )
+            self.logger.warning(f"No data found for metric {metric_name} and task {task_name}")
             return pd.DataFrame()
 
         # Create DataFrame with one column per subtask
@@ -77,15 +88,11 @@ class MetricsProcessor:
         df.sort_index(inplace=True)
 
         # Extract subtask indices from column names and sort
-        df.columns = (
-            df.columns.astype(str).str.extract(r"(\d+)", expand=False).astype(int)
-        )
+        df.columns = df.columns.astype(str).str.extract(r"(\d+)", expand=False).astype(int)
         df = df.sort_index(axis=1)
 
         # Create multi-level column index
-        df.columns = pd.MultiIndex.from_product(
-            [[metric_name], [task_name], df.columns]
-        )
+        df.columns = pd.MultiIndex.from_product([[metric_name], [task_name], df.columns])
 
         # Scale index back to milliseconds
         df.index = df.index * 5000
@@ -122,9 +129,7 @@ class MetricsProcessor:
 
             df = pd.DataFrame(
                 {
-                    f"{metric_name}_{source}_{k}": pd.Series(
-                        dict(v), name=f"{metric_name}_{k}"
-                    )
+                    f"{metric_name}_{source}_{k}": pd.Series(dict(v), name=f"{metric_name}_{k}")
                     for k, v in data.items()
                 }
             )
@@ -171,9 +176,7 @@ class MetricsProcessor:
             dfs_to_concat.append(sources_metrics_df)
 
         if job_metrics_dfs:
-            job_metrics_df = pd.concat(
-                [df for df in job_metrics_dfs if not df.empty], axis=1
-            )
+            job_metrics_df = pd.concat([df for df in job_metrics_dfs if not df.empty], axis=1)
             dfs_to_concat.append(job_metrics_df)
 
         if not dfs_to_concat:
@@ -187,9 +190,7 @@ class MetricsProcessor:
         final_df.index = final_df.index.astype(int)
 
         # Calculate parallelism from numRecordsInPerSecond columns
-        throughput_cols = [
-            col for col in final_df.columns if "numRecordsInPerSecond" in str(col)
-        ]
+        throughput_cols = [col for col in final_df.columns if "numRecordsInPerSecond" in str(col)]
 
         if throughput_cols:
             final_df["Parallelism"] = final_df[throughput_cols].count(axis=1)

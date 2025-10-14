@@ -1,3 +1,18 @@
+# Copyright (C) 2025 Khaled Arsalane
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 from typing import Dict, Any
 
 import numpy as np
@@ -58,9 +73,7 @@ class SingleExperimentProcessor(ProcessorWithComponents):
             df.columns = df.columns.droplevel([1, 2])
 
         # Create aggregated metrics
-        df["BackpressureTime"] = df.filter(
-            regex="hardBackPressuredTimeMsPerSecond"
-        ).mean(axis=1)
+        df["BackpressureTime"] = df.filter(regex="hardBackPressuredTimeMsPerSecond").mean(axis=1)
         df["BusyTime"] = df.filter(regex="busyTimeMsPerSecond").mean(axis=1)
         df["Throughput"] = df.filter(regex="numRecordsInPerSecond").sum(axis=1)
 
@@ -75,14 +88,8 @@ class SingleExperimentProcessor(ProcessorWithComponents):
         """Filter data based on time windows."""
         df_filtered = df.groupby("Parallelism").apply(
             lambda group: group[
-                (
-                    group.index
-                    >= group.index.min() + pd.Timedelta(seconds=self.start_skip)
-                )
-                & (
-                    group.index
-                    <= group.index.max() - pd.Timedelta(seconds=self.end_skip)
-                )
+                (group.index >= group.index.min() + pd.Timedelta(seconds=self.start_skip))
+                & (group.index <= group.index.max() - pd.Timedelta(seconds=self.end_skip))
             ]
         )
 
@@ -96,9 +103,9 @@ class SingleExperimentProcessor(ProcessorWithComponents):
 
     def _calculate_statistics(self, df: pd.DataFrame) -> pd.DataFrame:
         """Calculate mean and standard error statistics."""
-        df_final = df.groupby("Parallelism")[
-            ["Throughput", "BusyTime", "BackpressureTime"]
-        ].agg(["mean", lambda x: np.std(x) / np.sqrt(x.count())])
+        df_final = df.groupby("Parallelism")[["Throughput", "BusyTime", "BackpressureTime"]].agg(
+            ["mean", lambda x: np.std(x) / np.sqrt(x.count())]
+        )
 
         df_final.columns = [
             "Throughput",
@@ -125,9 +132,7 @@ class SingleExperimentProcessor(ProcessorWithComponents):
         data = {
             "Throughput": transformed_df.filter(regex="numRecordsInPerSecond"),
             "BusyTime": transformed_df.filter(regex="busyTimeMsPerSecond"),
-            "BackpressureTime": transformed_df.filter(
-                regex="hardBackPressuredTimeMsPerSecond"
-            ),
+            "BackpressureTime": transformed_df.filter(regex="hardBackPressuredTimeMsPerSecond"),
         }
 
         ylim_dict = {

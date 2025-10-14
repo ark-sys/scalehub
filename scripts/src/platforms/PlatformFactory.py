@@ -1,18 +1,35 @@
+# Copyright (C) 2025 Khaled Arsalane
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 from typing import Dict, Any, Optional, Type
-from scripts.src.platforms.Platform import Platform
+
 from scripts.src.platforms.EnosPlatform import EnosPlatform
+from scripts.src.platforms.Platform import Platform
 from scripts.src.platforms.RaspberryPiPlatform import RaspberryPiPlatform
 from scripts.utils.Logger import Logger
 
 
 class PlatformCreationError(Exception):
     """Raised when platform creation fails."""
+
     pass
 
 
 class PlatformFactory:
     """Factory for creating platform instances."""
-    
+
     _PLATFORM_TYPES: Dict[str, Type[Platform]] = {
         "Grid5000": EnosPlatform,
         "VMonG5k": EnosPlatform,
@@ -20,7 +37,7 @@ class PlatformFactory:
         "VagrantG5k": EnosPlatform,
         "RaspberryPi": RaspberryPiPlatform,
     }
-    
+
     @classmethod
     def register_platform(cls, platform_type: str, platform_class: Type[Platform]) -> None:
         """Register a new platform type.
@@ -46,10 +63,10 @@ class PlatformFactory:
     def create_platform(cls, log: Logger, platform_config: Dict[str, Any]) -> Optional[Platform]:
         """Create a platform instance based on configuration."""
         platform_type = platform_config.get("type")
-        
+
         if not platform_type:
             raise PlatformCreationError("Platform type not specified in configuration")
-        
+
         platform_class = cls._PLATFORM_TYPES.get(platform_type)
         if not platform_class:
             available_types = ", ".join(cls.get_supported_types())
@@ -62,7 +79,7 @@ class PlatformFactory:
             return platform_class(log, platform_config)
         except Exception as e:
             raise PlatformCreationError(f"Failed to create platform {platform_type}: {str(e)}")
-    
+
     @classmethod
     def get_supported_types(cls) -> list[str]:
         """Return list of supported platform types."""

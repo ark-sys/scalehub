@@ -1,3 +1,18 @@
+# Copyright (C) 2025 Khaled Arsalane
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import json
 
 import pandas as pd
@@ -89,9 +104,7 @@ class VictoriaMetricsLoadStrategy(BaseLoadStrategy):
                     self._logger.info(f"Successfully connected to {fallback_url}")
                     return response
                 except requests.exceptions.RequestException as fallback_e:
-                    self._logger.warning(
-                        f"Failed to connect to {fallback_url}: {fallback_e}"
-                    )
+                    self._logger.warning(f"Failed to connect to {fallback_url}: {fallback_e}")
                     continue
 
             # If all attempts failed, raise the original exception
@@ -156,9 +169,7 @@ class VictoriaMetricsLoadStrategy(BaseLoadStrategy):
             try:
                 # Parse JSON lines (each line is a separate JSON object)
                 json_data = [
-                    json.loads(line)
-                    for line in response.text.strip().split("\n")
-                    if line.strip()
+                    json.loads(line) for line in response.text.strip().split("\n") if line.strip()
                 ]
                 if not json_data:
                     self._logger.warning(f"Empty JSON data for {time_series_name}")

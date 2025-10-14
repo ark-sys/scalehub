@@ -1,3 +1,18 @@
+# Copyright (C) 2025 Khaled Arsalane
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import itertools
 from pathlib import Path
 from typing import Dict, Any
@@ -75,15 +90,11 @@ class StackedFramesPlotStrategy(PlotStrategy):
                 subplot_attributes = attributes_dict[subplot_label]
 
                 if "ylabel" in subplot_attributes:
-                    axs[i].set_ylabel(
-                        subplot_attributes["ylabel"], fontsize=self.fontsize + 2
-                    )
+                    axs[i].set_ylabel(subplot_attributes["ylabel"], fontsize=self.fontsize + 2)
                 if "ylim" in subplot_attributes:
                     axs[i].set_ylim(subplot_attributes["ylim"])
                 if "axhline" in subplot_attributes:
-                    axs[i].axhline(
-                        subplot_attributes["axhline"], color="r", linestyle="--"
-                    )
+                    axs[i].axhline(subplot_attributes["axhline"], color="r", linestyle="--")
 
             axs[i].legend(loc=self.legend_loc)
             axs[i].yaxis.set_major_locator(MaxNLocator(4))
@@ -96,9 +107,7 @@ class StackedFramesPlotStrategy(PlotStrategy):
                 if isinstance(series, pd.Series)
             )
             if max_value > 10000:
-                axs[i].yaxis.set_major_formatter(
-                    FuncFormatter(lambda x, p: f"{x:,.0f}")
-                )
+                axs[i].yaxis.set_major_formatter(FuncFormatter(lambda x, p: f"{x:,.0f}"))
 
         axs[-1].set_xlabel(xlabel, fontsize=self.fontsize)
         axs[-1].xaxis.set_major_locator(MaxNLocator(integer=True))

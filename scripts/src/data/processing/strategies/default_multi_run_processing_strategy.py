@@ -1,3 +1,18 @@
+# Copyright (C) 2025 Khaled Arsalane
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import json
 from pathlib import Path
 from typing import Dict, Any, Optional
@@ -102,14 +117,10 @@ class DefaultMultiRunProcessingStrategy(BaseProcessingStrategy):
         # Check if we need to build final_df.csv from VictoriaMetrics
         final_df_path = run_dir / "final_df.csv"
         if not final_df_path.exists():
-            self.logger.info(
-                f"final_df.csv not found, building from VictoriaMetrics..."
-            )
+            self.logger.info(f"final_df.csv not found, building from VictoriaMetrics...")
             success = self._build_final_df_from_victoriametrics(run_dir)
             if not success:
-                self.logger.warning(
-                    f"Failed to build final_df.csv for run {run_dir.name}"
-                )
+                self.logger.warning(f"Failed to build final_df.csv for run {run_dir.name}")
                 return None
 
         # Process the run using SingleExperimentProcessor
@@ -118,9 +129,7 @@ class DefaultMultiRunProcessingStrategy(BaseProcessingStrategy):
                 SingleExperimentProcessor,
             )
 
-            single_processor = SingleExperimentProcessor(
-                self.logger, self.config, str(run_dir)
-            )
+            single_processor = SingleExperimentProcessor(self.logger, self.config, str(run_dir))
             single_processor.process()
             self.logger.info(f"Successfully processed run {run_dir.name}")
 
@@ -174,21 +183,15 @@ class DefaultMultiRunProcessingStrategy(BaseProcessingStrategy):
         # Load data from VictoriaMetrics
         # Note: VictoriaMetricsLoadStrategy returns Dict[str, Any] which can be
         # either pd.DataFrame (csv) or list (json) depending on format parameter
-        vm_strategy = VictoriaMetricsLoadStrategy(
-            self.logger, db_url, str(start_ts), str(end_ts)
-        )
+        vm_strategy = VictoriaMetricsLoadStrategy(self.logger, db_url, str(start_ts), str(end_ts))
         vm_loader = Loader(vm_strategy)
 
         # Load both CSV (for export) and JSON (for processing)
-        raw_data_csv = vm_loader.load_data(
-            format="csv"
-        )  # Returns Dict[str, pd.DataFrame]
+        raw_data_csv = vm_loader.load_data(format="csv")  # Returns Dict[str, pd.DataFrame]
         raw_data_json = vm_loader.load_data(format="json")  # Returns Dict[str, list]
 
         if not raw_data_json:
-            self.logger.warning(
-                f"No data loaded from VictoriaMetrics for run {run_dir.name}"
-            )
+            self.logger.warning(f"No data loaded from VictoriaMetrics for run {run_dir.name}")
             return False
 
         # Export raw metrics to CSV and JSON files
@@ -391,20 +394,12 @@ class DefaultMultiRunProcessingStrategy(BaseProcessingStrategy):
         try:
             parallelism_levels = aggregated_results.index.tolist()
             throughput_mean = aggregated_results["Throughput"].tolist()
-            throughput_min = aggregated_results.get(
-                "Throughput_min", throughput_mean
-            ).tolist()
-            throughput_max = aggregated_results.get(
-                "Throughput_max", throughput_mean
-            ).tolist()
+            throughput_min = aggregated_results.get("Throughput_min", throughput_mean).tolist()
+            throughput_max = aggregated_results.get("Throughput_max", throughput_mean).tolist()
 
             # Create error bars from min/max
-            yerr_lower = [
-                mean - min_val for mean, min_val in zip(throughput_mean, throughput_min)
-            ]
-            yerr_upper = [
-                max_val - mean for mean, max_val in zip(throughput_mean, throughput_max)
-            ]
+            yerr_lower = [mean - min_val for mean, min_val in zip(throughput_mean, throughput_min)]
+            yerr_upper = [max_val - mean for mean, max_val in zip(throughput_mean, throughput_max)]
 
             # Calculate ylim: 0 to max_value + 10%
             max_value = max(throughput_max)

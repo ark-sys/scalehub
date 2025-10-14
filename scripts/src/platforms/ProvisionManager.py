@@ -1,3 +1,18 @@
+# Copyright (C) 2025 Khaled Arsalane
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 from typing import Dict, List, Any
 
@@ -40,9 +55,7 @@ class ProvisionManager:
         platform_configs = self._config.get(Key.Platforms.platforms.key)
 
         if not platform_configs:
-            self._log.info(
-                "No platforms configured. Using default platform configurations."
-            )
+            self._log.info("No platforms configured. Using default platform configurations.")
             platform_configs = []
 
         for platform_config in platform_configs:
@@ -66,9 +79,7 @@ class ProvisionManager:
     def _filter_custom_platforms(self) -> List[Platform]:
         """Filter custom platforms (non-Enos, non-RaspberryPi) from all platforms."""
         return [
-            p
-            for p in self._platforms
-            if not isinstance(p, (EnosPlatform, RaspberryPiPlatform))
+            p for p in self._platforms if not isinstance(p, (EnosPlatform, RaspberryPiPlatform))
         ]
 
     def _log_platform_summary(self) -> None:
@@ -87,9 +98,7 @@ class ProvisionManager:
 
     def _save_inventory(self, inventory: Dict[str, Any], filename: str) -> str:
         """Save inventory to file and return the path."""
-        inventory_path = os.path.join(
-            self._config.get(Key.Scalehub.inventory.key), filename
-        )
+        inventory_path = os.path.join(self._config.get(Key.Scalehub.inventory.key), filename)
 
         with open(inventory_path, "w") as inventory_file:
             yaml.dump(inventory, inventory_file, default_flow_style=False)
@@ -129,9 +138,7 @@ class ProvisionManager:
             pi_inventory = self._raspberry_pis[0].setup()
             self._save_inventory(pi_inventory, "pi_inventory.yaml")
         except Exception as e:
-            raise ProvisionManagerError(
-                f"Failed to provision Raspberry Pi platforms: {str(e)}"
-            )
+            raise ProvisionManagerError(f"Failed to provision Raspberry Pi platforms: {str(e)}")
 
     def _provision_custom_platforms(self) -> None:
         """Provision custom platforms."""
@@ -148,7 +155,9 @@ class ProvisionManager:
                 custom_inventory = platform.setup()
 
                 # Use platform type and name for filename
-                filename = f"{platform.platform_type.lower()}_{platform.platform_name}_inventory.yaml"
+                filename = (
+                    f"{platform.platform_type.lower()}_{platform.platform_name}_inventory.yaml"
+                )
                 # Remove any invalid filename characters
                 filename = "".join(c for c in filename if c.isalnum() or c in "._-")
 
@@ -169,9 +178,7 @@ class ProvisionManager:
         self._provision_custom_platforms()
 
         if not self._inventory_dict:
-            raise ProvisionManagerError(
-                "No platforms are specified in the configuration file."
-            )
+            raise ProvisionManagerError("No platforms are specified in the configuration file.")
 
         self._log.info("Provisioning completed.")
         return self._inventory_dict
