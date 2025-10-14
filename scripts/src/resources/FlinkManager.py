@@ -134,9 +134,7 @@ class FlinkManager:
                     for line in resp.split("\n"):
                         if "Savepoint completed." in line:
                             savepoint_path = line.split("Path:")[1].strip()
-                            self.__log.info(
-                                f"[FLK_MGR] Savepoint path: {savepoint_path}"
-                            )
+                            self.__log.info(f"[FLK_MGR] Savepoint path: {savepoint_path}")
                             return savepoint_path
                     retries -= 1
                     # At each iteration increase sleep time
@@ -156,9 +154,7 @@ class FlinkManager:
                 self.operators[operator] = new_parallelism
 
         # Join "operator:parallelism" pairs with ";"
-        operators_list = [
-            f"{operator}:{self.operators[operator]}" for operator in self.operators
-        ]
+        operators_list = [f"{operator}:{self.operators[operator]}" for operator in self.operators]
         return ";".join(operators_list)
 
     def run_job(self, new_parallelism=None, start_par=None):

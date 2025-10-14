@@ -82,14 +82,10 @@ class Playbooks:
         if extra_vars is None:
             extra_vars = {}
         inventory = config.get_str(Key.Scalehub.inventory.key)
-        playbook_filename = (
-            f"{config.get_str(Key.Scalehub.playbook.key)}/{playbook}.yaml"
-        )
+        playbook_filename = f"{config.get_str(Key.Scalehub.playbook.key)}/{playbook}.yaml"
         if not os.path.exists(playbook_filename):
             # Raise an error with the file path
-            raise FileNotFoundError(
-                f"[PLAY] The file doesn't exist: {playbook_filename}"
-            )
+            raise FileNotFoundError(f"[PLAY] The file doesn't exist: {playbook_filename}")
         if not os.path.exists(inventory):
             # This can happen when running in experiment-monitor. Just create a dummy inventory file with localhost
             inventory = "/tmp/inventory"
@@ -107,8 +103,11 @@ class Playbooks:
         self.__log.debug(f"[PLAY] Inventory: {inventory}")
         self.__log.debug(f"[PLAY] Extra vars: {playbook_vars}")
         # Retrieve debug level from config
-        debug_level = config.get_int(Key.Scalehub.debug_level.key) if config.get_int(Key.Scalehub.debug_level.key) is not None else 0
-
+        debug_level = (
+            config.get_int(Key.Scalehub.debug_level.key)
+            if config.get_int(Key.Scalehub.debug_level.key) is not None
+            else 0
+        )
 
         # Run the playbook with additional tags and extra vars
         try:
@@ -122,9 +121,7 @@ class Playbooks:
                 verbosity=debug_level,
             )
             if r.rc != 0:
-                self.__log.error(
-                    f"[PLAY] Failed to run playbook: {playbook_filename}: {r.status}"
-                )
+                self.__log.error(f"[PLAY] Failed to run playbook: {playbook_filename}: {r.status}")
                 self.__log.error(r.stdout.read())
                 return
             else:

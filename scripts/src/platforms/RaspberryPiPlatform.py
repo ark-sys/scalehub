@@ -23,6 +23,7 @@ from scripts.src.platforms.Platform import Platform
 
 class RaspberryPiConfigurationError(Exception):
     """Raised when RaspberryPi configuration is invalid."""
+
     pass
 
 
@@ -60,8 +61,7 @@ class RaspberryPiPlatform(Platform):
     def _get_alive_hosts(self, hosts: Dict[str, Any]) -> list[str]:
         """Get list of hosts that are alive and reachable."""
         return [
-            host for host in hosts
-            if self._test_ssh_connection(hosts[host]["ansible_ssh_host"])
+            host for host in hosts if self._test_ssh_connection(hosts[host]["ansible_ssh_host"])
         ]
 
     def _validate_host_requirements(self, alive_hosts: list, required_total: int) -> None:
