@@ -1,8 +1,24 @@
+# Copyright (C) 2025 Khaled Arsalane
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import json
 import os
 import threading
 
 import paho.mqtt.client as mqtt
+
 # noinspection PyUnresolvedReferences
 from paho.mqtt.enums import CallbackAPIVersion
 
@@ -68,9 +84,7 @@ class MQTTClient(threading.Thread):
                     self.client.publish("experiment/command", "", retain=True, qos=2)
 
                     # Send ack message
-                    self.client.publish(
-                        "experiment/ack", "ACK_STOP", retain=True, qos=2
-                    )
+                    self.client.publish("experiment/ack", "ACK_STOP", retain=True, qos=2)
 
                     # Stop running experiment
                     self.current_fsm.current_experiment.stop_thread()
@@ -80,17 +94,14 @@ class MQTTClient(threading.Thread):
                     self.client.publish("experiment/command", "", retain=True, qos=2)
 
                     # Send ack message
-                    self.client.publish(
-                        "experiment/ack", "ACK_START", retain=True, qos=2
-                    )
+                    self.client.publish("experiment/ack", "ACK_START", retain=True, qos=2)
 
                     configs = payload.get("configs")
                     self.__log.info(f"[CLIENT] Received config: {configs}")
 
                     # Deserialize payload
                     configs = [
-                        Config(self.__log, json.loads(config))
-                        for config in json.loads(configs)
+                        Config(self.__log, json.loads(config)) for config in json.loads(configs)
                     ]
 
                     # Set config in FSM
@@ -104,9 +115,7 @@ class MQTTClient(threading.Thread):
                     self.client.publish("experiment/command", "", retain=True, qos=2)
 
                     # Send ack message
-                    self.client.publish(
-                        "experiment/ack", "ACK_CLEAN", retain=True, qos=2
-                    )
+                    self.client.publish("experiment/ack", "ACK_CLEAN", retain=True, qos=2)
 
                     # Trigger clean transition
                     self.current_fsm.clean_state()
@@ -119,16 +128,12 @@ class MQTTClient(threading.Thread):
                     self.client.publish("experiment/command", "", retain=True, qos=2)
 
                     # Send ack message
-                    self.client.publish(
-                        "experiment/ack", "INVALID_COMMAND", retain=True, qos=2
-                    )
+                    self.client.publish("experiment/ack", "INVALID_COMMAND", retain=True, qos=2)
             # Ignore message with empty payload
             elif msg.payload == b"":
                 pass
             else:
-                self.__log.warning(
-                    f"[CLIENT] Received non-command payload: {msg.payload}."
-                )
+                self.__log.warning(f"[CLIENT] Received non-command payload: {msg.payload}.")
         else:
             self.__log.warning(f"[CLIENT] Received invalid topic {msg.topic}.")
 

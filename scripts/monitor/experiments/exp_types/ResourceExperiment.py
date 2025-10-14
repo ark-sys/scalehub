@@ -1,3 +1,18 @@
+# Copyright (C) 2025 Khaled Arsalane
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 from datetime import datetime
 
 from scripts.monitor.experiments.Experiment import Experiment
@@ -15,8 +30,7 @@ class ResourceExperiment(Experiment):
         self.config = config
 
         self.cpu_millis = [
-            cpu * 1000
-            for cpu in self.config.get_list_int(Key.Experiment.cpu_values.key)
+            cpu * 1000 for cpu in self.config.get_list_int(Key.Experiment.cpu_values.key)
         ]
         self.memory_values = self.config.get_list_int(Key.Experiment.memory_values.key)
         self.timestamps_dict = {}
@@ -55,17 +69,11 @@ class ResourceExperiment(Experiment):
 
             # Create subfolders for each tm_name
             for tm_name in self.timestamps_dict:
-                tm_path = f.create_subfolder(
-                    res_exp_folder, subfolder_type="tm", tm_name=tm_name
-                )
+                tm_path = f.create_subfolder(res_exp_folder, subfolder_type="tm", tm_name=tm_name)
 
                 for (start_ts, end_ts) in self.timestamps_dict[tm_name]:
-                    single_run_path = f.create_subfolder(
-                        tm_path, subfolder_type="single_run"
-                    )
-                    self.t.create_log_file(
-                        self.config.to_json(), single_run_path, start_ts, end_ts
-                    )
+                    single_run_path = f.create_subfolder(tm_path, subfolder_type="single_run")
+                    self.t.create_log_file(self.config.to_json(), single_run_path, start_ts, end_ts)
 
             dm = DataManager(self.__log, self.config)
             dm.export(res_exp_folder)
@@ -80,9 +88,7 @@ class ResourceExperiment(Experiment):
             try:
                 start_ts = int(datetime.now().timestamp())
                 if self.single_run() == 1:
-                    self.__log.info(
-                        f"[RESOURCE_E] Experiment exiting run {run + 1}/{self.runs}"
-                    )
+                    self.__log.info(f"[RESOURCE_E] Experiment exiting run {run + 1}/{self.runs}")
                     return 1
 
                 end_ts = int(datetime.now().timestamp())
@@ -97,15 +103,11 @@ class ResourceExperiment(Experiment):
                 )
 
                 if self.current_experiment_thread.sleep(10) == 1:
-                    self.__log.info(
-                        f"[RESOURCE_E] Experiment exiting run {run + 1}/{self.runs}"
-                    )
+                    self.__log.info(f"[RESOURCE_E] Experiment exiting run {run + 1}/{self.runs}")
                     return 1
 
             except Exception as e:
-                self.__log.error(
-                    f"[RESOURCE_E] Error in run {run + 1}/{self.runs}: {str(e)}"
-                )
+                self.__log.error(f"[RESOURCE_E] Error in run {run + 1}/{self.runs}: {str(e)}")
                 raise e
         return None
 

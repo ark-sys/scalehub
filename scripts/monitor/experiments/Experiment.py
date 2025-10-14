@@ -1,3 +1,18 @@
+# Copyright (C) 2025 Khaled Arsalane
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import threading
 from datetime import datetime
 from time import sleep
@@ -8,8 +23,8 @@ from scripts.src.resources.KubernetesManager import KubernetesManager
 from scripts.utils.Config import Config
 from scripts.utils.Defaults import DefaultKeys as Key
 from scripts.utils.Logger import Logger
-from scripts.utils.Tools import Tools, FolderManager
 from scripts.utils.Playbooks import Playbooks
+from scripts.utils.Tools import Tools, FolderManager
 
 
 class StoppableThread(threading.Thread):
@@ -69,9 +84,7 @@ class Experiment:
 
     def finishing(self):
         if not self.timestamps:
-            self.__log.warning(
-                "[EXPERIMENT] No timestamps found. Skipping results creation."
-            )
+            self.__log.warning("[EXPERIMENT] No timestamps found. Skipping results creation.")
             return
 
         f = FolderManager(self.__log, self.EXPERIMENTS_BASE_PATH)
@@ -82,9 +95,7 @@ class Experiment:
             )
             for i, (start_ts, end_ts) in enumerate(self.timestamps):
                 exp_path = f.create_subfolder(multi_run_folder_path)
-                self.t.create_log_file(
-                    self.config.to_json(), exp_path, start_ts, end_ts
-                )
+                self.t.create_log_file(self.config.to_json(), exp_path, start_ts, end_ts)
 
             time_diff = int(datetime.now().timestamp()) - self.timestamps[0][0]
             monitor_logs = self.k.pod_manager.get_logs_since(
@@ -103,9 +114,7 @@ class Experiment:
             self.k.node_manager.reset_scaling_labels()
             self.k.node_manager.reset_state_labels()
             self.k.statefulset_manager.reset_taskmanagers()
-            self.k.pod_manager.delete_pods_by_label(
-                "app=flink,component=jobmanager", "flink"
-            )
+            self.k.pod_manager.delete_pods_by_label("app=flink,component=jobmanager", "flink")
             self.p.role_load_generators(self.config, tag="delete")
             self.p.reload_playbook("application/kafka", config=self.config)
         except Exception as e:

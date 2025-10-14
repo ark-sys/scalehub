@@ -1,3 +1,18 @@
+# Copyright (C) 2025 Khaled Arsalane
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 from typing import List, Optional, Dict, Any
 
 import enoslib as en
@@ -33,9 +48,7 @@ class EnosPlatforms(Platform):
     def __gen_reservation_name(self, platform_type, start_time):
         reservation_name_base = "scalehub"
 
-        platform_type = (
-            "baremetal" if platform_type == "Grid5000" else "virtualmachines"
-        )
+        platform_type = "baremetal" if platform_type == "Grid5000" else "virtualmachines"
         reservation_name = f"{reservation_name_base}_{platform_type}"
 
         if start_time != "now":
@@ -73,9 +86,7 @@ class EnosPlatforms(Platform):
                 conf["resources"]["machines"] += setup_result["resources"]["machines"]
                 platform_confs[platform.platform_type] = conf
 
-        self.__log.debugg(
-            f"[ENOS_PLTS] Merged platform configurations: {platform_confs}"
-        )
+        self.__log.debugg(f"[ENOS_PLTS] Merged platform configurations: {platform_confs}")
         return platform_confs
 
     def __get_providers(self, conf_dict):
@@ -105,9 +116,7 @@ class EnosPlatforms(Platform):
 
         inventory["vms"] = {"hosts": {}}
         vagrant_platforms = [
-            platform
-            for platform in self.platforms
-            if platform.platform_type == "VagrantG5k"
+            platform for platform in self.platforms if platform.platform_type == "VagrantG5k"
         ]
 
         for platform in vagrant_platforms:
@@ -139,9 +148,7 @@ class EnosPlatforms(Platform):
                 ]
 
                 for i in range(vm_count):
-                    hypervisor_key, hypervisor_data = candidate_hypervisors[
-                        i % vm_required_nodes
-                    ]
+                    hypervisor_key, hypervisor_data = candidate_hypervisors[i % vm_required_nodes]
                     vm_hypervisor = hypervisor_data["ansible_host"]
                     vm_name = f"vm-{vm_hypervisor.split('.', 1)[0]}-{(i // vm_required_nodes) + 1}"
 
@@ -160,8 +167,7 @@ class EnosPlatforms(Platform):
                     }
 
                     inventory["vagrant"]["hosts"][hypervisor_key]["vm_count"] = (
-                        inventory["vagrant"]["hosts"][hypervisor_key].get("vm_count", 0)
-                        + 1
+                        inventory["vagrant"]["hosts"][hypervisor_key].get("vm_count", 0) + 1
                     )
 
         return inventory
@@ -176,9 +182,7 @@ class EnosPlatforms(Platform):
                 for host in inventory[platform_name]["hosts"]:
                     for group in inventory:
                         if group != platform_name and host in inventory[group]["hosts"]:
-                            inventory[group]["hosts"][host][
-                                "reservation_name"
-                            ] = platform_name
+                            inventory[group]["hosts"][host]["reservation_name"] = platform_name
                 inventory.pop(platform_name)
 
         # Distribute VMs for vagrant group
@@ -202,21 +206,13 @@ class EnosPlatforms(Platform):
         inventory["agents"] = {"hosts": {}}
         if "vms" in inventory:
             for host in inventory["vms"]["hosts"]:
-                if (
-                    "control" not in inventory
-                    or host not in inventory["control"]["hosts"]
-                ):
+                if "control" not in inventory or host not in inventory["control"]["hosts"]:
                     inventory["agents"]["hosts"][host] = inventory["vms"]["hosts"][host]
             inventory.pop("vms")
         if "virtualmachine" in inventory:
             for host in inventory["virtualmachine"]["hosts"]:
-                if (
-                    "control" not in inventory
-                    or host not in inventory["control"]["hosts"]
-                ):
-                    inventory["agents"]["hosts"][host] = inventory["virtualmachine"][
-                        "hosts"
-                    ][host]
+                if "control" not in inventory or host not in inventory["control"]["hosts"]:
+                    inventory["agents"]["hosts"][host] = inventory["virtualmachine"]["hosts"][host]
             inventory.pop("virtualmachine")
 
         # Refactor baremetal group
@@ -224,13 +220,8 @@ class EnosPlatforms(Platform):
             inventory.setdefault("G5k", {"hosts": {}})
             for host in inventory["baremetal"]["hosts"]:
                 inventory["G5k"]["hosts"][host] = inventory["baremetal"]["hosts"][host]
-                if (
-                    "control" not in inventory
-                    or host not in inventory["control"]["hosts"]
-                ):
-                    inventory["agents"]["hosts"][host] = inventory["baremetal"][
-                        "hosts"
-                    ][host]
+                if "control" not in inventory or host not in inventory["control"]["hosts"]:
+                    inventory["agents"]["hosts"][host] = inventory["baremetal"]["hosts"][host]
             inventory.pop("baremetal")
 
         self.__log.debug(f"[ENOS_PLTS] Final enos Inventory: {inventory}")
@@ -297,7 +288,9 @@ class EnosPlatforms(Platform):
                                 }
 
                     elif group == "G5k":
-                        ip6_alias = f"{host.address.split('.')[0]}-ipv6.{host.address.split('.', 1)[1]}"
+                        ip6_alias = (
+                            f"{host.address.split('.')[0]}-ipv6.{host.address.split('.', 1)[1]}"
+                        )
                         if host.alias not in inventory[group]["hosts"]:
                             inventory[group]["hosts"][host.alias] = {
                                 "ansible_host": host.address,

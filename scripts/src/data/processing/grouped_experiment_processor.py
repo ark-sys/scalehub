@@ -1,3 +1,18 @@
+# Copyright (C) 2025 Khaled Arsalane
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 from typing import Dict, Any
 
 from scripts.src.data.processing.base_processor import DataProcessor
@@ -39,9 +54,7 @@ class GroupedExperimentProcessor(DataProcessor):
         if strategy:
             return strategy.process()
         else:
-            self.logger.warning(
-                "No suitable processing strategy found. No action taken."
-            )
+            self.logger.warning("No suitable processing strategy found. No action taken.")
             return {
                 "type": "none",
                 "message": "No suitable data or configuration found.",
@@ -64,9 +77,7 @@ class GroupedExperimentProcessor(DataProcessor):
         else:
             # Use default strategy for unknown experiment types
             self.logger.info("Using default multi-run processing strategy")
-            return DefaultMultiRunProcessingStrategy(
-                self.logger, self.exp_path, self.config
-            )
+            return DefaultMultiRunProcessingStrategy(self.logger, self.exp_path, self.config)
 
     def _determine_multi_exp_type(self) -> str:
         """
@@ -83,21 +94,13 @@ class GroupedExperimentProcessor(DataProcessor):
             for subdir_name in subdirs:
                 if subdir_name in experiment_group_patterns:
                     subdir_path = self.exp_path / subdir_name
-                    run_dirs = [
-                        d
-                        for d in subdir_path.iterdir()
-                        if d.is_dir() and d.name.isdigit()
-                    ]
+                    run_dirs = [d for d in subdir_path.iterdir() if d.is_dir() and d.name.isdigit()]
                     if run_dirs:
-                        self.logger.info(
-                            "Detected experiment group with multi-run structure"
-                        )
+                        self.logger.info("Detected experiment group with multi-run structure")
                         return "experiment_group"
 
         # Check if this is a multi_run folder with exp_log.json files in subdirectories
-        run_dirs = [
-            d for d in self.exp_path.iterdir() if d.is_dir() and d.name.isdigit()
-        ]
+        run_dirs = [d for d in self.exp_path.iterdir() if d.is_dir() and d.name.isdigit()]
         if run_dirs and any((d / "exp_log.json").exists() for d in run_dirs):
             # This is a default multi-run experiment with raw data
             return "unknown"
@@ -116,6 +119,4 @@ class GroupedExperimentProcessor(DataProcessor):
 
     def _has_final_df_files(self) -> bool:
         """Check if final_df.csv files exist in any immediate subdirectories."""
-        return any(
-            (d / "final_df.csv").exists() for d in self.exp_path.iterdir() if d.is_dir()
-        )
+        return any((d / "final_df.csv").exists() for d in self.exp_path.iterdir() if d.is_dir())

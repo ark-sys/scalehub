@@ -1,3 +1,18 @@
+# Copyright (C) 2025 Khaled Arsalane
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 from datetime import datetime
 from time import sleep
 
@@ -30,20 +45,12 @@ class TransscaleExperiment(Experiment):
                 "affected_nodes_percentage": self.config.get_int(
                     Key.Experiment.Chaos.affected_nodes_percentage.key
                 ),
-                "latency": self.config.get_int(
-                    Key.Experiment.Chaos.delay_latency_ms.key
-                ),
+                "latency": self.config.get_int(Key.Experiment.Chaos.delay_latency_ms.key),
                 "jitter": self.config.get_int(Key.Experiment.Chaos.delay_jitter_ms.key),
-                "correlation": self.config.get_float(
-                    Key.Experiment.Chaos.delay_correlation.key
-                ),
-                "rate": self.config.get_int(
-                    Key.Experiment.Chaos.bandwidth_rate_mbps.key
-                ),
+                "correlation": self.config.get_float(Key.Experiment.Chaos.delay_correlation.key),
+                "rate": self.config.get_int(Key.Experiment.Chaos.bandwidth_rate_mbps.key),
                 "limit": self.config.get_int(Key.Experiment.Chaos.bandwidth_limit.key),
-                "buffer": self.config.get_int(
-                    Key.Experiment.Chaos.bandwidth_buffer.key
-                ),
+                "buffer": self.config.get_int(Key.Experiment.Chaos.bandwidth_buffer.key),
             }
             self.k.chaos_manager.deploy_networkchaos(chaos_params)
 
@@ -87,14 +94,10 @@ class TransscaleExperiment(Experiment):
         # )
 
         # Retrieve resource definition for transscale-job
-        transscale_resource_definition = self.k.get_configmap(
-            "transscale-job-definition"
-        )
+        transscale_resource_definition = self.k.get_configmap("transscale-job-definition")
 
         # Run transscale-job
-        self.k.job_manager.create_job(
-            transscale_resource_definition["transscale-job.yaml"]
-        )
+        self.k.job_manager.create_job(transscale_resource_definition["transscale-job.yaml"])
 
     # def finishing(self):
     # self.end_ts = int(datetime.now().timestamp())

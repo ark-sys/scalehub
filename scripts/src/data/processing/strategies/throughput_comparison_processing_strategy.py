@@ -1,3 +1,18 @@
+# Copyright (C) 2025 Khaled Arsalane
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 from typing import Dict, Any
 
 import pandas as pd
@@ -34,19 +49,17 @@ class ThroughputComparisonProcessingStrategy(BaseProcessingStrategy):
             new_df.rename(columns={"Throughput_mean": "Throughput"}, inplace=True)
             new_df.set_index("Parallelism", inplace=True)
 
-            self.exporter.export_data(
-                new_df, self.exp_path / f"{exp_name}_plot_data.csv"
-            )
+            self.exporter.export_data(new_df, self.exp_path / f"{exp_name}_plot_data.csv")
 
             machine_type = self._get_machine_type(exp_name)
             display_name = machine_type
             plot_data[display_name] = new_df["Throughput"]
-            custom_markers[display_name] = machine_styles.get(
-                machine_type, {"marker": "o"}
-            )["marker"]
-            custom_colors[display_name] = machine_styles.get(
-                machine_type, {"color": "#000000"}
-            )["color"]
+            custom_markers[display_name] = machine_styles.get(machine_type, {"marker": "o"})[
+                "marker"
+            ]
+            custom_colors[display_name] = machine_styles.get(machine_type, {"color": "#000000"})[
+                "color"
+            ]
 
         self.plotter.generate_plot(
             {

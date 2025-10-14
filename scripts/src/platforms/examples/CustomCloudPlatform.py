@@ -1,3 +1,18 @@
+# Copyright (C) 2025 Khaled Arsalane
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 """
 Example custom platform implementation for educational purposes.
 This demonstrates how to create a custom platform that integrates with Scalehub.
@@ -7,11 +22,11 @@ import time
 from typing import Dict, Any
 
 from scripts.src.platforms.Platform import Platform
-from scripts.utils.Logger import Logger
 
 
 class CustomCloudConfigurationError(Exception):
     """Raised when CustomCloud configuration is invalid."""
+
     pass
 
 
@@ -58,13 +73,15 @@ class CustomCloudPlatform(Platform):
         self._log.debug(f"Provisioning {instance_count} instances")
 
         for i in range(instance_count):
-            instances.append({
-                "id": f"instance-{i+1}",
-                "ip": f"192.168.1.{i+10}",
-                "region": self._platform_config["region"],
-                "type": self._platform_config["instance_type"],
-                "name": f"{self.platform_name}-{i+1}"
-            })
+            instances.append(
+                {
+                    "id": f"instance-{i+1}",
+                    "ip": f"192.168.1.{i+10}",
+                    "region": self._platform_config["region"],
+                    "type": self._platform_config["instance_type"],
+                    "name": f"{self.platform_name}-{i+1}",
+                }
+            )
 
         return instances
 
