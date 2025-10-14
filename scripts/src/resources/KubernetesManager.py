@@ -71,9 +71,7 @@ class KubernetesManager:
             secret = core_v1.read_namespaced_secret(secret_name, namespace)
             token = secret.data["token"]
         except ApiException as e:
-            self.__log.error(
-                f"Exception when calling CoreV1Api->read_namespaced_secret: {str(e)}"
-            )
+            self.__log.error(f"Exception when calling CoreV1Api->read_namespaced_secret: {str(e)}")
             return None
 
         # decode token from base64
@@ -94,18 +92,14 @@ class PodManager:
                 break
 
         if not target_pod:
-            self.__log.error(
-                f"[POD_MGR] No running pods found for deployment {deployment_name}"
-            )
+            self.__log.error(f"[POD_MGR] No running pods found for deployment {deployment_name}")
             return None
 
         pod_name = target_pod.metadata.name
 
         try:
             exec_command = ["/bin/sh", "-c", command]
-            self.__log.info(
-                f"[POD_MGR] Running command {exec_command} on pod {pod_name}"
-            )
+            self.__log.info(f"[POD_MGR] Running command {exec_command} on pod {pod_name}")
             resp = stream(
                 self.api_instance.connect_get_namespaced_pod_exec,
                 name=pod_name,
@@ -118,21 +112,15 @@ class PodManager:
             )
             return resp  # Return the captured output
         except ApiException as e:
-            self.__log.error(
-                f"[POD_MGR] Error executing command on pod {pod_name}: {str(e)}"
-            )
+            self.__log.error(f"[POD_MGR] Error executing command on pod {pod_name}: {str(e)}")
 
-    def execute_command_on_pods_by_label(
-        self, label_selector, command, namespace="default"
-    ):
+    def execute_command_on_pods_by_label(self, label_selector, command, namespace="default"):
         try:
             pods = self.api_instance.list_namespaced_pod(
                 label_selector=label_selector, namespace=namespace
             )
             for pod in pods.items:
-                self.__log.info(
-                    f"[POD_MGR] Running command {command} on pod {pod.metadata.name}"
-                )
+                self.__log.info(f"[POD_MGR] Running command {command} on pod {pod.metadata.name}")
                 # Step 2: Execute command on the pod
                 self.execute_command_on_pod(pod.metadata.name, command)
         except ApiException as e:
@@ -148,9 +136,7 @@ class PodManager:
             )
             for pod in pods.items:
                 # Step 2: Delete the pod
-                self.api_instance.delete_namespaced_pod(
-                    pod.metadata.name, pod.metadata.namespace
-                )
+                self.api_instance.delete_namespaced_pod(pod.metadata.name, pod.metadata.namespace)
                 self.__log.info(f"[POD_MGR] Pod {pod.metadata.name} deleted")
         except ApiException as e:
             self.__log.error(
@@ -281,9 +267,7 @@ class DeploymentManager:
                 namespace=namespace,
                 body=patch,
             )
-            self.__log.info(
-                f"[DEP_MGR] Deployment {deployment_name} scaled to {replicas} replica."
-            )
+            self.__log.info(f"[DEP_MGR] Deployment {deployment_name} scaled to {replicas} replica.")
         except ApiException as e:
             self.__log.error(
                 f"[DEP_MGR] Exception when calling AppsV1Api->patch_namespaced_deployment: {str(e)}\n"
@@ -308,9 +292,7 @@ class ServiceManager:
         self.t: Tools = Tools(self.__log)
         self.api_instance = client.CoreV1Api()
 
-    def create_service_from_template(
-        self, template_filename, params, namespace="default"
-    ):
+    def create_service_from_template(self, template_filename, params, namespace="default"):
         # Load resource definition from file
         resource_object = self.t.load_resource_definition(template_filename, params)
         service_name = resource_object["metadata"]["name"]
@@ -352,9 +334,7 @@ class ServiceManager:
                     namespace=resource_object["metadata"]["namespace"],
                     async_req=False,
                 )
-                self.__log.info(
-                    f"[SVC_MGR] Service {resource_object['metadata']['name']} deleted."
-                )
+                self.__log.info(f"[SVC_MGR] Service {resource_object['metadata']['name']} deleted.")
             else:
                 self.__log.info(
                     f"[SVC_MGR] Service {resource_object['metadata']['name']} does not exist."
@@ -380,18 +360,14 @@ class JobManager:
             self.api_instance.delete_namespaced_job(name=job_name, namespace=namespace)
             self.__log.info(f"Job {job_name} deleted.")
         except client.ApiException as e:
-            self.__log.error(
-                f"Exception when calling BatchV1Api->delete_namespaced_job: {str(e)}"
-            )
+            self.__log.error(f"Exception when calling BatchV1Api->delete_namespaced_job: {str(e)}")
 
     # Retrieve job status
     def get_job_status(self, job_name, namespace="default"):
 
         # Get the job
         try:
-            state = self.api_instance.read_namespaced_job_status(
-                name=job_name, namespace=namespace
-            )
+            state = self.api_instance.read_namespaced_job_status(name=job_name, namespace=namespace)
             return state.status.conditions
         except client.ApiException as e:
             return e
@@ -405,24 +381,18 @@ class JobManager:
             namespace = resource_obj["metadata"]["namespace"]
 
             self.api_instance.create_namespaced_job(namespace, resource_obj)
-            self.__log.info(
-                f"{resource_type} {resource_name} created in namespace {namespace}."
-            )
+            self.__log.info(f"{resource_type} {resource_name} created in namespace {namespace}.")
         except ApiException as e:
             self.__log.error(f"Exception when operating on resource: {str(e)}")
 
     def get_job_logs(self, job_name, namespace):
         try:
             core_v1 = core_v1_api.CoreV1Api()
-            pod_list = core_v1.list_namespaced_pod(
-                namespace, label_selector=f"job-name={job_name}"
-            )
+            pod_list = core_v1.list_namespaced_pod(namespace, label_selector=f"job-name={job_name}")
             logs = []
             if pod_list.items:
                 for pod in pod_list.items:
-                    logs.append(
-                        core_v1.read_namespaced_pod_log(pod.metadata.name, namespace)
-                    )
+                    logs.append(core_v1.read_namespaced_pod_log(pod.metadata.name, namespace))
                 return "\n".join(logs)
             else:
                 self.__log.error(f"No pods found for Job {job_name}.")
@@ -445,9 +415,7 @@ class NodeManager:
             nodes = self.api_instance.list_node(label_selector=label_selector)
             return nodes.items
         except ApiException as e:
-            self.__log.error(
-                f"[NODE_MGR] Exception when calling CoreV1Api->list_node: {str(e)}\n"
-            )
+            self.__log.error(f"[NODE_MGR] Exception when calling CoreV1Api->list_node: {str(e)}\n")
             return None
 
     def get_available_worker_nodes(self):
@@ -485,10 +453,8 @@ class NodeManager:
             # And that is not full => it doesn't have the node-role.kubernetes.io/state label with value FULL
             for node in nodes:
                 if (
-                    node.metadata.labels.get("node-role.kubernetes.io/scaling")
-                    != "SCHEDULABLE"
-                    and node.metadata.labels.get("node-role.kubernetes.io/state")
-                    != "FULL"
+                    node.metadata.labels.get("node-role.kubernetes.io/scaling") != "SCHEDULABLE"
+                    and node.metadata.labels.get("node-role.kubernetes.io/state") != "FULL"
                 ):
                     return node.metadata.name
         else:
@@ -501,9 +467,7 @@ class NodeManager:
             body = {"metadata": {"labels": node.metadata.labels}}
             self.api_instance.patch_node(node_name, body=body)
         except ApiException as e:
-            self.__log.error(
-                f"[NODE_MGR] Exception when calling CoreV1Api->list_node: {str(e)}\n"
-            )
+            self.__log.error(f"[NODE_MGR] Exception when calling CoreV1Api->list_node: {str(e)}\n")
             raise e
 
     def mark_node_as_schedulable(self, node_name):
@@ -593,10 +557,7 @@ class StatefulSetManager:
             retry = 15
             # Wait until the statefulset is ready
             while retry > 0:
-                if (
-                    self.__get_statefulset_ready_replicas(statefulset_name, namespace)
-                    == replicas
-                ):
+                if self.__get_statefulset_ready_replicas(statefulset_name, namespace) == replicas:
                     return True
                 retry -= 1
                 sleep(5)

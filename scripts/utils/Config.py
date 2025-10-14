@@ -38,9 +38,7 @@ class Config:
         elif isinstance(_param, str):
             self.__load_from_file(_param)
         else:
-            self.__log.error(
-                f"Invalid type for conf: {type(_param)}. Expected path (str) or dict."
-            )
+            self.__log.error(f"Invalid type for conf: {type(_param)}. Expected path (str) or dict.")
             raise ValueError(f"Invalid type for conf: {type(_param)}")
 
     def __str__(self):
@@ -48,9 +46,7 @@ class Config:
 
     def __load_from_file(self, _param: str):
         if not os.path.exists(_param):
-            self.__log.error(
-                f"Configuration file {_param} not found or does not exist."
-            )
+            self.__log.error(f"Configuration file {_param} not found or does not exist.")
             raise FileNotFoundError(f"Configuration file {_param} not found.")
         if _param.endswith(".ini"):
             self.__load_ini_file(_param)
@@ -86,9 +82,7 @@ class Config:
                 self.__validate_and_read_sections(parser, "scalehub", Key.Scalehub)
             if parser.has_section("experiment"):
                 ignore_keys = ["steps", "generators"]
-                self.__validate_and_read_sections(
-                    parser, "experiment", Key.Experiment, ignore_keys
-                )
+                self.__validate_and_read_sections(parser, "experiment", Key.Experiment, ignore_keys)
                 if parser.has_section("experiment.scaling"):
                     self.__config[
                         Key.Experiment.Scaling.steps.key
@@ -109,9 +103,9 @@ class Config:
             for key in parser[section]:
                 dict_key = f"{section}.{key}"
                 self.__config[dict_key] = parser[section][key]
-        self.__config[
-            Key.Experiment.Generators.generators.key
-        ] = self.__parse_load_generators(parser)
+        self.__config[Key.Experiment.Generators.generators.key] = self.__parse_load_generators(
+            parser
+        )
 
     def __validate_and_read_sections(self, parser, section_base, key_class, *args):
         ignored_keys = args[0] if args else []
@@ -156,9 +150,7 @@ class Config:
                         platform_dict["enos_firewall"] = firewall_dict
                     platform_dicts.append(platform_dict)
                 else:
-                    raise ValueError(
-                        f"Section {section_name} not found in config file."
-                    )
+                    raise ValueError(f"Section {section_name} not found in config file.")
             self.__config[Key.Platforms.platforms.key] = platform_dicts
         else:
             # Read base section parameters
@@ -183,9 +175,7 @@ class Config:
     def __validate_mandatory_parameters(self, key_class):
         def __get_class_attributes(class_name, attr_type=ConfigKey) -> dict:
             return {
-                pkey: pval
-                for pkey, pval in vars(class_name).items()
-                if isinstance(pval, attr_type)
+                pkey: pval for pkey, pval in vars(class_name).items() if isinstance(pval, attr_type)
             }
 
         # Get class representations of the keys
@@ -197,10 +187,7 @@ class Config:
 
         # Check base class mandatory parameters
         for key, value in __get_class_attributes(key_class).items():
-            if (
-                not value.is_optional
-                and f"{key_class.__name__.lower()}.{key}" not in self.__config
-            ):
+            if not value.is_optional and f"{key_class.__name__.lower()}.{key}" not in self.__config:
                 raise ValueError(
                     f"Mandatory parameter {key} is missing in section {key_class.__name__.lower()}"
                 )
@@ -210,9 +197,7 @@ class Config:
             platforms = self.__config[Key.Platforms.platforms.key]
 
             for platform in platforms:
-                for key, value in __get_class_attributes(
-                    Key.Platforms.Platform
-                ).items():
+                for key, value in __get_class_attributes(Key.Platforms.Platform).items():
                     if not value.is_optional:
                         if value.kwargs.get("for_types"):
                             if platform["type"] not in value.kwargs.get("for_types"):
@@ -240,49 +225,37 @@ class Config:
     def get_int(self, key, default=None) -> int:
         value = self.get(key, default)
         if value is None:
-            raise ValueError(
-                f"Configuration key '{key}' not found and no default provided"
-            )
+            raise ValueError(f"Configuration key '{key}' not found and no default provided")
         return int(value)
 
     def get_bool(self, key, default=None) -> bool:
         value = self.get(key, default)
         if value is None:
-            raise ValueError(
-                f"Configuration key '{key}' not found and no default provided"
-            )
+            raise ValueError(f"Configuration key '{key}' not found and no default provided")
         return str(value).lower() == "true"
 
     def get_float(self, key, default=None) -> float:
         value = self.get(key, default)
         if value is None:
-            raise ValueError(
-                f"Configuration key '{key}' not found and no default provided"
-            )
+            raise ValueError(f"Configuration key '{key}' not found and no default provided")
         return float(value)
 
     def get_str(self, key, default=None) -> str:
         value = self.get(key, default)
         if value is None:
-            raise ValueError(
-                f"Configuration key '{key}' not found and no default provided"
-            )
+            raise ValueError(f"Configuration key '{key}' not found and no default provided")
         return str(value)
 
     def get_list_str(self, key, default=None):
         value = self.get(key, default)
         if value is None:
-            raise ValueError(
-                f"Configuration key '{key}' not found and no default provided"
-            )
+            raise ValueError(f"Configuration key '{key}' not found and no default provided")
         return [str(v) for v in str(value).split()]
 
     def get_list_int(self, key, default=None):
         value = self.get(key, default)
         if value is None:
-            raise ValueError(
-                f"Configuration key '{key}' not found and no default provided"
-            )
+            raise ValueError(f"Configuration key '{key}' not found and no default provided")
         return [int(v) for v in str(value).split()]
 
     def update_runtime_file(self, create=False):
@@ -337,9 +310,7 @@ class Config:
                     }
                     load_generators.append(generator)
                 except KeyError as e:
-                    self.__log.error(
-                        f"Error while parsing load generator {name}: {str(e)}"
-                    )
+                    self.__log.error(f"Error while parsing load generator {name}: {str(e)}")
                     raise e
             return load_generators
 

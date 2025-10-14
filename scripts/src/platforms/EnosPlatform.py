@@ -48,9 +48,7 @@ class EnosPlatform(Platform):
     BASE_ROLES = ["control", "producers", "consumers"]
     GRID5000_API = "https://api.grid5000.fr/stable"
 
-    PROD_NETWORK = {
-        "networks": [{"id": "default", "type": "prod", "roles": ["my_network"]}]
-    }
+    PROD_NETWORK = {"networks": [{"id": "default", "type": "prod", "roles": ["my_network"]}]}
 
     def __init__(self, log: Logger, platform_config: Dict[str, Any]):
         super().__init__(log, platform_config)
@@ -80,18 +78,14 @@ class EnosPlatform(Platform):
         """Create Grid5000 configuration."""
         provider_conf = self._base_conf.copy()
         provider_conf["resources"] = self.PROD_NETWORK.copy()
-        provider_conf["resources"]["networks"][0]["site"] = self._platform_config[
-            "site"
-        ]
+        provider_conf["resources"]["networks"][0]["site"] = self._platform_config["site"]
         provider_conf["resources"]["machines"] = []
 
         for role in roles:
             node_count = int(self._platform_config.get(role, 0))
             if node_count > 0:
                 extended_roles = [role, self._platform_config["name"]]
-                platform_type = (
-                    "vagrant" if self.platform_type == "VagrantG5k" else "baremetal"
-                )
+                platform_type = "vagrant" if self.platform_type == "VagrantG5k" else "baremetal"
                 extended_roles.append(platform_type)
 
                 provider_conf["resources"]["machines"].append(
@@ -133,9 +127,7 @@ class EnosPlatform(Platform):
         """Create FIT configuration."""
         provider_conf = self._base_conf.copy()
         provider_conf["resources"] = self.PROD_NETWORK.copy()
-        provider_conf["resources"]["networks"][0]["site"] = self._platform_config[
-            "site"
-        ]
+        provider_conf["resources"]["networks"][0]["site"] = self._platform_config["site"]
         provider_conf["resources"]["machines"] = []
 
         for role in roles:
@@ -152,9 +144,7 @@ class EnosPlatform(Platform):
                 )
         return provider_conf
 
-    def _estimate_required_nodes(
-        self, vm_groups: List[VMGroup], site: str, cluster: str
-    ) -> None:
+    def _estimate_required_nodes(self, vm_groups: List[VMGroup], site: str, cluster: str) -> None:
         """Estimate required nodes for VM groups."""
         nodes_url = f"{self.GRID5000_API}/sites/{site}/clusters/{cluster}/nodes"
 
@@ -178,16 +168,12 @@ class EnosPlatform(Platform):
                 total_vm_memory_mb = vm_conf["memory_per_vm"] * count  # Already in MB
 
                 required_nodes_cpu = (total_vm_cpu + node_cpu - 1) // node_cpu
-                required_nodes_memory = (
-                    total_vm_memory_mb + node_memory_mb - 1
-                ) // node_memory_mb
+                required_nodes_memory = (total_vm_memory_mb + node_memory_mb - 1) // node_memory_mb
 
                 vm_group.required_nodes = max(required_nodes_cpu, required_nodes_memory)
 
         except Exception as e:
-            raise EnosConfigurationError(
-                f"Error fetching node data from {nodes_url}: {str(e)}"
-            )
+            raise EnosConfigurationError(f"Error fetching node data from {nodes_url}: {str(e)}")
 
     def _create_custom_vagrantong5k_config(self, roles: List[str]) -> Dict[str, Any]:
         """Create custom Vagrant on Grid5000 configuration."""
@@ -227,18 +213,10 @@ class EnosPlatform(Platform):
         self._log.debugg(f"Getting provider for: {platform_type}")
 
         provider_map = {
-            "Grid5000": lambda: en.G5k(
-                en.G5kConf.from_dictionary(conf_dict).finalize()
-            ),
-            "VagrantG5k": lambda: en.G5k(
-                en.G5kConf.from_dictionary(conf_dict).finalize()
-            ),
-            "VMonG5k": lambda: en.VMonG5k(
-                en.VMonG5kConf.from_dictionary(conf_dict).finalize()
-            ),
-            "FIT": lambda: en.Iotlab(
-                en.IotlabConf.from_dictionary(conf_dict).finalize()
-            ),
+            "Grid5000": lambda: en.G5k(en.G5kConf.from_dictionary(conf_dict).finalize()),
+            "VagrantG5k": lambda: en.G5k(en.G5kConf.from_dictionary(conf_dict).finalize()),
+            "VMonG5k": lambda: en.VMonG5k(en.VMonG5kConf.from_dictionary(conf_dict).finalize()),
+            "FIT": lambda: en.Iotlab(en.IotlabConf.from_dictionary(conf_dict).finalize()),
         }
 
         provider_factory = provider_map.get(platform_type)
@@ -274,16 +252,12 @@ class EnosPlatform(Platform):
             "Grid5000": lambda: self._create_g5k_config(self.BASE_ROLES),
             "VMonG5k": lambda: self._create_vmong5k_config(self.BASE_ROLES),
             "FIT": lambda: self._create_fit_config(self.BASE_ROLES),
-            "VagrantG5k": lambda: self._create_custom_vagrantong5k_config(
-                self.BASE_ROLES
-            ),
+            "VagrantG5k": lambda: self._create_custom_vagrantong5k_config(self.BASE_ROLES),
         }
 
         config_factory = config_map.get(self.platform_type)
         if not config_factory:
-            raise EnosConfigurationError(
-                f"Unsupported platform type: {self.platform_type}"
-            )
+            raise EnosConfigurationError(f"Unsupported platform type: {self.platform_type}")
 
         return config_factory()
 
