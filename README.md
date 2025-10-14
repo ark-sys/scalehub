@@ -29,6 +29,7 @@ Playbooks will help set up an environment for data stream processing experiments
         - [Starting an experiment](#starting-an-experiment)
 - [Configuration](#configuration)
 - [Contributing](#contributing)
+- [License](#license)
 
 ## Introduction
 
@@ -513,3 +514,11 @@ Contributions are welcome! If you have any ideas, suggestions, or bug reports, p
 request.
 
 Please follow the contribution guidelines when making contributions.
+
+## License
+
+This project is licensed under the GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later). See the
+`LICENSE` file for details.
+
+When using this software over a network, you must provide access to the source code to users interacting with it
+remotely. See Section 13 of the AGPL license for details.
