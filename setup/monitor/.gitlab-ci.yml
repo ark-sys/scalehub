@@ -11,9 +11,6 @@ before_script:
 build-and-push:
   # build and push the image to the registry
   stage: work
-  tags:
-    - ci.inria.fr
-    - small
   script:
     # build the image for experiment-monitor using current context
     - docker build -t "$CI_REGISTRY/$CI_REGISTRY_PROJECT/scalehub/monitor" -f setup/monitor/Dockerfile .

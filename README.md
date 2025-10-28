@@ -122,11 +122,11 @@ To correctly setup your environment, follow these steps:
 2. If you intend to connect to Grid5000, generate a credentials file with the deployment script. This file will be used by scalehub to interact with Grid5000 Frontend.
     ```shell
     ./deploy.sh generate
-3. Download and extract your personal Grid5000 VPN connection files to `setup/shub/secrets/vpn`
+3. Download and extract your personal Grid5000 VPN connection files to `setup/scalehub/secrets/vpn`
 
 4. Correctly set up your ssh private key for Grid5000. The key should be named `id_rsa` and `id_rsa.pub` and placed in
-   `setup/shub/secrets/enos`.
-5. Add your Grid5000 username and password to `setup/shub/secrets/enos/Grid5000_creds.yaml`
+   `setup/scalehub/secrets/enos`.d
+5. Add your Grid5000 username and password to `setup/scalehub/secrets/enos/Grid5000_creds.yaml`
     ```yaml
     username: <your_grid5000_username>
     password: <your_grid5000_password>

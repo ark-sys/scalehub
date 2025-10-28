@@ -21,8 +21,8 @@ ENV TZ="Europe/Paris" \
     KREW_ROOT="/app/.krew"
 
 ENV K8S_AUTH_KUBECONFIG=$KUBECONFIG \
-    PATH="$PATH:/app/scripts:/app/.krew/bin" \
-    PYTHONPATH="/app:/app/scripts"
+    PATH="$PATH:/app/src:/app/.krew/bin" \
+    PYTHONPATH="/app:/app/src"
 
 # Install system packages in one layer
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -93,7 +93,7 @@ RUN mkdir -p /home/$USER/.config/fish && \
     echo "kubectl completion fish | source" > /home/$USER/.config/fish/config.fish
 
 # Copy application code
-ADD scripts /app/scripts
+ADD src /app/src
 ADD conf /app/conf
 ADD playbooks /app/playbooks
 ADD setup/scalehub/entrypoint.sh /entrypoint.sh

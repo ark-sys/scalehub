@@ -6,28 +6,6 @@
       kubernetes.core.k8s:
         state: present
         definition: "{{ lookup('ansible.builtin.file', 'experiment-monitor/experiment-monitor-role.yaml') | from_yaml_all }}"
-    - name: Copy gitlab-scalehub secret from default namespace to experiment-monitor namespace
-      block:
-        - name: Get gitlab-scalehub secret from default namespace
-          kubernetes.core.k8s_info:
-            api_version: v1
-            kind: Secret
-            name: gitlab-scalehub
-            namespace: default
-          register: gitlab_scalehub_secret
-        - name: Create gitlab-scalehub secret in experiment-monitor namespace
-          kubernetes.core.k8s:
-            state: present
-            definition:
-              apiVersion: v1
-              kind: Secret
-              metadata:
-                name: gitlab-scalehub
-                namespace: experiment-monitor
-              type: kubernetes.io/dockerconfigjson
-              data:
-                .dockerconfigjson: "{{ gitlab_scalehub_secret.resources[0].data['.dockerconfigjson'] }}"
-
     - name: Create PVC for experiment-monitor
       kubernetes.core.k8s:
         state: present
@@ -63,9 +41,3 @@
       kubernetes.core.k8s:
         state: absent
         definition: "{{ lookup('ansible.builtin.file', 'experiment-monitor/experiment-monitor-role.yaml') | from_yaml_all }}"
-    - name: Delete gitlab-scalehub secret
-      kubernetes.core.k8s:
-        name: gitlab-scalehub
-        kind: Secret
-        namespace: experiment-monitor
-        state: absent
