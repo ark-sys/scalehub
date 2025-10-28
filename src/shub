@@ -1,0 +1,347 @@
+#!/usr/bin/env python3
+import argparse
+import os
+import sys
+
+from src.scalehub.Client import Client
+from src.scalehub.data.manager import DataManager
+from src.scalehub.platforms.ProvisionManager import (
+    ProvisionManager,
+    ProvisionManagerError,
+)
+from src.scalehub.resources.KubernetesManager import KubernetesManager
+from src.utils.Config import Config
+from src.utils.Defaults import DefaultKeys as Key
+from src.utils.Logger import Logger
+from src.utils.Tools import Tools
+from utils.Playbooks import Playbooks
+
+
+def provision(config: Config):
+    """Build cluster and install dependencies."""
+    platforms = config.get(Key.Platforms.platforms.key)
+    if not platforms:
+        log.error("No platforms are specified in the configuration file.")
+        return
+
+    log.debug(f"Found {len(platforms)} platforms to provision.")
+    try:
+        pm = ProvisionManager(log, config)
+        pm.provision()
+
+        # Platforms are provisioned, create runtime file
+        config.update_runtime_file(create=True)
+
+        # Check if we should provision infrastructure
+        if config.get_bool(
+            Key.Scalehub.provision_infrastructure.key
+        ) or config.get_bool(Key.Scalehub.lazy_setup.key):
+            _provision_infrastructure(config)
+
+    except ProvisionManagerError as e:
+        log.error(f"Provisioning failed: {str(e)}")
+        sys.exit(1)
+    except Exception as e:
+        log.error(f"Unexpected error during provisioning: {str(e)}")
+        sys.exit(1)
+
+
+def _provision_infrastructure(config: Config):
+    """Provision infrastructure components."""
+    p = Playbooks(log)
+    try:
+        p.run("infrastructure/setup", tag="create", config=config)
+
+        # Fast setup is enabled, deploy orchestration and application setup in sequence
+        if config.get_bool(Key.Scalehub.lazy_setup.key):
+            log.info(
+                "Lazy setup is enabled. Deploying orchestration and application setup in sequence."
+            )
+            p.run("orchestration/setup", tag="create", config=config)
+            p.run("application/setup", tag="create", config=config)
+    except Exception as e:
+        log.error(f"Error during infrastructure provision: {str(e)}")
+        sys.exit(1)
+
+
+def destroy(config: Config):
+    """Destroy cluster."""
+    platforms = config.get(Key.Platforms.platforms.key)
+    if not platforms:
+        log.error("No platforms are specified in the configuration file.")
+        return
+
+    log.info(f"Found {len(platforms)} platforms to destroy.")
+
+    try:
+        pm = ProvisionManager(log, config)
+        pm.destroy()
+        config.delete_runtime_file()
+    except Exception as e:
+        log.error(f"Error during destruction: {str(e)}")
+        sys.exit(1)
+
+
+# Execute tasks with "deploy" tag for a given playbook
+def deploy(playbook, config: Config):
+    log.info(f"Executing deployment tasks in playbook : {playbook} ...")
+    p: Playbooks = Playbooks(log)
+    tag = "create"
+    try:
+        if playbook == "application/load_generators":
+            p.role_load_generators(config, tag)
+        else:
+            p.run(playbook, config=config, tag=tag)
+    except Exception as e:
+        log.error(f"Error during deployment: {str(e)}")
+        exit(1)
+
+
+# Execute tasks with "delete" tag for a given playbook
+def delete(playbook, config: Config):
+    log.info(f"Executing deletion tasks in playbook : {playbook} ...")
+    p: Playbooks = Playbooks(log)
+    tag = "delete"
+    try:
+        if playbook == "application/load_generators":
+            p.role_load_generators(config, tag)
+        else:
+            p.run(playbook, config=config, tag=tag)
+    except Exception as e:
+        log.error(f"Error during deletion: {str(e)}")
+        exit(1)
+
+
+# Delete and re-deploy 'playbook' parameter
+def reload(playbook, config: Config):
+    p: Playbooks = Playbooks(log)
+    try:
+        p.reload_playbook(playbook, config)
+    except Exception as e:
+        log.error(f"Error during reload: {str(e)}")
+        exit(1)
+
+
+def experiment(action, configs: list):
+    c: Client = Client(log, configs)
+    match action:
+        case "start":
+            c.start()
+        case "stop":
+            c.stop()
+        case "clean":
+            c.clean()
+        case "check":
+            c.check()
+        case _:
+            log.error(f"Action {action} is not implemented for command 'experiment'.")
+
+
+# Get tokens for minio and kubernetes dashboard
+def tokens():
+    k: KubernetesManager = KubernetesManager(log)
+
+    # Retrieve token for minio console
+    kubernetes_dashboard_token = k.get_token("admin-user", "kubernetes-dashboard")
+
+    # Print tokens in a readable format and easy to copy-paste
+    log.info(f"Kubernetes Dashboard Token : \n{kubernetes_dashboard_token}\n\n")
+
+
+def export(config: Config, exp_path):
+    log.info("Exporting...")
+
+    dm: DataManager = DataManager(log, config)
+
+    dm.export(exp_path)
+
+
+def sync_experiment_data(config: Config):
+    log.info("Syncing experiment data...")
+    t: Tools = Tools(log)
+    t.sync_data(config.get_str(Key.Scalehub.experiments.key))
+
+
+def load_config(command, conf_paths=None) -> Config | list[Config] | None:
+    # Load configuration from provided path. If multiple paths are provided, we will use the first one.
+    if conf_paths is None:
+        conf_paths = None
+    elif "," in conf_paths:
+        conf_paths = conf_paths.split(",")
+    else:
+        conf_paths = [conf_paths]
+
+    if command != "experiment":
+        if conf_paths is None:
+            try:
+                # Try to load configuration from RUNTIME_PATH
+                config = Config(log, Config.RUNTIME_PATH)
+                return config
+            except FileNotFoundError as e:
+                # If RUNTIME_PATH is not provided and the command is not "destroy", we will use DEFAULTS_PATH
+                if command != "destroy":
+                    config = Config(log, Config.DEFAULTS_PATH)
+                    return config
+                else:
+                    log.error(f"Error while parsing configuration file: {str(e)}")
+                    raise e
+
+        else:
+            # Handle the case when a custom path is provided
+            conf_path = conf_paths[0]
+            if os.path.exists(conf_path):
+                try:
+                    log.info(f"Loading configuration from {conf_path}")
+                    config = Config(log, conf_path)
+                    if command in ["deploy", "delete", "reload"]:
+                        config.update_runtime_file()
+                    return config
+                except Exception as e:
+                    log.error(
+                        f"Error while parsing configuration file {conf_path} : {str(e)}"
+                    )
+                    raise e
+            else:
+                raise FileNotFoundError(
+                    f"Configuration file {conf_path} does not exist."
+                )
+    else:
+        log.info("Handling multiple configuration files for 'experiment' command.")
+        configs = []
+        for path in conf_paths:
+            if os.path.exists(path):
+                log.info(f"Loading configuration from {path}")
+                try:
+                    config = Config(log, path)
+                    configs.append(config)
+                except Exception as e:
+                    log.error(f"Error while parsing configuration file: {str(e)}")
+                    raise e
+            else:
+                raise FileNotFoundError(f"Configuration file {path} does not exist.")
+
+        return configs
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(dest="command")
+
+    parser.add_argument(
+        "-c",
+        "--confs",
+        dest="conf_files",
+        action="store",
+        default=None,
+        help="Specify a custom path for the configuration used for either provisioning or experiment running.\n"
+        "Separate multiple paths with a comma. e.g. -c /app/conf/experiment/exp1.yaml,/app/conf/experiment/exp2.yaml",
+    )
+    # Provision command
+    subparsers.add_parser(
+        "provision", help="Provision platform specified in conf/scalehub.conf"
+    )
+
+    # Destroy command
+    subparsers.add_parser(
+        "destroy", help="Destroy platform specified in conf/scalehub.conf"
+    )
+
+    # Deploy command
+    deploy_parser = subparsers.add_parser(
+        "deploy", help="Executes deploy tasks of provided playbook."
+    )
+    deploy_parser.add_argument("playbook", help="Name of the playbook.")
+
+    # Delete command
+    delete_parser = subparsers.add_parser(
+        "delete", help="Executes delete tasks of provided playbook."
+    )
+    delete_parser.add_argument("playbook", help="Name of the playbook.")
+
+    # Reload command
+    reload_parser = subparsers.add_parser(
+        "reload", help="Executes reload tasks of provided playbook."
+    )
+    reload_parser.add_argument("playbook", help="Name of the playbook.")
+
+    # Experiment command
+    experiment_parser = subparsers.add_parser(
+        "experiment", help="Executes experiment tasks."
+    )
+    experiment_parser.add_argument("action", help="Name of the action.")
+
+    # Tokens command
+    subparsers.add_parser(
+        "tokens", help="Get tokens for minio and kubernetes dashboard"
+    )
+
+    # Sync command
+    subparsers.add_parser("sync", help="Sync experiment data from remote to local")
+
+    # Reservation time command
+    subparsers.add_parser("reservation_time", help="Get remaining reservation time")
+
+    # Export command with updated help text
+    export_subparser = subparsers.add_parser("export", help="Export data")
+    export_subparser.add_argument(
+        "date",
+        help="Provide experiment path in format 'YYYY-MM-DD/N' for single experiment, "
+        "'YYYY-MM-DD' for all experiments in a day, or a path containing "
+        "multiple multi_run folders for taskmanager configuration comparison",
+    )
+
+    # Parse command line arguments
+    args = parser.parse_args()
+
+    # Parse configuration file's values
+    configuration_files = args.conf_files
+
+    try:
+        config = load_config(args.command, configuration_files)
+        if isinstance(config, Config):
+            debug_level = config.get_int(Key.Scalehub.debug_level.key)
+            if debug_level is not None:
+                log.set_debug_level(debug_level)
+    except Exception as e:
+        log.error(f"Error while loading configuration file: {str(e)}")
+        sys.exit(1)
+
+    log.debuggg(f"Command: {args.command}")
+    # Debug configuration, this can either be single or a list of config
+    if isinstance(config, Config):
+        log.debuggg(f"Configuration: {config.to_json()}")
+    elif isinstance(config, list):
+        for c in config:
+            log.debuggg(f"Configuration: {c.to_json()}")
+
+    match args.command:
+        case "destroy":
+            destroy(config)
+        case "provision":
+            provision(config)
+        case "deploy":
+            deploy(args.playbook, config)
+        case "delete":
+            delete(args.playbook, config)
+        case "reload":
+            reload(args.playbook, config)
+        case "experiment":
+            # Check if we have one path or multiple paths separated by comma
+            assert (
+                len(config) > 0
+            ), "No valid configuration files found. 'experiment' command requires at least one configuration file."
+            experiment(args.action, config)
+        case "tokens":
+            tokens()
+        case "sync":
+            sync_experiment_data(config)
+        case "export":
+            date = args.date
+            export(config, date)
+        case _:
+            parser.print_help()
+
+
+if __name__ == "__main__":
+    log = Logger()
+    main()

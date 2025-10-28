@@ -1,4 +1,4 @@
-from scripts.utils.Defaults import ConfigKey, DefaultKeys
+from src.utils.Defaults import ConfigKey, DefaultKeys
 
 
 class TestConfigKey:
@@ -6,9 +6,7 @@ class TestConfigKey:
 
     def test_config_key_initialization(self):
         """Test ConfigKey initializes with correct attributes."""
-        key = ConfigKey(
-            "test.key", is_optional=True, default_value="default", extra="extra"
-        )
+        key = ConfigKey("test.key", is_optional=True, default_value="default", extra="extra")
         assert key.key == "test.key"
         assert key.is_optional is True
         assert key.default_value == "default"

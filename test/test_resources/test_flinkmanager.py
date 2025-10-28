@@ -2,10 +2,10 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from scripts.src.resources.FlinkManager import FlinkManager
-from scripts.src.resources.KubernetesManager import KubernetesManager
-from scripts.utils.Config import Config
-from scripts.utils.Logger import Logger
+from src.scalehub.resources.FlinkManager import FlinkManager
+from src.scalehub.resources.KubernetesManager import KubernetesManager
+from src.utils.Config import Config
+from src.utils.Logger import Logger
 
 
 class TestFlinkManager:
@@ -182,9 +182,7 @@ class TestFlinkManager:
             "Savepoint completed. Path: /tmp/savepoint123"
         )
 
-        with patch.object(
-            flink_manager, "_FlinkManager__get_job_state", return_value="RUNNING"
-        ):
+        with patch.object(flink_manager, "_FlinkManager__get_job_state", return_value="RUNNING"):
             result = flink_manager._FlinkManager__stop_job()
 
         assert result == "/tmp/savepoint123"
@@ -197,9 +195,7 @@ class TestFlinkManager:
         """Test job stop when job is in failed state."""
         flink_manager.job_id = "test_job_id"
 
-        with patch.object(
-            flink_manager, "_FlinkManager__get_job_state", return_value="FAILED"
-        ):
+        with patch.object(flink_manager, "_FlinkManager__get_job_state", return_value="FAILED"):
             result = flink_manager._FlinkManager__stop_job()
 
         assert result is None
@@ -208,13 +204,9 @@ class TestFlinkManager:
     def test_stop_job_no_savepoint(self, mock_sleep, flink_manager):
         """Test job stop when savepoint fails."""
         flink_manager.job_id = "test_job_id"
-        flink_manager.k.pod_manager.execute_command_on_pod.return_value = (
-            "No savepoint info"
-        )
+        flink_manager.k.pod_manager.execute_command_on_pod.return_value = "No savepoint info"
 
-        with patch.object(
-            flink_manager, "_FlinkManager__get_job_state", return_value="RUNNING"
-        ):
+        with patch.object(flink_manager, "_FlinkManager__get_job_state", return_value="RUNNING"):
             result = flink_manager._FlinkManager__stop_job()
 
         assert result is None
@@ -231,9 +223,7 @@ class TestFlinkManager:
 
     def test_run_job_simple(self, flink_manager):
         """Test simple job run without parameters."""
-        flink_manager.k.pod_manager.execute_command_on_pod.return_value = (
-            "JobID abc123def456"
-        )
+        flink_manager.k.pod_manager.execute_command_on_pod.return_value = "JobID abc123def456"
 
         result = flink_manager.run_job()
 
@@ -245,9 +235,7 @@ class TestFlinkManager:
 
     def test_run_job_with_start_par(self, flink_manager):
         """Test job run with start parallelism."""
-        flink_manager.k.pod_manager.execute_command_on_pod.return_value = (
-            "JobID abc123def456"
-        )
+        flink_manager.k.pod_manager.execute_command_on_pod.return_value = "JobID abc123def456"
 
         result = flink_manager.run_job(start_par=4)
 
@@ -261,13 +249,9 @@ class TestFlinkManager:
         """Test job run with rescaling."""
         flink_manager.monitored_task = "test_task"
         flink_manager.operators = {"source_test_task": 2, "sink_other": 4}
-        flink_manager.k.pod_manager.execute_command_on_pod.return_value = (
-            "JobID abc123def456"
-        )
+        flink_manager.k.pod_manager.execute_command_on_pod.return_value = "JobID abc123def456"
 
-        with patch.object(
-            flink_manager, "_FlinkManager__stop_job", return_value="/tmp/savepoint"
-        ):
+        with patch.object(flink_manager, "_FlinkManager__stop_job", return_value="/tmp/savepoint"):
             result = flink_manager.run_job(new_parallelism=6)
 
         assert flink_manager.job_id == "abc123def456"
@@ -278,9 +262,7 @@ class TestFlinkManager:
 
     def test_run_job_no_job_id_found(self, flink_manager):
         """Test job run when job ID extraction fails."""
-        flink_manager.k.pod_manager.execute_command_on_pod.return_value = (
-            "No job ID in response"
-        )
+        flink_manager.k.pod_manager.execute_command_on_pod.return_value = "No job ID in response"
 
         result = flink_manager.run_job()
 
@@ -324,9 +306,7 @@ class TestFlinkManager:
     @patch("time.sleep")
     def test_wait_for_job_running_success(self, mock_sleep, flink_manager):
         """Test waiting for job to reach running state."""
-        with patch.object(
-            flink_manager, "_FlinkManager__get_job_state", return_value="RUNNING"
-        ):
+        with patch.object(flink_manager, "_FlinkManager__get_job_state", return_value="RUNNING"):
             result = flink_manager.wait_for_job_running()
 
         assert result == 0
@@ -334,9 +314,7 @@ class TestFlinkManager:
     @patch("time.sleep")
     def test_wait_for_job_running_timeout(self, mock_sleep, flink_manager):
         """Test waiting for job that never reaches running state."""
-        with patch.object(
-            flink_manager, "_FlinkManager__get_job_state", return_value="STARTING"
-        ):
+        with patch.object(flink_manager, "_FlinkManager__get_job_state", return_value="STARTING"):
             result = flink_manager.wait_for_job_running()
 
         assert result == 1
@@ -379,9 +357,7 @@ class TestFlinkManager:
             flink_manager,
             "_FlinkManager__get_job_plan",
             return_value={"plan": {"nodes": []}},
-        ), patch.object(
-            flink_manager, "_FlinkManager__get_operators", return_value=None
-        ):
+        ), patch.object(flink_manager, "_FlinkManager__get_operators", return_value=None):
             result = flink_manager.get_job_info()
 
         assert result is None

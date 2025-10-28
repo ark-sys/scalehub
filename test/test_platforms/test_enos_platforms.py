@@ -2,8 +2,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from scripts.src.platforms.EnosPlatform import EnosPlatform
-from scripts.src.platforms.EnosPlatforms import EnosPlatforms
+from src.scalehub.platforms.EnosPlatform import EnosPlatform
+from src.scalehub.platforms.EnosPlatforms import EnosPlatforms
 
 
 @pytest.fixture
@@ -58,7 +58,7 @@ def test_build_uber_dict_merge_configs(logger_mock):
     assert len(result["Grid5000"]["resources"]["machines"]) == 2
 
 
-@patch("scripts.src.platforms.EnosPlatforms.en.Providers")
+@patch("src.scalehub.platforms.EnosPlatforms.en.Providers")
 def test_setup_success(mock_providers, logger_mock, enos_platform_mock):
     """Test successful setup of EnosPlatforms."""
     # Mock the providers and their methods
@@ -75,9 +75,7 @@ def test_setup_success(mock_providers, logger_mock, enos_platform_mock):
 
     mock_provider_instance.init.return_value = (mock_roles, mock_networks)
 
-    with patch(
-        "scripts.src.platforms.EnosPlatforms.en.sync_info", return_value=mock_roles
-    ):
+    with patch("src.scalehub.platforms.EnosPlatforms.en.sync_info", return_value=mock_roles):
         platforms = [enos_platform_mock]
         enos_platforms = EnosPlatforms(logger_mock, platforms)
         inventory = enos_platforms.setup()
@@ -89,7 +87,7 @@ def test_setup_success(mock_providers, logger_mock, enos_platform_mock):
 
 @pytest.fixture
 def vagrant_platform_mock():
-    from scripts.src.platforms.EnosPlatform import VMGroup
+    from src.scalehub.platforms.EnosPlatform import VMGroup
 
     platform = MagicMock(spec=EnosPlatform)
     platform.platform_type = "VagrantG5k"
@@ -109,9 +107,7 @@ def vagrant_platform_mock():
             required_nodes=1,
         )
     ]
-    platform.setup.return_value = {
-        "resources": {"machines": [{"roles": ["vagrant"], "nodes": 1}]}
-    }
+    platform.setup.return_value = {"resources": {"machines": [{"roles": ["vagrant"], "nodes": 1}]}}
     platform.get_provider.return_value = MagicMock()
     return platform
 
@@ -168,8 +164,8 @@ def test_get_providers(logger_mock, enos_platform_mock):
     enos_platform_mock.get_provider.assert_called_once()
 
 
-@patch("scripts.src.platforms.EnosPlatforms.isinstance")
-@patch("scripts.src.platforms.EnosPlatforms.en.G5k")
+@patch("src.scalehub.platforms.EnosPlatforms.isinstance")
+@patch("src.scalehub.platforms.EnosPlatforms.en.G5k")
 def test_post_setup(mock_g5k, mock_isinstance, logger_mock, enos_platform_mock):
     """Test post-setup firewall configuration."""
     mock_provider = MagicMock()
@@ -210,12 +206,12 @@ def test_setup_with_start_time(logger_mock):
     platform.setup.return_value = {"resources": {"machines": []}}
     platform.get_provider.return_value = MagicMock()
 
-    with patch("scripts.src.platforms.EnosPlatforms.en.Providers") as mock_providers:
+    with patch("src.scalehub.platforms.EnosPlatforms.en.Providers") as mock_providers:
         mock_provider_instance = MagicMock()
         mock_providers.return_value = mock_provider_instance
         mock_provider_instance.init.return_value = ({}, [])
 
-        with patch("scripts.src.platforms.EnosPlatforms.en.sync_info", return_value={}):
+        with patch("src.scalehub.platforms.EnosPlatforms.en.sync_info", return_value={}):
             platforms = [platform]
             enos_platforms = EnosPlatforms(logger_mock, platforms)
             enos_platforms.setup()

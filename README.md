@@ -326,85 +326,90 @@ Create a new file `scripts/src/platforms/YourCustomPlatform.py` that inherits fr
 
 ```python
 from typing import Dict, Any
-from scripts.src.platforms.Platform import Platform
-from scripts.utils.Logger import Logger
+from src.scalehub.platforms.Platform import Platform
+from src.utils.Logger import Logger
+
 
 class YourCustomConfigurationError(Exception):
     """Raised when YourCustom configuration is invalid."""
     pass
 
+
 class YourCustomPlatform(Platform):
     """Custom platform implementation."""
-    
+
     def _validate_config(self) -> None:
         """Validate platform configuration."""
         required_fields = ["api_endpoint", "region"]  # Define your required fields
         for field in required_fields:
             if field not in self._platform_config:
                 raise YourCustomConfigurationError(f"Missing required field: {field}")
-    
+
     def _get_instance_count(self) -> int:
         """Calculate total instance count from INI configuration."""
         # Get counts from INI configuration (similar to Grid5000 pattern)
         control_count = int(self._platform_config.get("control", 0))
         producer_count = int(self._platform_config.get("producers", 0))
         consumer_count = int(self._platform_config.get("consumers", 0))
-        
+
         # If instance_count is explicitly set, use that instead
         if "instance_count" in self._platform_config:
             return int(self._platform_config["instance_count"])
-        
+
         return control_count + producer_count + consumer_count
-    
+
     def setup(self, verbose: bool = False) -> Dict[str, Any]:
         """Setup the platform and return Ansible inventory."""
         self._log.info(f"Setting up {self.platform_name}")
-        
+
         # Your custom provisioning logic here
         # This should interact with your platform's API
-        
+
         # Get role counts from INI configuration
         control_count = int(self._platform_config.get("control", 1))
         producer_count = int(self._platform_config.get("producers", 0))
         consumer_count = int(self._platform_config.get("consumers", 0))
-        
+
         # Return inventory in the expected format
         inventory = {
-            "control": {"hosts": {}},
-            "agents": {"hosts": {}},
-            "your_platform_group": {"hosts": {}},
+            "control": {
+                "hosts": {}},
+            "agents": {
+                "hosts": {}},
+            "your_platform_group": {
+                "hosts": {}},
         }
-        
+
         # Example host configuration for control nodes
         for i in range(control_count):
-            hostname = f"control-{i+1}"
+            hostname = f"control-{i + 1}"
             inventory["control"]["hosts"][hostname] = {
-                "ansible_host": f"192.168.1.{10+i}",
+                "ansible_host": f"192.168.1.{10 + i}",
                 "ansible_user": self._platform_config.get("ssh_user", "ubuntu"),
                 "cluster_role": "control",
                 "platform_name": self.platform_name,
             }
-        
+
         # Example host configuration for worker nodes (producers + consumers)
         worker_index = 0
         for role, count in [("producer", producer_count), ("consumer", consumer_count)]:
             for i in range(count):
-                hostname = f"{role}-{i+1}"
+                hostname = f"{role}-{i + 1}"
                 host_config = {
-                    "ansible_host": f"192.168.1.{20+worker_index}",
+                    "ansible_host": f"192.168.1.{20 + worker_index}",
                     "ansible_user": self._platform_config.get("ssh_user", "ubuntu"),
                     "cluster_role": role,
                     "platform_name": self.platform_name,
                 }
                 inventory["agents"]["hosts"][hostname] = host_config
                 worker_index += 1
-        
+
         # Add all hosts to your platform group
         inventory["your_platform_group"]["hosts"].update(inventory["control"]["hosts"])
         inventory["your_platform_group"]["hosts"].update(inventory["agents"]["hosts"])
-        
+
         return inventory
-    
+
     def destroy(self) -> None:
         """Destroy platform resources."""
         self._log.info(f"Destroying {self.platform_name}")
@@ -417,8 +422,8 @@ Create an initialization file or add to your main script to register the platfor
 
 ```python
 # In your initialization code or main script
-from scripts.src.platforms.PlatformFactory import PlatformFactory
-from scripts.src.platforms.YourCustomPlatform import YourCustomPlatform
+from src.scalehub.platforms.PlatformFactory import PlatformFactory
+from src.scalehub.platforms.YourCustomPlatform import YourCustomPlatform
 
 # Register your custom platform
 PlatformFactory.register_platform("YourCustomType", YourCustomPlatform)

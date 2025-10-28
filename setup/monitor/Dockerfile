@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y ssh && apt-get clean && rm -rf /var/lib
 # Install dependencies
 RUN --mount=type=bind,source=setup/monitor/requirements.txt,target=requirements.txt pip install -r requirements.txt
 
-RUN mkdir -p /app /app/conf /app/scripts /app/templates /app/playbooks /tmp/ansible 
+RUN mkdir -p /app /app/conf /app/src /app/templates /app/playbooks /tmp/ansible
 
 # Copy source code
 ADD scripts/monitor/ /app/scripts/monitor/
@@ -19,7 +19,7 @@ ADD playbooks/application/roles/load_generators/templates/* /app/templates/
 ADD playbooks/application/roles/chaos/templates/* /app/templates/
 
 # Create __init__.py file to make the directory a package
-RUN touch /app/scripts/__init__.py
+RUN touch /app/src/__init__.py
 
 # Set working directory
 WORKDIR /app
@@ -33,7 +33,7 @@ ENV MQTT_BROKER_USERNAME="monitor"
 ENV MQTT_BROKER_PASSWORD="m_password"
 ENV KUBECONFIG="/app/conf/kubeconfig"
 ENV PYTHONPATH="/app"
-# Redirect python scripts output to container logs
+# Redirect python src output to container logs
 ENV PYTHONUNBUFFERED=1
 
 ## Run the application

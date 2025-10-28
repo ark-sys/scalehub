@@ -23,7 +23,7 @@
 #
 #    - name: Generate Vagrantfile from template
 #      ansible.builtin.template:
-#        src: Vagrantfile.j2
+#        scalehub: Vagrantfile.j2
 #        dest: /home/{{ ansible_user }}/Vagrantfile
 #        owner: "{{ ansible_user }}"
 #        group: "g5k-users"

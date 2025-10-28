@@ -2,8 +2,8 @@ from unittest.mock import patch
 
 import pytest
 
-from scripts.utils.Config import Config
-from scripts.utils.Logger import Logger
+from src.utils.Config import Config
+from src.utils.Logger import Logger
 from utils.Playbooks import Playbooks
 
 
@@ -33,9 +33,7 @@ class TestPlaybooks:
 
     def test_run_playbook_success(self, playbooks, config):
         """Test running a playbook successfully."""
-        with patch("os.path.exists", return_value=True), patch(
-            "ansible_runner.run"
-        ) as mock_run:
+        with patch("os.path.exists", return_value=True), patch("ansible_runner.run") as mock_run:
             mock_run.return_value.rc = 0
             playbooks.run("test_playbook", config)
             mock_run.assert_called_once()
