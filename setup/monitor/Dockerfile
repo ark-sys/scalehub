@@ -9,9 +9,9 @@ RUN --mount=type=bind,source=setup/monitor/requirements.txt,target=requirements.
 RUN mkdir -p /app /app/conf /app/src /app/templates /app/playbooks /tmp/ansible
 
 # Copy source code
-ADD scripts/monitor/ /app/scripts/monitor/
-ADD scripts/utils /app/scripts/utils
-ADD scripts/src /app/scripts/src
+ADD src/monitor/ /app/src/monitor/
+ADD src/utils /app/src/utils
+ADD src/src /app/src/src
 
 # Add templates
 ADD playbooks /app/playbooks
@@ -37,7 +37,7 @@ ENV PYTHONPATH="/app"
 ENV PYTHONUNBUFFERED=1
 
 ## Run the application
-ENTRYPOINT ["python3", "/app/scripts/monitor/monitor.py"]
+ENTRYPOINT ["python3", "/app/src/monitor/monitor.py"]
 
 ## DEBUG: Hang the entrypoint so the container doesn't exit
 #CMD ["tail", "-f", "/dev/null"]
