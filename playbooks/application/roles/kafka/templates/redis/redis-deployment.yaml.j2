@@ -19,8 +19,7 @@ spec:
     spec:
       nodeSelector:
         node-role.kubernetes.io/worker: producer
-      imagePullSecrets:
-        - name: gitlab-scalehub
+
       containers:
         - name: redis
           image: "{{redis_image}}:{{redis_tag}}"

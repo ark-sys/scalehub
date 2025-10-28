@@ -123,8 +123,6 @@ spec:
       nodeSelector:
         node-role.kubernetes.io/control-plane: "true"
       terminationGracePeriodSeconds: 0
-      imagePullSecrets:
-        - name: gitlab-scalehub
       containers:
         - name: jobmanager
           image: "{{image}}:{{tag}}"

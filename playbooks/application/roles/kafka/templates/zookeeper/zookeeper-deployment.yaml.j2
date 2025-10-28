@@ -16,8 +16,7 @@ spec:
       nodeSelector:
         node-role.kubernetes.io/worker: producer
       hostname: zookeeper
-      imagePullSecrets:
-        - name: gitlab-scalehub
+
       containers:
       - env:
         - name: ZOOKEEPER_CLIENT_PORT

@@ -15,8 +15,7 @@ data:
       spec:
           template:
               spec:
-                imagePullSecrets:
-                  - name: gitlab-registry-s
+                
                 nodeSelector:
                   node-role.kubernetes.io/control-plane: "true"
                 restartPolicy: Never
