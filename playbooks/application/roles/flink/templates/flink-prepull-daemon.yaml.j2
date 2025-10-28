@@ -15,8 +15,6 @@ spec:
     spec:
       nodeSelector:
         node-role.kubernetes.io/worker: consumer
-      imagePullSecrets:
-        - name: gitlab-scalehub
       initContainers:
         - name: prepuller-1
           image: "{{image}}:{{tag}}"

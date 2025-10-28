@@ -20,8 +20,7 @@ spec:
       serviceAccountName: experiment-monitor
       nodeSelector:
         node-role.kubernetes.io/control-plane: "true"
-      imagePullSecrets:
-        - name: gitlab-scalehub
+
       containers:
         - name: experiment-monitor
           image: ghcr.io/ark-sys/scalehub/monitor:latest

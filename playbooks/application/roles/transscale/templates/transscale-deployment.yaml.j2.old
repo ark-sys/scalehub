@@ -15,8 +15,7 @@ spec:
         app: transscale
     spec:
       terminationGracePeriodSeconds: 0
-      imagePullSecrets:
-        - name: gitlab-registry-s
+
       nodeSelector:
         node-role.kubernetes.io/control-plane: "true"
       containers:

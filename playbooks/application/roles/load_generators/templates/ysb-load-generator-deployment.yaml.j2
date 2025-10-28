@@ -22,8 +22,7 @@ spec:
       nodeSelector:
         node-role.kubernetes.io/worker: producer
       terminationGracePeriodSeconds: 0
-      imagePullSecrets:
-        - name: gitlab-scalehub
+
       containers:
         - name: workload-generator
           image: "{{ysb_lg_image}}:{{ysb_lg_tag}}"

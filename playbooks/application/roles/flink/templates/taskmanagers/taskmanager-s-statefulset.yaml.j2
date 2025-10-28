@@ -120,8 +120,7 @@ spec:
       nodeSelector:
         node-role.kubernetes.io/worker: consumer
         node-role.kubernetes.io/scaling: SCHEDULABLE
-      imagePullSecrets:
-        - name: gitlab-scalehub
+
       containers:
         - name: taskmanager
           image: "{{ image }}:{{ tag }}"

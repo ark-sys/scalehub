@@ -23,8 +23,7 @@ spec:
       nodeSelector:
         node-role.kubernetes.io/worker: producer
       terminationGracePeriodSeconds: 0
-      imagePullSecrets:
-        - name: gitlab-scalehub
+
       containers:
         - name: workload-generator
           image: "{{theodolite_lg_image}}:{{theodolite_lg_tag}}"
