@@ -2,7 +2,7 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
-from scripts.utils.Logger import Logger, Color
+from src.utils.Logger import Logger, Color
 
 
 class TestLogger:
@@ -16,7 +16,7 @@ class TestLogger:
     @pytest.fixture
     def mock_datetime(self):
         """Mock datetime.now() to return a predictable timestamp."""
-        with patch("scripts.utils.Logger.datetime") as mock_dt:
+        with patch("src.utils.Logger.datetime") as mock_dt:
             mock_datetime_instance = MagicMock()
             mock_datetime_instance.isoformat.return_value = "2024-01-01T12:00:00"
             mock_dt.now.return_value = mock_datetime_instance
@@ -109,14 +109,18 @@ class TestLogger:
         """Test warning() prints message with correct format."""
         with patch("builtins.print") as mock_print:
             logger.warning("Warning message")
-            expected = f"{Color.yellow}[2024-01-01T12:00:00] [WARNING] Warning message{Color.reset_color}"
+            expected = (
+                f"{Color.yellow}[2024-01-01T12:00:00] [WARNING] Warning message{Color.reset_color}"
+            )
             mock_print.assert_called_once_with(expected)
 
     def test_error_message_format(self, logger, mock_datetime):
         """Test error() prints message with correct format."""
         with patch("builtins.print") as mock_print:
             logger.error("Error message")
-            expected = f"{Color.pure_red}[2024-01-01T12:00:00] [ERROR] Error message{Color.reset_color}"
+            expected = (
+                f"{Color.pure_red}[2024-01-01T12:00:00] [ERROR] Error message{Color.reset_color}"
+            )
             mock_print.assert_called_once_with(expected)
 
     def test_set_debug_level_updates_level(self, logger):

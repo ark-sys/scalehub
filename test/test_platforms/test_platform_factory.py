@@ -1,9 +1,11 @@
-import pytest
 from unittest.mock import MagicMock
-from scripts.src.platforms.PlatformFactory import PlatformFactory, PlatformCreationError
-from scripts.src.platforms.EnosPlatform import EnosPlatform
-from scripts.src.platforms.RaspberryPiPlatform import RaspberryPiPlatform
-from scripts.src.platforms.Platform import Platform
+
+import pytest
+
+from src.scalehub.platforms.EnosPlatform import EnosPlatform
+from src.scalehub.platforms.Platform import Platform
+from src.scalehub.platforms.PlatformFactory import PlatformFactory, PlatformCreationError
+from src.scalehub.platforms.RaspberryPiPlatform import RaspberryPiPlatform
 
 
 @pytest.fixture
@@ -65,6 +67,7 @@ def test_create_platform_missing_type(logger_mock):
 
 def test_register_new_platform_type():
     """Test registering a new platform type."""
+
     class MockPlatform(Platform):
         def _validate_config(self):
             pass

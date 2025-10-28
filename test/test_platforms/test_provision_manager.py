@@ -2,11 +2,11 @@ from unittest.mock import MagicMock, patch, call, mock_open
 
 import pytest
 
-from scripts.src.platforms.EnosPlatform import EnosPlatform
-from scripts.src.platforms.ProvisionManager import (
+from src.scalehub.platforms.EnosPlatform import EnosPlatform
+from src.scalehub.platforms.ProvisionManager import (
     ProvisionManager,
 )
-from scripts.src.platforms.RaspberryPiPlatform import RaspberryPiPlatform
+from src.scalehub.platforms.RaspberryPiPlatform import RaspberryPiPlatform
 
 
 @pytest.fixture
@@ -29,7 +29,7 @@ def config_mock():
     }
 
 
-@patch("scripts.src.platforms.ProvisionManager.PlatformFactory.create_platform")
+@patch("src.scalehub.platforms.ProvisionManager.PlatformFactory.create_platform")
 def test_create_platforms(mock_create_platform, logger_mock, config_mock):
     """Test the _create_platforms method."""
     mock_platform1 = MagicMock(spec=EnosPlatform)
@@ -45,7 +45,7 @@ def test_create_platforms(mock_create_platform, logger_mock, config_mock):
 
 
 @patch("os.makedirs")
-@patch("scripts.src.platforms.ProvisionManager.Key")
+@patch("src.scalehub.platforms.ProvisionManager.Key")
 def test_ensure_inventory_directory(mock_key, mock_makedirs, logger_mock, config_mock):
     """Test the _ensure_inventory_directory method."""
     mock_key.Scalehub.inventory.key = "scalehub.inventory"
@@ -61,7 +61,7 @@ def test_ensure_inventory_directory(mock_key, mock_makedirs, logger_mock, config
 
 @patch("builtins.open", new_callable=MagicMock)
 @patch("yaml.dump")
-@patch("scripts.src.platforms.ProvisionManager.Key")
+@patch("src.scalehub.platforms.ProvisionManager.Key")
 def test_save_inventory(mock_key, mock_yaml_dump, mock_open, logger_mock, config_mock):
     """Test the _save_inventory method."""
     # Mock the key to return the correct config key
@@ -81,12 +81,12 @@ def test_save_inventory(mock_key, mock_yaml_dump, mock_open, logger_mock, config
     )
 
 
-@patch("scripts.src.platforms.ProvisionManager.EnosPlatforms")
-@patch("scripts.src.platforms.ProvisionManager.Key")
-@patch("scripts.src.platforms.ProvisionManager.PlatformFactory.create_platform")
+@patch("src.scalehub.platforms.ProvisionManager.EnosPlatforms")
+@patch("src.scalehub.platforms.ProvisionManager.Key")
+@patch("src.scalehub.platforms.ProvisionManager.PlatformFactory.create_platform")
 @patch("builtins.open", new_callable=MagicMock)
 @patch("yaml.dump")
-@patch("scripts.src.platforms.ProvisionManager.os.makedirs")
+@patch("src.scalehub.platforms.ProvisionManager.os.makedirs")
 def test_provision_enos_platforms(
     mock_makedirs,
     mock_yaml_dump,
@@ -118,9 +118,7 @@ def test_provision_enos_platforms(
 
     # Create a proper config mock object with get and get_bool methods
     config_mock_obj = MagicMock()
-    config_mock_obj.get.side_effect = lambda key, default=None: config_mock.get(
-        key, default
-    )
+    config_mock_obj.get.side_effect = lambda key, default=None: config_mock.get(key, default)
     config_mock_obj.get_bool.return_value = False
 
     enos_mock = mock_enos_platforms.return_value
@@ -137,8 +135,8 @@ def test_provision_enos_platforms(
 
 
 @patch("builtins.open", new_callable=mock_open)
-@patch("scripts.src.platforms.ProvisionManager.yaml.dump")
-@patch("scripts.src.platforms.ProvisionManager.os.makedirs")
+@patch("src.scalehub.platforms.ProvisionManager.yaml.dump")
+@patch("src.scalehub.platforms.ProvisionManager.os.makedirs")
 def test_provision_raspberry_pi_platforms(
     mock_makedirs, mock_yaml_dump, mock_file, logger_mock, config_mock
 ):
@@ -167,16 +165,10 @@ def test_provision_raspberry_pi_platforms(
     )
 
 
-@patch(
-    "scripts.src.platforms.ProvisionManager.ProvisionManager._provision_enos_platforms"
-)
-@patch(
-    "scripts.src.platforms.ProvisionManager.ProvisionManager._provision_raspberry_pi_platforms"
-)
-@patch(
-    "scripts.src.platforms.ProvisionManager.ProvisionManager._provision_custom_platforms"
-)
-@patch("scripts.src.platforms.ProvisionManager.Key")
+@patch("src.scalehub.platforms.ProvisionManager.ProvisionManager._provision_enos_platforms")
+@patch("src.scalehub.platforms.ProvisionManager.ProvisionManager._provision_raspberry_pi_platforms")
+@patch("src.scalehub.platforms.ProvisionManager.ProvisionManager._provision_custom_platforms")
+@patch("src.scalehub.platforms.ProvisionManager.Key")
 @patch("os.makedirs")
 def test_provision(
     mock_makedirs,
@@ -198,19 +190,13 @@ def test_provision(
 
     # Configure the mocks to directly modify the manager's inventory dict
     def mock_enos_provision():
-        manager._inventory_dict["/tmp/inventory/enos_inventory.yaml"] = {
-            "test": "enos_data"
-        }
+        manager._inventory_dict["/tmp/inventory/enos_inventory.yaml"] = {"test": "enos_data"}
 
     def mock_raspberry_provision():
-        manager._inventory_dict["/tmp/inventory/pi_inventory.yaml"] = {
-            "test": "pi_data"
-        }
+        manager._inventory_dict["/tmp/inventory/pi_inventory.yaml"] = {"test": "pi_data"}
 
     def mock_custom_provision():
-        manager._inventory_dict["/tmp/inventory/custom_inventory.yaml"] = {
-            "test": "custom_data"
-        }
+        manager._inventory_dict["/tmp/inventory/custom_inventory.yaml"] = {"test": "custom_data"}
 
     mock_enos.side_effect = mock_enos_provision
     mock_raspberry.side_effect = mock_raspberry_provision
@@ -233,7 +219,7 @@ def test_provision(
     assert "/tmp/inventory/custom_inventory.yaml" in result
 
 
-@patch("scripts.src.platforms.ProvisionManager.EnosPlatforms.destroy")
+@patch("src.scalehub.platforms.ProvisionManager.EnosPlatforms.destroy")
 def test_destroy(mock_destroy, logger_mock, config_mock):
     """Test the destroy method."""
     manager = ProvisionManager(logger_mock, config_mock)

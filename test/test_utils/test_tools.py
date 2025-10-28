@@ -2,8 +2,8 @@ from unittest.mock import patch, mock_open, MagicMock
 
 import pytest
 
-from scripts.utils.Logger import Logger
-from scripts.utils.Tools import FolderManager, Tools
+from src.utils.Logger import Logger
+from src.utils.Tools import FolderManager, Tools
 
 
 class TestFolderManager:
@@ -39,13 +39,9 @@ class TestFolderManager:
         with patch("os.listdir", return_value=["res_exp_node1_1"]), patch(
             "os.makedirs"
         ) as mock_makedirs:
-            result = folder_manager.create_subfolder(
-                "/base/path", "res_exp", node_name="node1"
-            )
+            result = folder_manager.create_subfolder("/base/path", "res_exp", node_name="node1")
             assert result == "/base/path/res_exp_node1_2"
-            mock_makedirs.assert_called_once_with(
-                "/base/path/res_exp_node1_2", exist_ok=True
-            )
+            mock_makedirs.assert_called_once_with("/base/path/res_exp_node1_2", exist_ok=True)
 
     def test_create_subfolder_invalid_type(self, folder_manager):
         """Test creating a subfolder with an invalid type."""
@@ -85,9 +81,7 @@ class TestTools:
             ]
             mock_get.return_value = mock_response
 
-            quicklink_local, quicklink_remote = tools.generate_grafana_quicklink(
-                1000, 2000
-            )
+            quicklink_local, quicklink_remote = tools.generate_grafana_quicklink(1000, 2000)
             assert (
                 quicklink_local
                 == "http://localhost/http://grafana.monitoring.svc.cluster.local/dashboard?from=1000000&to=2000000"
@@ -119,7 +113,5 @@ class TestTools:
         with patch("builtins.open", mock_open(read_data=resource_content)), patch(
             "jinja2.Template.render", return_value=rendered_content
         ), patch("yaml.safe_load", return_value={"key": "test_value"}):
-            result = tools.load_resource_definition(
-                "resource.yaml", {"value": "test_value"}
-            )
+            result = tools.load_resource_definition("resource.yaml", {"value": "test_value"})
             assert result == {"key": "test_value"}

@@ -1,0 +1,60 @@
+# Copyright (C) 2025 Khaled Arsalane
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+from src.scalehub.data.plotting.strategies.basic_plot_strategy import BasicPlotStrategy
+from src.scalehub.data.plotting.strategies.scientific_plot_strategy import ScientificPlotStrategy
+from src.scalehub.data.plotting.strategies.single_frame_plot_strategy import (
+    SingleFramePlotStrategy,
+)
+from src.scalehub.data.plotting.strategies.stacked_frames_plot_strategy import (
+    StackedFramesPlotStrategy,
+)
+from src.scalehub.data.plotting.strategies.stacked_plot_strategy import StackedPlotStrategy
+from src.scalehub.data.plotting.strategies.three_d_plot_strategy import ThreeDPlotStrategy
+from src.scalehub.data.plotting.strategies.whisker_plot_strategy import WhiskerPlotStrategy
+
+
+class PlotStrategyFactory:
+    """Factory for creating plot strategy instances."""
+
+    _strategies = {
+        "basic": BasicPlotStrategy,
+        "stacked": StackedPlotStrategy,
+        "single_frame": SingleFramePlotStrategy,
+        "whisker": WhiskerPlotStrategy,
+        "3d": ThreeDPlotStrategy,
+        "stacked_frames": StackedFramesPlotStrategy,
+        "scientific": ScientificPlotStrategy,
+    }
+
+    @classmethod
+    def create_strategy(cls, plot_type: str):
+        """Create and return a strategy class for the given plot type."""
+        if plot_type not in cls._strategies:
+            raise ValueError(
+                f"Unknown plot type: {plot_type}. Available types: {list(cls._strategies.keys())}"
+            )
+
+        return cls._strategies[plot_type]
+
+    @classmethod
+    def register_strategy(cls, plot_type: str, strategy_class):
+        """Register a new strategy type."""
+        cls._strategies[plot_type] = strategy_class
+
+    @classmethod
+    def available_strategies(cls):
+        """Return list of available strategy types."""
+        return list(cls._strategies.keys())

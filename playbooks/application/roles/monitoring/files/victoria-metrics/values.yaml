@@ -127,7 +127,7 @@ server:
     #     readOnly: true
     #   args:
     #   - -storageDataPath=/storage
-    #   - -src=s3://your_bucket/folder/latest
+  #   - -scalehub=s3://your_bucket/folder/latest
   #   - -credsFilePath=/etc/vm/creds/credentials
 
   # -- Node tolerations for server scheduling to nodes with taints. Details are [here](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/)

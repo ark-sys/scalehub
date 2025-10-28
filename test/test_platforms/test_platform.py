@@ -1,5 +1,6 @@
 import pytest
-from scripts.src.platforms.Platform import Platform
+
+from src.scalehub.platforms.Platform import Platform
 
 
 class MockPlatform(Platform):

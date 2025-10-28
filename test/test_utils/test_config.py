@@ -3,8 +3,8 @@ from unittest.mock import patch, mock_open
 
 import pytest
 
-from scripts.utils.Config import Config
-from scripts.utils.Logger import Logger
+from src.utils.Config import Config
+from src.utils.Logger import Logger
 
 
 class TestConfig:
