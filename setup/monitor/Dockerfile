@@ -11,7 +11,7 @@ RUN mkdir -p /app /app/conf /app/src /app/templates /app/playbooks /tmp/ansible
 # Copy source code
 ADD src/monitor/ /app/src/monitor/
 ADD src/utils /app/src/utils
-ADD src/src /app/src/src
+ADD src/scalehub /app/src/scalehub
 
 # Add templates
 ADD playbooks /app/playbooks
