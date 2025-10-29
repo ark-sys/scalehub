@@ -2,14 +2,17 @@
 # vim: set ft=yaml:
 
 # Provide image name and tag for data stream components
-kafka_image: confluentinc/cp-kafka
+kafka_image: ghcr.io/ark-sys/scalehub/kafka
 kafka_tag: latest
 
-jmx_image: bitnami/jmx-exporter
+jmx_image: ghcr.io/ark-sys/scalehub/ghcr.io/ark-sys/scalehub/kafka-prometheus-jmx-exporter
 jmx_tag: latest
 
-zookeeper_image: confluentinc/cp-zookeeper
+zookeeper_image: ghcr.io/ark-sys/scalehub/cp-zookeeper
 zookeeper_tag: latest
 
-redis_image: redis
+redis_image: ghcr.io/ark-sys/scalehub/redis
 redis_tag: 7.4.0
+
+schema_registry_image: ghcr.io/ark-sys/scalehub/cp-schema-registry
+schema_registry_tag: 7.0.1
