@@ -5,7 +5,7 @@
 kafka_image: ghcr.io/ark-sys/scalehub/kafka
 kafka_tag: latest
 
-jmx_image: ghcr.io/ark-sys/scalehub/ghcr.io/ark-sys/scalehub/kafka-prometheus-jmx-exporter
+jmx_image: ghcr.io/ark-sys/scalehub/kafka-prometheus-jmx-exporter
 jmx_tag: latest
 
 zookeeper_image: ghcr.io/ark-sys/scalehub/cp-zookeeper
