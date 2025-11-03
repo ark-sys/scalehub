@@ -3,11 +3,12 @@
 - name : Setting up NFS - Creation block
   tags: [ create ]
   # Path to g5k credential files in container's home directory
+  # TODO: make job_site a variable at a higher level to be able to change it when deploying on another site
+  # Also, this setup is only relevant for Grid5000 deployments
+  # And delegation requires that the wildcard entry *.g5k should be already configures in ssh config file
   vars:
     job_site: "rennes"
   block:
-
-#
     - name: Include credentials file
       include_vars: "~/.python-grid5000.yaml"
     - name: retrieve JSON content
