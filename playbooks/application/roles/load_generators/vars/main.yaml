@@ -1,5 +1,6 @@
 ---
-# TODO: Replace these with your own load generator images or build and push custom images
+# The load generator images used in the experiments were hosted on the lab's private registry.
+# Set these to your own build of the Theodolite and YSB workload generators.
 theodolite_lg_image: ghcr.io/your-org/workload-generator
 theodolite_lg_tag: latest
 

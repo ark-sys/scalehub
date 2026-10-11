@@ -313,13 +313,11 @@ class EnosPlatforms(Platform):
         return None
 
     def post_setup(self):
-        # Apply firewall rules
+        # Open the Grid'5000 firewall on reserved nodes so that nodes from other
+        # testbeds can reach them (all protocols, no per-port rules)
         for provider in self.enos_providers:
             if isinstance(provider, en.G5k):
                 try:
-                    # apply rules to G5k group from self.enos_inventory
-                    # Retrieve firewall rules from platform_config
-                    # TODO: Implement this
                     provider.fw_create(proto="all")
                 except Exception as e:
                     self.__log.warning(

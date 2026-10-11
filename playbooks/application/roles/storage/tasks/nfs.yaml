@@ -2,12 +2,11 @@
 # Setup NFS
 - name : Setting up NFS - Creation block
   tags: [ create ]
-  # Path to g5k credential files in container's home directory
-  # TODO: make job_site a variable at a higher level to be able to change it when deploying on another site
-  # Also, this setup is only relevant for Grid5000 deployments
-  # And delegation requires that the wildcard entry *.g5k should be already configures in ssh config file
+  # Grid'5000 only: mounts the user's home directory from the site's NFS server.
+  # Override nfs_site to use another site. Delegation relies on the *.g5k entry
+  # of the ssh config in the scalehub container.
   vars:
-    job_site: "rennes"
+    job_site: "{{ nfs_site | default('rennes') }}"
   block:
     - name: Include credentials file
       include_vars: "~/.python-grid5000.yaml"

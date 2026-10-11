@@ -4,7 +4,7 @@ ScaleHub runs from a Docker container on your workstation. That container shares
 container to reach the Grid'5000 nodes, and it drives them with Ansible. A third container serves a small DNS zone, so
 you can open the cluster's web interfaces from your browser.
 
-![ScaleHub local setup](../setup/images/scalehub_setup-v4.png)
+![ScaleHub local setup](images/local-setup.png)
 
 ## Prerequisites
 

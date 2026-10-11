@@ -137,11 +137,10 @@ def experiment(action, configs: list):
             log.error(f"Action {action} is not implemented for command 'experiment'.")
 
 
-# Get tokens for minio and kubernetes dashboard
+# Get the login token for the Kubernetes dashboard
 def tokens():
     k: KubernetesManager = KubernetesManager(log)
 
-    # Retrieve token for minio console
     kubernetes_dashboard_token = k.get_token("admin-user", "kubernetes-dashboard")
 
     # Print tokens in a readable format and easy to copy-paste
@@ -272,14 +271,11 @@ def main():
 
     # Tokens command
     subparsers.add_parser(
-        "tokens", help="Get tokens for minio and kubernetes dashboard"
+        "tokens", help="Get the Kubernetes dashboard token"
     )
 
     # Sync command
     subparsers.add_parser("sync", help="Sync experiment data from remote to local")
-
-    # Reservation time command
-    subparsers.add_parser("reservation_time", help="Get remaining reservation time")
 
     # Export command with updated help text
     export_subparser = subparsers.add_parser("export", help="Export data")

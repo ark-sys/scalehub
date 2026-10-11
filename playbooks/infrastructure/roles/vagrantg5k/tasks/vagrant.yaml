@@ -17,10 +17,6 @@
     - name: Install libvirt plugin
       ansible.builtin.command:
         cmd: vagrant plugin install vagrant-libvirt
-#    - name: set user
-#      set_fact:
-#        ansible_user: karsalane
-#
 #    - name: Generate Vagrantfile from template
 #      ansible.builtin.template:
 #        scalehub: Vagrantfile.j2

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="setup/images/scalehub_logo.png" alt="ScaleHub" width="480">
+  <img src="docs/images/logo.png" alt="ScaleHub" width="420">
 </p>
 
 ScaleHub builds short-lived Kubernetes (K3s) clusters that span very different hardware (bare-metal servers, VMs

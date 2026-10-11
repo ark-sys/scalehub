@@ -66,6 +66,10 @@ shub deploy application/chaos        # optional components are deployed separate
 
 Image names and versions for each component are in `roles/<role>/vars/main.yaml`.
 
+The TransScale and load generator images used for the published experiments were hosted on the lab's private
+registry and are not publicly available. The `load_generators` and `transscale` roles point to placeholders and
+the old registry, so set them to your own builds before using those roles.
+
 ## Adding a playbook
 
 Create `playbooks/application/<name>.yaml` that applies a role on `localhost`, and give the role's tasks the `create`
