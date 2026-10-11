@@ -76,7 +76,7 @@ class TestFlinkManager:
             "[FLK_MGR] Error while getting overview: Connection failed"
         )
 
-    @patch("time.sleep")
+    @patch("src.scalehub.resources.FlinkManager.sleep")
     @patch("requests.get")
     def test_get_job_plan_success(self, mock_get, mock_sleep, flink_manager):
         """Test successful job plan retrieval."""
@@ -93,7 +93,7 @@ class TestFlinkManager:
             "http://flink-jobmanager.flink.svc.cluster.local:8081/jobs/test_job_id/plan"
         )
 
-    @patch("time.sleep")
+    @patch("src.scalehub.resources.FlinkManager.sleep")
     @patch("requests.get")
     def test_get_job_plan_retry_failure(self, mock_get, mock_sleep, flink_manager):
         """Test job plan retrieval with retries."""
@@ -145,7 +145,9 @@ class TestFlinkManager:
 
         result = flink_manager._FlinkManager__get_operators()
 
-        expected = {"Source_test_task": 2, "Sink_output_task": 4}
+        # Names are passed back to the job as "<name>:<parallelism>" arguments on restart,
+        # so they must match what the job JARs derive from the same description
+        expected = {"Source__testtask": 2, "Sink__outputtask": 4}
         assert result == expected
 
     def test_get_operators_exception(self, flink_manager):
@@ -174,7 +176,7 @@ class TestFlinkManager:
 
         assert result is None
 
-    @patch("time.sleep")
+    @patch("src.scalehub.resources.FlinkManager.sleep")
     def test_stop_job_success(self, mock_sleep, flink_manager):
         """Test successful job stop with savepoint."""
         flink_manager.job_id = "test_job_id"
@@ -190,7 +192,7 @@ class TestFlinkManager:
             deployment_name="flink-jobmanager", command="flink stop -p -d test_job_id"
         )
 
-    @patch("time.sleep")
+    @patch("src.scalehub.resources.FlinkManager.sleep")
     def test_stop_job_failed_state(self, mock_sleep, flink_manager):
         """Test job stop when job is in failed state."""
         flink_manager.job_id = "test_job_id"
@@ -200,7 +202,7 @@ class TestFlinkManager:
 
         assert result is None
 
-    @patch("time.sleep")
+    @patch("src.scalehub.resources.FlinkManager.sleep")
     def test_stop_job_no_savepoint(self, mock_sleep, flink_manager):
         """Test job stop when savepoint fails."""
         flink_manager.job_id = "test_job_id"
@@ -303,7 +305,7 @@ class TestFlinkManager:
 
         assert result == 0
 
-    @patch("time.sleep")
+    @patch("src.scalehub.resources.FlinkManager.sleep")
     def test_wait_for_job_running_success(self, mock_sleep, flink_manager):
         """Test waiting for job to reach running state."""
         with patch.object(flink_manager, "_FlinkManager__get_job_state", return_value="RUNNING"):
@@ -311,7 +313,7 @@ class TestFlinkManager:
 
         assert result == 0
 
-    @patch("time.sleep")
+    @patch("src.scalehub.resources.FlinkManager.sleep")
     def test_wait_for_job_running_timeout(self, mock_sleep, flink_manager):
         """Test waiting for job that never reaches running state."""
         with patch.object(flink_manager, "_FlinkManager__get_job_state", return_value="STARTING"):

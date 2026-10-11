@@ -96,3 +96,12 @@ Prometheus, VictoriaMetrics, the Flink UI, MinIO, Chaos Mesh, Consul and the Kub
 prints the Kubernetes dashboard login token.
 
 Next: [Usage](usage.md).
+
+## Running the tests
+
+The unit tests mock Kubernetes, Flink, Ansible and EnOSlib, so they run without a cluster:
+
+```shell
+pip install -r setup/scalehub/requirements.txt pytest-mock
+PYTHONPATH=.:src pytest test
+```

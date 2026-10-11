@@ -103,11 +103,7 @@ class Playbooks:
         self.__log.debug(f"[PLAY] Inventory: {inventory}")
         self.__log.debug(f"[PLAY] Extra vars: {playbook_vars}")
         # Retrieve debug level from config
-        debug_level = (
-            config.get_int(Key.Scalehub.debug_level.key)
-            if config.get_int(Key.Scalehub.debug_level.key) is not None
-            else 0
-        )
+        debug_level = config.get_int(Key.Scalehub.debug_level.key, 0)
 
         # Run the playbook with additional tags and extra vars
         try:
