@@ -70,7 +70,8 @@ deployed, removed or reloaded on its own (see [Playbooks](playbooks.md)):
 
 The experiment monitor (`src/monitor/`, image built by `.github/workflows/monitor.yaml`) runs on the control node and
 manages experiments from inside the cluster. `shub experiment start` sends the serialized configuration over MQTT and
-returns. The monitor then works alone, so long or overnight campaigns don't depend on the workstation staying online.
+returns. The broker only accepts the `scalehub` and `monitor` users, with per-topic ACLs. Their passwords are generated
+into the `mqtt-credentials` Secret the first time the monitoring role runs. The monitor then works alone, so long or overnight campaigns don't depend on the workstation staying online.
 
 ![Experiment state machine](images/experiment-monitor-fsm.png)
 

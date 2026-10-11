@@ -47,6 +47,7 @@ container's `authorized_keys`, so an IDE can open a remote session in the contai
 ```
 ./deploy.sh <option>
 
+  build                     Build the images without starting the containers
   generate                  Write Grid'5000 credentials to setup/scalehub/secrets/enos/Grid5000_creds.yaml
   create                    Build the image and start the scalehub, vpn and dns containers
   remove                    Stop and remove the containers
