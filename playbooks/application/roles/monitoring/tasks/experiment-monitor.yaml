@@ -10,6 +10,27 @@
       kubernetes.core.k8s:
         state: present
         definition: "{{ lookup('ansible.builtin.file', 'experiment-monitor/experiments-pvc.yaml') | from_yaml }}"
+    - name: Look for existing MQTT credentials
+      kubernetes.core.k8s_info:
+        kind: Secret
+        name: mqtt-credentials
+        namespace: experiment-monitor
+      register: mqtt_credentials
+    - name: Generate MQTT credentials
+      when: mqtt_credentials.resources | length == 0
+      no_log: true
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          type: Opaque
+          metadata:
+            name: mqtt-credentials
+            namespace: experiment-monitor
+          stringData:
+            monitor-password: "{{ lookup('ansible.builtin.password', '/dev/null', chars=['ascii_letters', 'digits'], length=32) }}"
+            scalehub-password: "{{ lookup('ansible.builtin.password', '/dev/null', chars=['ascii_letters', 'digits'], length=32) }}"
     - name: Deploy configmaps for mqtt-broker
       kubernetes.core.k8s:
         state: present
@@ -41,3 +62,9 @@
       kubernetes.core.k8s:
         state: absent
         definition: "{{ lookup('ansible.builtin.file', 'experiment-monitor/experiment-monitor-role.yaml') | from_yaml_all }}"
+    - name: Delete MQTT credentials
+      kubernetes.core.k8s:
+        state: absent
+        kind: Secret
+        name: mqtt-credentials
+        namespace: experiment-monitor

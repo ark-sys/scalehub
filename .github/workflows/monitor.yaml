@@ -1,11 +1,8 @@
 name: Build and Push Monitor Image
 
+# Manual only: the published image is kept as is, the project is no longer developed
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'setup/monitor/**'
+  workflow_dispatch:
 
 jobs:
   build-and-push:

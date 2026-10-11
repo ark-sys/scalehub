@@ -62,20 +62,22 @@ class KubernetesManager:
         except ApiException as e:
             self.__log.error(f"Exception when getting Job logs: {str(e)}")
 
-    # get_token(secret_name, namespace)
-    def get_token(self, secret_name, namespace):
+    def get_secret_value(self, secret_name, key, namespace):
         import base64
 
         try:
             core_v1 = core_v1_api.CoreV1Api()
             secret = core_v1.read_namespaced_secret(secret_name, namespace)
-            token = secret.data["token"]
-        except ApiException as e:
-            self.__log.error(f"Exception when calling CoreV1Api->read_namespaced_secret: {str(e)}")
+            value = secret.data[key]
+        except (ApiException, KeyError, TypeError) as e:
+            self.__log.error(f"Could not read key '{key}' of secret {namespace}/{secret_name}: {str(e)}")
             return None
 
-        # decode token from base64
-        return base64.b64decode(token).decode("utf-8")
+        # Secret data is base64 encoded
+        return base64.b64decode(value).decode("utf-8")
+
+    def get_token(self, secret_name, namespace):
+        return self.get_secret_value(secret_name, "token", namespace)
 
 
 class PodManager:

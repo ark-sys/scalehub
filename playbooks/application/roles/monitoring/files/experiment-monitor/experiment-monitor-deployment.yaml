@@ -33,7 +33,10 @@ spec:
             - name: MQTT_BROKER_USERNAME
               value: "monitor"
             - name: MQTT_BROKER_PASSWORD
-              value: "m_password"
+              valueFrom:
+                secretKeyRef:
+                  name: mqtt-credentials
+                  key: monitor-password
           volumeMounts:
             - mountPath: /experiment-volume
               name: experiment-volume

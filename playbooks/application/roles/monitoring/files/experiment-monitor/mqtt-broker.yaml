@@ -40,6 +40,32 @@ spec:
         - key: node-role.kubernetes.io/master
           operator: Exists
           effect: NoSchedule
+      initContainers:
+        # Build mosquitto's password file from the generated credentials
+        - name: mqtt-passwd
+          image: eclipse-mosquitto:2.0.11
+          command:
+            - sh
+            - -c
+            - |
+              mosquitto_passwd -c -b /work/passwd monitor "$MONITOR_PASSWORD"
+              mosquitto_passwd -b /work/passwd scalehub "$SCALEHUB_PASSWORD"
+              chown mosquitto:mosquitto /work/passwd
+              chmod 0600 /work/passwd
+          env:
+            - name: MONITOR_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mqtt-credentials
+                  key: monitor-password
+            - name: SCALEHUB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mqtt-credentials
+                  key: scalehub-password
+          volumeMounts:
+            - mountPath: /work
+              name: mosquitto-passwd
       containers:
         - name: mqtt-broker
           image: eclipse-mosquitto:2.0.11
@@ -55,7 +81,7 @@ spec:
               name: mosquitto-configmaps
               subPath: acl
             - mountPath: /mosquitto/config/passwd
-              name: mosquitto-configmaps
+              name: mosquitto-passwd
               subPath: passwd
           command:
             -  /usr/sbin/mosquitto
@@ -70,5 +96,5 @@ spec:
                 path: mosquitto.conf
               - key: acl
                 path: acl
-              - key: passwd
-                path: passwd
+        - name: mosquitto-passwd
+          emptyDir: {}
