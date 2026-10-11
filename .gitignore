@@ -2,9 +2,15 @@ __pycache__/
 *.py[cod]
 *$py.class
 .idea/
+.venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Generated at runtime or by deploy.sh
 experiments-data
-conf/kubeconfig
-setup/scalehub/secrets/
-conf/
-info/
 runtime
+conf/kubeconfig
+conf/pico_hosts.yaml
+setup/scalehub/.env
+setup/scalehub/secrets/

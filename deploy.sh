@@ -28,6 +28,7 @@ function display_help() {
     echo "At runtime, a python script is loaded in the container, which allows to reserve and provision nodes on Grid5000."
     echo " "
     echo "Options:"
+    echo "  build             Build the scalehub images"
     echo "  generate          Generate credentials file for grid5000"
     echo "  create            Create the Docker container"
     echo "  remove            Remove the Docker container"
@@ -69,7 +70,7 @@ function generate_creds() {
 }
 
 function generate_scalehub_keys(){
-  # These kays are used to expose the container via SSH to Pycharm or VSCode
+  # These keys are used to expose the container via SSH to Pycharm or VSCode
   # This behavior is intended to be used during development to facilitate code editing and debugging with IDEs that support remote development over SSH.
   if [ ! -f "$SCALEHUB_BASEDIR/setup/scalehub/secrets/scalehub" ]; then
     echo "Generating SSH keys for ScaleHub..."
@@ -96,6 +97,12 @@ function restart_service(){
     fi
 }
 
+function build_image() {
+  gen_env_file
+  generate_scalehub_keys
+  docker compose -p scalehub -f $SCALEHUB_BASEDIR/setup/scalehub/docker-compose.yml build
+}
+
 # Function to create the Docker container
 function create_service() {
   gen_env_file
@@ -111,11 +118,12 @@ function remove_service() {
 
 # Function to check if the service is running
 function is_service_running() {
-    if docker ps --format '{{.Names}}' | grep -q "$SERVICE_NAME"; then
+    if docker ps --format '{{.Names}}' | grep -qx "$SERVICE_NAME"; then
         echo "Container $SERVICE_NAME is running."
-    else
-        echo "Container $SERVICE_NAME is not running."
+        return 0
     fi
+    echo "Container $SERVICE_NAME is not running."
+    return 1
 }
 
 # Function to get an interactive shell for the service
@@ -131,7 +139,8 @@ function get_shell() {
 # Function to push the Docker image to a private registry
 function push_image() {
     registry="$1"
-    docker tag myproject "$registry/$IMAGE_NAME"
+    # Compose names the image <project>-<service>
+    docker tag scalehub-scalehub "$registry/$IMAGE_NAME"
     docker push "$registry/$IMAGE_NAME"
 }
 
