@@ -1,0 +1,48 @@
+cff-version: 1.2.0
+message: "If you use ScaleHub, please cite the thesis that describes it."
+title: "ScaleHub"
+abstract: "Provision heterogeneous K3s clusters on Grid'5000 and edge devices to run Apache Flink scalability experiments."
+authors:
+  - family-names: Arsalane
+    given-names: Khaled
+repository-code: "https://github.com/ark-sys/scalehub"
+license: AGPL-3.0-or-later
+preferred-citation:
+  type: thesis
+  thesis-type: PhD
+  title: "Scalable Data Stream Processing in Heterogeneous Environments"
+  authors:
+    - family-names: Arsalane
+      given-names: Khaled
+  institution:
+    name: "Université de Rennes"
+  year: 2025
+  doi: "10.70675/7171b04ez95afz4f33z85c9z17b909ab24ba"
+  url: "https://theses.fr/2025URENS105"
+references:
+  - type: conference-paper
+    title: "Toward Stream Processing Elasticity in Realistic Geo-Distributed Environments"
+    authors:
+      - family-names: Arsalane
+        given-names: Khaled
+      - family-names: Pierre
+        given-names: Guillaume
+      - family-names: Ibrahim
+        given-names: Shadi
+    collection-title: "2024 IEEE International Conference on Cloud Engineering (IC2E)"
+    year: 2024
+    start: 118
+    end: 125
+    doi: "10.1109/IC2E61754.2024.00020"
+  - type: conference-paper
+    title: "Data Stream Processing Effectiveness in Heterogeneous Computing Environments"
+    authors:
+      - family-names: Arsalane
+        given-names: Khaled
+      - family-names: Pierre
+        given-names: Guillaume
+    collection-title: "Proceedings of the 41st ACM/SIGAPP Symposium on Applied Computing (SAC '26)"
+    year: 2026
+    start: 274
+    end: 281
+    doi: "10.1145/3748522.3779774"
