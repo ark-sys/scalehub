@@ -6,7 +6,6 @@
     - network
     - storage
     - monitoring
-    - gitlab
     - kafka
     - flink
 #    - chaos
